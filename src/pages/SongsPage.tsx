@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Eye } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Eye, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchSongs, deleteSong } from "@/lib/supabase-queries";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
 
@@ -12,6 +13,8 @@ export default function SongsPage() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: songs = [], isLoading } = useQuery({
@@ -26,6 +29,54 @@ export default function SongsPage() {
       toast.success("Música excluída");
     },
   });
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/import-sqlite`,
+        {
+          method: "POST",
+          body: formData,
+          headers: {
+            Authorization: `Bearer ${session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Import failed");
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      queryClient.invalidateQueries({ queryKey: ["setlists"] });
+      queryClient.invalidateQueries({ queryKey: ["artists"] });
+
+      toast.success(
+        `Importação concluída! ${result.songs} músicas, ${result.setlists} setlists, ${result.artists} artistas, ${result.setlist_items} itens de setlist.`
+      );
+
+      if (result.errors?.length > 0) {
+        console.warn("Import errors:", result.errors);
+        toast.warning(`${result.errors.length} erro(s) durante a importação. Veja o console.`);
+      }
+    } catch (err: any) {
+      toast.error(`Erro na importação: ${err.message}`);
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const filtered = songs.filter(
     (s) =>
@@ -42,10 +93,31 @@ export default function SongsPage() {
             {songs.length} música{songs.length !== 1 ? "s" : ""} no repertório
           </p>
         </div>
-        <Button onClick={() => { setEditingSong(null); setFormOpen(true); }}>
-          <Plus className="h-4 w-4" />
-          Nova Música
-        </Button>
+        <div className="flex items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".db,.sqlite,.sqlite3"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <Button
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importing}
+          >
+            {importing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+            {importing ? "Importando..." : "Importar SQLite"}
+          </Button>
+          <Button onClick={() => { setEditingSong(null); setFormOpen(true); }}>
+            <Plus className="h-4 w-4" />
+            Nova Música
+          </Button>
+        </div>
       </div>
 
       <div className="relative">

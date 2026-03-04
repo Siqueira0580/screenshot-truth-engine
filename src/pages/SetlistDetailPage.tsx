@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,12 @@ import {
   removeSongFromSetlist,
 } from "@/lib/supabase-queries";
 import { toast } from "sonner";
+import Teleprompter from "@/components/Teleprompter";
 
 export default function SetlistDetailPage() {
   const { id } = useParams();
   const [addOpen, setAddOpen] = useState(false);
+  const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const queryClient = useQueryClient();
 
@@ -78,10 +80,18 @@ export default function SetlistDetailPage() {
             {items.length} música{items.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Adicionar
-        </Button>
+        <div className="flex items-center gap-2">
+          {items.length > 0 && (
+            <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
+              <MonitorPlay className="h-4 w-4" />
+              Teleprompter
+            </Button>
+          )}
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Adicionar
+          </Button>
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -161,6 +171,18 @@ export default function SetlistDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Teleprompter
+        songs={items.map((item: any) => ({
+          title: item.songs?.title || "",
+          artist: item.songs?.artist,
+          musical_key: item.songs?.musical_key,
+          bpm: item.songs?.bpm,
+          body_text: item.songs?.body_text,
+        }))}
+        open={teleprompterOpen}
+        onClose={() => setTeleprompterOpen(false)}
+      />
     </div>
   );
 }

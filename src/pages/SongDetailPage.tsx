@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Music2, Youtube } from "lucide-react";
+import { ArrowLeft, Music2, Youtube, MonitorPlay } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSong } from "@/lib/supabase-queries";
+import Teleprompter from "@/components/Teleprompter";
 
 function extractYoutubeId(url: string | null): string | null {
   if (!url) return null;
@@ -20,6 +22,7 @@ function highlightChords(text: string) {
 
 export default function SongDetailPage() {
   const { id } = useParams();
+  const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
     queryFn: () => fetchSong(id!),
@@ -49,7 +52,15 @@ export default function SongDetailPage() {
       </Button>
 
       <div className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight">{song.title}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-4xl font-bold tracking-tight">{song.title}</h1>
+          {song.body_text && (
+            <Button onClick={() => setTeleprompterOpen(true)} className="gap-2">
+              <MonitorPlay className="h-4 w-4" />
+              Teleprompter
+            </Button>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
           {song.artist && (
             <span className="flex items-center gap-1">
@@ -88,6 +99,11 @@ export default function SongDetailPage() {
           />
         </div>
       )}
+      <Teleprompter
+        songs={[song]}
+        open={teleprompterOpen}
+        onClose={() => setTeleprompterOpen(false)}
+      />
     </div>
   );
 }

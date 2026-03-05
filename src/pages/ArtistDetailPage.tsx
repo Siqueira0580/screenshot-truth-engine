@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchArtists, fetchSongsByArtist } from "@/lib/supabase-queries";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { fetchArtists, fetchSongsByArtist, updateArtistPhoto } from "@/lib/supabase-queries";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -24,6 +26,8 @@ const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[
 export default function ArtistDetailPage() {
   const { id } = useParams();
   const [sort, setSort] = useState<SortOption>("alpha_asc");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
   const { data: artists = [] } = useQuery({
     queryKey: ["artists"],
@@ -37,6 +41,26 @@ export default function ArtistDetailPage() {
     queryFn: () => fetchSongsByArtist(artist!.name, sort),
     enabled: !!artist,
   });
+
+  const photoMutation = useMutation({
+    mutationFn: (file: File) => updateArtistPhoto(id!, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      toast.success("Foto atualizada!");
+    },
+    onError: () => toast.error("Erro ao enviar foto"),
+  });
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("A imagem deve ter no máximo 5MB");
+        return;
+      }
+      photoMutation.mutate(file);
+    }
+  };
 
   if (!artist) {
     return (
@@ -60,9 +84,36 @@ export default function ArtistDetailPage() {
 
       {/* Header */}
       <div className="flex items-start gap-4">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-2xl">
-          {artist.name.charAt(0).toUpperCase()}
+        {/* Avatar with upload */}
+        <div className="relative group">
+          <Avatar className="h-20 w-20 text-2xl">
+            {artist.photo_url ? (
+              <AvatarImage src={artist.photo_url} alt={artist.name} className="object-cover" />
+            ) : null}
+            <AvatarFallback className="bg-primary/10 text-primary font-bold text-2xl">
+              {artist.name.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={photoMutation.isPending}
+            className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          >
+            {photoMutation.isPending ? (
+              <Loader2 className="h-5 w-5 text-white animate-spin" />
+            ) : (
+              <Camera className="h-5 w-5 text-white" />
+            )}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoChange}
+          />
         </div>
+
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{artist.name}</h1>
           {artist.about && (

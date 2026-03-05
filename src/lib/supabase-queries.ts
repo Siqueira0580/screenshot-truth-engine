@@ -124,6 +124,32 @@ export async function deleteArtist(id: string) {
   if (error) throw error;
 }
 
+export async function updateArtistPhoto(artistId: string, file: File) {
+  const fileExt = file.name.split(".").pop();
+  const filePath = `${artistId}.${fileExt}`;
+
+  // Upload (upsert) file
+  const { error: uploadError } = await supabase.storage
+    .from("artist-photos")
+    .upload(filePath, file, { upsert: true });
+  if (uploadError) throw uploadError;
+
+  // Get public URL
+  const { data: urlData } = supabase.storage
+    .from("artist-photos")
+    .getPublicUrl(filePath);
+
+  // Update artist record
+  const { data, error } = await supabase
+    .from("artists")
+    .update({ photo_url: urlData.publicUrl })
+    .eq("id", artistId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Artist;
+}
+
 // Find or create artist (case-insensitive dedup)
 export async function findOrCreateArtist(name: string): Promise<Artist> {
   const { data: existing } = await supabase

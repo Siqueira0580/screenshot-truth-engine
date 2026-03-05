@@ -80,6 +80,17 @@
   font-family: var(--font-mono);
 }
 
+.chord-text .chord-clickable {
+  cursor: pointer;
+  border-bottom: 1px dashed hsl(var(--primary) / 0.5);
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.chord-text .chord-clickable:hover {
+  border-bottom-color: hsl(var(--primary));
+  text-shadow: 0 0 8px hsl(var(--primary) / 0.4);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

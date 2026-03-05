@@ -389,7 +389,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                     {(loopsRemaining[currentIndex] || 0) > 0 ? `${loopsRemaining[currentIndex]}x` : "—"}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-1.5" align="center" side="bottom">
+                <PopoverContent className="w-auto p-1.5 z-[200]" align="center" side="bottom">
                   <div className="flex gap-1">
                     {[0, 1, 2, 3].map(n => (
                       <button
@@ -605,7 +605,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               </button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-auto p-2 z-[110]"
+              className="w-auto p-2 z-[200]"
               side="top"
               align="center"
             >

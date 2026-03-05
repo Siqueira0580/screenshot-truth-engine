@@ -93,6 +93,10 @@ export default {
           "0%, 100%": { opacity: "1", boxShadow: "0 0 12px hsl(var(--primary) / 0.3)" },
           "50%": { opacity: "0.7", boxShadow: "0 0 28px hsl(var(--primary) / 0.6)" },
         },
+        "key-blink": {
+          "0%, 100%": { opacity: "1", color: "hsl(40 95% 60%)" },
+          "50%": { opacity: "0.5", color: "hsl(20 90% 50%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -101,6 +105,7 @@ export default {
         "slide-in": "slide-in 0.3s ease-out",
         "bpm-pulse": "bpm-pulse 150ms ease-out",
         "pulse-alert": "pulse-alert 1s ease-in-out infinite",
+        "key-blink": "key-blink 0.8s ease-in-out infinite",
       },
     },
   },

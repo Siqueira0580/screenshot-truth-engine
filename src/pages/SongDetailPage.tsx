@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Music2, MonitorPlay, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchSong, incrementAccessCount } from "@/lib/supabase-queries";
+import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey } from "@/lib/transpose";
 import Teleprompter from "@/components/Teleprompter";
 
@@ -29,6 +29,15 @@ export default function SongDetailPage() {
     queryFn: () => fetchSong(id!),
     enabled: !!id,
   });
+
+  const { data: artists = [] } = useQuery({
+    queryKey: ["artists"],
+    queryFn: fetchArtists,
+  });
+
+  const artistPhoto = song?.artist
+    ? artists.find(a => a.name.toLowerCase() === song.artist!.toLowerCase())?.photo_url || null
+    : null;
 
   useEffect(() => {
     if (id) {
@@ -130,7 +139,7 @@ export default function SongDetailPage() {
         </div>
       )}
       <Teleprompter
-        songs={[{ ...song, body_text: displayBody, musical_key: displayKey }]}
+        songs={[{ ...song, body_text: displayBody, musical_key: displayKey, artist_photo_url: artistPhoto }]}
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
       />

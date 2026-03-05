@@ -119,7 +119,12 @@ export default function SongNavigationHUD({
                 {next.title}
               </p>
               {next.musical_key && (
-                <p className="text-xs text-primary font-mono font-semibold">
+                <p className={cn(
+                  "font-mono font-black mt-0.5",
+                  nearEnd && !willRepeat
+                    ? "text-lg animate-key-blink"
+                    : "text-base text-primary"
+                )}>
                   {transposeKey(next.musical_key, transpose)}
                 </p>
               )}

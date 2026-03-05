@@ -10,9 +10,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { createSong, updateSong, fetchSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
-import { FileUp, Loader2 } from "lucide-react";
+import { FileUp, Loader2, Settings2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
@@ -20,6 +34,8 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   songId: string | null;
 }
+
+const TIME_SIGNATURES = ["2/4", "3/4", "4/4", "5/4", "6/8", "7/8", "12/8"];
 
 export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
   const queryClient = useQueryClient();
@@ -34,6 +50,10 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
     musical_key: "",
     style: "",
     bpm: "",
+    time_signature: "4/4",
+    default_speed: "250",
+    loop_count: "0",
+    auto_next: true,
     youtube_url: "",
     body_text: "",
   });
@@ -53,23 +73,35 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
         musical_key: song.musical_key || "",
         style: song.style || "",
         bpm: song.bpm?.toString() || "",
+        time_signature: (song as any).time_signature || "4/4",
+        default_speed: song.default_speed?.toString() || "250",
+        loop_count: song.loop_count?.toString() || "0",
+        auto_next: song.auto_next ?? true,
         youtube_url: song.youtube_url || "",
         body_text: song.body_text || "",
       });
     } else if (!isEditing && open) {
-      setForm({ title: "", artist: "", composer: "", musical_key: "", style: "", bpm: "", youtube_url: "", body_text: "" });
+      setForm({
+        title: "", artist: "", composer: "", musical_key: "", style: "",
+        bpm: "", time_signature: "4/4", default_speed: "250", loop_count: "0",
+        auto_next: true, youtube_url: "", body_text: "",
+      });
     }
   }, [song, isEditing, open]);
 
   const mutation = useMutation({
     mutationFn: () => {
-      const payload = {
+      const payload: any = {
         title: form.title,
         artist: form.artist || null,
         composer: form.composer || null,
         musical_key: form.musical_key || null,
         style: form.style || null,
         bpm: form.bpm ? parseInt(form.bpm) : null,
+        time_signature: form.time_signature || "4/4",
+        default_speed: form.default_speed ? parseInt(form.default_speed) : 250,
+        loop_count: form.loop_count ? parseInt(form.loop_count) : 0,
+        auto_next: form.auto_next,
         youtube_url: form.youtube_url || null,
         body_text: form.body_text || null,
       };
@@ -89,23 +121,16 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       toast.error("Selecione um arquivo PDF");
       return;
     }
-
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Arquivo muito grande (máx. 10MB)");
       return;
     }
-
     setIsParsing(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-
-      const { data, error } = await supabase.functions.invoke("parse-pdf", {
-        body: formData,
-      });
-
+      const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
       if (error) throw error;
-
       if (data?.text) {
         setForm((prev) => ({ ...prev, body_text: data.text }));
         toast.success("Cifra extraída do PDF!");
@@ -135,6 +160,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           }}
           className="space-y-4"
         >
+          {/* Metadados principais */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Título *</Label>
@@ -160,11 +186,75 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
               <Label>BPM</Label>
               <Input type="number" value={form.bpm} onChange={(e) => setForm({ ...form, bpm: e.target.value })} />
             </div>
+            <div className="space-y-2">
+              <Label>Fórmula de Compasso</Label>
+              <Select value={form.time_signature} onValueChange={(v) => setForm({ ...form, time_signature: v })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIME_SIGNATURES.map((ts) => (
+                    <SelectItem key={ts} value={ts}>{ts}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
+          {/* YouTube */}
           <div className="space-y-2">
             <Label>YouTube URL</Label>
             <Input value={form.youtube_url} onChange={(e) => setForm({ ...form, youtube_url: e.target.value })} placeholder="https://youtube.com/..." />
           </div>
+
+          {/* Configurações do Teleprompter */}
+          <Accordion type="single" collapsible>
+            <AccordionItem value="teleprompter" className="border rounded-lg px-4">
+              <AccordionTrigger className="text-sm font-medium">
+                <span className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4" />
+                  Configurações do Teleprompter
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="pb-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Velocidade Padrão</Label>
+                    <Input
+                      type="number"
+                      value={form.default_speed}
+                      onChange={(e) => setForm({ ...form, default_speed: e.target.value })}
+                      placeholder="250"
+                    />
+                    <p className="text-xs text-muted-foreground">Pixels por segundo de rolagem</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Repetições (Loop)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={form.loop_count}
+                      onChange={(e) => setForm({ ...form, loop_count: e.target.value })}
+                      placeholder="0"
+                    />
+                    <p className="text-xs text-muted-foreground">0 = sem repetição</p>
+                  </div>
+                  <div className="col-span-2 flex items-center justify-between rounded-lg border border-border p-3">
+                    <div>
+                      <Label>Auto-Next</Label>
+                      <p className="text-xs text-muted-foreground">Avançar automaticamente para a próxima música</p>
+                    </div>
+                    <Switch
+                      checked={form.auto_next}
+                      onCheckedChange={(checked) => setForm({ ...form, auto_next: checked })}
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+
+          {/* Cifra / Letra */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Cifra / Letra</Label>
@@ -208,6 +298,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
               placeholder="Cole aqui a cifra ou letra da música..."
             />
           </div>
+
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar

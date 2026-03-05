@@ -48,6 +48,7 @@ export type Database = {
           id: string
           song_id: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -58,6 +59,7 @@ export type Database = {
           id?: string
           song_id: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -68,6 +70,7 @@ export type Database = {
           id?: string
           song_id?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -78,6 +81,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          phone: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          phone?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          phone?: string | null
+        }
+        Relationships: []
       }
       setlist_items: {
         Row: {
@@ -131,6 +164,7 @@ export type Database = {
           name: string
           show_date: string | null
           show_duration: number | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -138,6 +172,7 @@ export type Database = {
           name: string
           show_date?: string | null
           show_duration?: number | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -145,6 +180,7 @@ export type Database = {
           name?: string
           show_date?: string | null
           show_duration?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }

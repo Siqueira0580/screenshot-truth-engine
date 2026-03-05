@@ -42,10 +42,12 @@ export default function StudioPage() {
       if (upErr) throw upErr;
 
       const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
+      const { data: { user } } = await supabase.auth.getUser();
       await supabase.from("audio_tracks").insert({
         song_id: song.id,
         file_full: urlData.publicUrl,
-      });
+        user_id: user!.id,
+      } as any);
 
       queryClient.invalidateQueries({ queryKey: ["songs"] });
       toast.success(`"${title}" adicionado!`);

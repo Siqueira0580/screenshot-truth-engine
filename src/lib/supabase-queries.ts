@@ -8,7 +8,14 @@ type SetlistInsert = Database["public"]["Tables"]["setlists"]["Insert"];
 type SetlistItem = Database["public"]["Tables"]["setlist_items"]["Row"];
 type Artist = Database["public"]["Tables"]["artists"]["Row"];
 
-// Songs
+// Helper to get current user id
+async function getCurrentUserId(): Promise<string> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Não autenticado");
+  return user.id;
+}
+
+// Songs (PUBLIC - no user_id filter)
 export async function fetchSongs() {
   const { data, error } = await supabase
     .from("songs")
@@ -45,8 +52,9 @@ export async function deleteSong(id: string) {
   if (error) throw error;
 }
 
-// Setlists
+// Setlists (PRIVATE - user_id scoped via RLS + explicit insert)
 export async function fetchSetlists() {
+  // RLS handles filtering by user_id automatically
   const { data, error } = await supabase
     .from("setlists")
     .select("*")
@@ -76,7 +84,12 @@ export async function fetchSetlistItems(setlistId: string) {
 }
 
 export async function createSetlist(setlist: SetlistInsert) {
-  const { data, error } = await supabase.from("setlists").insert(setlist).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("setlists")
+    .insert({ ...setlist, user_id: userId } as any)
+    .select()
+    .single();
   if (error) throw error;
   return data as Setlist;
 }
@@ -117,7 +130,7 @@ export async function bulkUpdateSetlistItems(
   }
 }
 
-// Artists
+// Artists (PUBLIC - no user_id filter)
 export async function fetchArtists() {
   const { data, error } = await supabase.from("artists").select("*").order("name");
   if (error) throw error;
@@ -139,18 +152,15 @@ export async function updateArtistPhoto(artistId: string, file: File) {
   const fileExt = file.name.split(".").pop();
   const filePath = `${artistId}.${fileExt}`;
 
-  // Upload (upsert) file
   const { error: uploadError } = await supabase.storage
     .from("artist-photos")
     .upload(filePath, file, { upsert: true });
   if (uploadError) throw uploadError;
 
-  // Get public URL
   const { data: urlData } = supabase.storage
     .from("artist-photos")
     .getPublicUrl(filePath);
 
-  // Update artist record
   const { data, error } = await supabase
     .from("artists")
     .update({ photo_url: urlData.publicUrl })
@@ -161,7 +171,6 @@ export async function updateArtistPhoto(artistId: string, file: File) {
   return data as Artist;
 }
 
-// Find or create artist (case-insensitive dedup)
 export async function findOrCreateArtist(name: string): Promise<Artist> {
   const { data: existing } = await supabase
     .from("artists")
@@ -182,7 +191,6 @@ export async function findOrCreateArtist(name: string): Promise<Artist> {
   return data as Artist;
 }
 
-// Fetch songs by artist name
 export async function fetchSongsByArtist(
   artistName: string,
   sort: string = "alpha_asc"
@@ -199,7 +207,7 @@ export async function fetchSongsByArtist(
     case "recent":
       query = query.order("created_at", { ascending: false });
       break;
-    default: // alpha_asc
+    default:
       query = query.order("title", { ascending: true });
   }
 
@@ -208,9 +216,7 @@ export async function fetchSongsByArtist(
   return data as Song[];
 }
 
-// Increment access count
 export async function incrementAccessCount(id: string) {
-  // Simple fetch + update approach
   const { data } = await supabase.from("songs").select("access_count").eq("id", id).single();
   const current = (data as any)?.access_count || 0;
   await supabase.from("songs").update({ access_count: current + 1 } as any).eq("id", id);

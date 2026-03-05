@@ -38,6 +38,47 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_tracks: {
+        Row: {
+          created_at: string
+          file_full: string | null
+          file_harmony: string | null
+          file_percussion: string | null
+          file_vocals: string | null
+          id: string
+          song_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_full?: string | null
+          file_harmony?: string | null
+          file_percussion?: string | null
+          file_vocals?: string | null
+          id?: string
+          song_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_full?: string | null
+          file_harmony?: string | null
+          file_percussion?: string | null
+          file_vocals?: string | null
+          id?: string
+          song_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_tracks_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setlist_items: {
         Row: {
           bpm: number | null

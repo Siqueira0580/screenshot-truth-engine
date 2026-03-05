@@ -1,11 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Guitar } from "lucide-react";
+import { Music, ListMusic, Users, Guitar, Headphones } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { to: "/", icon: Music, label: "Músicas" },
   { to: "/setlists", icon: ListMusic, label: "Setlists" },
   { to: "/artists", icon: Users, label: "Artistas" },
+  { to: "/studio", icon: Headphones, label: "Estúdio" },
 ];
 
 export default function AppLayout() {

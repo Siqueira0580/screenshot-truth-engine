@@ -374,18 +374,44 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                 </p>
               </div>
-              {/* Repeat indicator */}
-              {(loopsRemaining[currentIndex] || 0) > 0 && (
-                <div className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-full border-2 font-mono font-black text-xs shrink-0 transition-all",
-                  nearEnd
-                    ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert shadow-[0_0_16px_hsl(40_95%_55%/0.4)]"
-                    : "bg-primary/10 border-primary/40 text-primary"
-                )}>
-                  <Repeat className="h-3.5 w-3.5" />
-                  {loopsRemaining[currentIndex]}x
-                </div>
-              )}
+              {/* Repeat selector */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-full border-2 font-mono font-black text-xs shrink-0 transition-all cursor-pointer",
+                    (loopsRemaining[currentIndex] || 0) > 0
+                      ? nearEnd
+                        ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert shadow-[0_0_16px_hsl(40_95%_55%/0.4)]"
+                        : "bg-primary/10 border-primary/40 text-primary"
+                      : "bg-muted/20 border-border text-muted-foreground hover:border-primary/40"
+                  )}>
+                    <Repeat className="h-3.5 w-3.5" />
+                    {(loopsRemaining[currentIndex] || 0) > 0 ? `${loopsRemaining[currentIndex]}x` : "—"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-1.5" align="center" side="bottom">
+                  <div className="flex gap-1">
+                    {[0, 1, 2, 3].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => setLoopsRemaining(prev => {
+                          const next = [...prev];
+                          next[currentIndex] = n;
+                          return next;
+                        })}
+                        className={cn(
+                          "px-3 py-1.5 rounded-md text-xs font-bold font-mono transition-colors",
+                          (loopsRemaining[currentIndex] || 0) === n
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted/30 text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {n === 0 ? "Nenhum" : `${n}x`}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* Right: next + fullscreen */}

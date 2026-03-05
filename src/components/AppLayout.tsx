@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, LogOut } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ export default function AppLayout() {
               SetlistPro
             </span>
           </div>
-          <nav className="flex items-center gap-1 flex-1">
+          <nav className="flex items-center gap-1 flex-1 overflow-x-auto">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -52,7 +52,7 @@ export default function AppLayout() {
                 end={item.to === "/"}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                     isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -60,11 +60,20 @@ export default function AppLayout() {
                 }
               >
                 <item.icon className="h-4 w-4" />
-                {item.label}
+                <span className="hidden sm:inline">{item.label}</span>
               </NavLink>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/settings")}
+              title="Configurações"
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
             <button
               onClick={() => navigate("/profile")}
               className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-secondary transition-colors"
@@ -76,7 +85,7 @@ export default function AppLayout() {
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground hidden sm:block">
+              <span className="text-sm text-muted-foreground hidden md:block">
                 {user?.email}
               </span>
             </button>

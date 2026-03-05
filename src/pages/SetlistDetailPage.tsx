@@ -1,11 +1,12 @@
 import { useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import {
   fetchSetlist,
   fetchSetlistItems,
@@ -17,6 +18,8 @@ import {
 } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
+import { useStageSync } from "@/hooks/useStageSync";
+import StageSyncInviteModal from "@/components/StageSyncInviteModal";
 
 export default function SetlistDetailPage() {
   const { id } = useParams();
@@ -55,6 +58,18 @@ export default function SetlistDetailPage() {
     queryKey: ["songs"],
     queryFn: fetchSongs,
     enabled: addOpen,
+  });
+
+  // Stage sync
+  const stageSync = useStageSync({
+    setlistId: id,
+    onSongChange: (index) => {
+      // Could navigate teleprompter to this song
+      toast.info(`Mestre navegou para música ${index + 1}`);
+    },
+    onScroll: () => {},
+    onPlay: () => toast.info("Mestre iniciou reprodução"),
+    onPause: () => toast.info("Mestre pausou"),
   });
 
   const addMutation = useMutation({
@@ -133,9 +148,15 @@ export default function SetlistDetailPage() {
 
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{setlist?.name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{setlist?.name}</h1>
           <p className="text-muted-foreground mt-1">
             {items.length} música{items.length !== 1 ? "s" : ""}
+            {stageSync.connectedCount > 1 && (
+              <Badge variant="secondary" className="ml-2 text-xs">
+                <Wifi className="h-3 w-3 mr-1" />
+                {stageSync.connectedCount} online
+              </Badge>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -146,33 +167,86 @@ export default function SetlistDetailPage() {
               className="gap-2"
             >
               <Save className="h-4 w-4" />
-              Salvar Configs
+              <span className="hidden sm:inline">Salvar Configs</span>
             </Button>
           )}
           {items.length > 0 && (
             <>
+              {/* Stage Sync Controls */}
+              {stageSync.isMaster ? (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={stageSync.stopMaster}
+                  className="gap-2 animate-pulse"
+                >
+                  <Radio className="h-4 w-4" />
+                  <span className="hidden sm:inline">Parar Transmissão</span>
+                </Button>
+              ) : stageSync.isFollowing ? (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={stageSync.stopFollowing}
+                  className="gap-2"
+                >
+                  <WifiOff className="h-4 w-4" />
+                  <span className="hidden sm:inline">Desconectar</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={stageSync.startMaster}
+                  className="gap-2"
+                  title="Iniciar Modo Palco — transmitir comandos para a banda"
+                >
+                  <Radio className="h-4 w-4" />
+                  <span className="hidden sm:inline">Modo Palco</span>
+                </Button>
+              )}
+
               <Button
                 variant={autoHideControls ? "outline" : "secondary"}
                 size="sm"
                 onClick={() => setAutoHideControls((v) => !v)}
                 className="gap-2"
-                title={autoHideControls ? "Auto-hide ativo: controles somem ao reproduzir" : "Auto-hide desativado: controles sempre visíveis"}
+                title={autoHideControls ? "Auto-hide ativo" : "Auto-hide desativado"}
               >
                 {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {autoHideControls ? "Auto-hide" : "Sempre visível"}
+                <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Sempre visível"}</span>
               </Button>
               <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
                 <MonitorPlay className="h-4 w-4" />
-                Teleprompter
+                <span className="hidden sm:inline">Teleprompter</span>
               </Button>
             </>
           )}
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" />
-            Adicionar
+            <span className="hidden sm:inline ml-1">Adicionar</span>
           </Button>
         </div>
       </div>
+
+      {/* Following indicator */}
+      {stageSync.isFollowing && stageSync.masterName && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+          <Radio className="h-4 w-4 text-primary animate-pulse" />
+          <span>
+            A seguir <strong className="text-primary">{stageSync.masterName}</strong> — ecrã sincronizado
+          </span>
+        </div>
+      )}
+
+      {stageSync.isMaster && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
+          <Radio className="h-4 w-4 text-destructive animate-pulse" />
+          <span>
+            <strong className="text-destructive">Transmissão Mestre ativa</strong> — {stageSync.connectedCount - 1} membro(s) conectado(s)
+          </span>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
@@ -309,6 +383,14 @@ export default function SetlistDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Stage sync invite modal */}
+      <StageSyncInviteModal
+        open={!!stageSync.invite}
+        masterName={stageSync.invite?.masterName || ""}
+        onAccept={stageSync.acceptInvite}
+        onDecline={stageSync.declineInvite}
+      />
 
       <Teleprompter
         songs={items.map((item: any) => ({

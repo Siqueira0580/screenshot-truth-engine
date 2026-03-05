@@ -31,49 +31,58 @@ serve(async (req) => {
 
     console.log("Starting stem separation for song:", song_id);
 
-    // Create prediction with Demucs (htdemucs model)
+    // Use ryan5453/demucs model (well-maintained, returns structured stems)
     const createRes = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${REPLICATE_API_KEY}`,
         "Content-Type": "application/json",
+        Prefer: "wait",
       },
       body: JSON.stringify({
-        version: "25a173108cff36ef9f80f854c162d01df9e6528be175794b81571db245b1c10c",
+        version: "b26a4313b4d75983d60657f80dfa93b9beb354f6e4fa29ecd27ffe14d60117f6",
         input: {
           audio: audio_url,
-          stem: "none", // returns all stems
+          model: "htdemucs",
+          output_format: "mp3",
         },
       }),
     });
 
     if (!createRes.ok) {
-      const errText = await createRes.text();
-      console.error("Replicate create error:", createRes.status, errText);
+      const errBody = await createRes.text();
+      console.error("Replicate create error:", createRes.status, errBody);
+
+      if (createRes.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit do Replicate. Aguarde alguns segundos e tente novamente. Se persistir, adicione um método de pagamento em replicate.com." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       return new Response(
-        JSON.stringify({ error: `Replicate API error: ${createRes.status}` }),
+        JSON.stringify({ error: `Replicate API error: ${createRes.status}`, details: errBody }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const prediction = await createRes.json();
-    console.log("Prediction created:", prediction.id);
+    let result = await createRes.json();
+    console.log("Prediction created:", result.id, "status:", result.status);
 
-    // Poll for completion (max 10 minutes)
-    let result = prediction;
-    const maxAttempts = 120;
-    for (let i = 0; i < maxAttempts; i++) {
-      if (result.status === "succeeded" || result.status === "failed" || result.status === "canceled") {
-        break;
+    // Poll for completion if not already done (max 10 minutes)
+    if (result.status !== "succeeded" && result.status !== "failed") {
+      const maxAttempts = 120;
+      for (let i = 0; i < maxAttempts; i++) {
+        if (result.status === "succeeded" || result.status === "failed" || result.status === "canceled") {
+          break;
+        }
+        await new Promise((r) => setTimeout(r, 5000));
+        const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
+          headers: { Authorization: `Bearer ${REPLICATE_API_KEY}` },
+        });
+        result = await pollRes.json();
+        console.log(`Poll ${i + 1}: status=${result.status}`);
       }
-
-      await new Promise((r) => setTimeout(r, 5000));
-
-      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-        headers: { Authorization: `Bearer ${REPLICATE_API_KEY}` },
-      });
-      result = await pollRes.json();
-      console.log(`Poll ${i + 1}: status=${result.status}`);
     }
 
     if (result.status !== "succeeded") {
@@ -83,24 +92,38 @@ serve(async (req) => {
       );
     }
 
-    // Result output is an object with stem URLs: { vocals, drums, bass, other }
+    // Output is { stems: [{ name: "vocals", audio: "url" }, { name: "drums", audio: "url" }, ...] }
     const output = result.output;
-    console.log("Separation complete. Output keys:", Object.keys(output));
+    console.log("Separation complete. Output:", JSON.stringify(output));
 
-    // Download stems and upload to storage
+    // Parse stems - handle both formats
+    let stems: Record<string, string> = {};
+    if (output?.stems && Array.isArray(output.stems)) {
+      // Structured format: { stems: [{ name, audio }] }
+      for (const stem of output.stems) {
+        stems[stem.name] = stem.audio;
+      }
+    } else if (typeof output === "object" && output !== null) {
+      // Flat format: { vocals: "url", drums: "url", ... }
+      stems = output;
+    }
+
+    console.log("Parsed stems:", Object.keys(stems));
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    // Map Demucs stem names to our DB columns
     const stemMapping: Record<string, string> = {
       vocals: "file_vocals",
       drums: "file_percussion",
-      other: "file_harmony", // "other" contains harmony/instruments
+      other: "file_harmony",
     };
 
     const updates: Record<string, string> = {};
 
     for (const [stemName, dbColumn] of Object.entries(stemMapping)) {
-      const stemUrl = output[stemName];
+      const stemUrl = stems[stemName];
       if (!stemUrl) {
         console.log(`No ${stemName} stem in output`);
         continue;
@@ -114,16 +137,16 @@ serve(async (req) => {
       }
 
       const stemBlob = await stemRes.blob();
-      const storagePath = `${song_id}/${stemName}.wav`;
+      const ext = stemUrl.includes(".wav") ? "wav" : "mp3";
+      const storagePath = `${song_id}/${stemName}.${ext}`;
 
-      // Upload to Supabase storage
       const uploadRes = await fetch(
         `${SUPABASE_URL}/storage/v1/object/audio-stems/${storagePath}`,
         {
           method: "POST",
           headers: {
             Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            "Content-Type": stemBlob.type || "audio/wav",
+            "Content-Type": stemBlob.type || "audio/mpeg",
             "x-upsert": "true",
           },
           body: stemBlob,
@@ -136,31 +159,34 @@ serve(async (req) => {
         continue;
       }
 
-      // Get public URL
       const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/audio-stems/${storagePath}`;
       updates[dbColumn] = publicUrl;
       console.log(`Uploaded ${stemName} -> ${publicUrl}`);
     }
 
-    // Also include bass in harmony (combine conceptually - store bass URL too if needed)
-    if (output.bass) {
-      const bassRes = await fetch(output.bass);
-      if (bassRes.ok) {
-        const bassBlob = await bassRes.blob();
-        const bassPath = `${song_id}/bass.wav`;
-        await fetch(
-          `${SUPABASE_URL}/storage/v1/object/audio-stems/${bassPath}`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-              "Content-Type": bassBlob.type || "audio/wav",
-              "x-upsert": "true",
-            },
-            body: bassBlob,
-          }
-        );
-        console.log("Bass stem uploaded separately");
+    // Also save bass separately in storage (for future use)
+    if (stems.bass) {
+      try {
+        const bassRes = await fetch(stems.bass);
+        if (bassRes.ok) {
+          const bassBlob = await bassRes.blob();
+          const ext = stems.bass.includes(".wav") ? "wav" : "mp3";
+          await fetch(
+            `${SUPABASE_URL}/storage/v1/object/audio-stems/${song_id}/bass.${ext}`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                "Content-Type": bassBlob.type || "audio/mpeg",
+                "x-upsert": "true",
+              },
+              body: bassBlob,
+            }
+          );
+          console.log("Bass stem uploaded separately");
+        }
+      } catch (e) {
+        console.error("Bass upload error:", e);
       }
     }
 

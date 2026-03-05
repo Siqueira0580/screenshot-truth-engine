@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Guitar } from "lucide-react";
+import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -39,9 +39,9 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
           <div className="flex items-center gap-2">
-            <Guitar className="h-6 w-6 text-primary" />
+            <img src={smartCifraLogo} alt="Smart Cifra" className="h-8 w-8 rounded-lg" />
             <span className="text-lg font-bold tracking-tight text-foreground">
-              SetlistPro
+              Smart Cifra
             </span>
           </div>
           <nav className="flex items-center gap-1 flex-1 overflow-x-auto">

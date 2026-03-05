@@ -317,22 +317,86 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         const prev = currentIndex > 0 ? songs[currentIndex - 1] : null;
         const next = currentIndex < songs.length - 1 ? songs[currentIndex + 1] : null;
         return (
+          <>
           <div
             className={cn(
-              "grid grid-cols-[1fr_auto_1fr] items-center px-3 py-2 transition-opacity duration-300 gap-2",
+              "flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center px-2 sm:px-3 py-2 transition-opacity duration-300 gap-1 md:gap-2",
               showControls ? "opacity-100" : "opacity-0 pointer-events-none"
             )}
             style={{ background: "hsl(220 20% 4% / 0.9)" }}
           >
-            {/* Left: close + prev */}
-            <div className="flex items-center gap-2 min-w-0">
+            {/* Left: close + prev (prev hidden on mobile) */}
+            <div className="flex items-center gap-2 min-w-0 w-full md:w-auto">
               <Button variant="ghost" size="icon" onClick={onClose} className="text-foreground shrink-0 h-8 w-8">
                 <X className="h-4 w-4" />
               </Button>
+
+              {/* Current song info - visible on mobile in this row */}
+              <div className="flex items-center gap-2 min-w-0 flex-1 md:hidden">
+                {song.artist_photo_url && (
+                  <Avatar className="h-8 w-8 shrink-0 border-2 border-primary/40">
+                    <AvatarImage src={song.artist_photo_url} alt={song.artist || ""} className="object-cover" />
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                      {(song.artist || "?")[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-bold text-foreground truncate">{song.title}</h2>
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {song.artist}
+                    {displayKey && ` · ${displayKey}`}
+                    {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
+                  </p>
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className={cn(
+                      "flex items-center gap-1 px-1.5 py-0.5 rounded-full border-2 font-mono font-black text-[10px] shrink-0 transition-all cursor-pointer",
+                      (loopsRemaining[currentIndex] || 0) > 0
+                        ? nearEnd
+                          ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert"
+                          : "bg-primary/10 border-primary/40 text-primary"
+                        : "bg-muted/20 border-border text-muted-foreground"
+                    )}>
+                      <Repeat className="h-3 w-3" />
+                      {(loopsRemaining[currentIndex] || 0) > 0 ? `${loopsRemaining[currentIndex]}x` : "—"}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-1.5 z-[200]" align="center" side="bottom">
+                    <div className="flex gap-1">
+                      {[0, 1, 2, 3].map(n => (
+                        <button
+                          key={n}
+                          onClick={() => setLoopsRemaining(prevLoops => {
+                            const updated = [...prevLoops];
+                            updated[currentIndex] = n;
+                            return updated;
+                          })}
+                          className={cn(
+                            "px-3 py-1.5 rounded-md text-xs font-bold font-mono transition-colors",
+                            (loopsRemaining[currentIndex] || 0) === n
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted/30 text-foreground hover:bg-muted"
+                          )}
+                        >
+                          {n === 0 ? "Nenhum" : `${n}x`}
+                        </button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-foreground shrink-0 h-8 w-8 md:hidden">
+                <Maximize className="h-4 w-4" />
+              </Button>
+
+              {/* Previous song - hidden on mobile */}
               {prev ? (
                 <button
                   onClick={() => navigateTo(currentIndex - 1)}
-                  className="flex items-center gap-1.5 text-left rounded-lg bg-muted/20 border border-border px-2.5 py-1.5 hover:border-primary/40 transition-all min-w-0"
+                  className="hidden md:flex items-center gap-1.5 text-left rounded-lg bg-muted/20 border border-border px-2.5 py-1.5 hover:border-primary/40 transition-all min-w-0"
                 >
                   <SkipBack className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                   <div className="min-w-0">
@@ -346,11 +410,11 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                     )}
                   </div>
                 </button>
-              ) : <div />}
+              ) : <div className="hidden md:block" />}
             </div>
 
-            {/* Center: current song */}
-            <div className="flex items-center gap-2.5 min-w-0 max-w-md">
+            {/* Center: current song - hidden on mobile */}
+            <div className="hidden md:flex items-center gap-2.5 min-w-0 max-w-md">
               {song.artist_photo_url ? (
                 <Avatar className="h-9 w-9 shrink-0 border-2 border-primary/40">
                   <AvatarImage src={song.artist_photo_url} alt={song.artist || ""} className="object-cover" />
@@ -374,7 +438,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                 </p>
               </div>
-              {/* Repeat selector */}
               <Popover>
                 <PopoverTrigger asChild>
                   <button className={cn(
@@ -394,10 +457,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                     {[0, 1, 2, 3].map(n => (
                       <button
                         key={n}
-                        onClick={() => setLoopsRemaining(prev => {
-                          const next = [...prev];
-                          next[currentIndex] = n;
-                          return next;
+                        onClick={() => setLoopsRemaining(prevLoops => {
+                          const updated = [...prevLoops];
+                          updated[currentIndex] = n;
+                          return updated;
                         })}
                         className={cn(
                           "px-3 py-1.5 rounded-md text-xs font-bold font-mono transition-colors",
@@ -414,8 +477,8 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               </Popover>
             </div>
 
-            {/* Right: next + fullscreen */}
-            <div className="flex items-center justify-end gap-2 min-w-0">
+            {/* Right: next + fullscreen - hidden on mobile */}
+            <div className="hidden md:flex items-center justify-end gap-2 min-w-0">
               {next ? (
                 <button
                   onClick={() => navigateTo(currentIndex + 1)}
@@ -453,6 +516,45 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               </Button>
             </div>
           </div>
+
+          {/* Mobile: fixed bottom-of-header next-song banner */}
+          {next && (
+            <button
+              onClick={() => navigateTo(currentIndex + 1)}
+              className={cn(
+                "md:hidden w-full flex items-center justify-between px-3 py-1.5 transition-all",
+                showControls ? "opacity-100" : "opacity-0 pointer-events-none",
+                nearEnd && loopsRemaining[currentIndex] <= 0
+                  ? "bg-primary/15"
+                  : "bg-muted/5"
+              )}
+              style={{ background: nearEnd && loopsRemaining[currentIndex] <= 0 ? undefined : "hsl(220 20% 6% / 0.8)" }}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <SkipForward className={cn(
+                  "h-3 w-3 shrink-0",
+                  nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-muted-foreground"
+                )} />
+                <span className={cn(
+                  "text-[10px] uppercase tracking-wider font-semibold shrink-0",
+                  nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-muted-foreground"
+                )}>Próxima:</span>
+                <span className={cn(
+                  "text-xs font-bold truncate",
+                  nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-foreground"
+                )}>{next.title}</span>
+              </div>
+              {next.musical_key && (
+                <span className={cn(
+                  "text-xs font-mono font-black shrink-0 ml-2",
+                  nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary animate-key-blink" : "text-primary"
+                )}>
+                  {transposeKey(next.musical_key, transpose)}
+                </span>
+              )}
+            </button>
+          )}
+          </>
         );
       })()}
 

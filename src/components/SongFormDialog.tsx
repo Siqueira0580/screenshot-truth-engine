@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createSong, updateSong, fetchSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
+import { FileUp, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   open: boolean;
@@ -22,6 +24,8 @@ interface Props {
 export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
   const queryClient = useQueryClient();
   const isEditing = !!songId;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isParsing, setIsParsing] = useState(false);
 
   const [form, setForm] = useState({
     title: "",
@@ -80,6 +84,43 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
     onError: () => toast.error("Erro ao salvar música"),
   });
 
+  const handlePdfUpload = async (file: File) => {
+    if (file.type !== "application/pdf") {
+      toast.error("Selecione um arquivo PDF");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 10MB)");
+      return;
+    }
+
+    setIsParsing(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const { data, error } = await supabase.functions.invoke("parse-pdf", {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      if (data?.text) {
+        setForm((prev) => ({ ...prev, body_text: data.text }));
+        toast.success("Cifra extraída do PDF!");
+      } else {
+        toast.warning("Nenhum texto encontrado no PDF");
+      }
+    } catch (err) {
+      console.error("PDF parse error:", err);
+      toast.error("Erro ao processar o PDF");
+    } finally {
+      setIsParsing(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -125,7 +166,41 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
             <Input value={form.youtube_url} onChange={(e) => setForm({ ...form, youtube_url: e.target.value })} placeholder="https://youtube.com/..." />
           </div>
           <div className="space-y-2">
-            <Label>Cifra / Letra</Label>
+            <div className="flex items-center justify-between">
+              <Label>Cifra / Letra</Label>
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handlePdfUpload(file);
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isParsing}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="gap-1.5 text-xs"
+                >
+                  {isParsing ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Extraindo...
+                    </>
+                  ) : (
+                    <>
+                      <FileUp className="h-3 w-3" />
+                      Importar PDF
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
             <Textarea
               value={form.body_text}
               onChange={(e) => setForm({ ...form, body_text: e.target.value })}

@@ -21,6 +21,7 @@ interface TeleprompterSong {
   body_text?: string | null;
   loop_count?: number | null;
   auto_next?: boolean | null;
+  speed?: number | null; // percentage value e.g. 250 = 2.5x
 }
 
 interface TeleprompterProps {
@@ -43,7 +44,10 @@ const NEAR_END_THRESHOLD = 0.80; // 80% scrolled = near end
 export default function Teleprompter({ songs, initialIndex = 0, open, onClose, autoHideControls = true }: TeleprompterProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState(2);
+  const [speed, setSpeed] = useState(() => {
+    const initial = songs[initialIndex]?.speed;
+    return initial ? initial / 100 : 2;
+  });
   const [fontSize, setFontSize] = useState(28);
   const [showControls, setShowControls] = useState(true);
   const [transpose, setTranspose] = useState(0);
@@ -63,6 +67,14 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   useEffect(() => {
     setLoopsRemaining(songs.map(s => s.loop_count ?? 0));
   }, [songs]);
+
+  // Update speed when current song changes (use song's configured speed)
+  useEffect(() => {
+    const songSpeed = songs[currentIndex]?.speed;
+    if (songSpeed) {
+      setSpeed(songSpeed / 100);
+    }
+  }, [currentIndex, songs]);
 
   const song = songs[currentIndex];
   const displayKey = transposeKey(song?.musical_key, transpose);
@@ -214,11 +226,11 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           break;
         case "ArrowUp":
           e.preventDefault();
-          setSpeed((s) => Math.min(s + 0.5, 10));
+          setSpeed((s) => Math.min(s + 0.1, 5));
           break;
         case "ArrowDown":
           e.preventDefault();
-          setSpeed((s) => Math.max(s - 0.5, 0.5));
+          setSpeed((s) => Math.max(s - 0.1, 0.5));
           break;
         case "ArrowRight":
           if (currentIndex < songs.length - 1) navigateTo(currentIndex + 1);
@@ -473,10 +485,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         </Button>
 
         {/* Speed */}
-        <div className="flex items-center gap-2 min-w-[160px]">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Velocidade</span>
-          <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={0.5} max={10} step={0.5} className="w-24" />
-          <span className="text-xs text-foreground font-mono w-8">{speed}x</span>
+        <div className="flex items-center gap-2 min-w-[180px]">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Vel</span>
+          <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={0.5} max={5} step={0.1} className="w-28" />
+          <span className="text-xs text-foreground font-mono w-12">{Math.round(speed * 100)}%</span>
         </div>
 
         {/* Metronome */}

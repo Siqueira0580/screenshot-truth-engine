@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.parse-pdf]
 verify_jwt = false
+
+[functions.separate-stems]
+verify_jwt = false

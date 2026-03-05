@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Eye, Upload, Loader2 } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Eye, Upload, Loader2, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchSongs, deleteSong } from "@/lib/supabase-queries";
+import { fetchSongs, deleteSong, createSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
@@ -14,7 +14,10 @@ export default function SongsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [importingPdfs, setImportingPdfs] = useState(false);
+  const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: songs = [], isLoading } = useQuery({
@@ -78,6 +81,65 @@ export default function SongsPage() {
     }
   };
 
+  const handleBulkPdfImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const pdfFiles = Array.from(files).filter(f => f.type === "application/pdf");
+    if (pdfFiles.length === 0) {
+      toast.error("Nenhum arquivo PDF selecionado");
+      return;
+    }
+
+    setImportingPdfs(true);
+    setPdfProgress({ done: 0, total: pdfFiles.length });
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < pdfFiles.length; i++) {
+      const file = pdfFiles[i];
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
+        if (error) throw error;
+
+        if (data && (data.title || data.body_text)) {
+          await createSong({
+            title: data.title || file.name.replace(/\.pdf$/i, ""),
+            artist: data.artist || null,
+            composer: data.composer || null,
+            musical_key: data.musical_key || null,
+            style: data.style || null,
+            bpm: data.bpm ? parseInt(data.bpm) : null,
+            time_signature: data.time_signature || "4/4",
+            body_text: data.body_text || data.text || null,
+          });
+          successCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (err) {
+        console.error(`Erro ao processar ${file.name}:`, err);
+        errorCount++;
+      }
+      setPdfProgress({ done: i + 1, total: pdfFiles.length });
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["songs"] });
+
+    if (successCount > 0) {
+      toast.success(`${successCount} música${successCount > 1 ? "s" : ""} importada${successCount > 1 ? "s" : ""} com sucesso!`);
+    }
+    if (errorCount > 0) {
+      toast.warning(`${errorCount} PDF${errorCount > 1 ? "s" : ""} não pôde${errorCount > 1 ? "ram" : ""} ser processado${errorCount > 1 ? "s" : ""}`);
+    }
+
+    setImportingPdfs(false);
+    setPdfProgress({ done: 0, total: 0 });
+    if (pdfInputRef.current) pdfInputRef.current.value = "";
+  };
+
   const filtered = songs.filter(
     (s) =>
       s.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -101,6 +163,32 @@ export default function SongsPage() {
             className="hidden"
             onChange={handleImport}
           />
+          <input
+            ref={pdfInputRef}
+            type="file"
+            accept=".pdf"
+            multiple
+            className="hidden"
+            onChange={handleBulkPdfImport}
+          />
+          <Button
+            variant="outline"
+            onClick={() => pdfInputRef.current?.click()}
+            disabled={importingPdfs}
+            className="gap-2"
+          >
+            {importingPdfs ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                PDFs {pdfProgress.done}/{pdfProgress.total}
+              </>
+            ) : (
+              <>
+                <FileUp className="h-4 w-4" />
+                Importar PDFs
+              </>
+            )}
+          </Button>
           <Button
             variant="outline"
             onClick={() => fileInputRef.current?.click()}

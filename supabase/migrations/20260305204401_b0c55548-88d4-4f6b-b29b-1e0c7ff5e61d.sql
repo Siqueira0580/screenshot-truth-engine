@@ -1,0 +1,1 @@
+ALTER TABLE public.setlist_items ADD COLUMN IF NOT EXISTS transposed_key text;

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus } from "lucide-react";
@@ -16,6 +16,7 @@ import {
   removeSongFromSetlist,
   bulkUpdateSetlistItems,
 } from "@/lib/supabase-queries";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
 import { useStageSync } from "@/hooks/useStageSync";
@@ -30,7 +31,7 @@ export default function SetlistDetailPage() {
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [localOverrides, setLocalOverrides] = useState<
-    Record<string, { loop_count: number | null; speed: number | null; bpm: number | null }>
+    Record<string, { loop_count: number | null; speed: number | null; bpm: number | null; transposed_key: string | null }>
   >({});
   const [dirty, setDirty] = useState(false);
   const [autoHideControls, setAutoHideControls] = useState(true);
@@ -121,13 +122,14 @@ export default function SetlistDetailPage() {
   });
 
   const updateField = useCallback(
-    (itemId: string, field: "loop_count" | "speed" | "bpm", value: number | null, item: any) => {
+    (itemId: string, field: "loop_count" | "speed" | "bpm" | "transposed_key", value: number | string | null, item: any) => {
       setLocalOverrides((prev) => ({
         ...prev,
         [itemId]: {
           loop_count: prev[itemId]?.loop_count ?? item.loop_count ?? null,
           speed: prev[itemId]?.speed ?? item.speed ?? null,
           bpm: prev[itemId]?.bpm ?? item.bpm ?? null,
+          transposed_key: prev[itemId]?.transposed_key ?? item.transposed_key ?? null,
           [field]: value,
         },
       }));
@@ -135,6 +137,30 @@ export default function SetlistDetailPage() {
     },
     []
   );
+
+  // Debounced auto-save: saves 1.5s after the last change
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!dirty || items.length === 0) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const payload = items.map((item: any) => {
+        const ov = localOverrides[item.id];
+        return {
+          id: item.id,
+          loop_count: ov?.loop_count ?? item.loop_count ?? null,
+          speed: ov?.speed ?? item.speed ?? null,
+          bpm: ov?.bpm ?? item.bpm ?? null,
+        };
+      });
+      bulkUpdateSetlistItems(payload).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+        setDirty(false);
+        toast.success("Configurações salvas automaticamente");
+      });
+    }, 1500);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [dirty, localOverrides]);
 
   const getVal = (item: any, field: "loop_count" | "speed" | "bpm") => {
     return localOverrides[item.id]?.[field] ?? item[field];
@@ -284,85 +310,88 @@ export default function SetlistDetailPage() {
           {items.map((item: any, i: number) => (
             <div
               key={item.id}
-              className="group flex items-start gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30 animate-fade-in"
+              className="group flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30 animate-fade-in"
               style={{ animationDelay: `${i * 30}ms` }}
             >
-              <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mt-2" />
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary font-mono text-sm font-bold mt-1">
-                {i + 1}
-              </div>
-              <div className="flex-1 min-w-0 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <Link to={`/songs/${item.song_id}`} className="font-medium hover:text-primary transition-colors">
-                      {item.songs?.title}
-                    </Link>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {item.songs?.artist}
-                      {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
-                    </p>
+              {/* Header row: number + title + delete */}
+              <div className="flex items-start gap-3 w-full sm:w-auto sm:flex-1 min-w-0">
+                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mt-2 shrink-0 hidden sm:block" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary font-mono text-sm font-bold mt-0.5">
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <Link to={`/songs/${item.song_id}`} className="font-medium hover:text-primary transition-colors text-sm sm:text-base">
+                        {item.songs?.title}
+                      </Link>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                        {item.songs?.artist}
+                        {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="sm:opacity-0 sm:group-hover:opacity-100 shrink-0 h-8 w-8"
+                      onClick={() => removeMutation.mutate(item.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 shrink-0"
-                    onClick={() => removeMutation.mutate(item.id)}
+                </div>
+              </div>
+
+              {/* Controls row - always visible, wraps on mobile */}
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap pl-11 sm:pl-0">
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground whitespace-nowrap">Loop</label>
+                  <Select
+                    value={String(getVal(item, "loop_count") ?? 0)}
+                    onValueChange={(v) => updateField(item.id, "loop_count", Number(v), item)}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                    <SelectTrigger className="h-7 w-14 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[0, 1, 2, 3, 4, 5].map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {n}x
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {/* Controls row */}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-xs text-muted-foreground whitespace-nowrap">Loop</label>
-                    <Select
-                      value={String(getVal(item, "loop_count") ?? 0)}
-                      onValueChange={(v) => updateField(item.id, "loop_count", Number(v), item)}
-                    >
-                      <SelectTrigger className="h-7 w-16 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[0, 1, 2, 3, 4, 5].map((n) => (
-                          <SelectItem key={n} value={String(n)}>
-                            {n}x
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground whitespace-nowrap">Vel</label>
+                  <Input
+                    type="number"
+                    min={0.5}
+                    max={5}
+                    step={0.1}
+                    className="h-7 w-16 text-xs"
+                    value={((getVal(item, "speed") ?? item.songs?.default_speed ?? 250) / 100).toFixed(1)}
+                    onChange={(e) =>
+                      updateField(item.id, "speed", e.target.value ? Math.round(Number(e.target.value) * 100) : null, item)
+                    }
+                  />
+                  <span className="text-xs text-muted-foreground">x</span>
+                </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-xs text-muted-foreground whitespace-nowrap">Vel</label>
-                    <Input
-                      type="number"
-                      min={0.5}
-                      max={5}
-                      step={0.1}
-                      className="h-7 w-20 text-xs"
-                      value={((getVal(item, "speed") ?? item.songs?.default_speed ?? 250) / 100).toFixed(1)}
-                      onChange={(e) =>
-                        updateField(item.id, "speed", e.target.value ? Math.round(Number(e.target.value) * 100) : null, item)
-                      }
-                    />
-                    <span className="text-xs text-muted-foreground">x</span>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-xs text-muted-foreground whitespace-nowrap">BPM</label>
-                    <Input
-                      type="number"
-                      min={20}
-                      max={300}
-                      className="h-7 w-20 text-xs"
-                      placeholder={item.songs?.bpm ? String(item.songs.bpm) : "—"}
-                      value={getVal(item, "bpm") ?? ""}
-                      onChange={(e) =>
-                        updateField(item.id, "bpm", e.target.value ? Number(e.target.value) : null, item)
-                      }
-                    />
-                  </div>
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-muted-foreground whitespace-nowrap">BPM</label>
+                  <Input
+                    type="number"
+                    min={20}
+                    max={300}
+                    className="h-7 w-16 text-xs"
+                    placeholder={item.songs?.bpm ? String(item.songs.bpm) : "—"}
+                    value={getVal(item, "bpm") ?? ""}
+                    onChange={(e) =>
+                      updateField(item.id, "bpm", e.target.value ? Number(e.target.value) : null, item)
+                    }
+                  />
                 </div>
               </div>
             </div>

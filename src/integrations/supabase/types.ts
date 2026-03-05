@@ -207,6 +207,7 @@ export type Database = {
           setlist_id: string
           song_id: string
           speed: number | null
+          transposed_key: string | null
         }
         Insert: {
           bpm?: number | null
@@ -216,6 +217,7 @@ export type Database = {
           setlist_id: string
           song_id: string
           speed?: number | null
+          transposed_key?: string | null
         }
         Update: {
           bpm?: number | null
@@ -225,6 +227,7 @@ export type Database = {
           setlist_id?: string
           song_id?: string
           speed?: number | null
+          transposed_key?: string | null
         }
         Relationships: [
           {

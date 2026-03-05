@@ -186,8 +186,9 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose }:
   // Chord click handler
   const handleBodyClick = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.classList.contains("chord-clickable")) {
-      const chord = target.getAttribute("data-chord");
+    const chordEl = target.closest?.(".chord-clickable") as HTMLElement | null;
+    if (chordEl) {
+      const chord = chordEl.getAttribute("data-chord");
       if (chord) {
         setSelectedChord(chord);
         setChordModalOpen(true);

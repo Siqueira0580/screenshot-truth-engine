@@ -23,6 +23,7 @@ interface TeleprompterProps {
   initialIndex?: number;
   open: boolean;
   onClose: () => void;
+  autoHideControls?: boolean;
 }
 
 function makeChordClickable(text: string) {
@@ -34,7 +35,7 @@ function makeChordClickable(text: string) {
 
 const NEAR_END_THRESHOLD = 0.80; // 80% scrolled = near end
 
-export default function Teleprompter({ songs, initialIndex = 0, open, onClose }: TeleprompterProps) {
+export default function Teleprompter({ songs, initialIndex = 0, open, onClose, autoHideControls = true }: TeleprompterProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(2);
@@ -194,14 +195,16 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose }:
   const showControlsTemporarily = useCallback(() => {
     setShowControls(true);
     if (controlsTimer.current) clearTimeout(controlsTimer.current);
-    controlsTimer.current = setTimeout(() => {
-      if (isPlaying) setShowControls(false);
-    }, 5000);
-  }, [isPlaying]);
+    if (autoHideControls) {
+      controlsTimer.current = setTimeout(() => {
+        if (isPlaying) setShowControls(false);
+      }, 5000);
+    }
+  }, [isPlaying, autoHideControls]);
 
   useEffect(() => {
-    if (!isPlaying) setShowControls(true);
-  }, [isPlaying]);
+    if (!isPlaying || !autoHideControls) setShowControls(true);
+  }, [isPlaying, autoHideControls]);
 
   // Fullscreen on play
   const toggleFullscreen = useCallback(() => {

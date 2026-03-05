@@ -118,23 +118,24 @@ export default function SongsPage() {
             variant="outline"
             onClick={() => pdfInputRef.current?.click()}
             disabled={importingPdfs}
-            className="gap-2"
+            size="icon"
+            className="md:w-auto md:px-4 md:gap-2"
           >
             {importingPdfs ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                PDFs {pdfProgress.done}/{pdfProgress.total}
+                <span className="hidden md:inline">PDFs {pdfProgress.done}/{pdfProgress.total}</span>
               </>
             ) : (
               <>
                 <FileUp className="h-4 w-4" />
-                Importar PDFs
+                <span className="hidden md:inline">Importar PDFs</span>
               </>
             )}
           </Button>
-          <Button onClick={() => { setEditingSong(null); setFormOpen(true); }}>
+          <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="md:w-auto md:px-4 md:gap-2">
             <Plus className="h-4 w-4" />
-            Nova Música
+            <span className="hidden md:inline">Nova Música</span>
           </Button>
         </div>
       </div>

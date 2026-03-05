@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchSongs, deleteSong, createSong } from "@/lib/supabase-queries";
+import { fetchSongs, deleteSong, createSong, findOrCreateArtist } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
@@ -55,9 +55,19 @@ export default function SongsPage() {
         if (error) throw error;
 
         if (data && (data.title || data.body_text)) {
+          // Auto-create artist if extracted from PDF
+          let artistName = data.artist || null;
+          if (artistName) {
+            try {
+              await findOrCreateArtist(artistName);
+            } catch (err) {
+              console.warn("Não foi possível criar artista automaticamente:", err);
+            }
+          }
+
           await createSong({
             title: data.title || file.name.replace(/\.pdf$/i, ""),
-            artist: data.artist || null,
+            artist: artistName,
             composer: data.composer || null,
             musical_key: data.musical_key || null,
             style: data.style || null,

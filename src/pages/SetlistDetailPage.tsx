@@ -237,17 +237,19 @@ export default function SetlistDetailPage() {
                   </div>
 
                   <div className="flex items-center gap-1.5">
-                    <label className="text-xs text-muted-foreground whitespace-nowrap">Vel %</label>
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">Vel</label>
                     <Input
                       type="number"
-                      min={50}
-                      max={500}
+                      min={0.5}
+                      max={5}
+                      step={0.1}
                       className="h-7 w-20 text-xs"
-                      value={getVal(item, "speed") ?? item.songs?.default_speed ?? 250}
+                      value={((getVal(item, "speed") ?? item.songs?.default_speed ?? 250) / 100).toFixed(1)}
                       onChange={(e) =>
-                        updateField(item.id, "speed", e.target.value ? Number(e.target.value) : null, item)
+                        updateField(item.id, "speed", e.target.value ? Math.round(Number(e.target.value) * 100) : null, item)
                       }
                     />
+                    <span className="text-xs text-muted-foreground">x</span>
                   </div>
 
                   <div className="flex items-center gap-1.5">

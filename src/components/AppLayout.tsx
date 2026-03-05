@@ -39,7 +39,7 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
           <div className="flex items-center gap-2">
-            <img src={smartCifraLogo} alt="Smart Cifra" className="h-10 w-10 rounded-lg" />
+            <img src={smartCifraLogo} alt="Smart Cifra" className="h-20 w-20 rounded-lg" />
             <span className="text-lg font-bold tracking-tight text-foreground">
               Smart Cifra
             </span>

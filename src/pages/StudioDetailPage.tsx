@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano,
-  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft,
+  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchSong, fetchArtists } from "@/lib/supabase-queries";
+import { fetchSong, fetchArtists, updateSong } from "@/lib/supabase-queries";
 import { MultitrackEngine, StemType } from "@/lib/audio-engine";
+import { detectKey, getTransposedKey } from "@/lib/key-detection";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ function formatTime(s: number) {
 export default function StudioDetailPage() {
   const { songId } = useParams<{ songId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const engineRef = useRef<MultitrackEngine | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -59,8 +61,9 @@ export default function StudioDetailPage() {
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);
   const [separationProgress, setSeparationProgress] = useState({ percent: 0, label: "" });
+  const [detectingKey, setDetectingKey] = useState(false);
 
-  const { data: song } = useQuery({
+  const { data: song, refetch: refetchSong } = useQuery({
     queryKey: ["song", songId],
     queryFn: () => fetchSong(songId!),
     enabled: !!songId,
@@ -142,6 +145,24 @@ export default function StudioDetailPage() {
   const handleStop = () => engineRef.current?.stop();
   const handleSeek = (val: number[]) => engineRef.current?.seek(val[0]);
 
+  // Key detection
+  const handleDetectKey = async () => {
+    if (!audioTrack?.file_full || !songId) return;
+    setDetectingKey(true);
+    try {
+      const result = await detectKey(audioTrack.file_full);
+      const keyValue = `${result.key}${result.mode === "Minor" ? "m" : ""}`;
+      await updateSong(songId, { musical_key: keyValue });
+      refetchSong();
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      toast.success(`Tom detectado: ${result.display} (${Math.round(result.confidence * 100)}% confiança)`);
+    } catch (err: any) {
+      toast.error(`Erro na detecção: ${err.message}`);
+    } finally {
+      setDetectingKey(false);
+    }
+  };
+
   const handleSeparateStems = async () => {
     if (!audioTrack?.file_full || !songId) return;
 
@@ -213,6 +234,15 @@ export default function StudioDetailPage() {
     audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony
   );
 
+  // Parse original key for transposition display
+  const originalKey = song?.musical_key;
+  const originalKeyNote = originalKey ? originalKey.replace("m", "").replace("#", "#") : null;
+  const isMinor = originalKey?.endsWith("m") || false;
+  const transposedKeyNote = originalKeyNote ? getTransposedKey(originalKeyNote, pitch) : null;
+  const transposedKeyDisplay = transposedKeyNote
+    ? `${transposedKeyNote}${isMinor ? "m" : ""}`
+    : null;
+
   if (!songId) return null;
 
   return (
@@ -222,7 +252,7 @@ export default function StudioDetailPage() {
         <Button variant="ghost" size="icon" onClick={() => navigate("/studio")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{song?.title || "Carregando..."}</h1>
           {song?.artist && <p className="text-muted-foreground text-sm">{song.artist}</p>}
         </div>
@@ -240,11 +270,40 @@ export default function StudioDetailPage() {
         <div className="min-w-0 flex-1">
           <h2 className="text-xl font-bold truncate">{song?.title}</h2>
           {song?.artist && <p className="text-muted-foreground">{song.artist}</p>}
-          {song?.musical_key && (
-            <span className="inline-block mt-1 rounded bg-primary/10 px-2 py-0.5 text-xs font-mono font-semibold text-primary">
-              Tom: {song.musical_key}
-            </span>
-          )}
+        </div>
+
+        {/* Key display + detection */}
+        <div className="flex items-center gap-2 shrink-0">
+          {originalKey ? (
+            <div className="text-center">
+              <div className="flex items-center gap-2">
+                <span className="inline-block rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-mono font-bold text-primary">
+                  {pitch !== 0 && transposedKeyDisplay ? transposedKeyDisplay : originalKey}
+                </span>
+                {pitch !== 0 && transposedKeyDisplay && (
+                  <span className="text-xs text-muted-foreground">
+                    (original: {originalKey})
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Tom</p>
+            </div>
+          ) : audioTrack?.file_full ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={handleDetectKey}
+              disabled={detectingKey}
+            >
+              {detectingKey ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <ScanSearch className="h-3.5 w-3.5" />
+              )}
+              {detectingKey ? "Detectando..." : "Detectar Tom"}
+            </Button>
+          ) : null}
         </div>
 
         {audioTrack?.file_full && !hasSeparatedStems && (
@@ -349,7 +408,13 @@ export default function StudioDetailPage() {
               <Slider value={[masterVol]} max={100} step={1} onValueChange={v => setMasterVol(v[0])} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Transposição (semitons)</label>
+              <label className="text-xs font-medium text-muted-foreground">
+                Transposição {originalKey && (
+                  <span className="text-primary font-mono ml-1">
+                    {pitch !== 0 && transposedKeyDisplay ? `${originalKey} → ${transposedKeyDisplay}` : originalKey}
+                  </span>
+                )}
+              </label>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPitch(p => p - 1)}>
                   <ChevronDown className="h-3.5 w-3.5" />

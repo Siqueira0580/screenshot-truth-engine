@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,8 @@ function makeChordClickable(text: string) {
   );
 }
 
+const NEAR_END_THRESHOLD = 0.80; // 80% scrolled = near end
+
 export default function Teleprompter({ songs, initialIndex = 0, open, onClose }: TeleprompterProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -39,33 +41,69 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose }:
   const [fontSize, setFontSize] = useState(28);
   const [showControls, setShowControls] = useState(true);
   const [transpose, setTranspose] = useState(0);
-  const [loopsRemaining, setLoopsRemaining] = useState(0);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
+  const [nearEnd, setNearEnd] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number | null>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTime = useRef<number>(0);
+  const songRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const song = songs[currentIndex];
   const displayKey = transposeKey(song?.musical_key, transpose);
-  const displayBody = song?.body_text ? transposeText(song.body_text, transpose) : null;
 
-  // Init loops when song changes
-  useEffect(() => {
-    setLoopsRemaining(song?.loop_count ?? 0);
-  }, [currentIndex, song?.loop_count]);
+  // Build all songs' display bodies
+  const displayBodies = useMemo(() =>
+    songs.map(s => s.body_text ? transposeText(s.body_text, transpose) : null),
+    [songs, transpose]
+  );
 
-  const resetScroll = useCallback(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  // Track current song based on scroll position
+  const updateCurrentSong = useCallback(() => {
+    if (!scrollRef.current || songRefs.current.length === 0) return;
+
+    const container = scrollRef.current;
+    const scrollTop = container.scrollTop;
+    const viewportMiddle = scrollTop + container.clientHeight / 3;
+
+    for (let i = songRefs.current.length - 1; i >= 0; i--) {
+      const el = songRefs.current[i];
+      if (el && el.offsetTop <= viewportMiddle) {
+        if (i !== currentIndex) {
+          setCurrentIndex(i);
+        }
+        break;
+      }
+    }
+
+    // Check if near end of current song section
+    const currentEl = songRefs.current[currentIndex];
+    const nextEl = songRefs.current[currentIndex + 1];
+    if (currentEl && nextEl) {
+      const songBottom = nextEl.offsetTop;
+      const distanceToEnd = songBottom - (scrollTop + container.clientHeight);
+      const songHeight = nextEl.offsetTop - currentEl.offsetTop;
+      const progress = 1 - (distanceToEnd / songHeight);
+      setNearEnd(progress >= NEAR_END_THRESHOLD);
+    } else if (currentEl && !nextEl) {
+      // Last song
+      const el = container;
+      const remaining = el.scrollHeight - (scrollTop + el.clientHeight);
+      const totalHeight = el.scrollHeight - el.clientHeight;
+      setNearEnd(totalHeight > 0 && (1 - remaining / totalHeight) >= NEAR_END_THRESHOLD);
+    }
+  }, [currentIndex]);
+
+  // Navigate to a specific song by scrolling to it
+  const navigateTo = useCallback((index: number) => {
+    const el = songRefs.current[index];
+    if (el && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: el.offsetTop - 20, behavior: "smooth" });
+    }
   }, []);
 
-  const navigateTo = useCallback((index: number) => {
-    setCurrentIndex(index);
-    resetScroll();
-  }, [resetScroll]);
-
-  // Auto-scroll with loop + auto-next
+  // Auto-scroll
   useEffect(() => {
     if (!isPlaying || !scrollRef.current) return;
 
@@ -77,20 +115,11 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose }:
       if (scrollRef.current) {
         const pxPerMs = speed * 0.03;
         scrollRef.current.scrollTop += pxPerMs * delta;
+        updateCurrentSong();
 
         const el = scrollRef.current;
         if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
-          // End reached
-          if (loopsRemaining > 0) {
-            // Loop: restart scroll
-            setLoopsRemaining((l) => l - 1);
-            resetScroll();
-          } else if (song?.auto_next !== false && currentIndex < songs.length - 1) {
-            // Auto-next
-            navigateTo(currentIndex + 1);
-          } else {
-            setIsPlaying(false);
-          }
+          setIsPlaying(false);
         }
       }
       animRef.current = requestAnimationFrame(step);
@@ -101,11 +130,23 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose }:
     return () => {
       if (animRef.current) cancelAnimationFrame(animRef.current);
     };
-  }, [isPlaying, speed, currentIndex, songs.length, resetScroll, loopsRemaining, song?.auto_next, navigateTo]);
+  }, [isPlaying, speed, updateCurrentSong]);
 
+  // Track scroll position on manual scroll
   useEffect(() => {
-    resetScroll();
-  }, [currentIndex, resetScroll]);
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => updateCurrentSong();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [updateCurrentSong]);
+
+  // Scroll to initial song on open
+  useEffect(() => {
+    if (open && initialIndex > 0) {
+      setTimeout(() => navigateTo(initialIndex), 100);
+    }
+  }, [open, initialIndex, navigateTo]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -225,7 +266,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose }:
               {song.bpm && ` · ${song.bpm} BPM`}
               {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
               {transpose !== 0 && ` · Transposto: ${transpose > 0 ? "+" : ""}${transpose}`}
-              {loopsRemaining > 0 && ` · ${loopsRemaining}x restante`}
             </p>
           </div>
         </div>
@@ -240,40 +280,73 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose }:
         currentIndex={currentIndex}
         transpose={transpose}
         visible={showControls}
+        nearEnd={nearEnd}
         onNavigate={navigateTo}
       />
 
-      {/* Scroll area */}
+      {/* Continuous scroll area with all songs */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-12"
         style={{ scrollBehavior: "auto" }}
         onClick={handleBodyClick}
       >
-        {displayBody ? (
-          <pre
-            className="chord-text whitespace-pre-wrap leading-relaxed text-foreground mx-auto max-w-4xl"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: `${fontSize}px`,
-              lineHeight: 1.8,
-            }}
-            dangerouslySetInnerHTML={{ __html: makeChordClickable(displayBody) }}
-          />
-        ) : (
-          <p className="text-center text-muted-foreground text-2xl mt-24">
-            Nenhuma cifra disponível
-          </p>
-        )}
-        {loopsRemaining > 0 && (
-          <div className="flex items-center justify-center gap-3 my-8 text-muted-foreground">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-sm font-mono flex items-center gap-1">
-              <Repeat className="h-3 w-3" /> REPETIÇÃO ({loopsRemaining}x)
-            </span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-        )}
+        {songs.map((s, idx) => {
+          const body = displayBodies[idx];
+          const sKey = transposeKey(s.musical_key, transpose);
+          return (
+            <div
+              key={idx}
+              ref={(el) => { songRefs.current[idx] = el; }}
+            >
+              {/* Song divider (not for first song) */}
+              {idx > 0 && (
+                <div className="flex items-center gap-4 my-12">
+                  <div className="h-px flex-1 bg-primary/30" />
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30">
+                    <span className="text-xs font-mono text-primary font-semibold uppercase tracking-wider">
+                      {idx + 1}/{songs.length}
+                    </span>
+                  </div>
+                  <div className="h-px flex-1 bg-primary/30" />
+                </div>
+              )}
+
+              {/* Song header */}
+              <div className="mb-6">
+                <h3
+                  className="text-2xl font-bold text-foreground font-display"
+                  style={{ fontSize: `${Math.max(fontSize + 4, 20)}px` }}
+                >
+                  {s.title}
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {s.artist}
+                  {sKey && ` · Tom: ${sKey}`}
+                  {s.bpm && ` · ${s.bpm} BPM`}
+                </p>
+              </div>
+
+              {/* Song body */}
+              {body ? (
+                <pre
+                  className="chord-text whitespace-pre-wrap leading-relaxed text-foreground mx-auto max-w-4xl"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: `${fontSize}px`,
+                    lineHeight: 1.8,
+                  }}
+                  dangerouslySetInnerHTML={{ __html: makeChordClickable(body) }}
+                />
+              ) : (
+                <p className="text-center text-muted-foreground text-xl my-12">
+                  Nenhuma cifra disponível
+                </p>
+              )}
+            </div>
+          );
+        })}
+        {/* Extra space at the bottom for scrolling */}
         <div className="h-[80vh]" />
       </div>
 

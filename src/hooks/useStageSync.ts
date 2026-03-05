@@ -18,6 +18,7 @@ interface StageSyncInvite {
 
 interface UseStageSyncOptions {
   setlistId: string | undefined;
+  inviteToken?: string | null;
   onSongChange?: (index: number) => void;
   onScroll?: (scrollTop: number) => void;
   onPlay?: (speed?: number) => void;
@@ -26,7 +27,7 @@ interface UseStageSyncOptions {
 }
 
 export function useStageSync(options: UseStageSyncOptions) {
-  const { setlistId, onSongChange, onScroll, onPlay, onPause, onTranspose } = options;
+  const { setlistId, inviteToken, onSongChange, onScroll, onPlay, onPause, onTranspose } = options;
   const { user } = useAuth();
   const [isMaster, setIsMaster] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -34,6 +35,7 @@ export function useStageSync(options: UseStageSyncOptions) {
   const [connectedCount, setConnectedCount] = useState(0);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [masterName, setMasterName] = useState<string | null>(null);
+  const autoConnectHandled = useRef(false);
 
   // Get user display name
   const getUserName = useCallback(async () => {
@@ -105,6 +107,43 @@ export function useStageSync(options: UseStageSyncOptions) {
       channelRef.current = null;
     };
   }, [setlistId, user, isMaster, isFollowing, onSongChange, onScroll, onPlay, onPause, onTranspose]);
+
+  // Auto-connect via invite token
+  useEffect(() => {
+    if (!inviteToken || !user || !setlistId || autoConnectHandled.current) return;
+    autoConnectHandled.current = true;
+
+    (async () => {
+      const { data: inviteData, error } = await supabase
+        .from("sync_invites")
+        .select("master_id, status")
+        .eq("token", inviteToken)
+        .eq("setlist_id", setlistId)
+        .single();
+
+      if (error || !inviteData) return;
+
+      // Update invite status to accepted
+      await supabase
+        .from("sync_invites")
+        .update({ status: "accepted", accepted_at: new Date().toISOString() })
+        .eq("token", inviteToken);
+
+      // Get master name
+      const { data: masterProfile } = await supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", inviteData.master_id)
+        .single();
+
+      const mName = masterProfile?.first_name
+        ? `${masterProfile.first_name}${masterProfile.last_name ? ` ${masterProfile.last_name}` : ""}`
+        : "Mestre";
+
+      setIsFollowing(true);
+      setMasterName(mName);
+    })();
+  }, [inviteToken, user, setlistId]);
 
   // Start master broadcast
   const startMaster = useCallback(async () => {

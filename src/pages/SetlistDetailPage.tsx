@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useCallback, useMemo } from "react";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,8 @@ import SyncInviteModal from "@/components/SyncInviteModal";
 
 export default function SetlistDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("invite");
   const [addOpen, setAddOpen] = useState(false);
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -65,6 +67,7 @@ export default function SetlistDetailPage() {
   // Stage sync
   const stageSync = useStageSync({
     setlistId: id,
+    inviteToken,
     onSongChange: (index) => {
       // Could navigate teleprompter to this song
       toast.info(`Mestre navegou para música ${index + 1}`);

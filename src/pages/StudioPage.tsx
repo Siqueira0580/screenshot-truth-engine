@@ -569,9 +569,24 @@ export default function StudioPage() {
               {/* Mixer faders - only show stems that exist */}
               {hasAnyStem && (
                 <div className="p-4 rounded-xl bg-card border border-border">
-                  <h3 className="text-sm font-semibold mb-4 text-muted-foreground uppercase tracking-wider">
-                    Mixer — Stems
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                      Mixer — Stems
+                    </h3>
+                    {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs gap-1"
+                        onClick={() => {
+                          setMutedStems({ full: false, vocals: false, percussion: false, harmony: false });
+                          setSoloStems({ full: false, vocals: false, percussion: false, harmony: false });
+                        }}
+                      >
+                        Reset
+                      </Button>
+                    )}
+                  </div>
                   <div className={cn(
                     "grid gap-4",
                     hasSeparatedStems ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 max-w-xs"

@@ -211,18 +211,17 @@ export default function SetlistDetailPage() {
                 </Button>
               )}
 
-              {stageSync.isMaster && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setInviteOpen(true)}
-                  className="gap-2"
-                  title="Convidar músico para sincronizar"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Convidar</span>
-                </Button>
-              )}
+              {/* Invite button - available before or during broadcast */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setInviteOpen(true)}
+                className="gap-2"
+                title="Convidar músicos para sincronizar"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span className="hidden sm:inline">Convidar</span>
+              </Button>
 
               <Button
                 variant={autoHideControls ? "outline" : "secondary"}

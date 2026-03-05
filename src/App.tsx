@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
 import AppLayout from "@/components/AppLayout";
 import SongsPage from "@/pages/SongsPage";
 import SongDetailPage from "@/pages/SongDetailPage";
@@ -15,6 +16,7 @@ import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudyPage from "@/pages/StudyPage";
 import ProfilePage from "@/pages/ProfilePage";
+import SettingsPage from "@/pages/SettingsPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import LoginPage from "@/pages/LoginPage";
@@ -57,25 +59,28 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-            <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-            <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-            <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/" element={<SongsPage />} />
-              <Route path="/songs/:id" element={<SongDetailPage />} />
-              <Route path="/setlists" element={<SetlistsPage />} />
-              <Route path="/setlists/:id" element={<SetlistDetailPage />} />
-              <Route path="/artists" element={<ArtistsPage />} />
-              <Route path="/artists/:id" element={<ArtistDetailPage />} />
-              <Route path="/studio" element={<StudioPage />} />
-              <Route path="/studio/:songId" element={<StudioDetailPage />} />
-              <Route path="/study/:songId" element={<StudyPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <UserPreferencesProvider>
+            <Routes>
+              <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+              <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+              <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                <Route path="/" element={<SongsPage />} />
+                <Route path="/songs/:id" element={<SongDetailPage />} />
+                <Route path="/setlists" element={<SetlistsPage />} />
+                <Route path="/setlists/:id" element={<SetlistDetailPage />} />
+                <Route path="/artists" element={<ArtistsPage />} />
+                <Route path="/artists/:id" element={<ArtistDetailPage />} />
+                <Route path="/studio" element={<StudioPage />} />
+                <Route path="/studio/:songId" element={<StudioDetailPage />} />
+                <Route path="/study/:songId" element={<StudyPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UserPreferencesProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

@@ -2,8 +2,11 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { transposeText, transposeKey } from "@/lib/transpose";
+
+const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 import MetronomePulse from "@/components/teleprompter/MetronomePulse";
 import SongNavigationHUD from "@/components/teleprompter/SongNavigationHUD";
 import ChordModal from "@/components/teleprompter/ChordModal";
@@ -468,9 +471,67 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t - 1)} className="text-foreground h-8 w-8">
             <ChevronDown className="h-3 w-3" />
           </Button>
-          <span className="text-xs text-foreground font-mono w-8 text-center">
-            {transpose > 0 ? `+${transpose}` : transpose}
-          </span>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-bold font-mono border transition-colors",
+                  transpose !== 0
+                    ? "bg-primary/20 border-primary text-primary"
+                    : "bg-muted/30 border-border text-foreground"
+                )}
+                title="Clique para escolher a tonalidade"
+              >
+                {displayKey || "—"}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent
+              className="w-auto p-2 z-[110]"
+              side="top"
+              align="center"
+            >
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2 text-center">
+                Tonalidade
+              </p>
+              <div className="grid grid-cols-4 gap-1">
+                {ALL_KEYS.map((key) => {
+                  // Calculate semitones needed to reach this key from original
+                  const originalKey = song?.musical_key;
+                  if (!originalKey) return null;
+                  const origMatch = originalKey.match(/^([A-G][#b]?)(.*)/);
+                  if (!origMatch) return null;
+                  const origRoot = origMatch[1];
+                  const suffix = origMatch[2];
+                  const origIdx = ALL_KEYS.indexOf(origRoot) !== -1
+                    ? ALL_KEYS.indexOf(origRoot)
+                    : ALL_KEYS.findIndex(k => k === origRoot || (origRoot === "Db" && k === "C#") || (origRoot === "D#" && k === "Eb") || (origRoot === "Gb" && k === "F#") || (origRoot === "G#" && k === "Ab") || (origRoot === "A#" && k === "Bb"));
+                  const targetIdx = ALL_KEYS.indexOf(key);
+                  const semitones = ((targetIdx - origIdx) % 12 + 12) % 12;
+                  const isActive = displayKey === `${key}${suffix}`;
+
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => setTranspose(semitones === 0 ? 0 : semitones)}
+                      className={cn(
+                        "px-2 py-1.5 rounded text-xs font-mono font-bold transition-colors",
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-muted text-foreground"
+                      )}
+                    >
+                      {key}{suffix}
+                    </button>
+                  );
+                })}
+              </div>
+              {!song?.musical_key && (
+                <p className="text-[10px] text-muted-foreground text-center mt-2">
+                  Sem tom definido
+                </p>
+              )}
+            </PopoverContent>
+          </Popover>
           <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t + 1)} className="text-foreground h-8 w-8">
             <ChevronUp className="h-3 w-3" />
           </Button>

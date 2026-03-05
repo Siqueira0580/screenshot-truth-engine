@@ -15,6 +15,8 @@ import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudyPage from "@/pages/StudyPage";
 import ProfilePage from "@/pages/ProfilePage";
+import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import NotFound from "./pages/NotFound";
@@ -58,6 +60,8 @@ const App = () => (
           <Routes>
             <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
             <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+            <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<SongsPage />} />
               <Route path="/songs/:id" element={<SongDetailPage />} />

@@ -89,7 +89,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between">
             <Checkbox
               id="remember"
               checked={remember}
@@ -98,6 +98,9 @@ export default function LoginPage() {
             <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
               Manter-me conectado
             </Label>
+            <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+              Esqueci a senha
+            </Link>
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>

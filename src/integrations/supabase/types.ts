@@ -82,6 +82,36 @@ export type Database = {
           },
         ]
       }
+      custom_chords: {
+        Row: {
+          chord_name: string
+          created_at: string
+          frets: number[] | null
+          id: string
+          image_url: string | null
+          instrument: string
+          user_id: string | null
+        }
+        Insert: {
+          chord_name: string
+          created_at?: string
+          frets?: number[] | null
+          id?: string
+          image_url?: string | null
+          instrument?: string
+          user_id?: string | null
+        }
+        Update: {
+          chord_name?: string
+          created_at?: string
+          frets?: number[] | null
+          id?: string
+          image_url?: string | null
+          instrument?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

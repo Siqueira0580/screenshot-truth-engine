@@ -120,6 +120,7 @@ export type Database = {
           loop_count: number | null
           musical_key: string | null
           style: string | null
+          time_signature: string | null
           title: string
           updated_at: string
           youtube_url: string | null
@@ -136,6 +137,7 @@ export type Database = {
           loop_count?: number | null
           musical_key?: string | null
           style?: string | null
+          time_signature?: string | null
           title: string
           updated_at?: string
           youtube_url?: string | null
@@ -152,6 +154,7 @@ export type Database = {
           loop_count?: number | null
           musical_key?: string | null
           style?: string | null
+          time_signature?: string | null
           title?: string
           updated_at?: string
           youtube_url?: string | null

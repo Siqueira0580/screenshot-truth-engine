@@ -1,0 +1,1 @@
+ALTER TABLE public.songs ADD COLUMN time_signature text DEFAULT '4/4';

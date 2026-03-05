@@ -169,24 +169,57 @@ export default function StudioPage() {
     if (!audioTrack?.file_full || !selectedSongId) return;
 
     setSeparating(true);
-    const toastId = toast.loading("Separando stems... Isso pode levar alguns minutos.");
+    const toastId = toast.loading("Iniciando separação de stems...");
 
     try {
-      const { data, error } = await supabase.functions.invoke("separate-stems", {
+      // Step 1: Start the prediction
+      const { data: startData, error: startError } = await supabase.functions.invoke("separate-stems", {
         body: {
+          action: "start",
           audio_url: audioTrack.file_full,
           song_id: selectedSongId,
         },
       });
 
-      if (error) throw error;
+      if (startError) throw startError;
+      if (!startData?.prediction_id) throw new Error(startData?.error || "Falha ao iniciar");
 
-      if (data?.success) {
-        toast.success(data.message || "Stems separados com sucesso!", { id: toastId });
-        refetchTrack();
-      } else {
-        throw new Error(data?.error || "Falha na separação");
+      const predictionId = startData.prediction_id;
+      toast.loading("Processando IA... Isso pode levar 3-5 minutos.", { id: toastId });
+
+      // Step 2: Poll every 10 seconds from the client
+      const maxPolls = 60; // 10 minutes max
+      for (let i = 0; i < maxPolls; i++) {
+        await new Promise(r => setTimeout(r, 10000));
+
+        const { data: pollData, error: pollError } = await supabase.functions.invoke("separate-stems", {
+          body: {
+            action: "poll",
+            prediction_id: predictionId,
+            song_id: selectedSongId,
+          },
+        });
+
+        if (pollError) throw pollError;
+
+        const status = pollData?.status;
+        if (status === "processing" || status === "starting") {
+          toast.loading(`Processando IA... (${(i + 1) * 10}s)`, { id: toastId });
+          continue;
+        }
+
+        if (status === "succeeded") {
+          toast.success(`Stems separados com sucesso! (${pollData.stems?.length || 0} faixas)`, { id: toastId });
+          refetchTrack();
+          return;
+        }
+
+        if (status === "failed" || status === "canceled") {
+          throw new Error(pollData?.error || `Separação ${status}`);
+        }
       }
+
+      throw new Error("Timeout: separação demorou mais de 10 minutos");
     } catch (err: any) {
       toast.error(`Erro na separação: ${err.message}`, { id: toastId });
     } finally {

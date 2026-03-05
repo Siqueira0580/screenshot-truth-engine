@@ -35,7 +35,7 @@ export default function AppLayout() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-background pb-16 md:pb-0">
+    <div className="h-screen flex flex-col bg-background overflow-hidden pb-16 md:pb-0">
       {/* Desktop Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
@@ -103,7 +103,7 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="container py-6 animate-fade-in">
+      <main className="container py-6 animate-fade-in flex-1 overflow-y-auto scrollbar-hide">
         <Outlet />
       </main>
 

@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchSong, fetchArtists, updateSong } from "@/lib/supabase-queries";
 import { MultitrackEngine, StemType } from "@/lib/audio-engine";
-import { detectKey, getTransposedKey } from "@/lib/key-detection";
+import { analyzeAudio, getTransposedKey } from "@/lib/key-detection";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -145,19 +145,21 @@ export default function StudioDetailPage() {
   const handleStop = () => engineRef.current?.stop();
   const handleSeek = (val: number[]) => engineRef.current?.seek(val[0]);
 
-  // Key detection
-  const handleDetectKey = async () => {
+  // Audio analysis (key + BPM)
+  const handleAnalyzeAudio = async () => {
     if (!audioTrack?.file_full || !songId) return;
     setDetectingKey(true);
     try {
-      const result = await detectKey(audioTrack.file_full);
-      const keyValue = `${result.key}${result.mode === "Minor" ? "m" : ""}`;
-      await updateSong(songId, { musical_key: keyValue });
+      const result = await analyzeAudio(audioTrack.file_full);
+      const keyValue = `${result.key.key}${result.key.mode === "Minor" ? "m" : ""}`;
+      await updateSong(songId, { musical_key: keyValue, bpm: result.bpm });
       refetchSong();
       queryClient.invalidateQueries({ queryKey: ["songs"] });
-      toast.success(`Tom detectado: ${result.display} (${Math.round(result.confidence * 100)}% confiança)`);
+      toast.success(
+        `Tom: ${result.key.display} · BPM: ${result.bpm}`
+      );
     } catch (err: any) {
-      toast.error(`Erro na detecção: ${err.message}`);
+      toast.error(`Erro na análise: ${err.message}`);
     } finally {
       setDetectingKey(false);
     }
@@ -272,28 +274,44 @@ export default function StudioDetailPage() {
           {song?.artist && <p className="text-muted-foreground">{song.artist}</p>}
         </div>
 
-        {/* Key display + detection */}
-        <div className="flex items-center gap-2 shrink-0">
-          {originalKey ? (
-            <div className="text-center">
-              <div className="flex items-center gap-2">
-                <span className="inline-block rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-mono font-bold text-primary">
-                  {pitch !== 0 && transposedKeyDisplay ? transposedKeyDisplay : originalKey}
-                </span>
-                {pitch !== 0 && transposedKeyDisplay && (
-                  <span className="text-xs text-muted-foreground">
-                    (original: {originalKey})
+        {/* Key + BPM display / detection */}
+        <div className="flex items-center gap-3 shrink-0">
+          {(originalKey || song?.bpm) ? (
+            <div className="flex items-center gap-2">
+              {originalKey && (
+                <div className="text-center">
+                  <span className="inline-block rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-mono font-bold text-primary">
+                    {pitch !== 0 && transposedKeyDisplay ? transposedKeyDisplay : originalKey}
                   </span>
-                )}
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Tom</p>
+                  {pitch !== 0 && transposedKeyDisplay && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5">
+                      orig: {originalKey}
+                    </p>
+                  )}
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Tom</p>
+                </div>
+              )}
+              {song?.bpm && (
+                <div className="text-center">
+                  <span className="inline-block rounded-lg bg-accent/50 px-3 py-1.5 text-sm font-mono font-bold text-accent-foreground">
+                    {song.bpm}
+                  </span>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">BPM</p>
+                </div>
+              )}
+              {/* Re-analyze button */}
+              {audioTrack?.file_full && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleAnalyzeAudio} disabled={detectingKey} title="Re-analisar áudio">
+                  {detectingKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5" />}
+                </Button>
+              )}
             </div>
           ) : audioTrack?.file_full ? (
             <Button
               variant="outline"
               size="sm"
               className="gap-1.5"
-              onClick={handleDetectKey}
+              onClick={handleAnalyzeAudio}
               disabled={detectingKey}
             >
               {detectingKey ? (
@@ -301,7 +319,7 @@ export default function StudioDetailPage() {
               ) : (
                 <ScanSearch className="h-3.5 w-3.5" />
               )}
-              {detectingKey ? "Detectando..." : "Detectar Tom"}
+              {detectingKey ? "Analisando..." : "Analisar Áudio"}
             </Button>
           ) : null}
         </div>

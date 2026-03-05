@@ -1,6 +1,5 @@
 /**
- * Audio Key Detection using Krumhansl-Schmuckler algorithm
- * Analyzes audio frequency content to determine the musical key
+ * Audio Analysis: Key Detection (Krumhansl-Schmuckler) + BPM Detection (autocorrelation)
  */
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -99,6 +98,99 @@ export interface KeyDetectionResult {
   display: string;    // e.g. "C Major"
 }
 
+export interface AudioAnalysisResult {
+  key: KeyDetectionResult;
+  bpm: number;
+  bpmConfidence: number;
+}
+
+/**
+ * BPM detection using onset detection + autocorrelation
+ */
+async function detectBpmFromBuffer(audioUrl: string): Promise<{ bpm: number; confidence: number }> {
+  const response = await fetch(audioUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  const audioCtx = new AudioContext();
+  const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+  const sampleRate = audioBuffer.sampleRate;
+  const length = audioBuffer.length;
+
+  // Mix to mono
+  const mono = new Float32Array(length);
+  for (let ch = 0; ch < audioBuffer.numberOfChannels; ch++) {
+    const channelData = audioBuffer.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      mono[i] += channelData[i] / audioBuffer.numberOfChannels;
+    }
+  }
+
+  // Compute onset strength envelope (energy in short frames)
+  const frameSize = Math.round(sampleRate * 0.01); // 10ms frames
+  const hopFrames = Math.round(sampleRate * 0.005); // 5ms hop
+  const numFrames = Math.floor((length - frameSize) / hopFrames);
+  const energy = new Float32Array(numFrames);
+
+  for (let i = 0; i < numFrames; i++) {
+    const start = i * hopFrames;
+    let sum = 0;
+    for (let j = 0; j < frameSize; j++) {
+      sum += mono[start + j] * mono[start + j];
+    }
+    energy[i] = sum / frameSize;
+  }
+
+  // Compute onset detection function (first-order difference, half-wave rectified)
+  const onset = new Float32Array(numFrames);
+  for (let i = 1; i < numFrames; i++) {
+    const diff = energy[i] - energy[i - 1];
+    onset[i] = diff > 0 ? diff : 0;
+  }
+
+  // Autocorrelation of onset function for BPM range 50-200
+  const framesPerSecond = sampleRate / hopFrames;
+  const minLag = Math.round(framesPerSecond * (60 / 200)); // 200 BPM
+  const maxLag = Math.round(framesPerSecond * (60 / 50));  // 50 BPM
+  const analysisLength = Math.min(onset.length, Math.round(framesPerSecond * 30)); // analyze 30s max
+
+  let bestLag = minLag;
+  let bestCorr = -Infinity;
+  let secondBestCorr = -Infinity;
+  const correlations = new Float32Array(maxLag - minLag + 1);
+
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let corr = 0;
+    let count = 0;
+    for (let i = 0; i < analysisLength - lag; i++) {
+      corr += onset[i] * onset[i + lag];
+      count++;
+    }
+    corr = count > 0 ? corr / count : 0;
+    correlations[lag - minLag] = corr;
+
+    if (corr > bestCorr) {
+      secondBestCorr = bestCorr;
+      bestCorr = corr;
+      bestLag = lag;
+    } else if (corr > secondBestCorr) {
+      secondBestCorr = corr;
+    }
+  }
+
+  // Also check double-time and half-time
+  const rawBpm = (framesPerSecond * 60) / bestLag;
+  let bpm = Math.round(rawBpm);
+
+  // Normalize BPM to common range (70-180)
+  if (bpm < 70) bpm *= 2;
+  if (bpm > 180) bpm = Math.round(bpm / 2);
+
+  const confidence = bestCorr > 0 ? Math.min(1, (bestCorr - secondBestCorr) / bestCorr) : 0;
+
+  audioCtx.close();
+  return { bpm, confidence };
+}
+
 export async function detectKey(audioUrl: string): Promise<KeyDetectionResult> {
   const chromagram = await buildChromagramFast(audioUrl);
 
@@ -108,7 +200,6 @@ export async function detectKey(audioUrl: string): Promise<KeyDetectionResult> {
   let secondBest = -Infinity;
 
   for (let shift = 0; shift < 12; shift++) {
-    // Rotate chromagram
     const rotated = [...chromagram.slice(shift), ...chromagram.slice(0, shift)];
 
     const majorCorr = correlate(rotated, MAJOR_PROFILE);
@@ -133,9 +224,7 @@ export async function detectKey(audioUrl: string): Promise<KeyDetectionResult> {
     }
   }
 
-  // Confidence: gap between best and second best correlation
   const confidence = Math.max(0, Math.min(1, (bestCorr - secondBest) / 0.5));
-
   const noteName = NOTE_NAMES[bestKey];
   const modeLabel = bestMode === "Major" ? "Maior" : "Menor";
 
@@ -144,6 +233,22 @@ export async function detectKey(audioUrl: string): Promise<KeyDetectionResult> {
     mode: bestMode,
     confidence,
     display: `${noteName} ${modeLabel}`,
+  };
+}
+
+/**
+ * Unified audio analysis: detects key AND BPM in one pass
+ */
+export async function analyzeAudio(audioUrl: string): Promise<AudioAnalysisResult> {
+  const [keyResult, bpmResult] = await Promise.all([
+    detectKey(audioUrl),
+    detectBpmFromBuffer(audioUrl),
+  ]);
+
+  return {
+    key: keyResult,
+    bpm: bpmResult.bpm,
+    bpmConfidence: bpmResult.confidence,
   };
 }
 

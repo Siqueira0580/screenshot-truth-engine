@@ -45,11 +45,17 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
   const [nearEnd, setNearEnd] = useState(false);
+  const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number | null>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTime = useRef<number>(0);
   const songRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Initialize loops remaining from song config
+  useEffect(() => {
+    setLoopsRemaining(songs.map(s => s.loop_count ?? 0));
+  }, [songs]);
 
   const song = songs[currentIndex];
   const displayKey = transposeKey(song?.musical_key, transpose);
@@ -61,6 +67,20 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   );
 
   // Track current song based on scroll position
+  // Handle loop repeat - scroll back to song start
+  const handleSongRepeat = useCallback((songIndex: number) => {
+    const el = songRefs.current[songIndex];
+    if (el && scrollRef.current) {
+      scrollRef.current.scrollTo({ top: el.offsetTop - 20, behavior: "smooth" });
+    }
+    setLoopsRemaining(prev => {
+      const next = [...prev];
+      next[songIndex] = Math.max(0, (next[songIndex] || 0) - 1);
+      return next;
+    });
+    setNearEnd(false);
+  }, []);
+
   const updateCurrentSong = useCallback(() => {
     if (!scrollRef.current || songRefs.current.length === 0) return;
 
@@ -87,14 +107,25 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       const songHeight = nextEl.offsetTop - currentEl.offsetTop;
       const progress = 1 - (distanceToEnd / songHeight);
       setNearEnd(progress >= NEAR_END_THRESHOLD);
+
+      // If reached end and has loops remaining, repeat
+      if (progress >= 0.98 && (loopsRemaining[currentIndex] || 0) > 0) {
+        handleSongRepeat(currentIndex);
+      }
     } else if (currentEl && !nextEl) {
       // Last song
       const el = container;
       const remaining = el.scrollHeight - (scrollTop + el.clientHeight);
       const totalHeight = el.scrollHeight - el.clientHeight;
-      setNearEnd(totalHeight > 0 && (1 - remaining / totalHeight) >= NEAR_END_THRESHOLD);
+      const atEnd = totalHeight > 0 && (1 - remaining / totalHeight) >= NEAR_END_THRESHOLD;
+      setNearEnd(atEnd);
+
+      // If reached end and has loops remaining, repeat
+      if (totalHeight > 0 && (1 - remaining / totalHeight) >= 0.98 && (loopsRemaining[currentIndex] || 0) > 0) {
+        handleSongRepeat(currentIndex);
+      }
     }
-  }, [currentIndex]);
+  }, [currentIndex, loopsRemaining, handleSongRepeat]);
 
   // Navigate to a specific song by scrolling to it
   const navigateTo = useCallback((index: number) => {
@@ -284,6 +315,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         transpose={transpose}
         visible={showControls}
         nearEnd={nearEnd}
+        remainingLoops={loopsRemaining[currentIndex] || 0}
         onNavigate={navigateTo}
       />
 
@@ -317,12 +349,24 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
 
               {/* Song header */}
               <div className="mb-6">
-                <h3
-                  className="text-2xl font-bold text-foreground font-display"
-                  style={{ fontSize: `${Math.max(fontSize + 4, 20)}px` }}
-                >
-                  {s.title}
-                </h3>
+                <div className="flex items-center gap-3">
+                  <h3
+                    className="text-2xl font-bold text-foreground font-display"
+                    style={{ fontSize: `${Math.max(fontSize + 4, 20)}px` }}
+                  >
+                    {s.title}
+                  </h3>
+                  {(loopsRemaining[idx] || 0) > 0 && (
+                    <span className={cn(
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold font-mono border",
+                      idx === currentIndex && nearEnd
+                        ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert"
+                        : "bg-primary/10 border-primary/40 text-primary"
+                    )}>
+                      🔁 {loopsRemaining[idx]}x
+                    </span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground mt-1">
                   {s.artist}
                   {sKey && ` · Tom: ${sKey}`}

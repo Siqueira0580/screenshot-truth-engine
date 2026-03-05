@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano,
-  Volume2, ChevronUp, ChevronDown, Loader2, Trash2
+  Volume2, ChevronUp, ChevronDown, Loader2, Trash2, Plus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchSongs, fetchArtists } from "@/lib/supabase-queries";
+import { fetchSongs, fetchArtists, createSong } from "@/lib/supabase-queries";
 import { MultitrackEngine, StemType } from "@/lib/audio-engine";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -50,6 +50,8 @@ export default function StudioPage() {
     full: 100, vocals: 100, percussion: 100, harmony: 100,
   });
   const [uploading, setUploading] = useState<StemType | null>(null);
+  const [uploadingNew, setUploadingNew] = useState(false);
+  const newAudioRef = useRef<HTMLInputElement>(null);
   const fileRefs = useRef<Record<StemType, HTMLInputElement | null>>({
     full: null, vocals: null, percussion: null, harmony: null,
   });
@@ -192,6 +194,40 @@ export default function StudioPage() {
     }
   };
 
+  const handleNewAudio = async (file: File) => {
+    setUploadingNew(true);
+    try {
+      const baseName = file.name.replace(/\.[^.]+$/, "");
+      const match = baseName.match(/^(.+?)\s*-\s*(.+)$/);
+      const title = match ? match[2].trim() : baseName;
+      const artist = match ? match[1].trim() : undefined;
+
+      const song = await createSong({ title, artist: artist || null });
+
+      // Upload as full stem
+      const ext = file.name.split(".").pop();
+      const path = `${song.id}/full.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("audio-stems")
+        .upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+
+      const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
+      await supabase.from("audio_tracks").insert({
+        song_id: song.id,
+        file_full: urlData.publicUrl,
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      setSelectedSongId(song.id);
+      toast.success(`"${title}" adicionado ao estúdio!`);
+    } catch (err: any) {
+      toast.error(`Erro: ${err.message}`);
+    } finally {
+      setUploadingNew(false);
+    }
+  };
+
   const handleDeleteStem = async (type: StemType) => {
     if (!audioTrack) return;
     const colMap: Record<StemType, string> = {
@@ -228,12 +264,38 @@ export default function StudioPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
         {/* Song selector */}
         <div className="space-y-3">
-          <Input
-            placeholder="Buscar música..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="h-9"
-          />
+          <div className="flex gap-2">
+            <Input
+              placeholder="Buscar música..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="h-9 flex-1"
+            />
+            <input
+              ref={newAudioRef}
+              type="file"
+              accept=".mp3,.wav,.ogg,.m4a,.flac"
+              className="hidden"
+              onChange={e => {
+                const f = e.target.files?.[0];
+                if (f) handleNewAudio(f);
+                e.target.value = "";
+              }}
+            />
+            <Button
+              size="sm"
+              className="h-9 gap-1.5"
+              disabled={uploadingNew}
+              onClick={() => newAudioRef.current?.click()}
+            >
+              {uploadingNew ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5" />
+              )}
+              Novo
+            </Button>
+          </div>
           <div className="max-h-[60vh] overflow-y-auto space-y-1 pr-1">
             {filteredSongs.map(song => {
               const photo = song.artist

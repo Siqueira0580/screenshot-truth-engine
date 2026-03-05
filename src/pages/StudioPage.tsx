@@ -53,7 +53,9 @@ export default function StudioPage() {
   const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({
     full: false, vocals: false, percussion: false, harmony: false,
   });
-  const [soloStem, setSoloStem] = useState<StemType | null>(null);
+  const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({
+    full: false, vocals: false, percussion: false, harmony: false,
+  });
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);
   const [separationProgress, setSeparationProgress] = useState({ percent: 0, label: "" });
@@ -127,11 +129,11 @@ export default function StudioPage() {
     for (const [type, vol] of Object.entries(stemVols)) {
       const st = type as StemType;
       const isMuted = mutedStems[st];
-      const isSoloed = soloStem !== null;
-      const shouldPlay = isSoloed ? soloStem === st : !isMuted;
+      const anySoloed = Object.values(soloStems).some(Boolean);
+      const shouldPlay = anySoloed ? soloStems[st] && !isMuted : !isMuted;
       engine.setStemVolume(st, shouldPlay ? vol / 100 : 0);
     }
-  }, [stemVols, mutedStems, soloStem]);
+  }, [stemVols, mutedStems, soloStems]);
 
   useEffect(() => {
     engineRef.current?.setPitch(pitch);
@@ -583,8 +585,9 @@ export default function StudioPage() {
                       if (!hasFile) return null;
 
                       const isMuted = mutedStems[type];
-                      const isSoloed = soloStem === type;
-                      const isEffectivelyMuted = soloStem !== null ? !isSoloed : isMuted;
+                      const isSoloed = soloStems[type];
+                      const anySoloed = Object.values(soloStems).some(Boolean);
+                      const isEffectivelyMuted = anySoloed ? !isSoloed || isMuted : isMuted;
 
                       return (
                         <div
@@ -615,7 +618,7 @@ export default function StudioPage() {
                               variant={isSoloed ? "default" : "outline"}
                               size="sm"
                               className="h-6 px-2 text-[10px] font-bold"
-                              onClick={() => setSoloStem(prev => prev === type ? null : type)}
+                              onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
                             >
                               <Star className="h-3 w-3 mr-1" />
                               S

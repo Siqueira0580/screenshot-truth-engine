@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { transposeKey } from "@/lib/transpose";
-import { ChevronLeft, ChevronRight, Repeat } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Song {
   title: string;
@@ -61,38 +61,8 @@ export default function SongNavigationHUD({
         )}
       </div>
 
-      {/* Right side: Loop indicator or Next */}
+      {/* Right side: Next */}
       <div className="pointer-events-auto max-w-[200px] flex flex-col items-end gap-2">
-        {/* Loop/Repeat indicator */}
-        {willRepeat && (
-          <div
-            className={cn(
-              "flex items-center gap-2 rounded-xl backdrop-blur-md border-2 p-3 transition-all shadow-lg",
-              nearEnd
-                ? "bg-amber-500/20 border-amber-400 animate-pulse-alert shadow-[0_0_24px_hsl(40_95%_55%/0.5)]"
-                : "bg-card/90 border-primary/40"
-            )}
-          >
-            <Repeat className={cn(
-              "h-5 w-5 shrink-0",
-              nearEnd ? "text-amber-400" : "text-primary"
-            )} />
-            <div className="min-w-0 text-right">
-              <p className={cn(
-                "text-[11px] uppercase tracking-wider font-semibold",
-                nearEnd ? "text-amber-400" : "text-muted-foreground"
-              )}>
-                Repetir
-              </p>
-              <p className={cn(
-                "text-lg font-black font-mono",
-                nearEnd ? "text-amber-300" : "text-foreground"
-              )}>
-                {remainingLoops}x
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Next song */}
         {next && (

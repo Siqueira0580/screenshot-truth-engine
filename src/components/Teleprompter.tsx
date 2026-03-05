@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown } from "lucide-react";
+import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -348,6 +348,18 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               {transpose !== 0 && ` · Transposto: ${transpose > 0 ? "+" : ""}${transpose}`}
             </p>
           </div>
+          {/* Repeat indicator in header */}
+          {(loopsRemaining[currentIndex] || 0) > 0 && (
+            <div className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 font-mono font-black text-sm shrink-0 transition-all",
+              nearEnd
+                ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert shadow-[0_0_16px_hsl(40_95%_55%/0.4)]"
+                : "bg-primary/10 border-primary/40 text-primary"
+            )}>
+              <Repeat className="h-4 w-4" />
+              🔁 {loopsRemaining[currentIndex]}x
+            </div>
+          )}
         </div>
         <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-foreground shrink-0">
           <Maximize className="h-5 w-5" />

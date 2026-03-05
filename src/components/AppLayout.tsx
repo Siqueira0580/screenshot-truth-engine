@@ -35,7 +35,8 @@ export default function AppLayout() {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
+      {/* Desktop Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
           <div className="flex items-center gap-2">
@@ -44,7 +45,9 @@ export default function AppLayout() {
               Smart Cifra
             </span>
           </div>
-          <nav className="flex items-center gap-1 flex-1 overflow-x-auto">
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1 flex-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -60,10 +63,14 @@ export default function AppLayout() {
                 }
               >
                 <item.icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{item.label}</span>
+                <span>{item.label}</span>
               </NavLink>
             ))}
           </nav>
+
+          {/* Spacer for mobile */}
+          <div className="flex-1 md:hidden" />
+
           <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="ghost"
@@ -89,7 +96,7 @@ export default function AppLayout() {
                 {user?.email}
               </span>
             </button>
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
+            <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="hidden md:inline-flex">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -99,6 +106,34 @@ export default function AppLayout() {
       <main className="container py-6 animate-fade-in">
         <Outlet />
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl md:hidden">
+        <div className="flex items-center justify-around h-16">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px]",
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+                  <span>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

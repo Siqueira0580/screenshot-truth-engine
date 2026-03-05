@@ -40,6 +40,9 @@ export default function AppLayout() {
         <div className="container flex h-16 items-center gap-6">
           <div className="flex items-center gap-2">
             <img src={smartCifraLogo} alt="Smart Cifra" className="h-12 w-12 rounded-lg" />
+            <span className="text-sm font-bold tracking-tight text-foreground hidden sm:inline">
+              Smart Cifra
+            </span>
           </div>
           <nav className="flex items-center gap-1 flex-1 overflow-x-auto">
             {navItems.map((item) => (

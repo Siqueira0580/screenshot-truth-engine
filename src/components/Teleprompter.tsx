@@ -3,6 +3,7 @@ import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { transposeText, transposeKey } from "@/lib/transpose";
 
@@ -14,6 +15,7 @@ import ChordModal from "@/components/teleprompter/ChordModal";
 interface TeleprompterSong {
   title: string;
   artist?: string | null;
+  artist_photo_url?: string | null;
   musical_key?: string | null;
   bpm?: number | null;
   body_text?: string | null;
@@ -306,10 +308,24 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         )}
         style={{ background: "hsl(220 20% 4% / 0.9)" }}
       >
-        <div className="flex items-center gap-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           <Button variant="ghost" size="icon" onClick={onClose} className="text-foreground shrink-0">
             <X className="h-5 w-5" />
           </Button>
+          {song.artist_photo_url ? (
+            <Avatar className="h-9 w-9 shrink-0 border-2 border-primary/40">
+              <AvatarImage src={song.artist_photo_url} alt={song.artist || ""} className="object-cover" />
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                {(song.artist || "?")[0]}
+              </AvatarFallback>
+            </Avatar>
+          ) : song.artist ? (
+            <Avatar className="h-9 w-9 shrink-0 border-2 border-border">
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                {song.artist[0]}
+              </AvatarFallback>
+            </Avatar>
+          ) : null}
           <div className="min-w-0">
             <h2 className="text-lg font-bold text-foreground truncate">{song.title}</h2>
             <p className="text-sm text-muted-foreground truncate">

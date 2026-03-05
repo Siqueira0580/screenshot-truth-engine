@@ -10,6 +10,7 @@ import {
   fetchSetlist,
   fetchSetlistItems,
   fetchSongs,
+  fetchArtists,
   addSongToSetlist,
   removeSongFromSetlist,
   bulkUpdateSetlistItems,
@@ -40,6 +41,15 @@ export default function SetlistDetailPage() {
     queryFn: () => fetchSetlistItems(id!),
     enabled: !!id,
   });
+
+  const { data: artists = [] } = useQuery({
+    queryKey: ["artists"],
+    queryFn: fetchArtists,
+  });
+
+  const artistPhotoMap = Object.fromEntries(
+    artists.filter(a => a.photo_url).map(a => [a.name.toLowerCase(), a.photo_url])
+  );
 
   const { data: allSongs = [] } = useQuery({
     queryKey: ["songs"],
@@ -302,6 +312,7 @@ export default function SetlistDetailPage() {
         songs={items.map((item: any) => ({
           title: item.songs?.title || "",
           artist: item.songs?.artist,
+          artist_photo_url: item.songs?.artist ? artistPhotoMap[item.songs.artist.toLowerCase()] || null : null,
           musical_key: item.songs?.musical_key,
           bpm: item.songs?.bpm ?? item.bpm,
           body_text: item.songs?.body_text,

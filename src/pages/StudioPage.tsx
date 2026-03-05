@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano,
-  Volume2, ChevronUp, ChevronDown, Loader2, Plus, Scissors,
+  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Plus, Scissors, Star,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,10 @@ export default function StudioPage() {
   const [stemVols, setStemVols] = useState<Record<StemType, number>>({
     full: 100, vocals: 100, percussion: 100, harmony: 100,
   });
+  const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({
+    full: false, vocals: false, percussion: false, harmony: false,
+  });
+  const [soloStem, setSoloStem] = useState<StemType | null>(null);
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);
   const [separationProgress, setSeparationProgress] = useState({ percent: 0, label: "" });
@@ -116,13 +120,18 @@ export default function StudioPage() {
     engineRef.current?.setMasterVolume(masterVol / 100);
   }, [masterVol]);
 
+  // Sync volumes considering mute/solo
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine) return;
     for (const [type, vol] of Object.entries(stemVols)) {
-      engine.setStemVolume(type as StemType, vol / 100);
+      const st = type as StemType;
+      const isMuted = mutedStems[st];
+      const isSoloed = soloStem !== null;
+      const shouldPlay = isSoloed ? soloStem === st : !isMuted;
+      engine.setStemVolume(st, shouldPlay ? vol / 100 : 0);
     }
-  }, [stemVols]);
+  }, [stemVols, mutedStems, soloStem]);
 
   useEffect(() => {
     engineRef.current?.setPitch(pitch);
@@ -573,20 +582,51 @@ export default function StudioPage() {
                       const hasFile = audioTrack && audioTrack[colMap[type]];
                       if (!hasFile) return null;
 
+                      const isMuted = mutedStems[type];
+                      const isSoloed = soloStem === type;
+                      const isEffectivelyMuted = soloStem !== null ? !isSoloed : isMuted;
+
                       return (
                         <div
                           key={type}
-                          className="rounded-lg border border-border bg-secondary/30 p-3 space-y-3"
+                          className={cn(
+                            "rounded-lg border p-3 space-y-3 transition-all",
+                            isEffectivelyMuted
+                              ? "border-border bg-muted/30 opacity-50"
+                              : "border-border bg-secondary/30",
+                            isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
+                          )}
                         >
                           <div className="flex items-center gap-2">
                             <Icon className={cn("h-4 w-4", color)} />
-                            <span className="text-xs font-medium">{label}</span>
+                            <span className="text-xs font-medium flex-1">{label}</span>
+                          </div>
+                          <div className="flex gap-1.5">
+                            <Button
+                              variant={isMuted ? "default" : "outline"}
+                              size="sm"
+                              className="h-6 px-2 text-[10px] font-bold"
+                              onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
+                            >
+                              <VolumeX className="h-3 w-3 mr-1" />
+                              M
+                            </Button>
+                            <Button
+                              variant={isSoloed ? "default" : "outline"}
+                              size="sm"
+                              className="h-6 px-2 text-[10px] font-bold"
+                              onClick={() => setSoloStem(prev => prev === type ? null : type)}
+                            >
+                              <Star className="h-3 w-3 mr-1" />
+                              S
+                            </Button>
                           </div>
                           <Slider
                             value={[stemVols[type]]}
                             max={100}
                             step={1}
                             onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
+                            disabled={isEffectivelyMuted}
                           />
                           <p className="text-[10px] text-muted-foreground text-center font-mono">
                             {stemVols[type]}%

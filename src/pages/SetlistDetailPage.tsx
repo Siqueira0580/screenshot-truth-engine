@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus } from "lucide-react";
@@ -69,13 +69,19 @@ export default function SetlistDetailPage() {
     setlistId: id,
     inviteToken,
     onSongChange: (index) => {
-      // Could navigate teleprompter to this song
       toast.info(`Mestre navegou para música ${index + 1}`);
     },
     onScroll: () => {},
     onPlay: () => toast.info("Mestre iniciou reprodução"),
     onPause: () => toast.info("Mestre pausou"),
   });
+
+  // Auto-open teleprompter for invited guests
+  useEffect(() => {
+    if (inviteToken && stageSync.isFollowing && items.length > 0 && !teleprompterOpen) {
+      setTeleprompterOpen(true);
+    }
+  }, [inviteToken, stageSync.isFollowing, items.length]);
 
   const addMutation = useMutation({
     mutationFn: (songId: string) => addSongToSetlist(id!, songId, items.length + 1),

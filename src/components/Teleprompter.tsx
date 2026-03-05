@@ -488,7 +488,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         <div className="flex items-center gap-2 min-w-[180px]">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Vel</span>
           <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={0.5} max={5} step={0.1} className="w-28" />
-          <span className="text-xs text-foreground font-mono w-12">{Math.round(speed * 100)}%</span>
+          <span className="text-xs text-foreground font-mono w-10">{speed.toFixed(1)}x</span>
         </div>
 
         {/* Metronome */}

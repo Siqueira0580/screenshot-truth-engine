@@ -28,15 +28,92 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Convert PDF to base64 for AI processing
     const arrayBuffer = await file.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-    // Extract text from PDF using raw byte parsing
-    // This handles most common PDFs with text streams
-    const text = extractTextFromPDF(bytes);
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
+
+    // Use Lovable AI to extract structured data from the PDF
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a music sheet parser. Extract structured information from music PDFs (chord sheets, cifras, lyrics).
+Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
+{
+  "title": "song title",
+  "artist": "artist/performer name",
+  "composer": "composer(s) name(s)",
+  "musical_key": "musical key (e.g. C, Am, F#m)",
+  "style": "music style/genre if identifiable, or null",
+  "bpm": null,
+  "time_signature": "time signature if found, e.g. 4/4, or null",
+  "body_text": "the full lyrics with chord annotations preserved, formatted as plain text with chords above lyrics lines. Each chord line followed by its lyric line. Use line breaks."
+}
+Rules:
+- For body_text: reconstruct the lyrics with chords ABOVE the corresponding lyrics, one chord line then one lyric line, separated by newlines.
+- Keep all chord names exactly as they appear (e.g. F7M, C7(9), Gm6).
+- Write lyrics in their original language (Portuguese).
+- If a field is not found, use null.
+- Do NOT include chord diagrams, tablatures, or tuning info in body_text.`
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'file',
+                file: {
+                  filename: file.name,
+                  file_data: `data:application/pdf;base64,${base64}`,
+                },
+              },
+              {
+                type: 'text',
+                text: 'Extract all song information from this PDF chord sheet. Return only the JSON object.',
+              },
+            ],
+          },
+        ],
+        temperature: 0.1,
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      console.error('AI Gateway error:', errText);
+      throw new Error('AI processing failed');
+    }
+
+    const aiResult = await aiResponse.json();
+    const content = aiResult.choices?.[0]?.message?.content || '';
+
+    // Parse the JSON from AI response (handle potential markdown wrapping)
+    let parsed;
+    try {
+      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      parsed = JSON.parse(jsonStr);
+    } catch {
+      console.error('Failed to parse AI response:', content);
+      // Fallback: return raw text
+      return new Response(
+        JSON.stringify({ text: content }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     return new Response(
-      JSON.stringify({ text: text.trim() || '(Nenhum texto encontrado no PDF)' }),
+      JSON.stringify(parsed),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
@@ -47,106 +124,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-/**
- * Lightweight PDF text extractor that works in Deno edge runtime.
- * Parses PDF stream objects and extracts text operators (Tj, TJ, ').
- */
-function extractTextFromPDF(bytes: Uint8Array): string {
-  const raw = new TextDecoder('latin1').decode(bytes);
-  const lines: string[] = [];
-
-  // Find all stream...endstream blocks
-  const streamRegex = /stream\r?\n([\s\S]*?)endstream/g;
-  let match;
-
-  while ((match = streamRegex.exec(raw)) !== null) {
-    let content = match[1];
-
-    // Try to decompress FlateDecode streams
-    if (raw.substring(Math.max(0, match.index - 200), match.index).includes('/FlateDecode')) {
-      try {
-        const compressed = new Uint8Array(
-          content.split('').map((c) => c.charCodeAt(0))
-        );
-        const ds = new DecompressionStream('deflate');
-        const writer = ds.writable.getWriter();
-        const reader = ds.readable.getReader();
-
-        // We need to handle this synchronously-ish for the regex approach
-        // Skip compressed streams for now and handle uncompressed ones
-        continue;
-      } catch {
-        continue;
-      }
-    }
-
-    // Extract text from PDF text operators in uncompressed streams
-    const extracted = extractTextOperators(content);
-    if (extracted) {
-      lines.push(extracted);
-    }
-  }
-
-  // If no streams found, try a simpler approach: look for parenthesized strings
-  if (lines.length === 0) {
-    const simpleText = extractSimpleText(raw);
-    if (simpleText) lines.push(simpleText);
-  }
-
-  return lines.join('\n');
-}
-
-function extractTextOperators(content: string): string {
-  const parts: string[] = [];
-
-  // Match Tj operator: (text) Tj
-  const tjRegex = /\(([^)]*)\)\s*Tj/g;
-  let m;
-  while ((m = tjRegex.exec(content)) !== null) {
-    parts.push(unescapePdfString(m[1]));
-  }
-
-  // Match TJ operator: [(text) num (text)] TJ
-  const tjArrayRegex = /\[((?:\([^)]*\)|[^\]])*)\]\s*TJ/g;
-  while ((m = tjArrayRegex.exec(content)) !== null) {
-    const inner = m[1];
-    const strRegex = /\(([^)]*)\)/g;
-    let sm;
-    while ((sm = strRegex.exec(inner)) !== null) {
-      parts.push(unescapePdfString(sm[1]));
-    }
-  }
-
-  // Match ' operator (next line + show text)
-  const quoteRegex = /\(([^)]*)\)\s*'/g;
-  while ((m = quoteRegex.exec(content)) !== null) {
-    parts.push(unescapePdfString(m[1]));
-  }
-
-  return parts.join('');
-}
-
-function extractSimpleText(raw: string): string {
-  const parts: string[] = [];
-  const regex = /\(([^)]{2,})\)/g;
-  let m;
-  while ((m = regex.exec(raw)) !== null) {
-    const text = unescapePdfString(m[1]);
-    // Filter out PDF metadata-like strings
-    if (text.length > 1 && !/^[A-Z][a-z]+$/.test(text) && !/^\d+$/.test(text)) {
-      parts.push(text);
-    }
-  }
-  return parts.join(' ');
-}
-
-function unescapePdfString(s: string): string {
-  return s
-    .replace(/\\n/g, '\n')
-    .replace(/\\r/g, '\r')
-    .replace(/\\t/g, '\t')
-    .replace(/\\\(/g, '(')
-    .replace(/\\\)/g, ')')
-    .replace(/\\\\/g, '\\');
-}

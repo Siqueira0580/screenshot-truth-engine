@@ -131,11 +131,23 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       formData.append("file", file);
       const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
       if (error) throw error;
-      if (data?.text) {
-        setForm((prev) => ({ ...prev, body_text: data.text }));
-        toast.success("Cifra extraída do PDF!");
+
+      if (data) {
+        // The AI returns structured data with all fields
+        setForm((prev) => ({
+          ...prev,
+          title: data.title || prev.title,
+          artist: data.artist || prev.artist,
+          composer: data.composer || prev.composer,
+          musical_key: data.musical_key || prev.musical_key,
+          style: data.style || prev.style,
+          bpm: data.bpm?.toString() || prev.bpm,
+          time_signature: data.time_signature || prev.time_signature,
+          body_text: data.body_text || data.text || prev.body_text,
+        }));
+        toast.success("PDF processado! Campos preenchidos automaticamente.");
       } else {
-        toast.warning("Nenhum texto encontrado no PDF");
+        toast.warning("Nenhum dado encontrado no PDF");
       }
     } catch (err) {
       console.error("PDF parse error:", err);
@@ -160,6 +172,42 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           }}
           className="space-y-4"
         >
+          {/* PDF Import - prominent at top */}
+          <div className="flex items-center gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handlePdfUpload(file);
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isParsing}
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2"
+            >
+              {isParsing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processando PDF...
+                </>
+              ) : (
+                <>
+                  <FileUp className="h-4 w-4" />
+                  Importar PDF
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Importe um PDF de cifra para preencher todos os campos automaticamente
+            </p>
+          </div>
+
           {/* Metadados principais */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -256,41 +304,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
 
           {/* Cifra / Letra */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Cifra / Letra</Label>
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handlePdfUpload(file);
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isParsing}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="gap-1.5 text-xs"
-                >
-                  {isParsing ? (
-                    <>
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      Extraindo...
-                    </>
-                  ) : (
-                    <>
-                      <FileUp className="h-3 w-3" />
-                      Importar PDF
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+            <Label>Cifra / Letra</Label>
             <Textarea
               value={form.body_text}
               onChange={(e) => setForm({ ...form, body_text: e.target.value })}

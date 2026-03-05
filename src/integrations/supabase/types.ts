@@ -82,6 +82,59 @@ export type Database = {
           },
         ]
       }
+      broadcast_group_members: {
+        Row: {
+          created_at: string
+          email: string
+          group_id: string
+          id: string
+          name: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          group_id: string
+          id?: string
+          name?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          group_id?: string
+          id?: string
+          name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_groups: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_chords: {
         Row: {
           chord_name: string

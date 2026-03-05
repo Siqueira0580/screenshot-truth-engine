@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   fetchSetlist,
   fetchSetlistItems,
   fetchSongs,
   addSongToSetlist,
   removeSongFromSetlist,
+  bulkUpdateSetlistItems,
 } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
@@ -20,6 +22,10 @@ export default function SetlistDetailPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [localOverrides, setLocalOverrides] = useState<
+    Record<string, { loop_count: number | null; speed: number | null; bpm: number | null }>
+  >({});
+  const [dirty, setDirty] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: setlist } = useQuery({
@@ -56,6 +62,47 @@ export default function SetlistDetailPage() {
     },
   });
 
+  const bulkSaveMutation = useMutation({
+    mutationFn: () => {
+      const payload = items.map((item: any) => {
+        const ov = localOverrides[item.id];
+        return {
+          id: item.id,
+          loop_count: ov?.loop_count ?? item.loop_count ?? null,
+          speed: ov?.speed ?? item.speed ?? null,
+          bpm: ov?.bpm ?? item.bpm ?? null,
+        };
+      });
+      return bulkUpdateSetlistItems(payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+      setLocalOverrides({});
+      setDirty(false);
+      toast.success("Configurações salvas!");
+    },
+  });
+
+  const updateField = useCallback(
+    (itemId: string, field: "loop_count" | "speed" | "bpm", value: number | null, item: any) => {
+      setLocalOverrides((prev) => ({
+        ...prev,
+        [itemId]: {
+          loop_count: prev[itemId]?.loop_count ?? item.loop_count ?? null,
+          speed: prev[itemId]?.speed ?? item.speed ?? null,
+          bpm: prev[itemId]?.bpm ?? item.bpm ?? null,
+          [field]: value,
+        },
+      }));
+      setDirty(true);
+    },
+    []
+  );
+
+  const getVal = (item: any, field: "loop_count" | "speed" | "bpm") => {
+    return localOverrides[item.id]?.[field] ?? item[field];
+  };
+
   const existingIds = new Set(items.map((i: any) => i.song_id));
   const availableSongs = allSongs.filter(
     (s) =>
@@ -73,14 +120,24 @@ export default function SetlistDetailPage() {
         </Link>
       </Button>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{setlist?.name}</h1>
           <p className="text-muted-foreground mt-1">
             {items.length} música{items.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {dirty && (
+            <Button
+              onClick={() => bulkSaveMutation.mutate()}
+              disabled={bulkSaveMutation.isPending}
+              className="gap-2"
+            >
+              <Save className="h-4 w-4" />
+              Salvar Configs
+            </Button>
+          )}
           {items.length > 0 && (
             <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
               <MonitorPlay className="h-4 w-4" />
@@ -107,35 +164,91 @@ export default function SetlistDetailPage() {
           {items.map((item: any, i: number) => (
             <div
               key={item.id}
-              className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30 animate-fade-in"
+              className="group flex items-start gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30 animate-fade-in"
               style={{ animationDelay: `${i * 30}ms` }}
             >
-              <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary font-mono text-sm font-bold">
+              <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab mt-2" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary font-mono text-sm font-bold mt-1">
                 {i + 1}
               </div>
-              <div className="flex-1 min-w-0">
-                <Link to={`/songs/${item.song_id}`} className="font-medium hover:text-primary transition-colors">
-                  {item.songs?.title}
-                </Link>
-                <p className="text-sm text-muted-foreground truncate">
-                  {item.songs?.artist}
-                  {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
-                </p>
+              <div className="flex-1 min-w-0 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <Link to={`/songs/${item.song_id}`} className="font-medium hover:text-primary transition-colors">
+                      {item.songs?.title}
+                    </Link>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {item.songs?.artist}
+                      {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 shrink-0"
+                    onClick={() => removeMutation.mutate(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+
+                {/* Controls row */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">Loop</label>
+                    <Select
+                      value={String(getVal(item, "loop_count") ?? 0)}
+                      onValueChange={(v) => updateField(item.id, "loop_count", Number(v), item)}
+                    >
+                      <SelectTrigger className="h-7 w-16 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[0, 1, 2, 3, 4, 5].map((n) => (
+                          <SelectItem key={n} value={String(n)}>
+                            {n}x
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">Vel %</label>
+                    <Input
+                      type="number"
+                      min={50}
+                      max={500}
+                      className="h-7 w-20 text-xs"
+                      value={getVal(item, "speed") ?? item.songs?.default_speed ?? 250}
+                      onChange={(e) =>
+                        updateField(item.id, "speed", e.target.value ? Number(e.target.value) : null, item)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs text-muted-foreground whitespace-nowrap">BPM</label>
+                    <Input
+                      type="number"
+                      min={20}
+                      max={300}
+                      className="h-7 w-20 text-xs"
+                      placeholder={item.songs?.bpm ? String(item.songs.bpm) : "—"}
+                      value={getVal(item, "bpm") ?? ""}
+                      onChange={(e) =>
+                        updateField(item.id, "bpm", e.target.value ? Number(e.target.value) : null, item)
+                      }
+                    />
+                  </div>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="opacity-0 group-hover:opacity-100"
-                onClick={() => removeMutation.mutate(item.id)}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
             </div>
           ))}
         </div>
       )}
 
+      {/* Add song dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="max-h-[80vh]">
           <DialogHeader>

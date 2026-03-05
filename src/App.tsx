@@ -14,6 +14,7 @@ import ArtistDetailPage from "@/pages/ArtistDetailPage";
 import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudyPage from "@/pages/StudyPage";
+import ProfilePage from "@/pages/ProfilePage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import NotFound from "./pages/NotFound";
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/studio" element={<StudioPage />} />
               <Route path="/studio/:songId" element={<StudioDetailPage />} />
               <Route path="/study/:songId" element={<StudyPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

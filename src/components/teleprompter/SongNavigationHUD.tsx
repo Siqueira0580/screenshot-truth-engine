@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Song {
   title: string;
+  artist?: string | null;
   musical_key?: string | null;
   loop_count?: number | null;
 }
@@ -41,7 +42,7 @@ export default function SongNavigationHUD({
       )}
     >
       {/* Previous */}
-      <div className="pointer-events-auto max-w-[180px]">
+      <div className="pointer-events-auto max-w-[200px]">
         {prev && (
           <button
             onClick={() => onNavigate(currentIndex - 1)}
@@ -50,10 +51,13 @@ export default function SongNavigationHUD({
             <ChevronLeft className="h-5 w-5 text-muted-foreground shrink-0" />
             <div className="min-w-0">
               <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-semibold">Anterior</p>
+              {prev.artist && (
+                <p className="text-[11px] text-muted-foreground truncate">{prev.artist}</p>
+              )}
               <p className="text-sm font-bold text-foreground truncate">{prev.title}</p>
               {prev.musical_key && (
                 <p className="text-xs text-primary font-mono font-semibold">
-                  {transposeKey(prev.musical_key, transpose)}
+                  Tom: {transposeKey(prev.musical_key, transpose)}
                 </p>
               )}
             </div>
@@ -62,8 +66,7 @@ export default function SongNavigationHUD({
       </div>
 
       {/* Right side: Next */}
-      <div className="pointer-events-auto max-w-[200px] flex flex-col items-end gap-2">
-
+      <div className="pointer-events-auto max-w-[220px] flex flex-col items-end gap-2">
         {/* Next song */}
         {next && (
           <button
@@ -82,6 +85,14 @@ export default function SongNavigationHUD({
               )}>
                 {willRepeat ? "Depois" : "Próxima"}
               </p>
+              {next.artist && (
+                <p className={cn(
+                  "text-[11px] truncate",
+                  nearEnd && !willRepeat ? "text-primary/80" : "text-muted-foreground"
+                )}>
+                  {next.artist}
+                </p>
+              )}
               <p className={cn(
                 "text-sm font-bold truncate",
                 nearEnd && !willRepeat ? "text-primary-foreground" : "text-foreground"
@@ -95,7 +106,7 @@ export default function SongNavigationHUD({
                     ? "text-lg animate-key-blink"
                     : "text-base text-primary"
                 )}>
-                  {transposeKey(next.musical_key, transpose)}
+                  Tom: {transposeKey(next.musical_key, transpose)}
                 </p>
               )}
             </div>

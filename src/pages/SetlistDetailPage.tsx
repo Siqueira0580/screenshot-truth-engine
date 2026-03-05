@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
 import { useStageSync } from "@/hooks/useStageSync";
 import StageSyncInviteModal from "@/components/StageSyncInviteModal";
+import SyncInviteModal from "@/components/SyncInviteModal";
 
 export default function SetlistDetailPage() {
   const { id } = useParams();
@@ -31,6 +32,7 @@ export default function SetlistDetailPage() {
   >({});
   const [dirty, setDirty] = useState(false);
   const [autoHideControls, setAutoHideControls] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: setlist } = useQuery({
@@ -203,6 +205,19 @@ export default function SetlistDetailPage() {
                 >
                   <Radio className="h-4 w-4" />
                   <span className="hidden sm:inline">Modo Palco</span>
+                </Button>
+              )}
+
+              {stageSync.isMaster && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInviteOpen(true)}
+                  className="gap-2"
+                  title="Convidar músico para sincronizar"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span className="hidden sm:inline">Convidar</span>
                 </Button>
               )}
 
@@ -390,6 +405,13 @@ export default function SetlistDetailPage() {
         masterName={stageSync.invite?.masterName || ""}
         onAccept={stageSync.acceptInvite}
         onDecline={stageSync.declineInvite}
+      />
+
+      <SyncInviteModal
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        setlistId={id!}
+        setlistName={setlist?.name || ""}
       />
 
       <Teleprompter

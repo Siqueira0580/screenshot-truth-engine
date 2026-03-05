@@ -274,6 +274,47 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          guest_email: string
+          id: string
+          master_id: string
+          setlist_id: string
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          guest_email: string
+          id?: string
+          master_id: string
+          setlist_id: string
+          status?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          guest_email?: string
+          id?: string
+          master_id?: string
+          setlist_id?: string
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_invites_setlist_id_fkey"
+            columns: ["setlist_id"]
+            isOneToOne: false
+            referencedRelation: "setlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

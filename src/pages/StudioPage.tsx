@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano,
-  Volume2, ChevronUp, ChevronDown, Loader2, Plus, Scissors
+  Volume2, ChevronUp, ChevronDown, Loader2, Plus, Scissors,
 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ export default function StudioPage() {
   });
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);
+  const [separationProgress, setSeparationProgress] = useState({ percent: 0, label: "" });
   const newAudioRef = useRef<HTMLInputElement>(null);
 
   const { data: songs = [] } = useQuery({ queryKey: ["songs"], queryFn: fetchSongs });
@@ -169,6 +171,7 @@ export default function StudioPage() {
     if (!audioTrack?.file_full || !selectedSongId) return;
 
     setSeparating(true);
+    setSeparationProgress({ percent: 5, label: "Iniciando separação..." });
     const toastId = toast.loading("Iniciando separação de stems...");
 
     try {
@@ -185,6 +188,7 @@ export default function StudioPage() {
       if (!startData?.prediction_id) throw new Error(startData?.error || "Falha ao iniciar");
 
       const predictionId = startData.prediction_id;
+      setSeparationProgress({ percent: 15, label: "Enviado para IA..." });
       toast.loading("Processando IA... Isso pode levar 3-5 minutos.", { id: toastId });
 
       // Step 2: Poll every 10 seconds from the client
@@ -204,11 +208,14 @@ export default function StudioPage() {
 
         const status = pollData?.status;
         if (status === "processing" || status === "starting") {
+          const pct = Math.min(15 + Math.round((i / maxPolls) * 75), 90);
+          setSeparationProgress({ percent: pct, label: `Processando IA... (${(i + 1) * 10}s)` });
           toast.loading(`Processando IA... (${(i + 1) * 10}s)`, { id: toastId });
           continue;
         }
 
         if (status === "succeeded") {
+          setSeparationProgress({ percent: 100, label: "Stems prontos!" });
           toast.success(`Stems separados com sucesso! (${pollData.stems?.length || 0} faixas)`, { id: toastId });
           refetchTrack();
           return;
@@ -224,6 +231,7 @@ export default function StudioPage() {
       toast.error(`Erro na separação: ${err.message}`, { id: toastId });
     } finally {
       setSeparating(false);
+      setTimeout(() => setSeparationProgress({ percent: 0, label: "" }), 2000);
     }
   };
 
@@ -392,7 +400,25 @@ export default function StudioPage() {
                 )}
               </div>
 
-              {/* Upload area if no audio yet */}
+              {/* Separation progress bar */}
+              {separating && (
+                <div className="p-4 rounded-xl bg-card border border-border space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground font-medium flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      {separationProgress.label}
+                    </span>
+                    <span className="font-mono text-primary font-semibold">
+                      {separationProgress.percent}%
+                    </span>
+                  </div>
+                  <Progress value={separationProgress.percent} className="h-2" />
+                  <p className="text-xs text-muted-foreground">
+                    A IA está separando voz, percussão e harmonia. Isso pode levar 3-5 minutos.
+                  </p>
+                </div>
+              )}
+
               {!audioTrack?.file_full && (
                 <div className="flex flex-col items-center justify-center py-12 rounded-xl border border-dashed border-border bg-card/50">
                   <Upload className="h-10 w-10 mb-3 text-muted-foreground opacity-50" />

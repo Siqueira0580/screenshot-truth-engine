@@ -139,7 +139,7 @@ export default function SongDetailPage() {
         </div>
       )}
       <Teleprompter
-        songs={[{ ...song, body_text: displayBody, musical_key: displayKey, artist_photo_url: artistPhoto }]}
+        songs={[{ ...song, body_text: displayBody, musical_key: displayKey, artist_photo_url: artistPhoto, speed: song.default_speed ?? 250 }]}
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
       />

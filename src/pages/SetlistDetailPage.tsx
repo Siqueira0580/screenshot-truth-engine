@@ -318,6 +318,7 @@ export default function SetlistDetailPage() {
           body_text: item.songs?.body_text,
           loop_count: item.loop_count ?? item.songs?.loop_count,
           auto_next: item.songs?.auto_next,
+          speed: item.speed ?? item.songs?.default_speed ?? 250,
         }))}
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}

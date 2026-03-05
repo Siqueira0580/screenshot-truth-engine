@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Plus, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,14 +78,21 @@ export default function ArtistsPage() {
               style={{ animationDelay: `${i * 50}ms` }}
             >
               <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-lg mb-3">
-                    {artist.name.charAt(0).toUpperCase()}
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    {artist.photo_url ? (
+                      <AvatarImage src={artist.photo_url} alt={artist.name} className="object-cover" />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                      {artist.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-semibold">{artist.name}</h3>
+                    {artist.about && (
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{artist.about}</p>
+                    )}
                   </div>
-                  <h3 className="font-semibold">{artist.name}</h3>
-                  {artist.about && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{artist.about}</p>
-                  )}
                 </div>
                 <Button
                   variant="ghost"

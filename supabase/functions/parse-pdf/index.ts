@@ -28,9 +28,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Convert PDF to base64 for AI processing
+    // Convert PDF to base64 for AI processing (chunked to avoid stack overflow)
     const arrayBuffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    const bytes = new Uint8Array(arrayBuffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, i + chunkSize);
+      binary += String.fromCharCode(...chunk);
+    }
+    const base64 = btoa(binary);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -96,6 +103,7 @@ Rules:
     }
 
     const aiResult = await aiResponse.json();
+    console.log('AI response received, choices:', aiResult.choices?.length);
     const content = aiResult.choices?.[0]?.message?.content || '';
 
     // Parse the JSON from AI response (handle potential markdown wrapping)

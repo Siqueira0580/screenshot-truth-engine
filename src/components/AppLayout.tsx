@@ -1,9 +1,10 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, LogOut, Settings } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, LogOut, Settings, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +22,7 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -35,10 +37,73 @@ export default function AppLayout() {
   }, [user]);
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden pb-16 md:pb-0">
-      {/* Desktop Header */}
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
+          {/* Mobile hamburger */}
+          <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden text-muted-foreground">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-64 p-0 bg-card border-border">
+              <div className="flex items-center gap-2 p-4 border-b border-border">
+                <img src={smartCifraLogo} alt="Smart Cifra" className="h-10 w-10 rounded-lg" />
+                <span className="text-sm font-bold tracking-tight text-foreground">Smart Cifra</span>
+              </div>
+              <nav className="flex flex-col gap-1 p-3">
+                {navItems.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
+                    onClick={() => setDrawerOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      )
+                    }
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </nav>
+              <div className="mt-auto border-t border-border p-3 flex flex-col gap-1">
+                <button
+                  onClick={() => { navigate("/settings"); setDrawerOpen(false); }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                  Configurações
+                </button>
+                <button
+                  onClick={() => { navigate("/profile"); setDrawerOpen(false); }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                >
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={avatarUrl || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  Meu Perfil
+                </button>
+                <button
+                  onClick={() => { signOut(); setDrawerOpen(false); }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <div className="flex items-center gap-2">
             <img src={smartCifraLogo} alt="Smart Cifra" className="h-12 w-12 rounded-lg" />
             <span className="text-sm font-bold tracking-tight text-foreground hidden sm:inline">
@@ -71,7 +136,7 @@ export default function AppLayout() {
           {/* Spacer for mobile */}
           <div className="flex-1 md:hidden" />
 
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <Button
               variant="ghost"
               size="icon"
@@ -92,11 +157,11 @@ export default function AppLayout() {
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground hidden md:block">
+              <span className="text-sm text-muted-foreground">
                 {user?.email}
               </span>
             </button>
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="hidden md:inline-flex">
+            <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -106,34 +171,6 @@ export default function AppLayout() {
       <main className="container py-6 animate-fade-in flex-1 overflow-y-auto scrollbar-hide">
         <Outlet />
       </main>
-
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl md:hidden">
-        <div className="flex items-center justify-around h-16">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px]",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
-                  <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </div>
-      </nav>
     </div>
   );
 }

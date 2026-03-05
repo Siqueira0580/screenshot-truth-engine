@@ -45,6 +45,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
   const [nearEnd, setNearEnd] = useState(false);
+  const [songProgress, setSongProgress] = useState(0);
   const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number | null>(null);
@@ -115,6 +116,8 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       const distanceToEnd = songBottom - (scrollTop + container.clientHeight);
       const songHeight = nextEl.offsetTop - currentEl.offsetTop;
       const progress = 1 - (distanceToEnd / songHeight);
+      const clampedProgress = Math.max(0, Math.min(1, progress));
+      setSongProgress(clampedProgress);
       setNearEnd(progress >= NEAR_END_THRESHOLD);
 
       // If reached end and has loops remaining, repeat
@@ -126,11 +129,14 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       const el = container;
       const remaining = el.scrollHeight - (scrollTop + el.clientHeight);
       const totalHeight = el.scrollHeight - el.clientHeight;
-      const atEnd = totalHeight > 0 && (1 - remaining / totalHeight) >= NEAR_END_THRESHOLD;
+      const progress = totalHeight > 0 ? 1 - (remaining / totalHeight) : 0;
+      const clampedProgress = Math.max(0, Math.min(1, progress));
+      setSongProgress(clampedProgress);
+      const atEnd = progress >= NEAR_END_THRESHOLD;
       setNearEnd(atEnd);
 
       // If reached end and has loops remaining, repeat
-      if (totalHeight > 0 && (1 - remaining / totalHeight) >= 0.98 && (loopsRemaining[currentIndex] || 0) > 0) {
+      if (progress >= 0.98 && (loopsRemaining[currentIndex] || 0) > 0) {
         handleSongRepeat(currentIndex);
       }
     }
@@ -315,6 +321,22 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-foreground shrink-0">
           <Maximize className="h-5 w-5" />
         </Button>
+      </div>
+
+      {/* Progress bar */}
+      <div className="relative h-1.5 w-full bg-muted/20 shrink-0">
+        <div
+          className={cn(
+            "absolute inset-y-0 left-0 transition-all duration-150 rounded-r-full",
+            songProgress >= NEAR_END_THRESHOLD
+              ? "bg-gradient-to-r from-primary to-amber-400 shadow-[0_0_8px_hsl(40_90%_55%/0.5)]"
+              : "bg-primary"
+          )}
+          style={{ width: `${(songProgress * 100).toFixed(1)}%` }}
+        />
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-mono text-muted-foreground leading-none">
+          {Math.round(songProgress * 100)}%
+        </span>
       </div>
 
       {/* Song navigation HUD */}

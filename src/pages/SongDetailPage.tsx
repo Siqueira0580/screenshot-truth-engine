@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey } from "@/lib/transpose";
 import Teleprompter from "@/components/Teleprompter";
+import ChordText from "@/components/ChordText";
 
 function extractYoutubeId(url: string | null): string | null {
   if (!url) return null;
@@ -13,12 +14,6 @@ function extractYoutubeId(url: string | null): string | null {
   return match ? match[1] : null;
 }
 
-function highlightChords(text: string) {
-  return text.replace(
-    /\b([A-G][#b]?(?:m|maj|min|dim|aug|sus|add)?[0-9]?(?:\/[A-G][#b]?)?)\b/g,
-    '<span class="chord">$1</span>'
-  );
-}
 
 export default function SongDetailPage() {
   const { id } = useParams();
@@ -132,9 +127,9 @@ export default function SongDetailPage() {
 
       {displayBody && (
         <div className="rounded-lg border border-border bg-card p-6">
-          <pre
+          <ChordText
+            text={displayBody}
             className="chord-text whitespace-pre-wrap font-mono text-sm leading-7 text-foreground"
-            dangerouslySetInnerHTML={{ __html: highlightChords(displayBody) }}
           />
         </div>
       )}

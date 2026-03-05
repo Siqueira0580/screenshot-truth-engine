@@ -9,7 +9,7 @@ import { transposeText, transposeKey } from "@/lib/transpose";
 
 const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 import MetronomePulse from "@/components/teleprompter/MetronomePulse";
-import SongNavigationHUD from "@/components/teleprompter/SongNavigationHUD";
+
 import ChordModal from "@/components/teleprompter/ChordModal";
 
 interface TeleprompterSong {
@@ -312,59 +312,123 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       onMouseMove={showControlsTemporarily}
       onTouchStart={showControlsTemporarily}
     >
-      {/* Top bar */}
-      <div
-        className={cn(
-          "flex items-center justify-between px-6 py-3 transition-opacity duration-300",
-          showControls ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        style={{ background: "hsl(220 20% 4% / 0.9)" }}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <Button variant="ghost" size="icon" onClick={onClose} className="text-foreground shrink-0">
-            <X className="h-5 w-5" />
-          </Button>
-          {song.artist_photo_url ? (
-            <Avatar className="h-9 w-9 shrink-0 border-2 border-primary/40">
-              <AvatarImage src={song.artist_photo_url} alt={song.artist || ""} className="object-cover" />
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-                {(song.artist || "?")[0]}
-              </AvatarFallback>
-            </Avatar>
-          ) : song.artist ? (
-            <Avatar className="h-9 w-9 shrink-0 border-2 border-border">
-              <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
-                {song.artist[0]}
-              </AvatarFallback>
-            </Avatar>
-          ) : null}
-          <div className="min-w-0">
-            <h2 className="text-lg font-bold text-foreground truncate">{song.title}</h2>
-            <p className="text-sm text-muted-foreground truncate">
-              {song.artist}
-              {displayKey && ` · Tom: ${displayKey}`}
-              {song.bpm && ` · ${song.bpm} BPM`}
-              {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
-              {transpose !== 0 && ` · Transposto: ${transpose > 0 ? "+" : ""}${transpose}`}
-            </p>
-          </div>
-          {/* Repeat indicator in header */}
-          {(loopsRemaining[currentIndex] || 0) > 0 && (
-            <div className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 font-mono font-black text-sm shrink-0 transition-all",
-              nearEnd
-                ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert shadow-[0_0_16px_hsl(40_95%_55%/0.4)]"
-                : "bg-primary/10 border-primary/40 text-primary"
-            )}>
-              <Repeat className="h-4 w-4" />
-              🔁 {loopsRemaining[currentIndex]}x
+      {/* Top bar - 3 columns: prev | current | next */}
+      {(() => {
+        const prev = currentIndex > 0 ? songs[currentIndex - 1] : null;
+        const next = currentIndex < songs.length - 1 ? songs[currentIndex + 1] : null;
+        return (
+          <div
+            className={cn(
+              "grid grid-cols-[1fr_auto_1fr] items-center px-3 py-2 transition-opacity duration-300 gap-2",
+              showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
+            style={{ background: "hsl(220 20% 4% / 0.9)" }}
+          >
+            {/* Left: close + prev */}
+            <div className="flex items-center gap-2 min-w-0">
+              <Button variant="ghost" size="icon" onClick={onClose} className="text-foreground shrink-0 h-8 w-8">
+                <X className="h-4 w-4" />
+              </Button>
+              {prev ? (
+                <button
+                  onClick={() => navigateTo(currentIndex - 1)}
+                  className="flex items-center gap-1.5 text-left rounded-lg bg-muted/20 border border-border px-2.5 py-1.5 hover:border-primary/40 transition-all min-w-0"
+                >
+                  <SkipBack className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold leading-none mb-0.5">Anterior</p>
+                    {prev.artist && <p className="text-[10px] text-muted-foreground truncate leading-tight">{prev.artist}</p>}
+                    <p className="text-xs font-bold text-foreground truncate leading-tight">{prev.title}</p>
+                    {prev.musical_key && (
+                      <p className="text-[10px] text-primary font-mono font-semibold leading-tight">
+                        Tom: {transposeKey(prev.musical_key, transpose)}
+                      </p>
+                    )}
+                  </div>
+                </button>
+              ) : <div />}
             </div>
-          )}
-        </div>
-        <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-foreground shrink-0">
-          <Maximize className="h-5 w-5" />
-        </Button>
-      </div>
+
+            {/* Center: current song */}
+            <div className="flex items-center gap-2.5 min-w-0 max-w-md">
+              {song.artist_photo_url ? (
+                <Avatar className="h-9 w-9 shrink-0 border-2 border-primary/40">
+                  <AvatarImage src={song.artist_photo_url} alt={song.artist || ""} className="object-cover" />
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                    {(song.artist || "?")[0]}
+                  </AvatarFallback>
+                </Avatar>
+              ) : song.artist ? (
+                <Avatar className="h-9 w-9 shrink-0 border-2 border-border">
+                  <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                    {song.artist[0]}
+                  </AvatarFallback>
+                </Avatar>
+              ) : null}
+              <div className="min-w-0 text-center">
+                <h2 className="text-base font-bold text-foreground truncate">{song.title}</h2>
+                <p className="text-xs text-muted-foreground truncate">
+                  {song.artist}
+                  {displayKey && ` · Tom: ${displayKey}`}
+                  {song.bpm && ` · ${song.bpm} BPM`}
+                  {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
+                </p>
+              </div>
+              {/* Repeat indicator */}
+              {(loopsRemaining[currentIndex] || 0) > 0 && (
+                <div className={cn(
+                  "flex items-center gap-1 px-2 py-1 rounded-full border-2 font-mono font-black text-xs shrink-0 transition-all",
+                  nearEnd
+                    ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert shadow-[0_0_16px_hsl(40_95%_55%/0.4)]"
+                    : "bg-primary/10 border-primary/40 text-primary"
+                )}>
+                  <Repeat className="h-3.5 w-3.5" />
+                  {loopsRemaining[currentIndex]}x
+                </div>
+              )}
+            </div>
+
+            {/* Right: next + fullscreen */}
+            <div className="flex items-center justify-end gap-2 min-w-0">
+              {next ? (
+                <button
+                  onClick={() => navigateTo(currentIndex + 1)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-right rounded-lg border px-2.5 py-1.5 transition-all min-w-0",
+                    nearEnd && loopsRemaining[currentIndex] <= 0
+                      ? "bg-primary/20 border-primary animate-pulse-alert shadow-[0_0_12px_hsl(var(--primary)/0.3)]"
+                      : "bg-muted/20 border-border hover:border-primary/40"
+                  )}
+                >
+                  <div className="min-w-0">
+                    <p className={cn(
+                      "text-[10px] uppercase tracking-wider font-semibold leading-none mb-0.5",
+                      nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-muted-foreground"
+                    )}>Próxima</p>
+                    {next.artist && <p className="text-[10px] text-muted-foreground truncate leading-tight">{next.artist}</p>}
+                    <p className={cn(
+                      "text-xs font-bold truncate leading-tight",
+                      nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-foreground"
+                    )}>{next.title}</p>
+                    {next.musical_key && (
+                      <p className={cn(
+                        "font-mono font-black text-[11px] leading-tight",
+                        nearEnd && loopsRemaining[currentIndex] <= 0 ? "animate-key-blink" : "text-primary"
+                      )}>
+                        Tom: {transposeKey(next.musical_key, transpose)}
+                      </p>
+                    )}
+                  </div>
+                  <SkipForward className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                </button>
+              ) : <div />}
+              <Button variant="ghost" size="icon" onClick={toggleFullscreen} className="text-foreground shrink-0 h-8 w-8">
+                <Maximize className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Progress bar */}
       <div className="relative h-1.5 w-full bg-muted/20 shrink-0">
@@ -381,17 +445,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           {Math.round(songProgress * 100)}%
         </span>
       </div>
-
-      {/* Song navigation HUD */}
-      <SongNavigationHUD
-        songs={songs}
-        currentIndex={currentIndex}
-        transpose={transpose}
-        visible={showControls}
-        nearEnd={nearEnd}
-        remainingLoops={loopsRemaining[currentIndex] || 0}
-        onNavigate={navigateTo}
-      />
 
       {/* Continuous scroll area with all songs */}
       <div

@@ -106,6 +106,17 @@ export async function updateSetlistItemPositions(items: { id: string; position: 
   }
 }
 
+export async function bulkUpdateSetlistItems(
+  items: { id: string; loop_count: number | null; speed: number | null; bpm: number | null }[]
+) {
+  for (const item of items) {
+    await supabase
+      .from("setlist_items")
+      .update({ loop_count: item.loop_count, speed: item.speed, bpm: item.bpm })
+      .eq("id", item.id);
+  }
+}
+
 // Artists
 export async function fetchArtists() {
   const { data, error } = await supabase.from("artists").select("*").order("name");

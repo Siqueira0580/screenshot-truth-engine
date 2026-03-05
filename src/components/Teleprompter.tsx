@@ -51,6 +51,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTime = useRef<number>(0);
   const songRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const repeatingRef = useRef(false);
 
   // Initialize loops remaining from song config
   useEffect(() => {
@@ -69,6 +70,9 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   // Track current song based on scroll position
   // Handle loop repeat - scroll back to song start
   const handleSongRepeat = useCallback((songIndex: number) => {
+    if (repeatingRef.current) return; // prevent multiple triggers
+    repeatingRef.current = true;
+    
     const el = songRefs.current[songIndex];
     if (el && scrollRef.current) {
       scrollRef.current.scrollTo({ top: el.offsetTop - 20, behavior: "smooth" });
@@ -79,6 +83,11 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       return next;
     });
     setNearEnd(false);
+    
+    // Allow auto-scroll to resume after scroll-back completes
+    setTimeout(() => {
+      repeatingRef.current = false;
+    }, 1500);
   }, []);
 
   const updateCurrentSong = useCallback(() => {
@@ -144,7 +153,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       const delta = timestamp - lastTime.current;
       lastTime.current = timestamp;
 
-      if (scrollRef.current) {
+      if (scrollRef.current && !repeatingRef.current) {
         const pxPerMs = speed * 0.03;
         scrollRef.current.scrollTop += pxPerMs * delta;
         updateCurrentSong();

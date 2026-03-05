@@ -109,6 +109,7 @@ export type Database = {
       }
       songs: {
         Row: {
+          access_count: number | null
           artist: string | null
           auto_next: boolean | null
           body_text: string | null
@@ -126,6 +127,7 @@ export type Database = {
           youtube_url: string | null
         }
         Insert: {
+          access_count?: number | null
           artist?: string | null
           auto_next?: boolean | null
           body_text?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           youtube_url?: string | null
         }
         Update: {
+          access_count?: number | null
           artist?: string | null
           auto_next?: boolean | null
           body_text?: string | null

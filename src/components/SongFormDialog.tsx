@@ -24,7 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { createSong, updateSong, fetchSong } from "@/lib/supabase-queries";
+import { createSong, updateSong, fetchSong, findOrCreateArtist } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { FileUp, Loader2, Settings2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,7 +92,12 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
   }, [song, isEditing, open]);
 
   const mutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
+      // Auto-deduplicate artist
+      if (form.artist.trim()) {
+        await findOrCreateArtist(form.artist.trim());
+      }
+
       const payload: any = {
         title: form.title,
         artist: form.artist || null,
@@ -111,6 +116,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["songs"] });
+      queryClient.invalidateQueries({ queryKey: ["artists"] });
       if (isEditing) queryClient.invalidateQueries({ queryKey: ["song", songId] });
       toast.success(isEditing ? "Música atualizada!" : "Música criada!");
       onOpenChange(false);

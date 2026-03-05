@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Plus, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,8 @@ export default function ArtistsPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {artists.map((artist, i) => (
-            <div
+            <Link
+              to={`/artists/${artist.id}`}
               key={artist.id}
               className="group relative rounded-lg border border-border bg-card p-5 transition-all hover:border-primary/30 animate-fade-in"
               style={{ animationDelay: `${i * 50}ms` }}
@@ -88,12 +90,12 @@ export default function ArtistsPage() {
                   variant="ghost"
                   size="icon"
                   className="opacity-0 group-hover:opacity-100"
-                  onClick={() => deleteM.mutate(artist.id)}
+                  onClick={(e) => { e.preventDefault(); deleteM.mutate(artist.id); }}
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       )}

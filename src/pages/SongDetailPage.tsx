@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Music2, MonitorPlay, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchSong } from "@/lib/supabase-queries";
+import { fetchSong, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey } from "@/lib/transpose";
 import Teleprompter from "@/components/Teleprompter";
 
@@ -29,6 +29,12 @@ export default function SongDetailPage() {
     queryFn: () => fetchSong(id!),
     enabled: !!id,
   });
+
+  useEffect(() => {
+    if (id) {
+      incrementAccessCount(id);
+    }
+  }, [id]);
 
   if (isLoading) {
     return (

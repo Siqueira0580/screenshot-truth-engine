@@ -223,7 +223,24 @@ export default function SyncInviteModal({
         results.push({ email, link: `${window.location.origin}/setlists/${setlistId}?invite=${data.token}` });
       }
       setInviteLinks(results);
-      toast.success(`${results.length} convite(s) enviado(s)!`);
+
+      // Send emails via edge function
+      if (results.length > 0) {
+        const senderName = user.user_metadata?.first_name || user.email?.split("@")[0] || "Músico";
+        const { error: emailError } = await supabase.functions.invoke("send-invite-email", {
+          body: {
+            invites: results,
+            setlistName,
+            senderName,
+          },
+        });
+        if (emailError) {
+          console.error("Email send error:", emailError);
+          toast.warning("Convites criados, mas houve erro ao enviar e-mails. Use os links abaixo.");
+        } else {
+          toast.success(`${results.length} convite(s) enviado(s) por e-mail!`);
+        }
+      }
     } catch (err: any) {
       toast.error("Erro: " + (err.message || ""));
     } finally {

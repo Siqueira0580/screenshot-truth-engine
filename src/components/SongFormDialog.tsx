@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/accordion";
 import { createSong, updateSong, fetchSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
-import { FileUp, Loader2, Settings2 } from "lucide-react";
+import { FileUp, Loader2, Settings2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
@@ -42,6 +42,8 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
   const isEditing = !!songId;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isParsing, setIsParsing] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [form, setForm] = useState({
     title: "",
@@ -158,6 +160,43 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
     }
   };
 
+  const handleSearchCifra = async () => {
+    if (!searchQuery.trim()) {
+      toast.error("Digite o nome da música");
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("search-cifra", {
+        body: { query: searchQuery.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        title: data.title || prev.title,
+        artist: data.artist || prev.artist,
+        composer: data.composer || prev.composer,
+        musical_key: data.musical_key || prev.musical_key,
+        style: data.style || prev.style,
+        bpm: data.bpm?.toString() || prev.bpm,
+        time_signature: data.time_signature || prev.time_signature,
+        body_text: data.body_text || prev.body_text,
+      }));
+      setSearchQuery("");
+      toast.success("Cifra encontrada! Campos preenchidos automaticamente.");
+    } catch (err) {
+      console.error("Search cifra error:", err);
+      toast.error("Erro ao buscar cifra");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -172,40 +211,79 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           }}
           className="space-y-4"
         >
-          {/* PDF Import - prominent at top */}
-          <div className="flex items-center gap-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handlePdfUpload(file);
-              }}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isParsing}
-              onClick={() => fileInputRef.current?.click()}
-              className="gap-2"
-            >
-              {isParsing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processando PDF...
-                </>
-              ) : (
-                <>
-                  <FileUp className="h-4 w-4" />
-                  Importar PDF
-                </>
-              )}
-            </Button>
-            <p className="text-xs text-muted-foreground">
-              Importe um PDF de cifra para preencher todos os campos automaticamente
-            </p>
+          {/* AI Search + PDF Import */}
+          <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+            {/* AI Search */}
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Buscar cifra por nome... Ex: Evidências - Chitãozinho e Xororó"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSearchCifra();
+                  }
+                }}
+                className="flex-1"
+                disabled={isSearching}
+              />
+              <Button
+                type="button"
+                variant="default"
+                disabled={isSearching || !searchQuery.trim()}
+                onClick={handleSearchCifra}
+                className="gap-2 shrink-0"
+              >
+                {isSearching ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Buscando...
+                  </>
+                ) : (
+                  <>
+                    <Search className="h-4 w-4" />
+                    Buscar Cifra
+                  </>
+                )}
+              </Button>
+            </div>
+            {/* PDF Import */}
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handlePdfUpload(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isParsing}
+                onClick={() => fileInputRef.current?.click()}
+                className="gap-2"
+              >
+                {isParsing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processando PDF...
+                  </>
+                ) : (
+                  <>
+                    <FileUp className="h-4 w-4" />
+                    Importar PDF
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Ou importe um PDF de cifra
+              </p>
+            </div>
           </div>
 
           {/* Metadados principais */}

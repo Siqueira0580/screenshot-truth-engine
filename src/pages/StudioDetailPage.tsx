@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano,
-  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch,
+  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch, BookOpen,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -258,6 +258,11 @@ export default function StudioDetailPage() {
           <h1 className="text-2xl font-bold tracking-tight">{song?.title || "Carregando..."}</h1>
           {song?.artist && <p className="text-muted-foreground text-sm">{song.artist}</p>}
         </div>
+        {song?.body_text && (
+          <Button variant="outline" className="gap-2 shrink-0" onClick={() => navigate(`/study/${songId}`)}>
+            <BookOpen className="h-4 w-4" /> Modo Estudo
+          </Button>
+        )}
       </div>
 
       {/* Now playing header */}

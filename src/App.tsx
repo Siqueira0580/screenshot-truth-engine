@@ -12,6 +12,7 @@ import ArtistsPage from "@/pages/ArtistsPage";
 import ArtistDetailPage from "@/pages/ArtistDetailPage";
 import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
+import StudyPage from "@/pages/StudyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/artists/:id" element={<ArtistDetailPage />} />
             <Route path="/studio" element={<StudioPage />} />
             <Route path="/studio/:songId" element={<StudioDetailPage />} />
+            <Route path="/study/:songId" element={<StudyPage />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>

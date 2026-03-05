@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ export default function SetlistDetailPage() {
     Record<string, { loop_count: number | null; speed: number | null; bpm: number | null }>
   >({});
   const [dirty, setDirty] = useState(false);
+  const [autoHideControls, setAutoHideControls] = useState(true);
   const queryClient = useQueryClient();
 
   const { data: setlist } = useQuery({
@@ -139,10 +140,22 @@ export default function SetlistDetailPage() {
             </Button>
           )}
           {items.length > 0 && (
-            <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
-              <MonitorPlay className="h-4 w-4" />
-              Teleprompter
-            </Button>
+            <>
+              <Button
+                variant={autoHideControls ? "outline" : "secondary"}
+                size="sm"
+                onClick={() => setAutoHideControls((v) => !v)}
+                className="gap-2"
+                title={autoHideControls ? "Auto-hide ativo: controles somem ao reproduzir" : "Auto-hide desativado: controles sempre visíveis"}
+              >
+                {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {autoHideControls ? "Auto-hide" : "Sempre visível"}
+              </Button>
+              <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
+                <MonitorPlay className="h-4 w-4" />
+                Teleprompter
+              </Button>
+            </>
           )}
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -297,6 +310,7 @@ export default function SetlistDetailPage() {
         }))}
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
+        autoHideControls={autoHideControls}
       />
     </div>
   );

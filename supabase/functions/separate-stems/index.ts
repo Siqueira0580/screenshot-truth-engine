@@ -112,6 +112,9 @@ serve(async (req) => {
         const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
         const stemMapping: Record<string, string> = {
           vocals: "file_vocals",
           drums: "file_percussion",
@@ -128,37 +131,31 @@ serve(async (req) => {
           const stemRes = await fetch(stemUrl);
           if (!stemRes.ok) { console.error(`Failed to download ${stemName}`); continue; }
 
-          const stemBlob = await stemRes.blob();
+          const stemArrayBuffer = await stemRes.arrayBuffer();
+          const stemUint8 = new Uint8Array(stemArrayBuffer);
           const ext = stemUrl.includes(".wav") ? "wav" : "mp3";
           const storagePath = `${song_id}/${stemName}.${ext}`;
+          const contentType = ext === "wav" ? "audio/wav" : "audio/mpeg";
 
-          const uploadRes = await fetch(
-            `${SUPABASE_URL}/storage/v1/object/audio-stems/${storagePath}`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-                "Content-Type": stemBlob.type || "audio/mpeg",
-                "x-upsert": "true",
-              },
-              body: stemBlob,
-            }
-          );
+          const { error: uploadError } = await supabase.storage
+            .from("audio-stems")
+            .upload(storagePath, stemUint8, {
+              contentType,
+              upsert: true,
+            });
 
-          if (!uploadRes.ok) {
-            const errText = await uploadRes.text();
-            console.error(`Upload failed for ${stemName}:`, errText);
+          if (uploadError) {
+            console.error(`Upload failed for ${stemName}:`, JSON.stringify(uploadError));
             continue;
           }
 
-          updates[dbColumn] = `${SUPABASE_URL}/storage/v1/object/public/audio-stems/${storagePath}`;
-          console.log(`Uploaded ${stemName}`);
+          const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(storagePath);
+          updates[dbColumn] = urlData.publicUrl;
+          console.log(`Uploaded ${stemName} -> ${urlData.publicUrl}`);
         }
 
         // Update DB
         if (Object.keys(updates).length > 0) {
-          const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-          const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
           const { error: updateError } = await supabase
             .from("audio_tracks")
             .update(updates)

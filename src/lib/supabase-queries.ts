@@ -221,3 +221,31 @@ export async function incrementAccessCount(id: string) {
   const current = (data as any)?.access_count || 0;
   await supabase.from("songs").update({ access_count: current + 1 } as any).eq("id", id);
 }
+
+export async function createSetlistFromSelection(
+  name: string,
+  sourceItems: { song_id: string; loop_count: number | null; speed: number | null; bpm: number | null; transposed_key: string | null }[]
+) {
+  const userId = await getCurrentUserId();
+  const { data: newSetlist, error: setlistError } = await supabase
+    .from("setlists")
+    .insert({ name, user_id: userId } as any)
+    .select()
+    .single();
+  if (setlistError) throw setlistError;
+
+  const inserts = sourceItems.map((item, i) => ({
+    setlist_id: (newSetlist as Setlist).id,
+    song_id: item.song_id,
+    position: i + 1,
+    loop_count: item.loop_count,
+    speed: item.speed,
+    bpm: item.bpm,
+    transposed_key: item.transposed_key,
+  }));
+
+  const { error: itemsError } = await supabase.from("setlist_items").insert(inserts);
+  if (itemsError) throw itemsError;
+
+  return newSetlist as Setlist;
+}

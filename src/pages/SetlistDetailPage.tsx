@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
   removeSongFromSetlist,
   bulkUpdateSetlistItems,
   createSetlistFromSelection,
+  updateSetlist,
 } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -26,6 +27,8 @@ import StageSyncInviteModal from "@/components/StageSyncInviteModal";
 import SyncInviteModal from "@/components/SyncInviteModal";
 import SetlistToolbar, { type SortBy } from "@/components/SetlistToolbar";
 import CreateFromSelectionBar from "@/components/CreateFromSelectionBar";
+import SetlistSettingsModal from "@/components/SetlistSettingsModal";
+import SetlistHeader from "@/components/SetlistHeader";
 
 // Chromatic key order for sorting
 const CHROMATIC_ORDER = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
@@ -50,6 +53,7 @@ export default function SetlistDetailPage() {
   const [dirty, setDirty] = useState(false);
   const [autoHideControls, setAutoHideControls] = useState(true);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Filter / sort / selection state
   const [sortBy, setSortBy] = useState<SortBy>("manual");
@@ -285,74 +289,78 @@ export default function SetlistDetailPage() {
         </Link>
       </Button>
 
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{setlist?.name}</h1>
-          <p className="text-muted-foreground mt-1">
-            {items.length} música{items.length !== 1 ? "s" : ""}
-            {stageSync.connectedCount > 1 && (
-              <Badge variant="secondary" className="ml-2 text-xs">
-                <Wifi className="h-3 w-3 mr-1" />
-                {stageSync.connectedCount} online
-              </Badge>
+      <SetlistHeader
+        name={setlist?.name || ""}
+        itemCount={items.length}
+        showDate={(setlist as any)?.show_date}
+        startTime={(setlist as any)?.start_time}
+        endTime={(setlist as any)?.end_time}
+        intervalDuration={(setlist as any)?.interval_duration}
+        showDuration={(setlist as any)?.show_duration}
+        musicians={(setlist as any)?.musicians}
+        onSettingsClick={() => setSettingsOpen(true)}
+      >
+        {stageSync.connectedCount > 1 && (
+          <Badge variant="secondary" className="text-xs">
+            <Wifi className="h-3 w-3 mr-1" />
+            {stageSync.connectedCount} online
+          </Badge>
+        )}
+      </SetlistHeader>
+      <div className="flex items-center gap-2 flex-wrap">
+        {dirty && (
+          <Button
+            onClick={() => bulkSaveMutation.mutate()}
+            disabled={bulkSaveMutation.isPending}
+            className="gap-2"
+          >
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Salvar Configs</span>
+          </Button>
+        )}
+        {items.length > 0 && (
+          <>
+            {stageSync.isMaster ? (
+              <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
+                <Radio className="h-4 w-4" />
+                <span className="hidden sm:inline">Parar Transmissão</span>
+              </Button>
+            ) : stageSync.isFollowing ? (
+              <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
+                <WifiOff className="h-4 w-4" />
+                <span className="hidden sm:inline">Desconectar</span>
+              </Button>
+            ) : (
+              <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2" title="Iniciar Modo Palco">
+                <Radio className="h-4 w-4" />
+                <span className="hidden sm:inline">Modo Palco</span>
+              </Button>
             )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {dirty && (
+
+            <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2" title="Convidar músicos">
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Convidar</span>
+            </Button>
+
             <Button
-              onClick={() => bulkSaveMutation.mutate()}
-              disabled={bulkSaveMutation.isPending}
+              variant={autoHideControls ? "outline" : "secondary"}
+              size="sm"
+              onClick={() => setAutoHideControls((v) => !v)}
               className="gap-2"
             >
-              <Save className="h-4 w-4" />
-              <span className="hidden sm:inline">Salvar Configs</span>
+              {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Sempre visível"}</span>
             </Button>
-          )}
-          {items.length > 0 && (
-            <>
-              {stageSync.isMaster ? (
-                <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
-                  <Radio className="h-4 w-4" />
-                  <span className="hidden sm:inline">Parar Transmissão</span>
-                </Button>
-              ) : stageSync.isFollowing ? (
-                <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
-                  <WifiOff className="h-4 w-4" />
-                  <span className="hidden sm:inline">Desconectar</span>
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2" title="Iniciar Modo Palco">
-                  <Radio className="h-4 w-4" />
-                  <span className="hidden sm:inline">Modo Palco</span>
-                </Button>
-              )}
-
-              <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2" title="Convidar músicos">
-                <UserPlus className="h-4 w-4" />
-                <span className="hidden sm:inline">Convidar</span>
-              </Button>
-
-              <Button
-                variant={autoHideControls ? "outline" : "secondary"}
-                size="sm"
-                onClick={() => setAutoHideControls((v) => !v)}
-                className="gap-2"
-              >
-                {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Sempre visível"}</span>
-              </Button>
-              <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
-                <MonitorPlay className="h-4 w-4" />
-                <span className="hidden sm:inline">Teleprompter</span>
-              </Button>
-            </>
-          )}
-          <Button onClick={() => setAddOpen(true)}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline ml-1">Adicionar</span>
-          </Button>
-        </div>
+            <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
+              <MonitorPlay className="h-4 w-4" />
+              <span className="hidden sm:inline">Teleprompter</span>
+            </Button>
+          </>
+        )}
+        <Button onClick={() => setAddOpen(true)}>
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline ml-1">Adicionar</span>
+        </Button>
       </div>
 
       {/* Following / Master indicators */}
@@ -542,6 +550,16 @@ export default function SetlistDetailPage() {
         onOpenChange={setInviteOpen}
         setlistId={id!}
         setlistName={setlist?.name || ""}
+      />
+
+      <SetlistSettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        setlist={setlist ? { ...setlist, ...((setlist as any) || {}) } : null}
+        onSave={async (data) => {
+          await updateSetlist(id!, data as any);
+          queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+        }}
       />
 
       <Teleprompter

@@ -99,6 +99,17 @@ export async function deleteSetlist(id: string) {
   if (error) throw error;
 }
 
+export async function updateSetlist(id: string, data: Record<string, any>) {
+  const { data: updated, error } = await supabase
+    .from("setlists")
+    .update(data)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return updated;
+}
+
 export async function addSongToSetlist(setlistId: string, songId: string, position: number) {
   const { error } = await supabase.from("setlist_items").insert({
     setlist_id: setlistId,

@@ -634,7 +634,7 @@ export default function SetlistDetailPage() {
       />
 
       <Teleprompter
-        songs={items.map((item: any) => ({
+        songs={processedItems.map((item: any) => ({
           title: item.songs?.title || "",
           artist: item.songs?.artist,
           artist_photo_url: item.songs?.artist ? artistPhotoMap[item.songs.artist.toLowerCase()] || null : null,

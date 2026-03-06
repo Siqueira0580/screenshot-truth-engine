@@ -56,7 +56,7 @@ function prevSpeedCycle(current: number): number {
 
 // Sortable song item component
 function SortableSongItem({
-  item, selectedSongs, toggleSelect, getVal, updateField,
+  item, index, selectedSongs, toggleSelect, getVal, updateField,
   removeMutation, isMobile,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
@@ -90,7 +90,7 @@ function SortableSongItem({
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </button>
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary font-mono text-sm font-bold mt-0.5">
-          {item.position}
+          {index + 1}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
@@ -270,6 +270,35 @@ export default function SetlistDetailPage() {
     }
     return result;
   }, [items, filterKey, sortBy]);
+
+  // When sort changes (artist/key), persist the new order to DB
+  const sortAppliedRef = useRef<SortBy>("manual");
+  useEffect(() => {
+    if (sortBy === "manual" || sortBy === sortAppliedRef.current) return;
+    if (processedItems.length === 0) return;
+    sortAppliedRef.current = sortBy;
+
+    const updates = processedItems.map((item: any, idx: number) => ({
+      id: item.id,
+      position: idx + 1,
+    }));
+
+    // Optimistic update
+    queryClient.setQueryData(
+      ["setlist-items", id],
+      processedItems.map((item: any, idx: number) => ({ ...item, position: idx + 1 }))
+    );
+
+    updateSetlistItemPositions(updates)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+        toast.success("Ordem atualizada!");
+      })
+      .catch(() => {
+        queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+        toast.error("Erro ao salvar ordem");
+      });
+  }, [sortBy, processedItems, id, queryClient]);
 
   // Selection helpers
   const allVisibleSelected = processedItems.length > 0 && processedItems.every((i: any) => selectedSongs.has(i.id));
@@ -551,13 +580,12 @@ export default function SetlistDetailPage() {
                 {processedItems.map((item: any, i: number) => (
                   <SortableSongItem
                     key={item.id}
-                    item={item} i={i}
+                    item={item} index={i}
                     selectedSongs={selectedSongs}
                     toggleSelect={toggleSelect}
                     getVal={getVal}
                     updateField={updateField}
                     removeMutation={removeMutation}
-                    
                     isMobile={isMobile}
                   />
                 ))}
@@ -605,7 +633,7 @@ export default function SetlistDetailPage() {
       />
 
       <Teleprompter
-        songs={items.map((item: any) => ({
+        songs={processedItems.map((item: any) => ({
           title: item.songs?.title || "",
           artist: item.songs?.artist,
           artist_photo_url: item.songs?.artist ? artistPhotoMap[item.songs.artist.toLowerCase()] || null : null,

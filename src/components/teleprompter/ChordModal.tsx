@@ -35,7 +35,7 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-xs">
+      <DialogContent className="max-w-xs z-[200]">
         <DialogHeader>
           <DialogTitle className="font-mono text-xl text-primary">{chord}</DialogTitle>
         </DialogHeader>

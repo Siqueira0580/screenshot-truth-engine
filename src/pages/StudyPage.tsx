@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { parseChordsInText } from "@/lib/chord-parser";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";
+import SongChordsFAB from "@/components/SongChordsFAB";
 
 const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
@@ -438,6 +439,7 @@ export default function StudyPage() {
       </div>
 
       <ChordModal chord={selectedChord} open={chordModalOpen} onClose={() => setChordModalOpen(false)} />
+      <SongChordsFAB bodyText={displayBody} />
     </div>
   );
 }

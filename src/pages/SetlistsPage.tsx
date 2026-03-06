@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Plus, ListMusic, Trash2, Calendar, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { fetchSetlists, createSetlist, deleteSetlist, updateSetlist } from "@/lib/supabase-queries";
+import { fetchSetlists, createSetlist, deleteSetlist } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";

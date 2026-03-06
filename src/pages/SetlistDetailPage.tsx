@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Settings, Share2, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
   addSongToSetlist, removeSongFromSetlist, bulkUpdateSetlistItems,
   createSetlistFromSelection, updateSetlist, updateSetlistItemPositions,
 } from "@/lib/supabase-queries";
-import { supabase } from "@/integrations/supabase/client";
+
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
 import { useStageSync } from "@/hooks/useStageSync";
@@ -56,8 +56,8 @@ function prevSpeedCycle(current: number): number {
 
 // Sortable song item component
 function SortableSongItem({
-  item, i, selectedSongs, toggleSelect, getVal, updateField,
-  removeMutation, artistPhotoMap, isMobile,
+  item, selectedSongs, toggleSelect, getVal, updateField,
+  removeMutation, isMobile,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
@@ -597,7 +597,7 @@ export default function SetlistDetailPage() {
 
       <SetlistSettingsModal
         open={settingsOpen} onOpenChange={setSettingsOpen}
-        setlist={setlist ? { ...setlist, ...((setlist as any) || {}) } : null}
+        setlist={setlist ? { ...(setlist as any) } : null}
         onSave={async (data) => {
           await updateSetlist(id!, data as any);
           queryClient.invalidateQueries({ queryKey: ["setlist", id] });

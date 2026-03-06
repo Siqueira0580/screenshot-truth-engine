@@ -6,16 +6,23 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon, X, Save } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+const INSTRUMENT_ROLES = [
+  "Baterista", "Violão 7", "Violão 6", "Guitarra", "Pandeiro",
+  "Surdo", "Cavaquinho", "Banjo", "Percussão Geral", "Voz",
+  "Baixo", "Teclado", "Saxofone", "Trompete", "Flauta",
+];
+
 interface SetlistSettingsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   setlist: {
-    id: string;
+    id?: string;
     name: string;
     show_date?: string | null;
     show_duration?: number | null;
@@ -52,19 +59,32 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
   const [endTime, setEndTime] = useState("");
   const [endTimeManual, setEndTimeManual] = useState(false);
   const [musicians, setMusicians] = useState<string[]>([]);
-  const [musicianInput, setMusicianInput] = useState("");
+  const [musicianName, setMusicianName] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (setlist && open) {
-      setName(setlist.name || "");
-      setShowDate(setlist.show_date ? new Date(setlist.show_date) : undefined);
-      setStartTime(setlist.start_time || "");
-      setShowDuration(setlist.show_duration ?? "");
-      setIntervalDuration(setlist.interval_duration ?? "");
-      setEndTime(setlist.end_time || "");
-      setMusicians(Array.isArray(setlist.musicians) ? setlist.musicians : []);
+    if (open) {
+      if (setlist) {
+        setName(setlist.name || "");
+        setShowDate(setlist.show_date ? new Date(setlist.show_date) : undefined);
+        setStartTime(setlist.start_time || "");
+        setShowDuration(setlist.show_duration ?? "");
+        setIntervalDuration(setlist.interval_duration ?? "");
+        setEndTime(setlist.end_time || "");
+        setMusicians(Array.isArray(setlist.musicians) ? setlist.musicians : []);
+      } else {
+        setName("");
+        setShowDate(undefined);
+        setStartTime("");
+        setShowDuration("");
+        setIntervalDuration("");
+        setEndTime("");
+        setMusicians([]);
+      }
       setEndTimeManual(false);
+      setMusicianName("");
+      setSelectedRole("");
     }
   }, [setlist, open]);
 
@@ -79,18 +99,27 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
     }
   }, [startTime, showDuration, intervalDuration, endTimeManual]);
 
-  const handleAddMusician = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && musicianInput.trim()) {
-      e.preventDefault();
-      if (!musicians.includes(musicianInput.trim())) {
-        setMusicians((prev) => [...prev, musicianInput.trim()]);
-      }
-      setMusicianInput("");
+  const handleAddMusician = useCallback(() => {
+    if (!musicianName.trim()) return;
+    const tag = selectedRole
+      ? `${musicianName.trim()} (${selectedRole})`
+      : musicianName.trim();
+    if (!musicians.includes(tag)) {
+      setMusicians((prev) => [...prev, tag]);
     }
-  }, [musicianInput, musicians]);
+    setMusicianName("");
+    setSelectedRole("");
+  }, [musicianName, selectedRole, musicians]);
 
-  const removeMusician = useCallback((name: string) => {
-    setMusicians((prev) => prev.filter((m) => m !== name));
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddMusician();
+    }
+  }, [handleAddMusician]);
+
+  const removeMusician = useCallback((m: string) => {
+    setMusicians((prev) => prev.filter((x) => x !== m));
   }, []);
 
   const handleSave = async () => {
@@ -110,7 +139,7 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
         musicians,
       });
       onOpenChange(false);
-      toast.success("Configurações do show salvas!");
+      toast.success("Configurações salvas!");
     } catch {
       toast.error("Erro ao salvar configurações");
     } finally {
@@ -120,7 +149,7 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Configuração do Show</DialogTitle>
         </DialogHeader>
@@ -159,10 +188,7 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
               <div className="space-y-1.5">
                 <Label htmlFor="show-duration" className="text-xs">Show (min)</Label>
                 <Input
-                  id="show-duration"
-                  type="number"
-                  min={0}
-                  placeholder="120"
+                  id="show-duration" type="number" min={0} placeholder="120"
                   value={showDuration}
                   onChange={(e) => setShowDuration(e.target.value ? Number(e.target.value) : "")}
                 />
@@ -170,10 +196,7 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
               <div className="space-y-1.5">
                 <Label htmlFor="interval-dur" className="text-xs">Intervalo (min)</Label>
                 <Input
-                  id="interval-dur"
-                  type="number"
-                  min={0}
-                  placeholder="15"
+                  id="interval-dur" type="number" min={0} placeholder="15"
                   value={intervalDuration}
                   onChange={(e) => setIntervalDuration(e.target.value ? Number(e.target.value) : "")}
                 />
@@ -181,27 +204,38 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
               <div className="space-y-1.5">
                 <Label htmlFor="end-time" className="text-xs">Término</Label>
                 <Input
-                  id="end-time"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => {
-                    setEndTime(e.target.value);
-                    setEndTimeManual(true);
-                  }}
+                  id="end-time" type="time" value={endTime}
+                  onChange={(e) => { setEndTime(e.target.value); setEndTimeManual(true); }}
                 />
               </div>
             </div>
           </div>
 
-          {/* Row 3: Musicians */}
-          <div className="space-y-1.5">
+          {/* Row 3: Musicians with Role Selector */}
+          <div className="space-y-2">
             <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Escala de Músicos</Label>
-            <Input
-              placeholder='Ex: João (Baixo) — pressione Enter'
-              value={musicianInput}
-              onChange={(e) => setMusicianInput(e.target.value)}
-              onKeyDown={handleAddMusician}
-            />
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nome do músico"
+                value={musicianName}
+                onChange={(e) => setMusicianName(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="flex-1"
+              />
+              <Select value={selectedRole} onValueChange={setSelectedRole}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Função" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTRUMENT_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>{role}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button type="button" variant="outline" size="sm" onClick={handleAddMusician} disabled={!musicianName.trim()}>
+                +
+              </Button>
+            </div>
             {musicians.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {musicians.map((m) => (

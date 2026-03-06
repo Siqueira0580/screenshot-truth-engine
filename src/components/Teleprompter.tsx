@@ -319,10 +319,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         return (
           <>
           <div
-            className={cn(
-              "flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center px-2 sm:px-3 py-2 transition-opacity duration-300 gap-1 md:gap-2",
-              showControls ? "opacity-100" : "opacity-0 pointer-events-none"
-            )}
+            className="flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center px-2 sm:px-3 py-2 gap-1 md:gap-2"
             style={{ background: "hsl(220 20% 4% / 0.9)" }}
           >
             {/* Left: close + prev (prev hidden on mobile) */}

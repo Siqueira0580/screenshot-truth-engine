@@ -580,13 +580,12 @@ export default function SetlistDetailPage() {
                 {processedItems.map((item: any, i: number) => (
                   <SortableSongItem
                     key={item.id}
-                    item={item} i={i}
+                    item={item} index={i}
                     selectedSongs={selectedSongs}
                     toggleSelect={toggleSelect}
                     getVal={getVal}
                     updateField={updateField}
                     removeMutation={removeMutation}
-                    
                     isMobile={isMobile}
                   />
                 ))}

@@ -1,0 +1,6 @@
+
+ALTER TABLE public.setlists
+  ADD COLUMN IF NOT EXISTS start_time TEXT,
+  ADD COLUMN IF NOT EXISTS interval_duration INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS end_time TEXT,
+  ADD COLUMN IF NOT EXISTS musicians JSONB DEFAULT '[]'::jsonb;

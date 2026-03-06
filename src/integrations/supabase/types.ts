@@ -249,26 +249,38 @@ export type Database = {
       setlists: {
         Row: {
           created_at: string
+          end_time: string | null
           id: string
+          interval_duration: number | null
+          musicians: Json | null
           name: string
           show_date: string | null
           show_duration: number | null
+          start_time: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string
+          end_time?: string | null
           id?: string
+          interval_duration?: number | null
+          musicians?: Json | null
           name: string
           show_date?: string | null
           show_duration?: number | null
+          start_time?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string
+          end_time?: string | null
           id?: string
+          interval_duration?: number | null
+          musicians?: Json | null
           name?: string
           show_date?: string | null
           show_duration?: number | null
+          start_time?: string | null
           user_id?: string | null
         }
         Relationships: []

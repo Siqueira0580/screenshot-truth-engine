@@ -271,6 +271,35 @@ export default function SetlistDetailPage() {
     return result;
   }, [items, filterKey, sortBy]);
 
+  // When sort changes (artist/key), persist the new order to DB
+  const sortAppliedRef = useRef<SortBy>("manual");
+  useEffect(() => {
+    if (sortBy === "manual" || sortBy === sortAppliedRef.current) return;
+    if (processedItems.length === 0) return;
+    sortAppliedRef.current = sortBy;
+
+    const updates = processedItems.map((item: any, idx: number) => ({
+      id: item.id,
+      position: idx + 1,
+    }));
+
+    // Optimistic update
+    queryClient.setQueryData(
+      ["setlist-items", id],
+      processedItems.map((item: any, idx: number) => ({ ...item, position: idx + 1 }))
+    );
+
+    updateSetlistItemPositions(updates)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+        toast.success("Ordem atualizada!");
+      })
+      .catch(() => {
+        queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+        toast.error("Erro ao salvar ordem");
+      });
+  }, [sortBy, processedItems, id, queryClient]);
+
   // Selection helpers
   const allVisibleSelected = processedItems.length > 0 && processedItems.every((i: any) => selectedSongs.has(i.id));
   const someVisibleSelected = processedItems.some((i: any) => selectedSongs.has(i.id));

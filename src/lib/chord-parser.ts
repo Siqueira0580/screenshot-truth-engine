@@ -59,6 +59,22 @@ export interface TextSegment {
  * Parse text into segments of plain text and chords.
  * Used for rendering chord-highlighted text with React components.
  */
+/**
+ * Extract all unique chord names from a text string (no duplicates).
+ */
+export function extractUniqueChords(text: string): string[] {
+  const chords = findChordsInText(text);
+  const seen = new Set<string>();
+  const unique: string[] = [];
+  for (const c of chords) {
+    if (!seen.has(c.chord)) {
+      seen.add(c.chord);
+      unique.push(c.chord);
+    }
+  }
+  return unique;
+}
+
 export function parseChordsInText(text: string): TextSegment[] {
   const chords = findChordsInText(text);
   if (chords.length === 0) return [{ type: "text", content: text }];

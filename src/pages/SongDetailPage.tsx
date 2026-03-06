@@ -7,6 +7,7 @@ import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-qu
 import { transposeText, transposeKey } from "@/lib/transpose";
 import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
+import SongChordsFAB from "@/components/SongChordsFAB";
 
 function extractYoutubeId(url: string | null): string | null {
   if (!url) return null;
@@ -138,6 +139,7 @@ export default function SongDetailPage() {
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
       />
+      <SongChordsFAB bodyText={displayBody} />
     </div>
   );
 }

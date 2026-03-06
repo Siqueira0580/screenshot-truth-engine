@@ -11,6 +11,7 @@ const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B
 import MetronomePulse from "@/components/teleprompter/MetronomePulse";
 
 import ChordModal from "@/components/teleprompter/ChordModal";
+import SongChordsFAB from "@/components/SongChordsFAB";
 
 interface TeleprompterSong {
   title: string;
@@ -773,6 +774,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         open={chordModalOpen}
         onClose={() => setChordModalOpen(false)}
       />
+      <SongChordsFAB bodyText={displayBodies[currentIndex]} className="z-[110]" />
     </div>
   );
 }

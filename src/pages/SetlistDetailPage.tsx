@@ -557,7 +557,7 @@ export default function SetlistDetailPage() {
                     getVal={getVal}
                     updateField={updateField}
                     removeMutation={removeMutation}
-                    artistPhotoMap={artistPhotoMap}
+                    
                     isMobile={isMobile}
                   />
                 ))}

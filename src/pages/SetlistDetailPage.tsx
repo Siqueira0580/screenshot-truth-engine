@@ -194,7 +194,7 @@ export default function SetlistDetailPage() {
     Record<string, { loop_count: number | null; speed: number | null; bpm: number | null; transposed_key: string | null }>
   >({});
   const [dirty, setDirty] = useState(false);
-  const [autoHideControls, setAutoHideControls] = useState(true);
+  const [autoHideControls, setAutoHideControls] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 

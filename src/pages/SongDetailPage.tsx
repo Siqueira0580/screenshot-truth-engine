@@ -25,7 +25,7 @@ export default function SongDetailPage() {
   const [transpose, setTranspose] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);
-  const [showAiCipher, setShowAiCipher] = useState(false);
+  
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
@@ -96,7 +96,6 @@ export default function SongDetailPage() {
       if (!chordpro) throw new Error("Nenhuma cifra gerada.");
 
       setAiChordPro(chordpro);
-      setShowAiCipher(true);
 
       // If no audio_track exists yet, create one to store the result
       if (!audioTrack?.id && id) {
@@ -232,35 +231,18 @@ export default function SongDetailPage() {
         </div>
       )}
 
-      {/* AI Generated Cipher */}
+      {/* AI Cipher (priority) */}
       {aiChordPro && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Wand2 className="h-4 w-4 text-primary" />
-              Cifra Gerada por IA
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAiCipher(!showAiCipher)}
-              className="text-xs"
-            >
-              {showAiCipher ? "Ocultar" : "Mostrar"}
-            </Button>
-          </div>
-          {showAiCipher && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <AutoCipherViewer
-                chordProText={transposeChordPro(aiChordPro, transpose)}
-                onSave={handleSaveChordPro}
-              />
-            </div>
-          )}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <AutoCipherViewer
+            chordProText={transposeChordPro(aiChordPro, transpose)}
+            onSave={handleSaveChordPro}
+          />
         </div>
       )}
 
-      {displayBody && (
+      {/* Plain text fallback (only when no AI cipher) */}
+      {!aiChordPro && displayBody && (
         <div className="rounded-lg border border-border bg-card p-6">
           <ChordText
             text={displayBody}

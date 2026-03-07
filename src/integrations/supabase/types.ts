@@ -257,6 +257,7 @@ export type Database = {
           show_date: string | null
           show_duration: number | null
           start_time: string | null
+          updated_at: string
           user_id: string | null
         }
         Insert: {
@@ -269,6 +270,7 @@ export type Database = {
           show_date?: string | null
           show_duration?: number | null
           start_time?: string | null
+          updated_at?: string
           user_id?: string | null
         }
         Update: {
@@ -281,6 +283,7 @@ export type Database = {
           show_date?: string | null
           show_duration?: number | null
           start_time?: string | null
+          updated_at?: string
           user_id?: string | null
         }
         Relationships: []

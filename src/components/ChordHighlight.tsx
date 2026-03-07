@@ -23,13 +23,19 @@ export default function ChordHighlight({ chord }: ChordHighlightProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    if (!isOpen || !canvasRef.current) return;
-    const timer = setTimeout(() => {
-      if (canvasRef.current) {
-        drawChordDiagram(canvasRef.current, chord, preferredInstrument);
+    if (!isOpen) return;
+    let cancelled = false;
+    const draw = (attempt = 0) => {
+      if (cancelled) return;
+      const canvas = canvasRef.current;
+      if (canvas && canvas.getContext("2d")) {
+        drawChordDiagram(canvas, chord, preferredInstrument);
+      } else if (attempt < 5) {
+        setTimeout(() => draw(attempt + 1), 50 * (attempt + 1));
       }
-    }, 30);
-    return () => clearTimeout(timer);
+    };
+    setTimeout(() => draw(0), 50);
+    return () => { cancelled = true; };
   }, [isOpen, chord, preferredInstrument]);
 
   return (

@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { drawChordDiagram } from "@/lib/chord-diagrams";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
@@ -17,14 +17,25 @@ interface SongChordsDrawerProps {
   chords: string[];
 }
 
-function ChordCard({ chord }: { chord: string }) {
+function ChordCard({ chord, visible }: { chord: string; visible: boolean }) {
   const { preferredInstrument } = useUserPreferences();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-    drawChordDiagram(canvasRef.current, chord, preferredInstrument);
-  }, [chord, preferredInstrument]);
+    if (!visible) return;
+    let cancelled = false;
+    const draw = (attempt = 0) => {
+      if (cancelled) return;
+      const canvas = canvasRef.current;
+      if (canvas && canvas.getContext("2d")) {
+        drawChordDiagram(canvas, chord, preferredInstrument);
+      } else if (attempt < 5) {
+        setTimeout(() => draw(attempt + 1), 50 * (attempt + 1));
+      }
+    };
+    setTimeout(() => draw(0), 30);
+    return () => { cancelled = true; };
+  }, [chord, preferredInstrument, visible]);
 
   return (
     <div className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card p-2">
@@ -79,7 +90,7 @@ export default function SongChordsDrawer({ isOpen, onClose, chords }: SongChords
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {chords.map((chord) => (
-                <ChordCard key={chord} chord={chord} />
+                <ChordCard key={chord} chord={chord} visible={isOpen} />
               ))}
             </div>
           )}

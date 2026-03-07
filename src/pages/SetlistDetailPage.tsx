@@ -342,6 +342,14 @@ export default function SetlistDetailPage() {
     });
   }, []);
 
+  const bulkToggleGlobalSongs = useCallback((songIds: string[], add: boolean) => {
+    setGlobalSelectedSongs((prev) => {
+      const next = new Set(prev);
+      songIds.forEach((id) => { if (add) next.add(id); else next.delete(id); });
+      return next;
+    });
+  }, []);
+
   const handleCreateFromSelection = useCallback(async (name: string) => {
     // Songs from current setlist selection
     const selectedItems = items
@@ -642,7 +650,9 @@ export default function SetlistDetailPage() {
         onOpenChange={setGlobalSearchOpen}
         selectedSongIds={globalSelectedSongs}
         onToggleSong={toggleGlobalSong}
+        onBulkToggleSongs={bulkToggleGlobalSongs}
         existingSetlistSongIds={existingIds}
+        currentSetlistId={id}
       />
 
       {/* Add song dialog */}

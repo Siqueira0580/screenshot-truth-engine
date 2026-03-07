@@ -573,9 +573,7 @@ export default function SetlistDetailPage() {
             <Button variant="outline" size="sm" onClick={handleShareWhatsApp} className="gap-2" title="Compartilhar via WhatsApp">
               <Share2 className="h-4 w-4" /><span className="hidden sm:inline">WhatsApp</span>
             </Button>
-            <Button variant="outline" onClick={() => setTeleprompterOpen(true)} className="gap-2">
-              <MonitorPlay className="h-4 w-4" /><span className="hidden sm:inline">Teleprompter</span>
-            </Button>
+            <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
           </>
         )}
         <Button onClick={() => setAddOpen(true)}>

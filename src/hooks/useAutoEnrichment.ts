@@ -55,6 +55,7 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
                   ? {
                       ...s,
                       style: data.style || s.style,
+                      bpm: data.bpm || s.bpm,
                       enrichment_status: "done",
                     }
                   : s

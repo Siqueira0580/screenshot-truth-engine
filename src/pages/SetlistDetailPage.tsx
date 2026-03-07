@@ -29,6 +29,7 @@ import SetlistToolbar, { type SortBy } from "@/components/SetlistToolbar";
 import CreateFromSelectionBar from "@/components/CreateFromSelectionBar";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import SetlistHeader from "@/components/SetlistHeader";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
@@ -57,7 +58,7 @@ function prevSpeedCycle(current: number): number {
 // Sortable song item component
 function SortableSongItem({
   item, index, selectedSongs, toggleSelect, getVal, updateField,
-  removeMutation, isMobile, isTablet,
+  onDelete, isMobile, isTablet,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
@@ -103,7 +104,7 @@ function SortableSongItem({
                 {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
               </p>
             </div>
-            <Button variant="ghost" size="icon" className="sm:opacity-0 sm:group-hover:opacity-100 shrink-0 h-8 w-8" onClick={() => removeMutation.mutate(item.id)}>
+            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => onDelete(item.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
@@ -198,6 +199,7 @@ export default function SetlistDetailPage() {
   const [autoHideControls, setAutoHideControls] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const [sortBy, setSortBy] = useState<SortBy>("manual");
   const [filterKey, setFilterKey] = useState("all");
@@ -586,7 +588,7 @@ export default function SetlistDetailPage() {
                     toggleSelect={toggleSelect}
                     getVal={getVal}
                     updateField={updateField}
-                    removeMutation={removeMutation}
+                    onDelete={(itemId: string) => setDeleteTarget(itemId)}
                     isMobile={isMobile}
                     isTablet={isTablet}
                   />
@@ -649,6 +651,18 @@ export default function SetlistDetailPage() {
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
         autoHideControls={autoHideControls}
+      />
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            removeMutation.mutate(deleteTarget);
+            setDeleteTarget(null);
+          }
+        }}
+        description="Tem a certeza de que deseja remover esta música do repertório? Esta ação não pode ser desfeita."
       />
     </div>
   );

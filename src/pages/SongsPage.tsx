@@ -8,6 +8,7 @@ import { fetchSongs, deleteSong, createSong, findOrCreateArtist } from "@/lib/su
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SongsPage() {
@@ -17,6 +18,7 @@ export default function SongsPage() {
   const [editingSong, setEditingSong] = useState<string | null>(null);
   const [importingPdfs, setImportingPdfs] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 0 });
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -57,7 +59,6 @@ export default function SongsPage() {
         if (error) throw error;
 
         if (data && (data.title || data.body_text)) {
-          // Auto-create artist if extracted from PDF
           let artistName = data.artist || null;
           if (artistName) {
             try {
@@ -78,7 +79,6 @@ export default function SongsPage() {
             body_text: data.body_text || data.text || null,
           });
 
-          // Auto-create audio_track with ChordPro if available
           if (data.chordpro_text && newSong?.id) {
             await supabase.from("audio_tracks").insert({
               song_id: newSong.id,
@@ -207,7 +207,7 @@ export default function SongsPage() {
                   {song.style && <span>{song.style}</span>}
                 </div>
               </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" asChild>
                   <Link to={`/songs/${song.id}`}>
                     <Eye className="h-4 w-4" />
@@ -223,7 +223,7 @@ export default function SongsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => deleteM.mutate(song.id)}
+                  onClick={() => setDeleteTarget(song.id)}
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
@@ -237,6 +237,18 @@ export default function SongsPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         songId={editingSong}
+      />
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteM.mutate(deleteTarget);
+            setDeleteTarget(null);
+          }
+        }}
+        description="Tem a certeza de que deseja excluir esta música? Esta ação não pode ser desfeita."
       />
     </div>
   );

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format, differenceInDays, differenceInHours, isAfter, subDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 type SortOption = "newest" | "oldest" | "name_asc" | "name_desc";
 type DateFilter = "all" | "7days" | "30days" | "3months";
@@ -31,6 +32,7 @@ export default function SetlistsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -42,7 +44,6 @@ export default function SetlistsPage() {
   const filteredAndSorted = useMemo(() => {
     let result = [...setlists];
 
-    // Date filter
     if (dateFilter !== "all") {
       const now = new Date();
       const cutoff =
@@ -52,7 +53,6 @@ export default function SetlistsPage() {
       result = result.filter((sl: any) => isAfter(new Date(sl.created_at), cutoff));
     }
 
-    // Sort
     result.sort((a: any, b: any) => {
       switch (sortBy) {
         case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -176,7 +176,6 @@ export default function SetlistsPage() {
                     )}
                   </div>
 
-                  {/* Creation & Update info */}
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
                     <span>Criado: {format(new Date(sl.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                     {sl.updated_at && sl.updated_at !== sl.created_at && (
@@ -197,10 +196,10 @@ export default function SetlistsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="opacity-0 group-hover:opacity-100 shrink-0"
+                  className="shrink-0"
                   onClick={(e) => {
                     e.preventDefault();
-                    deleteM.mutate(sl.id);
+                    setDeleteTarget(sl.id);
                   }}
                 >
                   <Trash2 className="h-4 w-4 text-destructive" />
@@ -226,6 +225,18 @@ export default function SetlistsPage() {
             musicians: data.musicians,
           });
         }}
+      />
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteM.mutate(deleteTarget);
+            setDeleteTarget(null);
+          }
+        }}
+        description="Tem a certeza de que deseja excluir este repertório? Esta ação não pode ser desfeita."
       />
     </div>
   );

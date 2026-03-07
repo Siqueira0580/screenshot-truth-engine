@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Music2, MonitorPlay, ChevronUp, ChevronDown } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Music2, MonitorPlay, ChevronUp, ChevronDown, Wand2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey } from "@/lib/transpose";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
 import SongChordsFAB from "@/components/SongChordsFAB";
+import AutoCipherViewer from "@/components/AutoCipherViewer";
 
 function extractYoutubeId(url: string | null): string | null {
   if (!url) return null;
@@ -15,11 +18,15 @@ function extractYoutubeId(url: string | null): string | null {
   return match ? match[1] : null;
 }
 
-
 export default function SongDetailPage() {
   const { id } = useParams();
+  const queryClient = useQueryClient();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);
+  const [generating, setGenerating] = useState(false);
+  const [aiChordPro, setAiChordPro] = useState<string | null>(null);
+  const [showAiCipher, setShowAiCipher] = useState(false);
+
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
     queryFn: () => fetchSong(id!),
@@ -31,6 +38,28 @@ export default function SongDetailPage() {
     queryFn: fetchArtists,
   });
 
+  // Fetch existing AI chordpro from audio_tracks
+  const { data: audioTrack } = useQuery({
+    queryKey: ["audio_track_chordpro", id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data } = await supabase
+        .from("audio_tracks")
+        .select("id, ai_chordpro_text")
+        .eq("song_id", id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  // Load existing AI chordpro on mount
+  useEffect(() => {
+    if (audioTrack?.ai_chordpro_text) {
+      setAiChordPro(audioTrack.ai_chordpro_text);
+    }
+  }, [audioTrack]);
+
   const artistPhoto = song?.artist
     ? artists.find(a => a.name.toLowerCase() === song.artist!.toLowerCase())?.photo_url || null
     : null;
@@ -40,6 +69,66 @@ export default function SongDetailPage() {
       incrementAccessCount(id);
     }
   }, [id]);
+
+  const handleGenerateCipher = async () => {
+    if (!song?.body_text) {
+      toast.error("A música precisa ter letra para gerar a cifra.");
+      return;
+    }
+
+    setGenerating(true);
+    const toastId = toast.loading("Gerando cifra com IA...");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("transcribe-audio", {
+        body: {
+          lyrics: song.body_text,
+          song_title: song.title,
+          artist: song.artist,
+          audio_track_id: audioTrack?.id || null,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const chordpro = data?.chordpro;
+      if (!chordpro) throw new Error("Nenhuma cifra gerada.");
+
+      setAiChordPro(chordpro);
+      setShowAiCipher(true);
+
+      // If no audio_track exists yet, create one to store the result
+      if (!audioTrack?.id && id) {
+        await supabase.from("audio_tracks").insert({
+          song_id: id,
+          ai_chordpro_text: chordpro,
+        });
+        queryClient.invalidateQueries({ queryKey: ["audio_track_chordpro", id] });
+      }
+
+      toast.success("Cifra gerada com sucesso!", { id: toastId });
+    } catch (err: any) {
+      toast.error(`Erro ao gerar cifra: ${err.message}`, { id: toastId });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSaveChordPro = async (updatedText: string) => {
+    setAiChordPro(updatedText);
+    if (audioTrack?.id) {
+      const { error } = await supabase
+        .from("audio_tracks")
+        .update({ ai_chordpro_text: updatedText })
+        .eq("id", audioTrack.id);
+      if (error) {
+        toast.error("Erro ao salvar edição.");
+      } else {
+        toast.success("Cifra atualizada!");
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -66,14 +155,31 @@ export default function SongDetailPage() {
       </Button>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-4xl font-bold tracking-tight">{song.title}</h1>
-          {song.body_text && (
-            <Button onClick={() => setTeleprompterOpen(true)} className="gap-2">
-              <MonitorPlay className="h-4 w-4" />
-              Teleprompter
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {song.body_text && (
+              <Button
+                variant="outline"
+                onClick={handleGenerateCipher}
+                disabled={generating}
+                className="gap-2"
+              >
+                {generating ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Wand2 className="h-4 w-4" />
+                )}
+                {generating ? "Gerando..." : aiChordPro ? "Regerar Cifra IA" : "Gerar Cifra IA"}
+              </Button>
+            )}
+            {song.body_text && (
+              <Button onClick={() => setTeleprompterOpen(true)} className="gap-2">
+                <MonitorPlay className="h-4 w-4" />
+                Teleprompter
+              </Button>
+            )}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
           {song.artist && (
@@ -123,6 +229,34 @@ export default function SongDetailPage() {
             allowFullScreen
             title={song.title}
           />
+        </div>
+      )}
+
+      {/* AI Generated Cipher */}
+      {aiChordPro && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Wand2 className="h-4 w-4 text-primary" />
+              Cifra Gerada por IA
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAiCipher(!showAiCipher)}
+              className="text-xs"
+            >
+              {showAiCipher ? "Ocultar" : "Mostrar"}
+            </Button>
+          </div>
+          {showAiCipher && (
+            <div className="rounded-lg border border-border bg-card p-6">
+              <AutoCipherViewer
+                chordProText={aiChordPro}
+                onSave={handleSaveChordPro}
+              />
+            </div>
+          )}
         </div>
       )}
 

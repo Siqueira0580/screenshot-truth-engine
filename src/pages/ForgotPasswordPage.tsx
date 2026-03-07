@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Guitar, Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
+import AuthBranding from "@/components/AuthBranding";
 import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
@@ -30,13 +31,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-8">
-        <div className="text-center">
-          <Guitar className="h-10 w-10 text-primary mx-auto mb-3" />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Recuperar Senha</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {sent ? "Verifique o seu e-mail" : "Insira o e-mail da sua conta"}
-          </p>
-        </div>
+        <AuthBranding subtitle={sent ? "Verifique o seu e-mail" : "Insira o e-mail da sua conta"} />
 
         {sent ? (
           <div className="space-y-4 text-center">

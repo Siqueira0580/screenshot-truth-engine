@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 const navItems = [
-  { to: "/", icon: Music, label: "Músicas" },
+  { to: "/songs", icon: Music, label: "Músicas" },
   { to: "/setlists", icon: ListMusic, label: "Setlists" },
   { to: "/artists", icon: Users, label: "Artistas" },
   { to: "/studio", icon: Headphones, label: "Estúdio" },

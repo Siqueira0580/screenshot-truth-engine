@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Guitar, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import AuthBranding from "@/components/AuthBranding";
 import { toast } from "sonner";
 
 export default function LoginPage() {
@@ -59,11 +60,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-8">
-        <div className="text-center">
-          <Guitar className="h-10 w-10 text-primary mx-auto mb-3" />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">SetlistPro</h1>
-          <p className="text-muted-foreground text-sm mt-1">Entre na sua conta</p>
-        </div>
+        <AuthBranding subtitle="Entre na sua conta" />
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">

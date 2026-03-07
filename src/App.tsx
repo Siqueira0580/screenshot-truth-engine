@@ -15,6 +15,7 @@ import ArtistDetailPage from "@/pages/ArtistDetailPage";
 import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudyPage from "@/pages/StudyPage";
+import CompositionStudioPage from "@/pages/CompositionStudioPage";
 import ProfilePage from "@/pages/ProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
@@ -76,6 +77,7 @@ const App = () => (
                 <Route path="/artists/:id" element={<ArtistDetailPage />} />
                 <Route path="/studio" element={<StudioPage />} />
                 <Route path="/studio/:songId" element={<StudioDetailPage />} />
+                <Route path="/compose" element={<CompositionStudioPage />} />
                 <Route path="/study/:songId" element={<StudyPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />

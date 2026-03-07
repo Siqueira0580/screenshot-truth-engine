@@ -162,6 +162,45 @@ export type Database = {
         }
         Relationships: []
       }
+      compositions: {
+        Row: {
+          audio_url: string | null
+          body_text: string | null
+          bpm: number | null
+          created_at: string
+          id: string
+          musical_key: string | null
+          style: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audio_url?: string | null
+          body_text?: string | null
+          bpm?: number | null
+          created_at?: string
+          id?: string
+          musical_key?: string | null
+          style?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string | null
+          body_text?: string | null
+          bpm?: number | null
+          created_at?: string
+          id?: string
+          musical_key?: string | null
+          style?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_chords: {
         Row: {
           chord_name: string

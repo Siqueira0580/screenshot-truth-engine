@@ -39,3 +39,22 @@ export function transposeKey(key: string | null | undefined, semitones: number):
   const newRoot = transposeNote(match[1], semitones, flatCount > 0);
   return `${newRoot}${match[2]}`;
 }
+
+/**
+ * Transpose chords inside ChordPro bracket notation, e.g. [Am7] -> [Bm7]
+ */
+export function transposeChordPro(text: string, semitones: number): string {
+  if (semitones === 0 || !text) return text;
+  const flatCount = (text.match(/[A-G]b/g) || []).length;
+  const sharpCount = (text.match(/[A-G]#/g) || []).length;
+  const useFlats = flatCount > sharpCount;
+
+  return text.replace(/\[([^\]]+)\]/g, (_match, chord: string) => {
+    const transposed = chord.replace(CHORD_REGEX, (_m: string, root: string, quality: string, num: string, slashPart: string, bassNote: string) => {
+      const newRoot = transposeNote(root, semitones, useFlats);
+      const newBass = bassNote ? transposeNote(bassNote, semitones, useFlats) : "";
+      return `${newRoot}${quality || ""}${num || ""}${bassNote ? `/${newBass}` : ""}`;
+    });
+    return `[${transposed}]`;
+  });
+}

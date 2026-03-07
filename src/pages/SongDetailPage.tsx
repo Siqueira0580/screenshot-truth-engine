@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Music2, MonitorPlay, ChevronUp, ChevronDown, Wand2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
-import { transposeText, transposeKey } from "@/lib/transpose";
+import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
@@ -252,7 +252,7 @@ export default function SongDetailPage() {
           {showAiCipher && (
             <div className="rounded-lg border border-border bg-card p-6">
               <AutoCipherViewer
-                chordProText={aiChordPro}
+                chordProText={transposeChordPro(aiChordPro, transpose)}
                 onSave={handleSaveChordPro}
               />
             </div>

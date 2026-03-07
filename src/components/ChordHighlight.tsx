@@ -60,7 +60,7 @@ export default function ChordHighlight({ chord }: ChordHighlightProps) {
         className="w-auto p-2 bg-popover border-border shadow-xl rounded-lg overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <canvas ref={canvasRef} width={220} height={180} className="rounded block" />
+        <canvas ref={canvasRef} width={160} height={220} className="rounded block" />
       </PopoverContent>
     </Popover>
   );

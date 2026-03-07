@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Hash, User, Music } from "lucide-react";
+import { Hash, User, Music, ClipboardList } from "lucide-react";
 
 export type SortBy = "manual" | "artist" | "key";
 
@@ -16,6 +16,7 @@ interface SetlistToolbarProps {
   someSelected: boolean;
   onSelectAll: () => void;
   selectionCount: number;
+  onCreateFromSelection?: () => void;
 }
 
 export default function SetlistToolbar({

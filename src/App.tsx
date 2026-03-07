@@ -16,6 +16,7 @@ import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudyPage from "@/pages/StudyPage";
 import CompositionStudioPage from "@/pages/CompositionStudioPage";
+import CompositionsHomePage from "@/pages/CompositionsHomePage";
 import ProfilePage from "@/pages/ProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";

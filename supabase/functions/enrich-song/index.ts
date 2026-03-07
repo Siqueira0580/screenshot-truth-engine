@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { song_id, artist, current_style } = await req.json();
+    const { song_id, artist, title, current_style, current_bpm } = await req.json();
 
     if (!song_id) {
       return new Response(JSON.stringify({ error: "song_id is required" }), {

@@ -105,6 +105,7 @@ export default function SetlistsPage() {
             Novo Repertório
           </Button>
         </div>
+      </div>
 
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-3">

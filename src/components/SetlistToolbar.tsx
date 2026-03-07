@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Hash, User, Music } from "lucide-react";
+import { Hash, User, Music, ClipboardList } from "lucide-react";
 
 export type SortBy = "manual" | "artist" | "key";
 
@@ -16,6 +16,7 @@ interface SetlistToolbarProps {
   someSelected: boolean;
   onSelectAll: () => void;
   selectionCount: number;
+  onCreateFromSelection?: () => void;
 }
 
 export default function SetlistToolbar({
@@ -28,6 +29,7 @@ export default function SetlistToolbar({
   someSelected,
   onSelectAll,
   selectionCount,
+  onCreateFromSelection,
 }: SetlistToolbarProps) {
   const sortOptions: { value: SortBy; label: string; icon: React.ReactNode }[] = [
     { value: "manual", label: "123", icon: <Hash className="h-3.5 w-3.5" /> },
@@ -47,6 +49,17 @@ export default function SetlistToolbar({
         <span className="text-xs text-muted-foreground whitespace-nowrap">
           {selectionCount > 0 ? `${selectionCount} selecionada(s)` : "Selecionar"}
         </span>
+        {selectionCount > 0 && onCreateFromSelection && (
+          <Button
+            variant="default"
+            size="sm"
+            className="h-7 text-xs gap-1 px-3 ml-1"
+            onClick={onCreateFromSelection}
+          >
+            <ClipboardList className="h-3.5 w-3.5" />
+            Criar Repertório
+          </Button>
+        )}
       </div>
 
       <div className="h-4 w-px bg-border hidden sm:block" />

@@ -575,6 +575,10 @@ export default function SetlistDetailPage() {
             availableKeys={availableKeys}
             allSelected={allVisibleSelected} someSelected={someVisibleSelected}
             onSelectAll={toggleSelectAll} selectionCount={selectedSongs.size}
+            onCreateFromSelection={selectedSongs.size > 0 ? () => {
+              const bar = document.querySelector('[data-clone-bar]');
+              if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            } : undefined}
           />
 
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

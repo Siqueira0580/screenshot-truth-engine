@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2 } from "lucide-react";
+import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2 } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { transposeChord } from "@/lib/transpose-chord";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 const KEYS = ["C", "C#", "D", "Dm", "D#", "E", "Em", "F", "F#", "G", "Gm", "G#", "A", "Am", "A#", "B", "Bm"];
 const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "Worship", "Samba", "Pagode", "Jazz", "R&B", "MPB", "Blues", "Forró", "Reggae"];
@@ -129,6 +130,21 @@ export default function CompositionStudioPage() {
       setIsSaving(false);
     }
   }, [title, editorText, selectedKey, bpm, style, compositionId, setSearchParams, navigate]);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDelete = useCallback(async () => {
+    if (!compositionId) return;
+    try {
+      const { error } = await supabase.from("compositions").delete().eq("id", compositionId);
+      if (error) throw error;
+      toast.success("Composição apagada.");
+      navigate("/compositions");
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Erro ao apagar a composição.");
+    }
+  }, [compositionId, navigate]);
 
   const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
@@ -298,6 +314,11 @@ export default function CompositionStudioPage() {
             <Button size="sm" className="gap-1.5">
               <Share2 className="h-4 w-4" /> Partilhar
             </Button>
+            {compositionId && (
+              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setShowDeleteModal(true)}>
+                <Trash2 className="h-4 w-4" /> Excluir
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -509,6 +530,14 @@ export default function CompositionStudioPage() {
           )}
         </div>
       </footer>
+
+      <ConfirmDeleteModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={handleDelete}
+        title="Apagar Composição"
+        description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

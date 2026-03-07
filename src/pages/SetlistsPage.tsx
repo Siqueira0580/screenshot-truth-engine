@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, ListMusic, Trash2, Calendar, Clock, Users, ArrowUpDown, RefreshCw } from "lucide-react";
+import { Plus, ListMusic, Trash2, Calendar, Clock, Users, ArrowUpDown, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

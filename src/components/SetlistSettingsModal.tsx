@@ -63,6 +63,18 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
   const [musicianName, setMusicianName] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmExit, setConfirmExit] = useState(false);
+
+  // Track initial values to detect changes
+  const initialValues = useRef<string>("");
+
+  const serializeValues = useCallback(() => {
+    return JSON.stringify({ name, showDate, startTime, showDuration, intervalDuration, endTime, musicians });
+  }, [name, showDate, startTime, showDuration, intervalDuration, endTime, musicians]);
+
+  const hasChanges = useCallback(() => {
+    return initialValues.current !== serializeValues();
+  }, [serializeValues]);
 
   useEffect(() => {
     if (open) {
@@ -86,8 +98,35 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
       setEndTimeManual(false);
       setMusicianName("");
       setSelectedRole("");
+      // Snapshot initial values after a tick so state is settled
+      setTimeout(() => {
+        initialValues.current = JSON.stringify({
+          name: setlist?.name || "",
+          showDate: setlist?.show_date ? new Date(setlist.show_date) : undefined,
+          startTime: setlist?.start_time || "",
+          showDuration: setlist?.show_duration ?? "",
+          intervalDuration: setlist?.interval_duration ?? "",
+          endTime: setlist?.end_time || "",
+          musicians: Array.isArray(setlist?.musicians) ? setlist.musicians : [],
+        });
+      }, 0);
     }
   }, [setlist, open]);
+
+  const handleRequestClose = useCallback((openState: boolean) => {
+    if (!openState) {
+      if (hasChanges()) {
+        setConfirmExit(true);
+      } else {
+        onOpenChange(false);
+      }
+    }
+  }, [hasChanges, onOpenChange]);
+
+  const handleConfirmExit = useCallback(() => {
+    setConfirmExit(false);
+    onOpenChange(false);
+  }, [onOpenChange]);
 
   // Auto-calculate end_time
   useEffect(() => {

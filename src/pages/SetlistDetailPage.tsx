@@ -104,7 +104,7 @@ function SortableSongItem({
                 {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
               </p>
             </div>
-            <Button variant="ghost" size="icon" className="sm:opacity-0 sm:group-hover:opacity-100 shrink-0 h-8 w-8" onClick={() => removeMutation.mutate(item.id)}>
+            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => removeMutation.mutate(item.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>

@@ -260,13 +260,39 @@ export default function SongDetailPage() {
 
       {/* AI Cipher (priority) */}
       {aiChordPro && (
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg border border-border bg-card p-6 space-y-3">
           <AutoCipherViewer
             chordProText={transposeChordPro(aiChordPro, transpose)}
             onSave={handleSaveChordPro}
           />
+          <Button
+            variant="default"
+            onClick={() => setConfirmSaveAsDefault(true)}
+            className="gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Salvar como Cifra Padrão
+          </Button>
         </div>
       )}
+
+      {/* Confirm save as default modal */}
+      <AlertDialog open={confirmSaveAsDefault} onOpenChange={setConfirmSaveAsDefault}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Substituir cifra original?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja substituir a cifra original por esta nova versão gerada pela IA? A versão antiga será excluída.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAsDefault}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (

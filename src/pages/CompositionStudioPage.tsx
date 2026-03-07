@@ -56,7 +56,7 @@ export default function CompositionStudioPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorText, setEditorText] = useState("");
 
-  const { isRecording, isProcessing, toggleRecording } = useAudioRecorder();
+  const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
   const handleRecordToggle = useCallback(() => {
     toggleRecording(style, (result) => {
@@ -64,6 +64,9 @@ export default function CompositionStudioPage() {
       setSelectedKey(result.detectedKey);
     });
   }, [style, toggleRecording]);
+
+  // While recording, show live ChordPro; after stop, show editorText
+  const displayText = isRecording ? liveChordPro : editorText;
 
   const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];
 

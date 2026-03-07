@@ -39,12 +39,12 @@ export default function AppLayout() {
       {/* Desktop Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
-          <div className="flex items-center gap-2">
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img src={smartCifraLogo} alt="Smart Cifra" className="h-12 w-12 rounded-lg" />
             <span className="text-sm font-bold tracking-tight text-foreground hidden sm:inline">
               Smart Cifra
             </span>
-          </div>
+          </button>
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1 flex-1">

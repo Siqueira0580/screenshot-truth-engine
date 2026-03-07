@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, LogOut, Settings } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ const navItems = [
   { to: "/songs", icon: Music, label: "Músicas" },
   { to: "/setlists", icon: ListMusic, label: "Setlists" },
   { to: "/artists", icon: Users, label: "Artistas" },
+  { to: "/compose", icon: PenTool, label: "Compor" },
   { to: "/studio", icon: Headphones, label: "Estúdio" },
 ];
 

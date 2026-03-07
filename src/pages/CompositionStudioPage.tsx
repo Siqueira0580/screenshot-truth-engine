@@ -42,6 +42,7 @@ export default function CompositionStudioPage() {
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
   const audioBlobRef = useRef<Blob | null>(null);
 
   // Load existing composition if ID in URL
@@ -59,6 +60,7 @@ export default function CompositionStudioPage() {
       setSelectedKey(data.musical_key || "Am");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
+      if (data.audio_url) setSavedAudioUrl(data.audio_url);
     };
     load();
   }, [compositionId]);
@@ -375,9 +377,9 @@ export default function CompositionStudioPage() {
           </div>
 
           {/* Audio playback after recording */}
-          {audioUrl && !isRecording && (
+          {(audioUrl || savedAudioUrl) && !isRecording && (
             <div className="mb-6 flex justify-center">
-              <audio controls src={audioUrl} className="w-full max-w-md rounded-lg" />
+              <audio controls src={audioUrl || savedAudioUrl || undefined} className="w-full max-w-md rounded-lg" />
             </div>
           )}
 
@@ -519,13 +521,13 @@ export default function CompositionStudioPage() {
           <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-1">
             🎙️ Cofre de Ideias
           </span>
-          {audioUrl && (
+          {(audioUrl || savedAudioUrl) && (
             <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-secondary border border-border text-foreground">
               <PlayCircle className="h-3.5 w-3.5 text-primary" />
               Gravação atual
             </span>
           )}
-          {!audioUrl && (
+          {!audioUrl && !savedAudioUrl && (
             <span className="text-xs text-muted-foreground">Nenhuma gravação ainda.</span>
           )}
         </div>

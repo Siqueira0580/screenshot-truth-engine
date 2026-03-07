@@ -60,6 +60,7 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
               width={200}
               height={240}
               className="rounded-lg"
+              style={{ display: 'block' }}
             />
           </div>
           <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">

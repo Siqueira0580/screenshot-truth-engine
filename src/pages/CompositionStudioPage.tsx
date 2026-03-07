@@ -275,9 +275,16 @@ export default function CompositionStudioPage() {
               </SelectContent>
             </Select>
 
-            <Select value={targetKey} onValueChange={setTargetKey}>
+            <Select value={targetKey} onValueChange={(newTarget) => {
+              setTargetKey(newTarget);
+              if (newTarget && newTarget !== "none" && newTarget !== selectedKey && editorText.includes("[")) {
+                setEditorText((prev) => transposeChordProText(prev, selectedKey, newTarget));
+                setSelectedKey(newTarget);
+                toast.success(`Transposto de ${selectedKey} para ${newTarget}`);
+              }
+            }}>
               <SelectTrigger className="w-28 h-9 bg-secondary border-border text-sm">
-                <SelectValue placeholder="Tom Alvo" />
+                <SelectValue placeholder="Transpor" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Sem transpor</SelectItem>

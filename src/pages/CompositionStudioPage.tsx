@@ -217,13 +217,13 @@ export default function CompositionStudioPage() {
           <div className="flex flex-col items-center gap-3 mb-8">
             <button
               onClick={handleRecordToggle}
-              disabled={isProcessing}
+              disabled={isProcessing || isTranscribing}
               className={cn(
                 "inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-lg font-bold uppercase tracking-wider text-primary-foreground",
                 "transition-all duration-300",
                 isRecording
                   ? "bg-destructive shadow-[0_0_30px_hsl(var(--destructive)/0.5)] animate-pulse"
-                  : isProcessing
+                  : (isProcessing || isTranscribing)
                     ? "bg-muted text-muted-foreground cursor-not-allowed"
                     : "bg-gradient-to-r from-primary via-accent to-primary shadow-[0_0_25px_hsl(195_100%_50%/0.35)] hover:shadow-[0_0_35px_hsl(195_100%_50%/0.55)] hover:scale-105 active:scale-95"
               )}
@@ -232,6 +232,11 @@ export default function CompositionStudioPage() {
                 <>
                   <Square className="h-6 w-6" />
                   A gravar... (Clique para parar)
+                </>
+              ) : isTranscribing ? (
+                <>
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  IA a transcrever o áudio...
                 </>
               ) : isProcessing ? (
                 <>

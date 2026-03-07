@@ -35,7 +35,7 @@ export default function AppLayout() {
   }, [user]);
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden pb-16 md:pb-0">
+    <div className="h-screen flex flex-col bg-background overflow-hidden pb-16 lg:pb-0">
       {/* Desktop Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
@@ -47,7 +47,7 @@ export default function AppLayout() {
           </div>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1 flex-1">
+          <nav className="hidden lg:flex items-center gap-1 flex-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -69,7 +69,7 @@ export default function AppLayout() {
           </nav>
 
           {/* Spacer for mobile */}
-          <div className="flex-1 md:hidden" />
+          <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
             <Button
@@ -92,11 +92,11 @@ export default function AppLayout() {
                   {initials}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground hidden md:block">
+              <span className="text-sm text-muted-foreground hidden lg:block">
                 {user?.email}
               </span>
             </button>
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="hidden md:inline-flex">
+            <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="hidden lg:inline-flex">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -108,7 +108,7 @@ export default function AppLayout() {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => (
             <NavLink

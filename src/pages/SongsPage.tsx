@@ -8,8 +8,10 @@ import { fetchSongs, deleteSong, createSong, findOrCreateArtist } from "@/lib/su
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SongsPage() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<string | null>(null);
@@ -81,6 +83,7 @@ export default function SongsPage() {
             await supabase.from("audio_tracks").insert({
               song_id: newSong.id,
               ai_chordpro_text: data.chordpro_text,
+              user_id: user?.id || null,
             });
           }
 

@@ -11,6 +11,7 @@ import { format, differenceInDays, differenceInHours, isAfter, subDays, subMonth
 import { ptBR } from "date-fns/locale";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import AutoSetlistGeneratorModal from "@/components/AutoSetlistGeneratorModal";
 
 type SortOption = "newest" | "oldest" | "name_asc" | "name_desc";
 type DateFilter = "all" | "7days" | "30days" | "3months";

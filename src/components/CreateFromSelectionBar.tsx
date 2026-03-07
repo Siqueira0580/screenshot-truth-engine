@@ -26,7 +26,7 @@ export default function CreateFromSelectionBar({ count, onSubmit }: CreateFromSe
   };
 
   return (
-    <div data-clone-bar className="fixed bottom-0 left-0 right-0 w-full z-50 border-t border-border bg-card shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)] p-4 pb-6 sm:pb-4 animate-fade-in">
+    <div data-clone-bar className="fixed bottom-16 lg:bottom-0 left-0 right-0 w-full z-50 border-t border-border bg-card shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)] p-4 pb-6 sm:pb-4 animate-fade-in">
       <div className="max-w-3xl mx-auto flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
           <ClipboardList className="h-4 w-4 text-primary" />

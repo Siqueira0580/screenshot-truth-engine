@@ -1,16 +1,36 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, ListMusic, Trash2, Calendar, Clock, Users } from "lucide-react";
+import { Plus, ListMusic, Trash2, Calendar, Clock, Users, ArrowUpDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchSetlists, createSetlist, deleteSetlist } from "@/lib/supabase-queries";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, differenceInDays, differenceInHours, isAfter, subDays, subMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
+
+type SortOption = "newest" | "oldest" | "name_asc" | "name_desc";
+type DateFilter = "all" | "7days" | "30days" | "3months";
+
+function formatDaysAgo(dateStr: string): string {
+  const date = new Date(dateStr);
+  const hours = differenceInHours(new Date(), date);
+  if (hours < 1) return "agora";
+  if (hours < 24) return `${hours}h atrás`;
+  const days = differenceInDays(new Date(), date);
+  if (days === 1) return "1 dia atrás";
+  if (days < 30) return `${days} dias atrás`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return "1 mês atrás";
+  return `${months} meses atrás`;
+}
 
 export default function SetlistsPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -18,6 +38,33 @@ export default function SetlistsPage() {
     queryKey: ["setlists"],
     queryFn: fetchSetlists,
   });
+
+  const filteredAndSorted = useMemo(() => {
+    let result = [...setlists];
+
+    // Date filter
+    if (dateFilter !== "all") {
+      const now = new Date();
+      const cutoff =
+        dateFilter === "7days" ? subDays(now, 7) :
+        dateFilter === "30days" ? subMonths(now, 1) :
+        subMonths(now, 3);
+      result = result.filter((sl: any) => isAfter(new Date(sl.created_at), cutoff));
+    }
+
+    // Sort
+    result.sort((a: any, b: any) => {
+      switch (sortBy) {
+        case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest": return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "name_asc": return a.name.localeCompare(b.name);
+        case "name_desc": return b.name.localeCompare(a.name);
+        default: return 0;
+      }
+    });
+
+    return result;
+  }, [setlists, sortBy, dateFilter]);
 
   const createM = useMutation({
     mutationFn: (data: any) => createSetlist(data),
@@ -42,7 +89,8 @@ export default function SetlistsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Repertórios</h1>
           <p className="text-muted-foreground mt-1">
-            {setlists.length} repertório{setlists.length !== 1 ? "s" : ""}
+            {filteredAndSorted.length} repertório{filteredAndSorted.length !== 1 ? "s" : ""}
+            {dateFilter !== "all" && ` (filtrado de ${setlists.length})`}
           </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
@@ -51,20 +99,54 @@ export default function SetlistsPage() {
         </Button>
       </div>
 
+      {/* Filters Row */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-[160px] h-8 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Mais recentes</SelectItem>
+              <SelectItem value="oldest">Mais antigos</SelectItem>
+              <SelectItem value="name_asc">Nome A-Z</SelectItem>
+              <SelectItem value="name_desc">Nome Z-A</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Select value={dateFilter} onValueChange={(v) => setDateFilter(v as DateFilter)}>
+            <SelectTrigger className="w-[160px] h-8 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="7days">Últimos 7 dias</SelectItem>
+              <SelectItem value="30days">Último mês</SelectItem>
+              <SelectItem value="3months">Últimos 3 meses</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       {isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-36 animate-pulse rounded-lg bg-card" />
           ))}
         </div>
-      ) : setlists.length === 0 ? (
+      ) : filteredAndSorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
           <ListMusic className="h-12 w-12 mb-4 opacity-40" />
-          <p className="text-lg">Nenhum repertório criado</p>
+          <p className="text-lg">
+            {setlists.length === 0 ? "Nenhum repertório criado" : "Nenhum repertório encontrado com esses filtros"}
+          </p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {setlists.map((sl: any, i) => (
+          {filteredAndSorted.map((sl: any, i) => (
             <Link
               key={sl.id}
               to={`/setlists/${sl.id}`}
@@ -93,6 +175,18 @@ export default function SetlistsPage() {
                       </Badge>
                     )}
                   </div>
+
+                  {/* Creation & Update info */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                    <span>Criado: {format(new Date(sl.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
+                    {sl.updated_at && sl.updated_at !== sl.created_at && (
+                      <span className="flex items-center gap-1">
+                        <RefreshCw className="h-3 w-3" />
+                        {formatDaysAgo(sl.updated_at)}
+                      </span>
+                    )}
+                  </div>
+
                   {sl.musicians && (sl.musicians as string[]).length > 0 && (
                     <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
                       <Users className="h-3 w-3" />

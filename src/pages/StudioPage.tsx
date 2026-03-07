@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchSongs, fetchArtists, createSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import SongFormDialog from "@/components/SongFormDialog";
 
 export default function StudioPage() {
   const navigate = useNavigate();
@@ -16,8 +15,6 @@ export default function StudioPage() {
   const [search, setSearch] = useState("");
   const [uploadingNew, setUploadingNew] = useState(false);
   const newAudioRef = useRef<HTMLInputElement>(null);
-  const [editSongId, setEditSongId] = useState<string | null>(null);
-  const [showFormDialog, setShowFormDialog] = useState(false);
 
   const { data: songs = [] } = useQuery({ queryKey: ["songs"], queryFn: fetchSongs });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
@@ -33,9 +30,9 @@ export default function StudioPage() {
       const baseName = file.name.replace(/\.[^.]+$/, "");
       const match = baseName.match(/^(.+?)\s*-\s*(.+)$/);
       const title = match ? match[2].trim() : baseName;
+      const artist = match ? match[1].trim() : undefined;
 
-      // Create song WITHOUT artist - no auto-creation of artist card
-      const song = await createSong({ title, artist: null });
+      const song = await createSong({ title, artist: artist || null });
 
       const ext = file.name.split(".").pop();
       const path = `${song.id}/full.${ext}`;
@@ -53,11 +50,8 @@ export default function StudioPage() {
       } as any);
 
       queryClient.invalidateQueries({ queryKey: ["songs"] });
-      toast.success("Áudio enviado! Configure os detalhes da música.");
-
-      // Open config dialog instead of navigating
-      setEditSongId(song.id);
-      setShowFormDialog(true);
+      toast.success(`"${title}" adicionado!`);
+      navigate(`/studio/${song.id}`);
     } catch (err: any) {
       toast.error(`Erro: ${err.message}`);
     } finally {
@@ -148,19 +142,6 @@ export default function StudioPage() {
           })}
         </div>
       )}
-
-      {/* Song config dialog after upload */}
-      <SongFormDialog
-        open={showFormDialog}
-        onOpenChange={(open) => {
-          setShowFormDialog(open);
-          if (!open && editSongId) {
-            navigate(`/studio/${editSongId}`);
-            setEditSongId(null);
-          }
-        }}
-        songId={editSongId}
-      />
     </div>
   );
 }

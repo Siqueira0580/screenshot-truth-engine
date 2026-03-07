@@ -22,13 +22,25 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (!open || !chord || !canvasRef.current) return;
-    const timer = setTimeout(() => {
-      if (canvasRef.current) {
-        drawChordDiagram(canvasRef.current, chord, preferredInstrument);
+    if (!open || !chord) return;
+
+    // The canvas may not be mounted yet when the dialog opens inside a Portal.
+    // We retry a few times with increasing delays to ensure the canvas is ready.
+    let cancelled = false;
+    const draw = (attempt = 0) => {
+      if (cancelled) return;
+      const canvas = canvasRef.current;
+      if (canvas && canvas.getContext("2d")) {
+        drawChordDiagram(canvas, chord, preferredInstrument);
+      } else if (attempt < 5) {
+        setTimeout(() => draw(attempt + 1), 60 * (attempt + 1));
       }
-    }, 50);
-    return () => clearTimeout(timer);
+    };
+
+    // First attempt after a short delay for portal mount
+    setTimeout(() => draw(0), 80);
+
+    return () => { cancelled = true; };
   }, [open, chord, preferredInstrument]);
 
   if (!chord) return null;
@@ -48,6 +60,7 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
               width={200}
               height={240}
               className="rounded-lg"
+              style={{ display: 'block' }}
             />
           </div>
           <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">

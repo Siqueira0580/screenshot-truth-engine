@@ -62,7 +62,7 @@ const App = () => (
         <AuthProvider>
           <UserPreferencesProvider>
             <Routes>
-              <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+              <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
               <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
               <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />

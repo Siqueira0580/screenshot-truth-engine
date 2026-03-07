@@ -180,9 +180,13 @@ export default function CompositionStudioPage() {
       if (transcription) {
         // Apply transposition if target key is set
         const detectedKey = data?.detected_key || selectedKey;
+        // Set original key from audio detection if not already defined
+        if (!originalKey && detectedKey) {
+          setOriginalKey(detectedKey);
+        }
         if (targetKey && targetKey !== detectedKey) {
           transcription = transposeChordProText(transcription, detectedKey, targetKey);
-          setSelectedKey(targetKey); // update displayed key to target
+          setSelectedKey(targetKey);
         } else if (detectedKey) {
           setSelectedKey(detectedKey);
         }

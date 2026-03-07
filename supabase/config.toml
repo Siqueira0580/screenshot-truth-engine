@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-chord-voicing]
 verify_jwt = false
+
+[functions.import-song-url]
+verify_jwt = false

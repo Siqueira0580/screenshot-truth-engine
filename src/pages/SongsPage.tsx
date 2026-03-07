@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchSongs, deleteSong, createSong, findOrCreateArtist } from "@/lib/supabase-queries";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import ImportSongModal from "@/components/ImportSongModal";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function SongsPage() {
@@ -19,6 +20,7 @@ export default function SongsPage() {
   const [importingPdfs, setImportingPdfs] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 0 });
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [importLinkOpen, setImportLinkOpen] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -155,6 +157,15 @@ export default function SongsPage() {
               </>
             )}
           </Button>
+          <Button
+            variant="outline"
+            onClick={() => setImportLinkOpen(true)}
+            size="icon"
+            className="md:w-auto md:px-4 md:gap-2"
+          >
+            <Link2 className="h-4 w-4" />
+            <span className="hidden md:inline">Importar Link</span>
+          </Button>
           <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="md:w-auto md:px-4 md:gap-2">
             <Plus className="h-4 w-4" />
             <span className="hidden md:inline">Nova Música</span>
@@ -237,6 +248,11 @@ export default function SongsPage() {
         open={formOpen}
         onOpenChange={setFormOpen}
         songId={editingSong}
+      />
+
+      <ImportSongModal
+        open={importLinkOpen}
+        onOpenChange={setImportLinkOpen}
       />
 
       <ConfirmDeleteModal

@@ -12,7 +12,7 @@ import MetronomePulse from "@/components/teleprompter/MetronomePulse";
 
 import ChordModal from "@/components/teleprompter/ChordModal";
 import SongChordsFAB from "@/components/SongChordsFAB";
-import { parseChordPro } from "@/lib/chordpro-parser";
+import { parseChordPro, isChordProFormat } from "@/lib/chordpro-parser";
 
 interface TeleprompterSong {
   title: string;
@@ -686,7 +686,60 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 }
 
                 const body = displayBodies[idx];
-                return body ? (
+                if (!body) {
+                  return (
+                    <p className="text-center text-muted-foreground text-xl my-12">
+                      Nenhuma cifra disponível
+                    </p>
+                  );
+                }
+
+                // Auto-detect ChordPro in body_text (e.g. after "Save as Default")
+                if (isChordProFormat(body)) {
+                  const parsedLines = parseChordPro(body);
+                  return (
+                    <div
+                      className="mx-auto max-w-4xl"
+                      style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
+                      onClick={handleBodyClick}
+                    >
+                      {parsedLines.map((line, lineIdx) => {
+                        const firstToken = line.tokens[0];
+                        if (firstToken && !firstToken.chord && firstToken.lyric.match(/^\{.*\}$/)) {
+                          return null;
+                        }
+                        return (
+                          <div key={lineIdx} className="flex flex-wrap items-end mb-0.5">
+                            {line.tokens.map((token, tokenIdx) => (
+                              <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
+                                <span
+                                  className="text-primary font-bold select-none leading-tight"
+                                  style={{ fontSize: `${Math.max(fontSize * 0.55, 12)}px` }}
+                                >
+                                  {token.chord ? (
+                                    <span
+                                      className="chord chord-clickable cursor-pointer hover:text-accent transition-colors underline decoration-primary/30 underline-offset-2"
+                                      data-chord={token.chord}
+                                    >
+                                      {token.chord}
+                                    </span>
+                                  ) : (
+                                    "\u00A0"
+                                  )}
+                                </span>
+                                <span className="text-foreground whitespace-pre" style={{ fontFamily: "var(--font-mono)" }}>
+                                  {token.lyric || "\u00A0"}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                return (
                   <pre
                     className="chord-text whitespace-pre-wrap leading-relaxed text-foreground mx-auto max-w-4xl"
                     style={{
@@ -696,10 +749,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                     }}
                     dangerouslySetInnerHTML={{ __html: makeChordClickable(body) }}
                   />
-                ) : (
-                  <p className="text-center text-muted-foreground text-xl my-12">
-                    Nenhuma cifra disponível
-                  </p>
                 );
               })()}
             </div>

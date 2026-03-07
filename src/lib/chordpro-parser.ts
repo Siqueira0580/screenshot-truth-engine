@@ -24,9 +24,20 @@ export interface ChordProLine {
 // Regex that captures everything inside brackets as a chord marker
 const CHORDPRO_RE = /\[([^\]]+)\]/g;
 
+/** Regex to detect ChordPro directive lines like {title: ...} */
+const _DIRECTIVE_RE = /^\s*\{[^}]+\}\s*$/;
+
+/**
+ * Returns true if the text contains ChordPro chord markers like [Am].
+ */
+export function isChordProFormat(text: string): boolean {
+  return /\[[A-G][^\]]*\]/.test(text);
+}
+
 /**
  * Parse a full ChordPro string into an array of lines,
  * each containing an array of chord/lyric tokens.
+ * Automatically filters out metadata directives like {title:...}.
  */
 export function parseChordPro(text: string): ChordProLine[] {
   if (!text) return [];

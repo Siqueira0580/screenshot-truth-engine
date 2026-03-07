@@ -470,10 +470,16 @@ function assignFingers(frets: (number | -1)[], barres?: { fret: number; from: nu
   return result;
 }
 
+/**
+ * Draw a chord diagram on a canvas.
+ * Accepts an optional pre-resolved voicing (from AI/cache) to bypass the local dictionary.
+ */
 export function drawChordDiagram(
   canvas: HTMLCanvasElement,
   chord: string,
-  instrument: Instrument
+  instrument: Instrument,
+  preResolved?: { frets: (number | -1)[]; barres?: { fret: number; from: number; to: number }[]; baseFret?: number } | null,
+  isSimplified?: boolean
 ) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
@@ -483,7 +489,17 @@ export function drawChordDiagram(
     return;
   }
 
-  const { voicing, simplified } = resolveChordVoicing(chord, instrument);
+  let voicing: ChordVoicing | null;
+  let simplified: boolean;
+
+  if (preResolved) {
+    voicing = preResolved;
+    simplified = isSimplified ?? false;
+  } else {
+    const resolved = resolveChordVoicing(chord, instrument);
+    voicing = resolved.voicing;
+    simplified = resolved.simplified;
+  }
   const numStrings = getStringsForInstrument(instrument);
   const numFrets = 5;
   const w = canvas.width;

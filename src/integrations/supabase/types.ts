@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_generated_chords: {
+        Row: {
+          chord_data: Json
+          chord_name: string
+          created_at: string
+          id: string
+          instrument: string
+        }
+        Insert: {
+          chord_data: Json
+          chord_name: string
+          created_at?: string
+          id?: string
+          instrument?: string
+        }
+        Update: {
+          chord_data?: Json
+          chord_name?: string
+          created_at?: string
+          id?: string
+          instrument?: string
+        }
+        Relationships: []
+      }
       artists: {
         Row: {
           about: string | null

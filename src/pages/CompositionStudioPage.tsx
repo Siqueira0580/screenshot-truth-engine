@@ -131,6 +131,21 @@ export default function CompositionStudioPage() {
     }
   }, [title, editorText, selectedKey, bpm, style, compositionId, setSearchParams, navigate]);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleDelete = useCallback(async () => {
+    if (!compositionId) return;
+    try {
+      const { error } = await supabase.from("compositions").delete().eq("id", compositionId);
+      if (error) throw error;
+      toast.success("Composição apagada.");
+      navigate("/compositions");
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error("Erro ao apagar a composição.");
+    }
+  }, [compositionId, navigate]);
+
   const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
   const transcribeAudio = useCallback(async (audioBlob: Blob) => {

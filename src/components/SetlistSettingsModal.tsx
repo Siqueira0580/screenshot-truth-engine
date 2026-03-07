@@ -188,114 +188,133 @@ export default function SetlistSettingsModal({ open, onOpenChange, setlist, onSa
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Configuração do Show</DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={handleRequestClose}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
+          <DialogHeader>
+            <DialogTitle>Configuração do Show</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-5">
-          {/* Row 1: Name + Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="setlist-name">Nome do Repertório</Label>
-              <Input id="setlist-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Show Acústico" />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Data do Show</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !showDate && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {showDate ? format(showDate, "dd/MM/yyyy") : "Selecionar data"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={showDate} onSelect={setShowDate} initialFocus className="p-3 pointer-events-auto" />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {/* Row 2: Schedule */}
-          <div>
-            <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Cronograma</Label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="space-y-5">
+            {/* Row 1: Name + Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="start-time" className="text-xs">Início</Label>
-                <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                <Label htmlFor="setlist-name">Nome do Repertório</Label>
+                <Input id="setlist-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Show Acústico" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="show-duration" className="text-xs">Show (min)</Label>
-                <Input
-                  id="show-duration" type="number" min={0} placeholder="120"
-                  value={showDuration}
-                  onChange={(e) => setShowDuration(e.target.value ? Number(e.target.value) : "")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="interval-dur" className="text-xs">Intervalo (min)</Label>
-                <Input
-                  id="interval-dur" type="number" min={0} placeholder="15"
-                  value={intervalDuration}
-                  onChange={(e) => setIntervalDuration(e.target.value ? Number(e.target.value) : "")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="end-time" className="text-xs">Término</Label>
-                <Input
-                  id="end-time" type="time" value={endTime}
-                  onChange={(e) => { setEndTime(e.target.value); setEndTimeManual(true); }}
-                />
+                <Label>Data do Show</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !showDate && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {showDate ? format(showDate, "dd/MM/yyyy") : "Selecionar data"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar mode="single" selected={showDate} onSelect={setShowDate} initialFocus className="p-3 pointer-events-auto" />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
-          </div>
 
-          {/* Row 3: Musicians with Role Selector */}
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Escala de Músicos</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Nome do músico"
-                value={musicianName}
-                onChange={(e) => setMusicianName(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1"
-              />
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Função" />
-                </SelectTrigger>
-                <SelectContent>
-                  {INSTRUMENT_ROLES.map((role) => (
-                    <SelectItem key={role} value={role}>{role}</SelectItem>
+            {/* Row 2: Schedule */}
+            <div>
+              <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Cronograma</Label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="start-time" className="text-xs">Início</Label>
+                  <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="show-duration" className="text-xs">Show (min)</Label>
+                  <Input
+                    id="show-duration" type="number" min={0} placeholder="120"
+                    value={showDuration}
+                    onChange={(e) => setShowDuration(e.target.value ? Number(e.target.value) : "")}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="interval-dur" className="text-xs">Intervalo (min)</Label>
+                  <Input
+                    id="interval-dur" type="number" min={0} placeholder="15"
+                    value={intervalDuration}
+                    onChange={(e) => setIntervalDuration(e.target.value ? Number(e.target.value) : "")}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="end-time" className="text-xs">Término</Label>
+                  <Input
+                    id="end-time" type="time" value={endTime}
+                    onChange={(e) => { setEndTime(e.target.value); setEndTimeManual(true); }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3: Musicians with Role Selector */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Escala de Músicos</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Nome do músico"
+                  value={musicianName}
+                  onChange={(e) => setMusicianName(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="flex-1"
+                />
+                <Select value={selectedRole} onValueChange={setSelectedRole}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Função" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INSTRUMENT_ROLES.map((role) => (
+                      <SelectItem key={role} value={role}>{role}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddMusician} disabled={!musicianName.trim()}>
+                  +
+                </Button>
+              </div>
+              {musicians.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {musicians.map((m) => (
+                    <Badge key={m} variant="secondary" className="gap-1 pr-1">
+                      {m}
+                      <button onClick={() => removeMusician(m)} className="ml-1 rounded-full hover:bg-destructive/20 p-0.5 transition-colors">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
                   ))}
-                </SelectContent>
-              </Select>
-              <Button type="button" variant="outline" size="sm" onClick={handleAddMusician} disabled={!musicianName.trim()}>
-                +
-              </Button>
+                </div>
+              )}
             </div>
-            {musicians.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {musicians.map((m) => (
-                  <Badge key={m} variant="secondary" className="gap-1 pr-1">
-                    {m}
-                    <button onClick={() => removeMusician(m)} className="ml-1 rounded-full hover:bg-destructive/20 p-0.5 transition-colors">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
 
-          <Button onClick={handleSave} disabled={saving} className="w-full gap-2">
-            <Save className="h-4 w-4" />
-            {saving ? "Salvando..." : "Salvar Configurações"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+            <Button onClick={handleSave} disabled={saving} className="w-full gap-2">
+              <Save className="h-4 w-4" />
+              {saving ? "Salvando..." : "Salvar Configurações"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={confirmExit} onOpenChange={setConfirmExit}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar alterações?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você tem alterações não salvas. Deseja sair sem salvar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmExit} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Descartar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

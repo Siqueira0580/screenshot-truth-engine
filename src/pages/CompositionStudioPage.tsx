@@ -65,8 +65,8 @@ export default function CompositionStudioPage() {
     });
   }, [style, toggleRecording]);
 
-  // While recording, show live ChordPro; after stop, show editorText
-  const displayText = isRecording ? liveChordPro : editorText;
+  // Append live transcription in real-time while recording
+  const displayText = editorText + (isRecording && liveChordPro ? (editorText ? "\n" : "") + liveChordPro : "");
 
   const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];
 
@@ -210,63 +210,37 @@ export default function CompositionStudioPage() {
             </div>
           )}
 
-          {/* ChordPro preview editor area */}
+          {/* Editable textarea + ChordPro preview */}
           <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
-            {parsedLines ? (
-              parsedLines.map((tokens, lineIdx) => (
-                <div key={lineIdx} className="flex flex-wrap items-end mb-6">
-                  {tokens.map((token, i) => (
-                    <span key={i} className="inline-flex flex-col mr-1 mb-2">
-                      <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
-                        {token.chord || "\u00A0"}
-                      </span>
-                      <span className="text-foreground whitespace-pre text-base">
-                        {token.lyric || "\u00A0"}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              ))
-            ) : (
-              <>
-                {/* Sample placeholder */}
-                <div className="flex flex-wrap items-end mb-6">
-                  {SAMPLE_CHORDPRO.map((token, i) => (
-                    <span key={i} className="inline-flex flex-col mr-1 mb-2">
-                      <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
-                        {token.chord || "\u00A0"}
-                      </span>
-                      <span className="text-foreground whitespace-pre text-base">
-                        {token.lyric || "\u00A0"}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-                <div className="flex flex-wrap items-end mb-6">
-                  {[
-                    { chord: "Am7", lyric: "E o silêncio " },
-                    { chord: "F7M", lyric: "fala mais " },
-                    { chord: "G7", lyric: "que palavras" },
-                  ].map((token, i) => (
-                    <span key={i} className="inline-flex flex-col mr-1 mb-2">
-                      <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
-                        {token.chord || "\u00A0"}
-                      </span>
-                      <span className="text-foreground whitespace-pre text-base">
-                        {token.lyric || "\u00A0"}
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Blinking cursor placeholder */}
-            <div className="flex items-center gap-1 text-muted-foreground mt-4">
-              <span className="w-0.5 h-5 bg-primary animate-pulse rounded-full" />
-              <span className="text-sm italic opacity-60">Comece a escrever sua letra aqui...</span>
-            </div>
+            <textarea
+              value={isRecording ? displayText : editorText}
+              onChange={(e) => { if (!isRecording) setEditorText(e.target.value); }}
+              readOnly={isRecording}
+              placeholder="Comece a digitar sua composição ou clique em Cantar Nova Ideia..."
+              className="w-full h-96 bg-transparent text-foreground font-mono resize-none focus:outline-none placeholder:text-muted-foreground text-base leading-relaxed"
+            />
           </div>
+
+          {/* ChordPro rendered preview */}
+          {displayText && (
+            <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono mt-4">
+              <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Pré-visualização</p>
+              {parsedLines?.map((tokens, lineIdx) => (
+                <div key={lineIdx} className="flex flex-wrap items-end mb-4">
+                  {tokens.map((token, i) => (
+                    <span key={i} className="inline-flex flex-col mr-1 mb-1">
+                      <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
+                        {token.chord || "\u00A0"}
+                      </span>
+                      <span className="text-foreground whitespace-pre text-base">
+                        {token.lyric || "\u00A0"}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </main>
 
         {/* Mobile toggle for sidebar */}

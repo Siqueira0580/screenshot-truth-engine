@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, MonitorPlay, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,7 @@ import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
+import ShowButton from "@/components/ShowButton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";

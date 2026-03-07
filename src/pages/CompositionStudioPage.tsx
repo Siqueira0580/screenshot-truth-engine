@@ -59,6 +59,7 @@ export default function CompositionStudioPage() {
       setTitle(data.title || "");
       setEditorText(data.body_text || "");
       setSelectedKey(data.musical_key || "Am");
+      setOriginalKey(data.musical_key || "Am");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
       if (data.audio_url) setSavedAudioUrl(data.audio_url);
@@ -265,6 +266,12 @@ export default function CompositionStudioPage() {
 
           {/* Center: filters */}
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Original key badge */}
+            <span className="inline-flex items-center gap-1 rounded-md bg-accent/20 border border-accent/40 px-2.5 h-9 text-sm font-semibold text-accent-foreground">
+              <Music className="h-3.5 w-3.5 text-accent" />
+              Original: <span className="text-accent">{originalKey}</span>
+            </span>
+
             <Select value={selectedKey} onValueChange={setSelectedKey}>
               <SelectTrigger className="w-24 h-9 bg-secondary border-border text-sm">
                 <SelectValue placeholder="Tom" />

@@ -73,9 +73,13 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Você é um assistente musical especializado em cifras. Extraia a cifra/letra do texto fornecido (que foi extraído de um site de cifras). 
-Formate a música rigorosamente no formato ChordPro, colocando os acordes entre colchetes sobre as sílabas corretas (ex: [Am]Hoje eu [G]sei).
-Identifique o Título, o Artista e classifique o Gênero Musical (ex: Samba, Rock, MPB, Pop, Gospel, Forró, Sertanejo, Bossa Nova).
+            content: `Você é um formatador de texto especializado no padrão ChordPro. Eu vou fornecer-lhe o texto bruto extraído de uma página da web de cifras.
+A sua ÚNICA tarefa é encontrar a letra e os acordes DENTRO DESTE TEXTO FORNECIDO e formatá-los para ChordPro (ex: [Am]Sílaba).
+Extraia também o Título, Artista e classifique o Gênero Musical (ex: Samba, Rock, MPB, Pop, Gospel, Forró, Sertanejo, Bossa Nova).
+
+REGRA ABSOLUTA: NÃO invente acordes. NÃO adicione trechos de música que não estejam no texto bruto fornecido. Use APENAS os dados presentes no texto.
+Se o texto bruto não contiver uma cifra musical válida (ex: página de erro, notícias, ou conteúdo sem acordes), retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}
+
 Retorne ESTRITAMENTE um JSON válido com as chaves: "title", "artist", "genre", "content" (a cifra formatada em ChordPro).
 Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
           },

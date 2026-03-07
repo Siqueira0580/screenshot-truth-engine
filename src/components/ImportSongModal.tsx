@@ -53,6 +53,14 @@ export default function ImportSongModal({
 
   const isUrl = (text: string) => /^https?:\/\//i.test(text.trim());
 
+  const validateUrl = (text: string): boolean => {
+    if (!isUrl(text)) {
+      toast.error("Por favor, cole um link válido de um site de cifras (ex: https://cifraclub.com.br/...)");
+      return false;
+    }
+    return true;
+  };
+
   const resetToSearch = () => {
     setStep("search");
     setPreviewData(null);
@@ -67,35 +75,25 @@ export default function ImportSongModal({
   const handleSearch = async () => {
     const trimmed = input.trim();
     if (!trimmed) {
-      toast.error("Digite o nome da música ou cole um link");
+      toast.error("Cole o link da cifra");
       return;
     }
 
+    if (!validateUrl(trimmed)) return;
+
     setIsSearching(true);
     try {
-      let data: PreviewData;
-
-      if (isUrl(trimmed)) {
-        const { data: urlData, error } = await supabase.functions.invoke("import-song-url", {
-          body: { url: trimmed },
-        });
-        if (error) throw error;
-        if (urlData?.error) { toast.error(urlData.error); return; }
-        data = urlData;
-      } else {
-        const { data: aiData, error } = await supabase.functions.invoke("search-cifra", {
-          body: { query: trimmed },
-        });
-        if (error) throw error;
-        if (aiData?.error) { toast.error(aiData.error); return; }
-        data = aiData;
-      }
+      const { data, error } = await supabase.functions.invoke("import-song-url", {
+        body: { url: trimmed },
+      });
+      if (error) throw error;
+      if (data?.error) { toast.error(data.error); return; }
 
       setPreviewData(data);
       setStep("preview");
     } catch (err) {
-      console.error("Search error:", err);
-      toast.error("Erro ao buscar a cifra. Tente novamente.");
+      console.error("Import error:", err);
+      toast.error("Erro ao importar a cifra. Verifique o link e tente novamente.");
     } finally {
       setIsSearching(false);
     }
@@ -145,9 +143,7 @@ export default function ImportSongModal({
   const bodyText = previewData?.content || previewData?.body_text || "";
   const snippetLines = bodyText.split("\n").slice(0, 8).join("\n");
 
-  const loadingText = isUrl(input.trim())
-    ? "O robô está a ler o site e a afinar os acordes..."
-    : "A buscar a cifra na internet...";
+  const loadingText = "O robô está a ler o site e a afinar os acordes...";
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -155,16 +151,17 @@ export default function ImportSongModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            {step === "search" ? "Importar / Buscar Cifra" : "Pré-visualização"}
+            {step === "search" ? "Importar Cifra via Link" : "Pré-visualização"}
           </DialogTitle>
         </DialogHeader>
 
         {step === "search" && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Cole o link da cifra ou digite o Nome da Música e Artista</Label>
+              <Label>Cole o link da cifra</Label>
               <Input
-                placeholder="https://cifraclub.com.br/... ou Evidências Chitãozinho"
+                type="url"
+                placeholder="https://cifraclub.com.br/artista/musica"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -173,7 +170,7 @@ export default function ImportSongModal({
                 disabled={isSearching}
               />
               <p className="text-xs text-muted-foreground">
-                Funciona com links (Cifra Club, Letras.mus.br, Ultimate Guitar) ou buscas por nome.
+                Funciona com Cifra Club, Letras.mus.br, Ultimate Guitar e outros sites de cifras.
               </p>
             </div>
 
@@ -191,11 +188,11 @@ export default function ImportSongModal({
               <Button variant="outline" onClick={handleClose} disabled={isSearching}>
                 Cancelar
               </Button>
-              <Button onClick={handleSearch} disabled={isSearching || !input.trim()} className="gap-2">
+              <Button onClick={handleSearch} disabled={isSearching || !input.trim() || !isUrl(input.trim())} className="gap-2">
                 {isSearching ? (
-                  <><Loader2 className="h-4 w-4 animate-spin" />Buscando...</>
+                  <><Loader2 className="h-4 w-4 animate-spin" />Importando...</>
                 ) : (
-                  <><Sparkles className="h-4 w-4" />Buscar Cifra</>
+                  <><Sparkles className="h-4 w-4" />Importar Cifra</>
                 )}
               </Button>
             </div>

@@ -231,7 +231,7 @@ export default function SetlistDetailPage() {
   const { data: allSongs = [] } = useQuery({
     queryKey: ["songs"],
     queryFn: fetchSongs,
-    enabled: addOpen,
+    enabled: addOpen || globalSearchOpen,
   });
 
   // Offline cache

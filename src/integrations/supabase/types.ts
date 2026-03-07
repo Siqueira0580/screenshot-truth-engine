@@ -40,6 +40,7 @@ export type Database = {
       }
       audio_tracks: {
         Row: {
+          ai_chordpro_text: string | null
           created_at: string
           file_full: string | null
           file_harmony: string | null
@@ -51,6 +52,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          ai_chordpro_text?: string | null
           created_at?: string
           file_full?: string | null
           file_harmony?: string | null
@@ -62,6 +64,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          ai_chordpro_text?: string | null
           created_at?: string
           file_full?: string | null
           file_harmony?: string | null

@@ -1,0 +1,1 @@
+ALTER TABLE public.audio_tracks ADD COLUMN ai_chordpro_text text;

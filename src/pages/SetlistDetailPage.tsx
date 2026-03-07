@@ -27,6 +27,7 @@ import StageSyncInviteModal from "@/components/StageSyncInviteModal";
 import SyncInviteModal from "@/components/SyncInviteModal";
 import SetlistToolbar, { type SortBy } from "@/components/SetlistToolbar";
 import CreateFromSelectionBar from "@/components/CreateFromSelectionBar";
+import GlobalSongSearchModal from "@/components/GlobalSongSearchModal";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
@@ -204,6 +205,8 @@ export default function SetlistDetailPage() {
   const [sortBy, setSortBy] = useState<SortBy>("manual");
   const [filterKey, setFilterKey] = useState("all");
   const [selectedSongs, setSelectedSongs] = useState<Set<string>>(new Set());
+  const [globalSelectedSongs, setGlobalSelectedSongs] = useState<Set<string>>(new Set());
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -228,7 +231,7 @@ export default function SetlistDetailPage() {
   const { data: allSongs = [] } = useQuery({
     queryKey: ["songs"],
     queryFn: fetchSongs,
-    enabled: addOpen,
+    enabled: addOpen || globalSearchOpen,
   });
 
   // Offline cache
@@ -331,7 +334,16 @@ export default function SetlistDetailPage() {
     });
   }, []);
 
+  const toggleGlobalSong = useCallback((songId: string) => {
+    setGlobalSelectedSongs((prev) => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId); else next.add(songId);
+      return next;
+    });
+  }, []);
+
   const handleCreateFromSelection = useCallback(async (name: string) => {
+    // Songs from current setlist selection
     const selectedItems = items
       .filter((item: any) => selectedSongs.has(item.id))
       .map((item: any) => ({
@@ -341,11 +353,26 @@ export default function SetlistDetailPage() {
         bpm: localOverrides[item.id]?.bpm ?? item.bpm ?? null,
         transposed_key: localOverrides[item.id]?.transposed_key ?? item.transposed_key ?? null,
       }));
-    const newSetlist = await createSetlistFromSelection(name, selectedItems);
+
+    // Songs from global search (not already in setlist selection)
+    const existingSongIds = new Set(selectedItems.map((i) => i.song_id));
+    const globalItems = Array.from(globalSelectedSongs)
+      .filter((songId) => !existingSongIds.has(songId))
+      .map((songId) => ({
+        song_id: songId,
+        loop_count: null,
+        speed: null,
+        bpm: null,
+        transposed_key: null,
+      }));
+
+    const allItems = [...selectedItems, ...globalItems];
+    const newSetlist = await createSetlistFromSelection(name, allItems);
     setSelectedSongs(new Set());
-    toast.success(`Repertório "${name}" criado com ${selectedItems.length} música(s)!`);
+    setGlobalSelectedSongs(new Set());
+    toast.success(`Repertório "${name}" criado com ${allItems.length} música(s)!`);
     navigate(`/setlists/${newSetlist.id}`);
-  }, [items, selectedSongs, localOverrides, navigate]);
+  }, [items, selectedSongs, globalSelectedSongs, localOverrides, navigate]);
 
   // Drag and drop
   const sensors = useSensors(
@@ -471,7 +498,7 @@ export default function SetlistDetailPage() {
   }, [setlist, items]);
 
   return (
-    <div className={`max-w-3xl space-y-6 animate-fade-in ${selectedSongs.size > 0 ? "pb-36 sm:pb-28" : ""}`}>
+    <div className={`max-w-3xl space-y-6 animate-fade-in ${(selectedSongs.size > 0 || globalSelectedSongs.size > 0) ? "pb-36 sm:pb-28" : ""}`}>
       <Button variant="ghost" asChild className="gap-2">
         <Link to="/setlists"><ArrowLeft className="h-4 w-4" /> Voltar</Link>
       </Button>
@@ -603,7 +630,20 @@ export default function SetlistDetailPage() {
         </>
       )}
 
-      <CreateFromSelectionBar count={selectedSongs.size} onSubmit={handleCreateFromSelection} />
+      <CreateFromSelectionBar
+        count={selectedSongs.size}
+        globalCount={globalSelectedSongs.size}
+        onSubmit={handleCreateFromSelection}
+        onSearchGlobal={() => setGlobalSearchOpen(true)}
+      />
+
+      <GlobalSongSearchModal
+        open={globalSearchOpen}
+        onOpenChange={setGlobalSearchOpen}
+        selectedSongIds={globalSelectedSongs}
+        onToggleSong={toggleGlobalSong}
+        existingSetlistSongIds={existingIds}
+      />
 
       {/* Add song dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>

@@ -11,6 +11,17 @@ import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import AutoCipherViewer from "@/components/AutoCipherViewer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Save } from "lucide-react";
 
 function extractYoutubeId(url: string | null): string | null {
   if (!url) return null;

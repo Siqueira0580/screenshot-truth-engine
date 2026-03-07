@@ -29,6 +29,7 @@ import SetlistToolbar, { type SortBy } from "@/components/SetlistToolbar";
 import CreateFromSelectionBar from "@/components/CreateFromSelectionBar";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import SetlistHeader from "@/components/SetlistHeader";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";

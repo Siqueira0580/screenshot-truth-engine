@@ -643,6 +643,14 @@ export default function CompositionStudioPage() {
         title="Apagar Composição"
         description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
       />
+
+      <ConfirmDeleteModal
+        open={showDeleteAudioModal}
+        onOpenChange={setShowDeleteAudioModal}
+        onConfirm={handleDeleteAudio}
+        title="Excluir Áudio"
+        description="Tem certeza que deseja excluir o áudio gravado? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

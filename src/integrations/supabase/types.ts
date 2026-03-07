@@ -325,6 +325,7 @@ export type Database = {
           composer: string | null
           created_at: string
           default_speed: number | null
+          enrichment_status: string | null
           id: string
           loop_count: number | null
           musical_key: string | null
@@ -343,6 +344,7 @@ export type Database = {
           composer?: string | null
           created_at?: string
           default_speed?: number | null
+          enrichment_status?: string | null
           id?: string
           loop_count?: number | null
           musical_key?: string | null
@@ -361,6 +363,7 @@ export type Database = {
           composer?: string | null
           created_at?: string
           default_speed?: number | null
+          enrichment_status?: string | null
           id?: string
           loop_count?: number | null
           musical_key?: string | null

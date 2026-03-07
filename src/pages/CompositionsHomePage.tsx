@@ -130,18 +130,20 @@ export default function CompositionsHomePage() {
               className="text-left rounded-xl border border-border bg-card p-5 hover:border-primary/40 hover:bg-primary/5 transition-all group"
             >
               <div className="flex items-start justify-between">
-                <h3 className="font-semibold text-foreground truncate flex-1">
-                  {comp.title || "Sem título"}
-                </h3>
-                {comp.composers && (
-                  <p className="text-xs text-muted-foreground truncate flex-1 -mt-0.5">
-                    ✍️ {comp.composers}
-                  </p>
-                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-foreground truncate">
+                    {comp.title || "Sem título"}
+                  </h3>
+                  {comp.composers && (
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      ✍️ {comp.composers}
+                    </p>
+                  )}
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
                   onClick={(e) => handleDelete(comp.id, e)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />

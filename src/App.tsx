@@ -49,7 +49,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/songs" replace />;
   return <>{children}</>;
 }
 

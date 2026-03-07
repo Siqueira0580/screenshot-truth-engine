@@ -155,6 +155,29 @@ export default function CompositionStudioPage() {
   }, [title, editorText, composers]);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteAudioModal, setShowDeleteAudioModal] = useState(false);
+
+  const handleDeleteAudio = useCallback(async () => {
+    try {
+      // Remove from storage if saved URL exists
+      if (savedAudioUrl) {
+        const path = savedAudioUrl.split("/compositions_audio/")[1];
+        if (path) {
+          await supabase.storage.from("compositions_audio").remove([decodeURIComponent(path)]);
+        }
+        // Clear audio_url in DB
+        if (compositionId) {
+          await supabase.from("compositions").update({ audio_url: null } as any).eq("id", compositionId);
+        }
+      }
+      setSavedAudioUrl(null);
+      audioBlobRef.current = null;
+      toast.success("Áudio excluído com sucesso.");
+    } catch (err) {
+      console.error("Delete audio error:", err);
+      toast.error("Erro ao excluir o áudio.");
+    }
+  }, [savedAudioUrl, compositionId]);
 
   const handleDelete = useCallback(async () => {
     if (!compositionId) return;

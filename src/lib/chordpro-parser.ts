@@ -31,7 +31,7 @@ const _DIRECTIVE_RE = /^\s*\{[^}]+\}\s*$/;
  * Returns true if the text contains ChordPro chord markers like [Am].
  */
 export function isChordProFormat(text: string): boolean {
-  return CHORDPRO_RE.test(text);
+  return /\[[A-G][^\]]*\]/.test(text);
 }
 
 /**

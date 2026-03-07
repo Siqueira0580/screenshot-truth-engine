@@ -590,7 +590,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         onClick={handleBodyClick}
       >
         {songs.map((s, idx) => {
-          const body = displayBodies[idx];
           const sKey = transposeKey(s.musical_key, transpose);
           return (
             <div

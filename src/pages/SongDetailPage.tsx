@@ -96,7 +96,6 @@ export default function SongDetailPage() {
       if (!chordpro) throw new Error("Nenhuma cifra gerada.");
 
       setAiChordPro(chordpro);
-      setShowAiCipher(true);
 
       // If no audio_track exists yet, create one to store the result
       if (!audioTrack?.id && id) {

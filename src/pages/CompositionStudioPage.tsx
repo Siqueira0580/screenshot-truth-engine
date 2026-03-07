@@ -70,15 +70,13 @@ export default function CompositionStudioPage() {
 
   const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];
 
-  // Parse editorText into renderable ChordPro tokens
-  const parsedLines = editorText
-    ? editorText.split("\n").map((line) => {
+  // Parse displayText into renderable ChordPro tokens
+  const parsedLines = displayText
+    ? displayText.split("\n").map((line) => {
         const tokens: { chord: string | null; lyric: string }[] = [];
         const regex = /\[([^\]]+)\]([^\[]*)/g;
         let match;
-        let lastIndex = 0;
 
-        // Text before first chord
         const firstBracket = line.indexOf("[");
         if (firstBracket > 0) {
           tokens.push({ chord: null, lyric: line.slice(0, firstBracket) });
@@ -86,10 +84,8 @@ export default function CompositionStudioPage() {
 
         while ((match = regex.exec(line)) !== null) {
           tokens.push({ chord: match[1], lyric: match[2] });
-          lastIndex = regex.lastIndex;
         }
 
-        // If no chords found, treat as plain lyric line
         if (tokens.length === 0 && line.trim()) {
           tokens.push({ chord: null, lyric: line });
         }

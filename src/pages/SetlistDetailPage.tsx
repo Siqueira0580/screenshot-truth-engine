@@ -130,7 +130,7 @@ function SortableSongItem({
         {/* Speed: Mobile = cycle buttons, Desktop = input */}
         <div className="flex items-center gap-1">
           <label className="text-xs text-muted-foreground whitespace-nowrap">Vel</label>
-          {isMobile ? (
+          {(isMobile || isTablet) ? (
             <div className="flex items-center gap-0.5">
               <Button
                 variant="outline" size="icon"
@@ -185,8 +185,7 @@ export default function SetlistDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [searchParams] = useSearchParams();
-  const inviteToken = searchParams.get("invite");
+  const isTablet = useIsTablet();
   const [addOpen, setAddOpen] = useState(false);
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -587,6 +586,7 @@ export default function SetlistDetailPage() {
                     updateField={updateField}
                     removeMutation={removeMutation}
                     isMobile={isMobile}
+                    isTablet={isTablet}
                   />
                 ))}
               </div>

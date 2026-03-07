@@ -630,7 +630,20 @@ export default function SetlistDetailPage() {
         </>
       )}
 
-      <CreateFromSelectionBar count={selectedSongs.size} onSubmit={handleCreateFromSelection} />
+      <CreateFromSelectionBar
+        count={selectedSongs.size}
+        globalCount={globalSelectedSongs.size}
+        onSubmit={handleCreateFromSelection}
+        onSearchGlobal={() => setGlobalSearchOpen(true)}
+      />
+
+      <GlobalSongSearchModal
+        open={globalSearchOpen}
+        onOpenChange={setGlobalSearchOpen}
+        selectedSongIds={globalSelectedSongs}
+        onToggleSong={toggleGlobalSong}
+        existingSetlistSongIds={existingIds}
+      />
 
       {/* Add song dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>

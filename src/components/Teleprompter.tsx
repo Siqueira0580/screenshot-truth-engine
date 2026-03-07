@@ -90,9 +90,15 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const song = songs[currentIndex];
   const displayKey = transposeKey(song?.musical_key, transpose);
 
-  // Build all songs' display bodies
+  // Build all songs' display bodies (use transposeChordPro for ChordPro-formatted text)
   const displayBodies = useMemo(() =>
-    songs.map(s => s.body_text ? transposeText(s.body_text, transpose) : null),
+    songs.map(s => {
+      if (!s.body_text) return null;
+      if (isChordProFormat(s.body_text)) {
+        return transposeChordPro(s.body_text, transpose);
+      }
+      return transposeText(s.body_text, transpose);
+    }),
     [songs, transpose]
   );
 

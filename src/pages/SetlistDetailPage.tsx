@@ -644,6 +644,7 @@ export default function SetlistDetailPage() {
           musical_key: item.songs?.musical_key,
           bpm: item.songs?.bpm ?? item.bpm,
           body_text: item.songs?.body_text,
+          ai_chordpro_text: item.songs?.body_text || null,
           loop_count: item.loop_count ?? item.songs?.loop_count,
           auto_next: item.songs?.auto_next,
           speed: item.speed ?? item.songs?.default_speed ?? 250,

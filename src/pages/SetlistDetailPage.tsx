@@ -334,7 +334,16 @@ export default function SetlistDetailPage() {
     });
   }, []);
 
+  const toggleGlobalSong = useCallback((songId: string) => {
+    setGlobalSelectedSongs((prev) => {
+      const next = new Set(prev);
+      if (next.has(songId)) next.delete(songId); else next.add(songId);
+      return next;
+    });
+  }, []);
+
   const handleCreateFromSelection = useCallback(async (name: string) => {
+    // Songs from current setlist selection
     const selectedItems = items
       .filter((item: any) => selectedSongs.has(item.id))
       .map((item: any) => ({
@@ -344,11 +353,26 @@ export default function SetlistDetailPage() {
         bpm: localOverrides[item.id]?.bpm ?? item.bpm ?? null,
         transposed_key: localOverrides[item.id]?.transposed_key ?? item.transposed_key ?? null,
       }));
-    const newSetlist = await createSetlistFromSelection(name, selectedItems);
+
+    // Songs from global search (not already in setlist selection)
+    const existingSongIds = new Set(selectedItems.map((i) => i.song_id));
+    const globalItems = Array.from(globalSelectedSongs)
+      .filter((songId) => !existingSongIds.has(songId))
+      .map((songId) => ({
+        song_id: songId,
+        loop_count: null,
+        speed: null,
+        bpm: null,
+        transposed_key: null,
+      }));
+
+    const allItems = [...selectedItems, ...globalItems];
+    const newSetlist = await createSetlistFromSelection(name, allItems);
     setSelectedSongs(new Set());
-    toast.success(`Repertório "${name}" criado com ${selectedItems.length} música(s)!`);
+    setGlobalSelectedSongs(new Set());
+    toast.success(`Repertório "${name}" criado com ${allItems.length} música(s)!`);
     navigate(`/setlists/${newSetlist.id}`);
-  }, [items, selectedSongs, localOverrides, navigate]);
+  }, [items, selectedSongs, globalSelectedSongs, localOverrides, navigate]);
 
   // Drag and drop
   const sensors = useSensors(

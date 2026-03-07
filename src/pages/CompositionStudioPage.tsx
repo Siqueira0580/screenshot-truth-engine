@@ -34,6 +34,7 @@ export default function CompositionStudioPage() {
   const [compositionId, setCompositionId] = useState<string | null>(searchParams.get("id"));
   const [title, setTitle] = useState("");
   const [selectedKey, setSelectedKey] = useState("Am");
+  const [originalKey, setOriginalKey] = useState("Am"); // tom original da composição
   const [targetKey, setTargetKey] = useState(""); // empty = no transposition
   const [bpm, setBpm] = useState("120");
   const [style, setStyle] = useState("Bossa Nova");

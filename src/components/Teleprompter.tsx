@@ -66,13 +66,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const songRefs = useRef<(HTMLDivElement | null)[]>([]);
   const repeatingRef = useRef(false);
 
-  // Auto-enable ChordPro mode if any song has AI chordpro text
-  useEffect(() => {
-    if (songs.some(s => s.ai_chordpro_text)) {
-      setUseChordPro(true);
-    }
-  }, [songs]);
-
   // Initialize loops remaining from song config
   useEffect(() => {
     setLoopsRemaining(songs.map(s => s.loop_count ?? 0));

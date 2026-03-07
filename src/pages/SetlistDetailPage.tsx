@@ -205,6 +205,8 @@ export default function SetlistDetailPage() {
   const [sortBy, setSortBy] = useState<SortBy>("manual");
   const [filterKey, setFilterKey] = useState("all");
   const [selectedSongs, setSelectedSongs] = useState<Set<string>>(new Set());
+  const [globalSelectedSongs, setGlobalSelectedSongs] = useState<Set<string>>(new Set());
+  const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
 
   const queryClient = useQueryClient();
 

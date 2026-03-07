@@ -148,6 +148,7 @@ serve(async (req) => {
         success: true,
         artist_image_url: artistImageUrl,
         style: updates.style || null,
+        bpm: updates.bpm ? Number(updates.bpm) : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

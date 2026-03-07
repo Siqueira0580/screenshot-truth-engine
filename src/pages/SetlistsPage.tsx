@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
-import { Plus, ListMusic, Trash2, Calendar, Clock, Users, ArrowUpDown, RefreshCw } from "lucide-react";
+import { Plus, ListMusic, Trash2, Calendar, Clock, Users, ArrowUpDown, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { format, differenceInDays, differenceInHours, isAfter, subDays, subMonth
 import { ptBR } from "date-fns/locale";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import AutoSetlistGeneratorModal from "@/components/AutoSetlistGeneratorModal";
 
 type SortOption = "newest" | "oldest" | "name_asc" | "name_desc";
 type DateFilter = "all" | "7days" | "30days" | "3months";
@@ -30,6 +31,7 @@ function formatDaysAgo(dateStr: string): string {
 
 export default function SetlistsPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [autoGenOpen, setAutoGenOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -93,10 +95,16 @@ export default function SetlistsPage() {
             {dateFilter !== "all" && ` (filtrado de ${setlists.length})`}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Novo Repertório
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setAutoGenOpen(true)} className="gap-1">
+            <Sparkles className="h-4 w-4" />
+            Sugerir Repertório
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Novo Repertório
+          </Button>
+        </div>
       </div>
 
       {/* Filters Row */}
@@ -237,6 +245,15 @@ export default function SetlistsPage() {
           }
         }}
         description="Tem a certeza de que deseja excluir este repertório? Esta ação não pode ser desfeita."
+      />
+
+      <AutoSetlistGeneratorModal
+        open={autoGenOpen}
+        onOpenChange={setAutoGenOpen}
+        onCreated={(id) => {
+          queryClient.invalidateQueries({ queryKey: ["setlists"] });
+          navigate(`/setlists/${id}`);
+        }}
       />
     </div>
   );

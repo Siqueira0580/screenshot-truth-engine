@@ -148,6 +148,19 @@ export default function StudioPage() {
           })}
         </div>
       )}
+
+      {/* Song config dialog after upload */}
+      <SongFormDialog
+        open={showFormDialog}
+        onOpenChange={(open) => {
+          setShowFormDialog(open);
+          if (!open && editSongId) {
+            navigate(`/studio/${editSongId}`);
+            setEditSongId(null);
+          }
+        }}
+        songId={editSongId}
+      />
     </div>
   );
 }

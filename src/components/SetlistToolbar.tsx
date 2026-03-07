@@ -49,6 +49,17 @@ export default function SetlistToolbar({
         <span className="text-xs text-muted-foreground whitespace-nowrap">
           {selectionCount > 0 ? `${selectionCount} selecionada(s)` : "Selecionar"}
         </span>
+        {selectionCount > 0 && onCreateFromSelection && (
+          <Button
+            variant="default"
+            size="sm"
+            className="h-7 text-xs gap-1 px-3 ml-1"
+            onClick={onCreateFromSelection}
+          >
+            <ClipboardList className="h-3.5 w-3.5" />
+            Criar Repertório
+          </Button>
+        )}
       </div>
 
       <div className="h-4 w-px bg-border hidden sm:block" />

@@ -18,6 +18,7 @@ interface Composition {
   style: string | null;
   musical_key: string | null;
   bpm: number | null;
+  composers: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,7 +37,7 @@ export default function CompositionsHomePage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("compositions")
-        .select("id, title, style, musical_key, bpm, created_at, updated_at")
+        .select("id, title, style, musical_key, bpm, composers, created_at, updated_at")
         .eq("user_id", user.id)
         .order("updated_at", { ascending: false });
       if (!error && data) setCompositions(data);
@@ -132,6 +133,11 @@ export default function CompositionsHomePage() {
                 <h3 className="font-semibold text-foreground truncate flex-1">
                   {comp.title || "Sem título"}
                 </h3>
+                {comp.composers && (
+                  <p className="text-xs text-muted-foreground truncate flex-1 -mt-0.5">
+                    ✍️ {comp.composers}
+                  </p>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

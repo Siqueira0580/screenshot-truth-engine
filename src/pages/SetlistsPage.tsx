@@ -31,6 +31,7 @@ function formatDaysAgo(dateStr: string): string {
 
 export default function SetlistsPage() {
   const [createOpen, setCreateOpen] = useState(false);
+  const [autoGenOpen, setAutoGenOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);

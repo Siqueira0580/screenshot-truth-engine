@@ -56,7 +56,7 @@ export default function CompositionStudioPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorText, setEditorText] = useState("");
 
-  const { isRecording, isProcessing, toggleRecording } = useAudioRecorder();
+  const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
   const handleRecordToggle = useCallback(() => {
     toggleRecording(style, (result) => {
@@ -65,17 +65,18 @@ export default function CompositionStudioPage() {
     });
   }, [style, toggleRecording]);
 
+  // While recording, show live ChordPro; after stop, show editorText
+  const displayText = isRecording ? liveChordPro : editorText;
+
   const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];
 
-  // Parse editorText into renderable ChordPro tokens
-  const parsedLines = editorText
-    ? editorText.split("\n").map((line) => {
+  // Parse displayText into renderable ChordPro tokens
+  const parsedLines = displayText
+    ? displayText.split("\n").map((line) => {
         const tokens: { chord: string | null; lyric: string }[] = [];
         const regex = /\[([^\]]+)\]([^\[]*)/g;
         let match;
-        let lastIndex = 0;
 
-        // Text before first chord
         const firstBracket = line.indexOf("[");
         if (firstBracket > 0) {
           tokens.push({ chord: null, lyric: line.slice(0, firstBracket) });
@@ -83,10 +84,8 @@ export default function CompositionStudioPage() {
 
         while ((match = regex.exec(line)) !== null) {
           tokens.push({ chord: match[1], lyric: match[2] });
-          lastIndex = regex.lastIndex;
         }
 
-        // If no chords found, treat as plain lyric line
         if (tokens.length === 0 && line.trim()) {
           tokens.push({ chord: null, lyric: line });
         }
@@ -162,8 +161,8 @@ export default function CompositionStudioPage() {
       <div className="flex-1 flex overflow-hidden relative">
         {/* Editor – 70% */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24">
-          {/* Record button */}
-          <div className="flex justify-center mb-8">
+          {/* Record button + current note */}
+          <div className="flex flex-col items-center gap-3 mb-8">
             <button
               onClick={handleRecordToggle}
               disabled={isProcessing}
@@ -185,7 +184,7 @@ export default function CompositionStudioPage() {
               ) : isProcessing ? (
                 <>
                   <Loader2 className="h-6 w-6 animate-spin" />
-                  IA a deduzir a harmonia...
+                  A finalizar...
                 </>
               ) : (
                 <>
@@ -194,7 +193,22 @@ export default function CompositionStudioPage() {
                 </>
               )}
             </button>
+
+            {/* Real-time note indicator */}
+            {isRecording && currentNote && (
+              <div className="flex items-center gap-2 animate-pulse">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider">Nota detetada:</span>
+                <span className="text-2xl font-mono font-black text-primary">{currentNote}</span>
+              </div>
+            )}
           </div>
+
+          {/* Audio playback after recording */}
+          {audioUrl && !isRecording && (
+            <div className="mb-6 flex justify-center">
+              <audio controls src={audioUrl} className="w-full max-w-md rounded-lg" />
+            </div>
+          )}
 
           {/* ChordPro preview editor area */}
           <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">

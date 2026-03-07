@@ -430,6 +430,46 @@ function getStringsForInstrument(instrument: Instrument): number {
   return 4;
 }
 
+/**
+ * Assign finger numbers (1-4) to fretted positions based on fret layout.
+ * Returns an array matching voicing.frets where each entry is the finger number (or 0 for open/-1 for muted).
+ */
+function assignFingers(frets: (number | -1)[], barres?: { fret: number; from: number; to: number }[]): number[] {
+  // Collect fretted positions (fret > 0) that are NOT covered by a barre
+  const barreFret = barres?.[0]?.fret ?? -1;
+  const barreFrom = barres?.[0]?.from ?? -1;
+  const barreTo = barres?.[0]?.to ?? -1;
+
+  interface FretEntry { stringIdx: number; fret: number; isBarre: boolean }
+  const entries: FretEntry[] = [];
+
+  for (let s = 0; s < frets.length; s++) {
+    const f = frets[s];
+    if (f <= 0) continue;
+    const isBarre = f === barreFret && s >= barreFrom && s <= barreTo;
+    entries.push({ stringIdx: s, fret: f, isBarre });
+  }
+
+  const result = new Array(frets.length).fill(0);
+
+  // Barre finger is always 1
+  if (barres && barres.length > 0) {
+    for (const e of entries) {
+      if (e.isBarre) result[e.stringIdx] = 1;
+    }
+  }
+
+  // Sort non-barre entries by fret then string position, assign fingers 2,3,4
+  const nonBarre = entries.filter(e => !e.isBarre).sort((a, b) => a.fret - b.fret || a.stringIdx - b.stringIdx);
+  let nextFinger = barres && barres.length > 0 ? 2 : 1;
+  for (const e of nonBarre) {
+    result[e.stringIdx] = Math.min(nextFinger, 4);
+    nextFinger++;
+  }
+
+  return result;
+}
+
 export function drawChordDiagram(
   canvas: HTMLCanvasElement,
   chord: string,
@@ -446,36 +486,48 @@ export function drawChordDiagram(
   const { voicing, simplified } = resolveChordVoicing(chord, instrument);
   const numStrings = getStringsForInstrument(instrument);
   const numFrets = 5;
-  const padding = { top: 50, bottom: 20, left: 30, right: 30 };
   const w = canvas.width;
   const h = canvas.height;
+
+  const isFirstPosition = !voicing?.baseFret || voicing.baseFret <= 1;
+  const nutH = 4;
+  const padding = { top: 38, bottom: 28, left: 32, right: 20 };
   const gridW = w - padding.left - padding.right;
   const gridH = h - padding.top - padding.bottom;
   const stringSpacing = gridW / (numStrings - 1);
   const fretSpacing = gridH / numFrets;
+  const dotRadius = Math.min(stringSpacing, fretSpacing) * 0.34;
 
   // Clear
   ctx.clearRect(0, 0, w, h);
 
-  // Title
-  ctx.fillStyle = "hsl(220, 15%, 90%)";
-  ctx.font = "bold 18px 'Space Grotesk', sans-serif";
+  // ── Title ──
+  ctx.fillStyle = "#444";
+  ctx.font = `bold ${Math.round(w * 0.09)}px 'Helvetica Neue', Arial, sans-serif`;
   ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   const title = simplified ? `${chord} *` : chord;
-  ctx.fillText(title, w / 2, 24);
+  ctx.fillText(title, w / 2, 16);
 
-  // Nut
-  ctx.strokeStyle = "hsl(220, 15%, 60%)";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(padding.left, padding.top);
-  ctx.lineTo(padding.left + gridW, padding.top);
-  ctx.stroke();
+  // ── Nut (thick bar at first position) ──
+  if (isFirstPosition) {
+    ctx.fillStyle = "#333";
+    ctx.fillRect(padding.left - 1, padding.top - nutH, gridW + 2, nutH);
+  }
 
-  // Frets
+  // ── Base fret indicator (e.g. "5ª") ──
+  if (!isFirstPosition && voicing?.baseFret) {
+    ctx.fillStyle = "#666";
+    ctx.font = `bold ${Math.round(fretSpacing * 0.38)}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`${voicing.baseFret}ª`, padding.left - 6, padding.top + fretSpacing * 0.5);
+  }
+
+  // ── Grid: frets (horizontal lines) ──
+  ctx.strokeStyle = "#bbb";
   ctx.lineWidth = 1;
-  ctx.strokeStyle = "hsl(220, 15%, 30%)";
-  for (let f = 1; f <= numFrets; f++) {
+  for (let f = 0; f <= numFrets; f++) {
     const y = padding.top + f * fretSpacing;
     ctx.beginPath();
     ctx.moveTo(padding.left, y);
@@ -483,7 +535,9 @@ export function drawChordDiagram(
     ctx.stroke();
   }
 
-  // Strings
+  // ── Grid: strings (vertical lines) ──
+  ctx.strokeStyle = "#999";
+  ctx.lineWidth = 1;
   for (let s = 0; s < numStrings; s++) {
     const x = padding.left + s * stringSpacing;
     ctx.beginPath();
@@ -493,67 +547,106 @@ export function drawChordDiagram(
   }
 
   if (!voicing) {
-    ctx.fillStyle = "hsl(220, 10%, 50%)";
-    ctx.font = "14px 'Space Grotesk', sans-serif";
+    ctx.fillStyle = "#888";
+    ctx.font = "12px 'Helvetica Neue', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
     ctx.fillText("Diagrama indisponível", w / 2, h / 2);
     return;
   }
 
-  // Draw dots
-  for (let s = 0; s < voicing.frets.length; s++) {
-    const fret = voicing.frets[s];
-    const x = padding.left + s * stringSpacing;
+  const fingers = assignFingers(voicing.frets, voicing.barres);
 
-    if (fret === -1) {
-      ctx.fillStyle = "hsl(0, 72%, 51%)";
-      ctx.font = "16px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("×", x, padding.top - 8);
-    } else if (fret === 0) {
-      ctx.strokeStyle = "hsl(36, 95%, 55%)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, padding.top - 12, 6, 0, Math.PI * 2);
-      ctx.stroke();
-    } else {
-      const y = padding.top + (fret - 0.5) * fretSpacing;
-      ctx.fillStyle = "hsl(36, 95%, 55%)";
-      ctx.beginPath();
-      ctx.arc(x, y, 8, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  // Barres
+  // ── Barres ──
   if (voicing.barres) {
     for (const barre of voicing.barres) {
       const y = padding.top + (barre.fret - 0.5) * fretSpacing;
       const x1 = padding.left + barre.from * stringSpacing;
       const x2 = padding.left + barre.to * stringSpacing;
-      ctx.strokeStyle = "hsl(36, 95%, 55%)";
-      ctx.lineWidth = 6;
-      ctx.lineCap = "round";
+      ctx.fillStyle = "#555";
       ctx.beginPath();
-      ctx.moveTo(x1, y);
-      ctx.lineTo(x2, y);
+      ctx.moveTo(x1, y - dotRadius);
+      ctx.lineTo(x2, y - dotRadius);
+      ctx.arc(x2, y, dotRadius, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(x1, y + dotRadius);
+      ctx.arc(x1, y, dotRadius, Math.PI / 2, -Math.PI / 2);
+      ctx.closePath();
+      ctx.fill();
+      // Finger number on barre (at the "from" end)
+      ctx.fillStyle = "#fff";
+      ctx.font = `bold ${Math.round(dotRadius * 1.3)}px 'Helvetica Neue', Arial, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("1", x1, y + 1);
+    }
+  }
+
+  // ── Fret dots with finger numbers ──
+  for (let s = 0; s < voicing.frets.length; s++) {
+    const fret = voicing.frets[s];
+    const x = padding.left + s * stringSpacing;
+
+    if (fret > 0) {
+      // Skip dots that are fully covered by barre
+      const isCoveredByBarre = voicing.barres?.some(
+        b => fret === b.fret && s >= b.from && s <= b.to
+      );
+      if (isCoveredByBarre) continue;
+
+      const y = padding.top + (fret - 0.5) * fretSpacing;
+      ctx.fillStyle = "#555";
+      ctx.beginPath();
+      ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Finger number
+      if (fingers[s] > 0) {
+        ctx.fillStyle = "#fff";
+        ctx.font = `bold ${Math.round(dotRadius * 1.3)}px 'Helvetica Neue', Arial, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(fingers[s]), x, y + 1);
+      }
+    }
+  }
+
+  // ── Bottom indicators: open (○) and muted (●) ──
+  const indicatorY = padding.top + gridH + 16;
+  const indicatorR = 4;
+  for (let s = 0; s < voicing.frets.length; s++) {
+    const fret = voicing.frets[s];
+    const x = padding.left + s * stringSpacing;
+
+    if (fret === 0) {
+      // Open string: hollow circle
+      ctx.strokeStyle = "#666";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(x, indicatorY, indicatorR, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (fret === -1) {
+      // Muted string: filled circle
+      ctx.fillStyle = "#333";
+      ctx.beginPath();
+      ctx.arc(x, indicatorY, indicatorR, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Fretted string: hollow circle
+      ctx.strokeStyle = "#bbb";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(x, indicatorY, indicatorR, 0, Math.PI * 2);
       ctx.stroke();
     }
   }
 
-  // Base fret indicator
-  if (voicing.baseFret && voicing.baseFret > 1) {
-    ctx.fillStyle = "hsl(220, 15%, 70%)";
-    ctx.font = "12px 'JetBrains Mono', monospace";
-    ctx.textAlign = "right";
-    ctx.fillText(`${voicing.baseFret}fr`, padding.left - 8, padding.top + fretSpacing * 0.5 + 4);
-  }
-
-  // Simplified indicator
+  // ── Simplified indicator ──
   if (simplified) {
-    ctx.fillStyle = "hsl(36, 80%, 50%)";
-    ctx.font = "10px 'Space Grotesk', sans-serif";
+    ctx.fillStyle = "#999";
+    ctx.font = "9px 'Helvetica Neue', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("* versão simplificada", w / 2, h - 4);
+    ctx.textBaseline = "bottom";
+    ctx.fillText("* simplificado", w / 2, h - 2);
   }
 }
 

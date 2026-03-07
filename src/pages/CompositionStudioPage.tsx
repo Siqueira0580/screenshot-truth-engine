@@ -38,6 +38,7 @@ export default function CompositionStudioPage() {
   const [targetKey, setTargetKey] = useState(""); // empty = no transposition
   const [bpm, setBpm] = useState("120");
   const [style, setStyle] = useState("Bossa Nova");
+  const [composers, setComposers] = useState("");
   const [rhymeSearch, setRhymeSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorText, setEditorText] = useState("");
@@ -62,6 +63,7 @@ export default function CompositionStudioPage() {
       setOriginalKey(data.musical_key || "");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
+      setComposers((data as any).composers || "");
       if (data.audio_url) setSavedAudioUrl(data.audio_url);
     };
     load();
@@ -109,6 +111,7 @@ export default function CompositionStudioPage() {
         musical_key: selectedKey,
         bpm: parseInt(bpm) || 120,
         style,
+        composers: composers || null,
         user_id: user.id,
       };
       if (audioUrl) payload.audio_url = audioUrl;
@@ -265,6 +268,12 @@ export default function CompositionStudioPage() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Nome da Composição..."
               className="bg-transparent text-xl font-bold placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-foreground"
+            />
+            <input
+              value={composers}
+              onChange={(e) => setComposers(e.target.value)}
+              placeholder="Compositores..."
+              className="bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-muted-foreground"
             />
           </div>
 

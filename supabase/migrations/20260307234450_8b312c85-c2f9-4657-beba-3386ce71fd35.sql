@@ -1,0 +1,1 @@
+ALTER TABLE public.compositions ADD COLUMN composers text DEFAULT NULL;

@@ -34,7 +34,7 @@ export default function CompositionStudioPage() {
   const [compositionId, setCompositionId] = useState<string | null>(searchParams.get("id"));
   const [title, setTitle] = useState("");
   const [selectedKey, setSelectedKey] = useState("Am");
-  const [originalKey, setOriginalKey] = useState("Am"); // tom original da composição
+  const [originalKey, setOriginalKey] = useState(""); // tom original da composição — vazio até ser definido
   const [targetKey, setTargetKey] = useState(""); // empty = no transposition
   const [bpm, setBpm] = useState("120");
   const [style, setStyle] = useState("Bossa Nova");
@@ -59,7 +59,7 @@ export default function CompositionStudioPage() {
       setTitle(data.title || "");
       setEditorText(data.body_text || "");
       setSelectedKey(data.musical_key || "Am");
-      setOriginalKey(data.musical_key || "Am");
+      setOriginalKey(data.musical_key || "");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
       if (data.audio_url) setSavedAudioUrl(data.audio_url);
@@ -180,9 +180,13 @@ export default function CompositionStudioPage() {
       if (transcription) {
         // Apply transposition if target key is set
         const detectedKey = data?.detected_key || selectedKey;
+        // Set original key from audio detection if not already defined
+        if (!originalKey && detectedKey) {
+          setOriginalKey(detectedKey);
+        }
         if (targetKey && targetKey !== detectedKey) {
           transcription = transposeChordProText(transcription, detectedKey, targetKey);
-          setSelectedKey(targetKey); // update displayed key to target
+          setSelectedKey(targetKey);
         } else if (detectedKey) {
           setSelectedKey(detectedKey);
         }
@@ -266,10 +270,24 @@ export default function CompositionStudioPage() {
 
           {/* Center: filters */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Original key badge */}
+            {/* Original key badge / selector */}
             <span className="inline-flex items-center gap-1 rounded-md bg-accent/20 border border-accent/40 px-2.5 h-9 text-sm font-semibold text-accent-foreground">
               <Music className="h-3.5 w-3.5 text-accent" />
-              Original: <span className="text-accent">{originalKey}</span>
+              Original:
+              {originalKey ? (
+                <span className="text-accent ml-1">{originalKey}</span>
+              ) : (
+                <Select value="" onValueChange={(k) => { setOriginalKey(k); setSelectedKey(k); }}>
+                  <SelectTrigger className="w-20 h-7 bg-transparent border-accent/40 text-accent text-xs px-1.5 py-0 ml-1">
+                    <SelectValue placeholder="—" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {KEYS.map((k) => (
+                      <SelectItem key={k} value={k}>{k}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </span>
 
             <Select value={selectedKey} onValueChange={setSelectedKey}>

@@ -11,6 +11,7 @@ import SongFormDialog from "@/components/SongFormDialog";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import ImportSongModal from "@/components/ImportSongModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAutoEnrichment } from "@/hooks/useAutoEnrichment";
 
 export default function SongsPage() {
   const { user } = useAuth();
@@ -28,6 +29,9 @@ export default function SongsPage() {
     queryKey: ["songs"],
     queryFn: fetchSongs,
   });
+
+  // Background enrichment: auto-fetches missing genre & artist photos
+  useAutoEnrichment(songs);
 
   const deleteM = useMutation({
     mutationFn: deleteSong,

@@ -95,11 +95,16 @@ export default function SetlistsPage() {
             {dateFilter !== "all" && ` (filtrado de ${setlists.length})`}
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Novo Repertório
-        </Button>
-      </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setAutoGenOpen(true)} className="gap-1">
+            <Sparkles className="h-4 w-4" />
+            Sugerir Repertório
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" />
+            Novo Repertório
+          </Button>
+        </div>
 
       {/* Filters Row */}
       <div className="flex flex-wrap items-center gap-3">

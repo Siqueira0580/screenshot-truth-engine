@@ -185,7 +185,9 @@ export default function SetlistDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const isTablet = useIsTablet();
+  const isTablet = typeof window !== "undefined" && window.innerWidth >= 768 && window.innerWidth < 1024;
+  const [searchParams] = useSearchParams();
+  const inviteToken = searchParams.get("invite");
   const [addOpen, setAddOpen] = useState(false);
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");

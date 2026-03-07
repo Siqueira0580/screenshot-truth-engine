@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.import-song-url]
 verify_jwt = false
+
+[functions.transcribe-composition]
+verify_jwt = false

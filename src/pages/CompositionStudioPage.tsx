@@ -171,6 +171,20 @@ export default function CompositionStudioPage() {
 
   const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
+  // ─── Auto-save (debounced 3s) ───
+  useEffect(() => {
+    if (!hasInteracted.current || isRecording || isTranscribing) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      persistComposition({ silent: true });
+    }, 3000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [title, editorText, selectedKey, bpm, style, composers, persistComposition, isRecording, isTranscribing]);
+
   const transcribeAudio = useCallback(async (audioBlob: Blob) => {
     setIsTranscribing(true);
     try {

@@ -2,6 +2,7 @@
  * Chord diagram data and canvas drawing for Guitar, Cavaquinho, Ukulele, and Keyboard.
  * Includes normalization, enharmonic fallback, and simplification fallback.
  */
+import { translateChordBR, getChordLookupChain } from "@/lib/chord-normalizer";
 
 export type Instrument = "guitar" | "cavaquinho" | "ukulele" | "keyboard";
 
@@ -25,9 +26,10 @@ export function normalizeChordName(chord: string): string {
   let c = chord.trim();
   // Normalize unicode accidentals
   c = c.replace(/♯/g, "#").replace(/♭/g, "b");
+  // Apply Brazilian notation translation
+  c = translateChordBR(c);
   // Normalize quality synonyms
   c = c.replace(/min(?!or)/g, "m");    // min7 → m7
-  c = c.replace(/^([A-G][#b]?)maj/i, "$1M"); // Cmaj7 → CM7 — but we store as maj7 below
   return c;
 }
 
@@ -47,26 +49,29 @@ export function resolveChordVoicing(
   const db = CHORD_DB[instrument];
   if (!db) return { voicing: null, displayName: chord, simplified: false };
 
-  const normalized = normalizeChordName(chord);
+  // Use the BR-aware lookup chain for maximum coverage
+  const lookupChain = getChordLookupChain(chord);
 
-  // 1. Exact match
-  if (db[normalized]) return { voicing: db[normalized], displayName: chord, simplified: false };
+  for (const { name, simplified } of lookupChain) {
+    // Direct match
+    if (db[name]) return { voicing: db[name], displayName: chord, simplified };
 
-  // 2. Enharmonic swap on root
-  const rootMatch = normalized.match(/^([A-G][#b]?)(.*)/);
-  if (rootMatch) {
-    const [, root, suffix] = rootMatch;
-    const alt = ENHARMONIC[root];
-    if (alt && db[alt + suffix]) {
-      return { voicing: db[alt + suffix], displayName: chord, simplified: false };
+    // Enharmonic swap on root
+    const rootMatch = name.match(/^([A-G][#b]?)(.*)/);
+    if (rootMatch) {
+      const [, root, suffix] = rootMatch;
+      const alt = ENHARMONIC[root];
+      if (alt && db[alt + suffix]) {
+        return { voicing: db[alt + suffix], displayName: chord, simplified };
+      }
     }
   }
 
-  // 3. Progressive simplification
+  // Legacy fallback: progressive simplification on the normalized name
+  const normalized = normalizeChordName(chord);
   const simplifications = buildSimplifications(normalized);
   for (const simpl of simplifications) {
     if (db[simpl]) return { voicing: db[simpl], displayName: chord, simplified: true };
-    // Also try enharmonic of simplified
     const sMatch = simpl.match(/^([A-G][#b]?)(.*)/);
     if (sMatch) {
       const alt = ENHARMONIC[sMatch[1]];

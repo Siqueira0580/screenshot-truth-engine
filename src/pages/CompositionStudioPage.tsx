@@ -146,28 +146,13 @@ export default function CompositionStudioPage() {
     }
   }, [persistComposition, compositionId, navigate]);
 
-  // ─── Auto-save (debounced 3s) ───
+  // Auto-save refs (effect placed after useAudioRecorder below)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasInteracted = useRef(false);
 
-  // Mark that user started editing
   useEffect(() => {
     if (title || editorText || composers) hasInteracted.current = true;
   }, [title, editorText, composers]);
-
-  useEffect(() => {
-    // Don't auto-save if user hasn't interacted or while recording/transcribing
-    if (!hasInteracted.current || isRecording || isTranscribing) return;
-
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      persistComposition({ silent: true });
-    }, 3000);
-
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    };
-  }, [title, editorText, selectedKey, bpm, style, composers, persistComposition, isRecording, isTranscribing]);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 

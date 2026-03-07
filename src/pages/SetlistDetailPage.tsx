@@ -58,7 +58,7 @@ function prevSpeedCycle(current: number): number {
 // Sortable song item component
 function SortableSongItem({
   item, index, selectedSongs, toggleSelect, getVal, updateField,
-  removeMutation, isMobile, isTablet,
+  onDelete, isMobile, isTablet,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
@@ -104,7 +104,7 @@ function SortableSongItem({
                 {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
               </p>
             </div>
-            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => setDeleteTarget(item.id)}>
+            <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => onDelete(item.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
@@ -588,7 +588,7 @@ export default function SetlistDetailPage() {
                     toggleSelect={toggleSelect}
                     getVal={getVal}
                     updateField={updateField}
-                    removeMutation={removeMutation}
+                    onDelete={(itemId: string) => setDeleteTarget(itemId)}
                     isMobile={isMobile}
                     isTablet={isTablet}
                   />

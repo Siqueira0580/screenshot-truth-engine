@@ -15,6 +15,8 @@ import { MultitrackEngine, StemType } from "@/lib/audio-engine";
 import { transposeText, transposeKey } from "@/lib/transpose";
 import { cn } from "@/lib/utils";
 import { parseChordsInText } from "@/lib/chord-parser";
+import { isChordProFormat } from "@/lib/chordpro-parser";
+import { useChordProParser } from "@/hooks/useChordProParser";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SongChordsFAB from "@/components/SongChordsFAB";
@@ -43,8 +45,50 @@ function formatTime(s: number) {
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
 
-// React-based chord rendering with highlighting
-function ChordHighlightedText({
+// ChordPro renderer — chords stacked above lyrics
+function ChordProRenderedText({
+  text, fontSize, onChordClick,
+}: { text: string; fontSize: number; onChordClick: (chord: string) => void }) {
+  const { lines } = useChordProParser(text);
+
+  return (
+    <div className="font-mono leading-relaxed" style={{ fontSize: `${fontSize}px` }}>
+      {lines.map((line, lineIdx) => {
+        const firstToken = line.tokens[0];
+        if (firstToken && !firstToken.chord && /^\s*\{[^}]+\}\s*$/.test(firstToken.lyric)) {
+          return null;
+        }
+
+        return (
+          <div key={lineIdx} className="flex flex-wrap items-end mb-1">
+            {line.tokens.map((token, tokenIdx) => (
+              <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
+                <span className="font-bold text-[0.75em] h-[1.4em] leading-[1.4em] select-none text-primary">
+                  {token.chord ? (
+                    <span
+                      className="cursor-pointer hover:text-accent transition-colors underline decoration-primary/30 underline-offset-2"
+                      onClick={() => onChordClick(token.chord!)}
+                    >
+                      {token.chord}
+                    </span>
+                  ) : (
+                    "\u00A0"
+                  )}
+                </span>
+                <span className="text-foreground whitespace-pre">
+                  {token.lyric || "\u00A0"}
+                </span>
+              </span>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Inline chord rendering for plain text
+function InlineChordText({
   text, fontSize, onChordClick,
 }: { text: string; fontSize: number; onChordClick: (chord: string) => void }) {
   const lines = text.split("\n");
@@ -59,7 +103,7 @@ function ChordHighlightedText({
               seg.type === "chord" ? (
                 <span
                   key={segIdx}
-                  className="text-orange-400 font-bold cursor-pointer hover:text-primary transition-colors"
+                  className="text-primary font-bold cursor-pointer hover:text-accent transition-colors"
                   onClick={() => onChordClick(seg.content)}
                 >
                   {seg.content}
@@ -74,6 +118,18 @@ function ChordHighlightedText({
       })}
     </pre>
   );
+}
+
+// Auto-detects ChordPro vs plain text
+function ChordHighlightedText({
+  text, fontSize, onChordClick,
+}: { text: string; fontSize: number; onChordClick: (chord: string) => void }) {
+  const isChordPro = useMemo(() => isChordProFormat(text), [text]);
+
+  if (isChordPro) {
+    return <ChordProRenderedText text={text} fontSize={fontSize} onChordClick={onChordClick} />;
+  }
+  return <InlineChordText text={text} fontSize={fontSize} onChordClick={onChordClick} />;
 }
 
 export default function StudyPage() {

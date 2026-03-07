@@ -246,6 +246,15 @@ export default function SetlistsPage() {
         }}
         description="Tem a certeza de que deseja excluir este repertório? Esta ação não pode ser desfeita."
       />
+
+      <AutoSetlistGeneratorModal
+        open={autoGenOpen}
+        onOpenChange={setAutoGenOpen}
+        onCreated={(id) => {
+          queryClient.invalidateQueries({ queryKey: ["setlists"] });
+          navigate(`/setlists/${id}`);
+        }}
+      />
     </div>
   );
 }

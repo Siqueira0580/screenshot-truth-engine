@@ -8,8 +8,10 @@ import { fetchSongs, deleteSong, createSong, findOrCreateArtist } from "@/lib/su
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SongsPage() {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function SongsPage() {
             }
           }
 
-          await createSong({
+          const newSong = await createSong({
             title: data.title || file.name.replace(/\.pdf$/i, ""),
             artist: artistName,
             composer: data.composer || null,
@@ -75,6 +77,16 @@ export default function SongsPage() {
             time_signature: data.time_signature || "4/4",
             body_text: data.body_text || data.text || null,
           });
+
+          // Auto-create audio_track with ChordPro if available
+          if (data.chordpro_text && newSong?.id) {
+            await supabase.from("audio_tracks").insert({
+              song_id: newSong.id,
+              ai_chordpro_text: data.chordpro_text,
+              user_id: user?.id || null,
+            });
+          }
+
           successCount++;
         } else {
           errorCount++;

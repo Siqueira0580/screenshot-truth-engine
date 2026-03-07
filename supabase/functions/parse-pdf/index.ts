@@ -66,10 +66,12 @@ Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
   "style": "music style/genre if identifiable, or null",
   "bpm": null,
   "time_signature": "time signature if found, e.g. 4/4, or null",
-  "body_text": "the full lyrics with chord annotations preserved, formatted as plain text with chords above lyrics lines. Each chord line followed by its lyric line. Use line breaks."
+  "body_text": "the full lyrics with chord annotations preserved, formatted as plain text with chords above lyrics lines. Each chord line followed by its lyric line. Use line breaks.",
+  "chordpro_text": "the full lyrics in ChordPro format with chords inline in brackets, e.g. [C]Letra da [Am]música"
 }
 Rules:
 - For body_text: reconstruct the lyrics with chords ABOVE the corresponding lyrics, one chord line then one lyric line, separated by newlines.
+- For chordpro_text: place each chord in square brackets immediately before the syllable it belongs to. Example: [C]Parabéns pra [G]você. Do NOT include ChordPro directives like {title:} or {artist:}. Only lyrics with inline chords.
 - Keep all chord names exactly as they appear (e.g. F7M, C7(9), Gm6).
 - Write lyrics in their original language (Portuguese).
 - If a field is not found, use null.

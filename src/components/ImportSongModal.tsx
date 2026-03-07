@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Loader2, Music2, Check, X, ArrowLeft } from "lucide-react";
+import { Sparkles, Loader2, Music2, Check, X, ArrowLeft, Mic } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { createSong, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ interface PreviewData {
   composer?: string | null;
   time_signature?: string | null;
   source_url?: string | null;
+  artist_image_url?: string | null;
 }
 
 export default function ImportSongModal({
@@ -110,7 +112,9 @@ export default function ImportSongModal({
       const bodyText = previewData.content || previewData.body_text || null;
 
       if (artist) {
-        try { await findOrCreateArtist(artist); } catch { /* non-critical */ }
+        try {
+          await findOrCreateArtist(artist, previewData.artist_image_url || undefined);
+        } catch { /* non-critical */ }
       }
 
       const newSong = await createSong({
@@ -201,13 +205,22 @@ export default function ImportSongModal({
 
         {step === "preview" && previewData && (
           <div className="space-y-4">
-            {/* Metadata */}
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-foreground">{previewData.title}</h3>
-              {previewData.artist && (
-                <p className="text-sm text-muted-foreground">{previewData.artist}</p>
-              )}
-              <div className="flex gap-2 flex-wrap">
+            {/* Metadata with artist image */}
+            <div className="flex items-start gap-4">
+              <Avatar className="h-20 w-20 shrink-0 shadow-md">
+                {previewData.artist_image_url ? (
+                  <AvatarImage src={previewData.artist_image_url} alt={previewData.artist || "Artista"} className="object-cover" />
+                ) : null}
+                <AvatarFallback className="bg-muted text-muted-foreground">
+                  <Mic className="h-8 w-8" />
+                </AvatarFallback>
+              </Avatar>
+              <div className="space-y-1 min-w-0">
+                <h3 className="text-lg font-bold text-foreground leading-tight">{previewData.title}</h3>
+                {previewData.artist && (
+                  <p className="text-sm text-muted-foreground">{previewData.artist}</p>
+                )}
+                <div className="flex gap-2 flex-wrap">
                 {(previewData.genre || previewData.style) && (
                   <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                     {previewData.genre || previewData.style}
@@ -223,6 +236,7 @@ export default function ImportSongModal({
                     {previewData.bpm} BPM
                   </span>
                 )}
+                </div>
               </div>
             </div>
 

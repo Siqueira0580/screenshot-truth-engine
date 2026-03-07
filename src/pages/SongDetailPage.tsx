@@ -25,7 +25,7 @@ export default function SongDetailPage() {
   const [transpose, setTranspose] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);
-  const [showAiCipher, setShowAiCipher] = useState(false);
+  
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],

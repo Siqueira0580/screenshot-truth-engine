@@ -90,7 +90,7 @@ export default function SongChordsDrawer({ isOpen, onClose, chords }: SongChords
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
               {chords.map((chord) => (
-                <ChordCard key={chord} chord={chord} />
+                <ChordCard key={chord} chord={chord} visible={isOpen} />
               ))}
             </div>
           )}

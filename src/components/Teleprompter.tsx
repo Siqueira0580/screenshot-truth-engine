@@ -35,7 +35,7 @@ interface TeleprompterProps {
 
 function makeChordClickable(text: string) {
   return text.replace(
-    /\b([A-G][#b]?(?:m|maj|min|dim|aug|sus|add)?[0-9]?(?:\/[A-G][#b]?)?)\b/g,
+    /\b([A-G][#b♯♭]?(?:m(?:aj|in)?|M|maj|min|dim|aug|sus[24]?|add|[º°])?(?:\d{0,2}[M+]?)(?:(?:[#b♯♭]\d{1,2}|sus[24]?|add\d{1,2}|no\d{1,2}|aug|dim|\+)*)(?:\((?:[#b♯♭+-]?\d{1,2}[,/\s]*)+\))?(?:\/[A-G][#b♯♭]?)?)\b/g,
     '<span class="chord chord-clickable" data-chord="$1">$1</span>'
   );
 }

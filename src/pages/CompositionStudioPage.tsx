@@ -377,9 +377,9 @@ export default function CompositionStudioPage() {
           </div>
 
           {/* Audio playback after recording */}
-          {audioUrl && !isRecording && (
+          {(audioUrl || savedAudioUrl) && !isRecording && (
             <div className="mb-6 flex justify-center">
-              <audio controls src={audioUrl} className="w-full max-w-md rounded-lg" />
+              <audio controls src={audioUrl || savedAudioUrl || undefined} className="w-full max-w-md rounded-lg" />
             </div>
           )}
 

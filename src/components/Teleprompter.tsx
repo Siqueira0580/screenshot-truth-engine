@@ -21,7 +21,6 @@ interface TeleprompterSong {
   musical_key?: string | null;
   bpm?: number | null;
   body_text?: string | null;
-  ai_chordpro_text?: string | null;
   loop_count?: number | null;
   auto_next?: boolean | null;
   speed?: number | null; // percentage value e.g. 250 = 2.5x

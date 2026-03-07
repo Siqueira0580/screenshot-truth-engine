@@ -652,6 +652,18 @@ export default function SetlistDetailPage() {
         onClose={() => setTeleprompterOpen(false)}
         autoHideControls={autoHideControls}
       />
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            removeMutation.mutate(deleteTarget);
+            setDeleteTarget(null);
+          }
+        }}
+        description="Tem a certeza de que deseja remover esta música do repertório? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

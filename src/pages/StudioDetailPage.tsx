@@ -378,18 +378,26 @@ export default function StudioDetailPage() {
                 const path = `${songId}/full.${ext}`;
                 const { error: upErr } = await supabase.storage
                   .from("audio-stems")
-                  .upload(path, f, { upsert: true });
+                  .upload(path, f, { upsert: true, contentType: f.type || "audio/mpeg" });
                 if (upErr) throw upErr;
                 const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
+                const { data: { user } } = await supabase.auth.getUser();
 
                 if (audioTrack) {
-                  await supabase.from("audio_tracks").update({ file_full: urlData.publicUrl }).eq("id", audioTrack.id);
+                  const { error: dbErr } = await supabase.from("audio_tracks").update({ file_full: urlData.publicUrl }).eq("id", audioTrack.id);
+                  if (dbErr) throw dbErr;
                 } else {
-                  await supabase.from("audio_tracks").insert({ song_id: songId, file_full: urlData.publicUrl });
+                  const { error: dbErr } = await supabase.from("audio_tracks").insert({
+                    song_id: songId,
+                    file_full: urlData.publicUrl,
+                    user_id: user?.id || null,
+                  });
+                  if (dbErr) throw dbErr;
                 }
-                refetchTrack();
+                await refetchTrack();
                 toast.success("Mix completo enviado!");
               } catch (err: any) {
+                console.error("Upload error:", err);
                 toast.error(`Erro: ${err.message}`);
               } finally {
                 setUploadingNew(false);

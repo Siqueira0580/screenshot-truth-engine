@@ -521,13 +521,13 @@ export default function CompositionStudioPage() {
           <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-1">
             🎙️ Cofre de Ideias
           </span>
-          {audioUrl && (
+          {(audioUrl || savedAudioUrl) && (
             <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-secondary border border-border text-foreground">
               <PlayCircle className="h-3.5 w-3.5 text-primary" />
               Gravação atual
             </span>
           )}
-          {!audioUrl && (
+          {!audioUrl && !savedAudioUrl && (
             <span className="text-xs text-muted-foreground">Nenhuma gravação ainda.</span>
           )}
         </div>

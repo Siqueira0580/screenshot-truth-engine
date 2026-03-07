@@ -78,6 +78,7 @@ const App = () => (
                 <Route path="/artists/:id" element={<ArtistDetailPage />} />
                 <Route path="/studio" element={<StudioPage />} />
                 <Route path="/studio/:songId" element={<StudioDetailPage />} />
+                <Route path="/compositions" element={<CompositionsHomePage />} />
                 <Route path="/compose" element={<CompositionStudioPage />} />
                 <Route path="/study/:songId" element={<StudyPage />} />
                 <Route path="/profile" element={<ProfilePage />} />

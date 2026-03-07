@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, MonitorPlay, ChevronUp, ChevronDown, Wand2, Loader2 } from "lucide-react";
+import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
+import ShowButton from "@/components/ShowButton";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import AutoCipherViewer from "@/components/AutoCipherViewer";
 import {
@@ -200,10 +201,7 @@ export default function SongDetailPage() {
               </Button>
             )}
             {song.body_text && (
-              <Button onClick={() => setTeleprompterOpen(true)} className="gap-2">
-                <MonitorPlay className="h-4 w-4" />
-                Teleprompter
-              </Button>
+              <ShowButton onClick={() => setTeleprompterOpen(true)} />
             )}
           </div>
         </div>

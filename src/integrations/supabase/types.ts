@@ -167,6 +167,7 @@ export type Database = {
           audio_url: string | null
           body_text: string | null
           bpm: number | null
+          composers: string | null
           created_at: string
           id: string
           musical_key: string | null
@@ -179,6 +180,7 @@ export type Database = {
           audio_url?: string | null
           body_text?: string | null
           bpm?: number | null
+          composers?: string | null
           created_at?: string
           id?: string
           musical_key?: string | null
@@ -191,6 +193,7 @@ export type Database = {
           audio_url?: string | null
           body_text?: string | null
           bpm?: number | null
+          composers?: string | null
           created_at?: string
           id?: string
           musical_key?: string | null

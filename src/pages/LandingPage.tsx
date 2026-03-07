@@ -7,7 +7,7 @@ import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 30 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] },
+  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
 });
 
 const features = [
@@ -146,8 +146,8 @@ export default function LandingPage() {
           {/* Tab bar */}
           <div className="flex items-center gap-2 rounded-t-xl bg-muted/60 px-4 py-2.5">
             <span className="h-3 w-3 rounded-full bg-destructive/60" />
-            <span className="h-3 w-3 rounded-full bg-yellow-500/60" />
-            <span className="h-3 w-3 rounded-full bg-green-500/60" />
+            <span className="h-3 w-3 rounded-full bg-accent/60" />
+            <span className="h-3 w-3 rounded-full bg-primary/60" />
             <span className="ml-3 text-xs text-muted-foreground font-mono">smart-cifra • Meu Repertório</span>
           </div>
 

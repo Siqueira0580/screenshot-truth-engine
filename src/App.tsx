@@ -21,6 +21,7 @@ import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
+import LandingPage from "@/pages/LandingPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -61,12 +62,13 @@ const App = () => (
         <AuthProvider>
           <UserPreferencesProvider>
             <Routes>
+              <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
               <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
               <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
               <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                <Route path="/" element={<SongsPage />} />
+                <Route path="/songs" element={<SongsPage />} />
                 <Route path="/songs/:id" element={<SongDetailPage />} />
                 <Route path="/setlists" element={<SetlistsPage />} />
                 <Route path="/setlists/:id" element={<SetlistDetailPage />} />

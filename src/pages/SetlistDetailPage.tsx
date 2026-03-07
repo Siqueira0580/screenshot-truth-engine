@@ -27,6 +27,7 @@ import StageSyncInviteModal from "@/components/StageSyncInviteModal";
 import SyncInviteModal from "@/components/SyncInviteModal";
 import SetlistToolbar, { type SortBy } from "@/components/SetlistToolbar";
 import CreateFromSelectionBar from "@/components/CreateFromSelectionBar";
+import GlobalSongSearchModal from "@/components/GlobalSongSearchModal";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";

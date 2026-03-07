@@ -232,35 +232,18 @@ export default function SongDetailPage() {
         </div>
       )}
 
-      {/* AI Generated Cipher */}
+      {/* AI Cipher (priority) */}
       {aiChordPro && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Wand2 className="h-4 w-4 text-primary" />
-              Cifra Gerada por IA
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAiCipher(!showAiCipher)}
-              className="text-xs"
-            >
-              {showAiCipher ? "Ocultar" : "Mostrar"}
-            </Button>
-          </div>
-          {showAiCipher && (
-            <div className="rounded-lg border border-border bg-card p-6">
-              <AutoCipherViewer
-                chordProText={transposeChordPro(aiChordPro, transpose)}
-                onSave={handleSaveChordPro}
-              />
-            </div>
-          )}
+        <div className="rounded-lg border border-border bg-card p-6">
+          <AutoCipherViewer
+            chordProText={transposeChordPro(aiChordPro, transpose)}
+            onSave={handleSaveChordPro}
+          />
         </div>
       )}
 
-      {displayBody && (
+      {/* Plain text fallback (only when no AI cipher) */}
+      {!aiChordPro && displayBody && (
         <div className="rounded-lg border border-border bg-card p-6">
           <ChordText
             text={displayBody}

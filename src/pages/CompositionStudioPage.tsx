@@ -450,8 +450,16 @@ export default function CompositionStudioPage() {
 
           {/* Audio playback after recording */}
           {(audioUrl || savedAudioUrl) && !isRecording && (
-            <div className="mb-6 flex justify-center">
+            <div className="mb-6 flex flex-col items-center gap-2">
               <audio controls src={audioUrl || savedAudioUrl || undefined} className="w-full max-w-md rounded-lg" />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
+                onClick={() => setShowDeleteAudioModal(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Excluir áudio
+              </Button>
             </div>
           )}
 

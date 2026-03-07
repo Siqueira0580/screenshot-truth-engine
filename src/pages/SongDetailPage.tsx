@@ -140,6 +140,22 @@ export default function SongDetailPage() {
     }
   };
 
+  const handleSaveAsDefault = async () => {
+    if (!aiChordPro || !id) return;
+    try {
+      const { error } = await supabase
+        .from("songs")
+        .update({ body_text: aiChordPro })
+        .eq("id", id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["song", id] });
+      toast.success("Cifra IA salva como padrão!");
+      setConfirmSaveAsDefault(false);
+    } catch (err: any) {
+      toast.error(`Erro ao salvar: ${err.message}`);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">

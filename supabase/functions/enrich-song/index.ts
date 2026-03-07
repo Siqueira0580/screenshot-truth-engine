@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { song_id, artist, current_style } = await req.json();
+    const { song_id, artist, title, current_style, current_bpm } = await req.json();
 
     if (!song_id) {
       return new Response(JSON.stringify({ error: "song_id is required" }), {
@@ -66,11 +66,18 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Classify genre via AI if missing
-    if (!current_style && artist) {
+    // Step 2: Classify genre and BPM via AI if missing
+    const needsGenre = !current_style && artist;
+    const needsBpm = (!current_bpm || current_bpm === 0) && artist && title;
+
+    if (needsGenre || needsBpm) {
       try {
         const openaiKey = Deno.env.get("LOVABLE_API_KEY");
         if (openaiKey) {
+          const promptParts: string[] = [];
+          if (needsGenre) promptParts.push("gênero musical (em português, ex: Sertanejo, MPB, Pop Rock)");
+          if (needsBpm) promptParts.push("BPM (batidas por minuto) original de estúdio");
+
           const aiRes = await fetch("https://api.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -83,28 +90,39 @@ serve(async (req) => {
                 {
                   role: "system",
                   content:
-                    "You classify music genres. Return ONLY a single genre/style word or short phrase in Portuguese (e.g. 'Sertanejo', 'Pop Rock', 'MPB', 'Forró', 'Bossa Nova', 'Gospel', 'Pagode', 'Axé', 'Rock', 'Samba'). No explanation.",
+                    'You are a music metadata expert. Return ONLY valid JSON with the requested fields. No explanation, no markdown.',
                 },
                 {
                   role: "user",
-                  content: `Qual o gênero musical do artista "${artist}"?`,
+                  content: `Analise a música "${title || ''}" de "${artist}". Retorne um JSON com: ${promptParts.join(" e ")}. Formato: { "genre": "string ou null", "bpm": number ou null }`,
                 },
               ],
-              max_tokens: 20,
+              max_tokens: 60,
               temperature: 0.1,
             }),
           });
 
           if (aiRes.ok) {
             const aiData = await aiRes.json();
-            const genre = aiData.choices?.[0]?.message?.content?.trim();
-            if (genre && genre.length < 40) {
-              updates.style = genre;
+            const raw = aiData.choices?.[0]?.message?.content?.trim();
+            try {
+              const parsed = JSON.parse(raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
+              if (needsGenre && parsed.genre && typeof parsed.genre === "string" && parsed.genre.length < 40) {
+                updates.style = parsed.genre;
+              }
+              if (needsBpm && parsed.bpm && typeof parsed.bpm === "number" && parsed.bpm > 20 && parsed.bpm < 300) {
+                updates.bpm = String(parsed.bpm);
+              }
+            } catch {
+              // Fallback: try to extract genre only
+              if (needsGenre && raw && raw.length < 40 && !raw.includes('{')) {
+                updates.style = raw;
+              }
             }
           }
         }
       } catch (e) {
-        console.error("AI genre error:", e);
+        console.error("AI enrichment error:", e);
       }
     }
 
@@ -130,6 +148,7 @@ serve(async (req) => {
         success: true,
         artist_image_url: artistImageUrl,
         style: updates.style || null,
+        bpm: updates.bpm ? Number(updates.bpm) : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

@@ -18,9 +18,9 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
       (s) =>
         s.artist &&
         !processedIdsRef.current.has(s.id) &&
-        (!s.style || !(s as any).enrichment_status) &&
-        (s as any).enrichment_status !== "done" &&
-        (s as any).enrichment_status !== "failed"
+        s.enrichment_status !== "done" &&
+        s.enrichment_status !== "failed" &&
+        (!s.style || !s.bpm)
     );
   }, [songs]);
 
@@ -40,7 +40,9 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
             body: {
               song_id: song.id,
               artist: song.artist,
+              title: song.title,
               current_style: song.style,
+              current_bpm: song.bpm,
             },
           });
 
@@ -53,6 +55,7 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
                   ? {
                       ...s,
                       style: data.style || s.style,
+                      bpm: data.bpm || s.bpm,
                       enrichment_status: "done",
                     }
                   : s

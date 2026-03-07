@@ -1,5 +1,6 @@
 /**
  * Chord diagram data and canvas drawing for Guitar, Cavaquinho, Ukulele, and Keyboard.
+ * Includes normalization, enharmonic fallback, and simplification fallback.
  */
 
 export type Instrument = "guitar" | "cavaquinho" | "ukulele" | "keyboard";
@@ -10,99 +11,418 @@ interface ChordVoicing {
   baseFret?: number;
 }
 
-// Simplified chord database — covers most common chords
+// ─── Enharmonic map ──────────────────────────────────────────────
+const ENHARMONIC: Record<string, string> = {
+  "Db": "C#", "Eb": "D#", "Fb": "E", "Gb": "F#", "Ab": "G#", "Bb": "A#", "Cb": "B",
+  "C#": "Db", "D#": "Eb", "E#": "F", "F#": "Gb", "G#": "Ab", "A#": "Bb", "B#": "C",
+};
+
+/**
+ * Normalize a chord name and return the canonical form our DB uses.
+ * Handles: Bbm7 → A#m7, min7 → m7, maj → M, etc.
+ */
+export function normalizeChordName(chord: string): string {
+  let c = chord.trim();
+  // Normalize unicode accidentals
+  c = c.replace(/♯/g, "#").replace(/♭/g, "b");
+  // Normalize quality synonyms
+  c = c.replace(/min(?!or)/g, "m");    // min7 → m7
+  c = c.replace(/^([A-G][#b]?)maj/i, "$1M"); // Cmaj7 → CM7 — but we store as maj7 below
+  return c;
+}
+
+/**
+ * Try to find a voicing with multiple fallback strategies:
+ * 1. Exact match
+ * 2. Enharmonic root swap  (G#m7 → Abm7 or vice-versa)
+ * 3. Simplification: strip tensions progressively (C#m7b5 → C#m7 → C#m → C#)
+ * Returns { voicing, displayName, simplified }
+ */
+export function resolveChordVoicing(
+  chord: string,
+  instrument: Instrument
+): { voicing: ChordVoicing | null; displayName: string; simplified: boolean } {
+  if (instrument === "keyboard") return { voicing: null, displayName: chord, simplified: false };
+
+  const db = CHORD_DB[instrument];
+  if (!db) return { voicing: null, displayName: chord, simplified: false };
+
+  const normalized = normalizeChordName(chord);
+
+  // 1. Exact match
+  if (db[normalized]) return { voicing: db[normalized], displayName: chord, simplified: false };
+
+  // 2. Enharmonic swap on root
+  const rootMatch = normalized.match(/^([A-G][#b]?)(.*)/);
+  if (rootMatch) {
+    const [, root, suffix] = rootMatch;
+    const alt = ENHARMONIC[root];
+    if (alt && db[alt + suffix]) {
+      return { voicing: db[alt + suffix], displayName: chord, simplified: false };
+    }
+  }
+
+  // 3. Progressive simplification
+  const simplifications = buildSimplifications(normalized);
+  for (const simpl of simplifications) {
+    if (db[simpl]) return { voicing: db[simpl], displayName: chord, simplified: true };
+    // Also try enharmonic of simplified
+    const sMatch = simpl.match(/^([A-G][#b]?)(.*)/);
+    if (sMatch) {
+      const alt = ENHARMONIC[sMatch[1]];
+      if (alt && db[alt + sMatch[2]]) {
+        return { voicing: db[alt + sMatch[2]], displayName: chord, simplified: true };
+      }
+    }
+  }
+
+  return { voicing: null, displayName: chord, simplified: false };
+}
+
+/**
+ * Build a list of progressively simpler chord names.
+ * E.g. "C#m7b5" → ["C#m7", "C#m", "C#"]
+ */
+function buildSimplifications(chord: string): string[] {
+  const rootMatch = chord.match(/^([A-G][#b]?)(.*)/);
+  if (!rootMatch) return [];
+  const [, root, quality] = rootMatch;
+  const results: string[] = [];
+
+  // Strip parenthetical content: C#m7(b5) → C#m7
+  const noParens = quality.replace(/\([^)]*\)/g, "");
+  if (noParens !== quality) results.push(root + noParens);
+
+  // Strip slash bass: Am7/G → Am7
+  const noSlash = (noParens || quality).replace(/\/[A-G][#b]?$/, "");
+  if (noSlash !== noParens) results.push(root + noSlash);
+
+  // Strip tensions like b5, #9, b9, #11, 9, 11, 13
+  const noTensions = noSlash.replace(/[#b]?\d{1,2}/g, "");
+  if (noTensions !== noSlash && noTensions) results.push(root + noTensions);
+
+  // Strip "add", "sus" suffixes
+  const noAdd = noTensions.replace(/(add|sus)\d?/g, "");
+  if (noAdd !== noTensions && noAdd) results.push(root + noAdd);
+
+  // Just the quality letter (m, dim, aug)
+  const baseQuality = (noAdd || noTensions || noSlash || noParens || quality).match(/^(m|dim|aug)?/)?.[0] || "";
+  if (root + baseQuality !== results[results.length - 1]) {
+    results.push(root + baseQuality);
+  }
+
+  // Just root
+  if (!results.includes(root)) results.push(root);
+
+  return results;
+}
+
+// Legacy wrapper — still used by some components
+export function getChordVoicing(chord: string, instrument: Instrument): ChordVoicing | null {
+  return resolveChordVoicing(chord, instrument).voicing;
+}
+
+// ─── Comprehensive Chord Database ────────────────────────────────
 const CHORD_DB: Record<string, Record<string, ChordVoicing>> = {
   guitar: {
-    C:  { frets: [-1, 3, 2, 0, 1, 0] },
-    D:  { frets: [-1, -1, 0, 2, 3, 2] },
-    E:  { frets: [0, 2, 2, 1, 0, 0] },
-    F:  { frets: [1, 1, 2, 3, 3, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
-    G:  { frets: [3, 2, 0, 0, 0, 3] },
-    A:  { frets: [-1, 0, 2, 2, 2, 0] },
-    B:  { frets: [-1, 2, 4, 4, 4, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
-    Am: { frets: [-1, 0, 2, 2, 1, 0] },
-    Bm: { frets: [-1, 2, 4, 4, 3, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
-    Cm: { frets: [-1, 3, 5, 5, 4, 3], barres: [{ fret: 3, from: 1, to: 5 }], baseFret: 3 },
-    Dm: { frets: [-1, -1, 0, 2, 3, 1] },
-    Em: { frets: [0, 2, 2, 0, 0, 0] },
-    Fm: { frets: [1, 1, 3, 3, 2, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
-    Gm: { frets: [3, 1, 0, 0, 3, 3], baseFret: 3 },
-    "C#": { frets: [-1, 4, 3, 1, 2, 1], baseFret: 1 },
-    "Db": { frets: [-1, 4, 3, 1, 2, 1], baseFret: 1 },
+    // === Major ===
+    C:    { frets: [-1, 3, 2, 0, 1, 0] },
+    "C#": { frets: [-1, 4, 6, 6, 6, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    Db:   { frets: [-1, 4, 6, 6, 6, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    D:    { frets: [-1, -1, 0, 2, 3, 2] },
     "D#": { frets: [-1, -1, 1, 3, 4, 3], baseFret: 1 },
-    "Eb": { frets: [-1, -1, 1, 3, 4, 3], baseFret: 1 },
+    Eb:   { frets: [-1, -1, 1, 3, 4, 3], baseFret: 1 },
+    E:    { frets: [0, 2, 2, 1, 0, 0] },
+    F:    { frets: [1, 1, 2, 3, 3, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
     "F#": { frets: [2, 4, 4, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
-    "Gb": { frets: [2, 4, 4, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
-    "G#": { frets: [4, 3, 1, 1, 1, 4], baseFret: 1 },
-    "Ab": { frets: [4, 3, 1, 1, 1, 4], baseFret: 1 },
+    Gb:   { frets: [2, 4, 4, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    G:    { frets: [3, 2, 0, 0, 0, 3] },
+    "G#": { frets: [4, 6, 6, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    Ab:   { frets: [4, 6, 6, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    A:    { frets: [-1, 0, 2, 2, 2, 0] },
     "A#": { frets: [-1, 1, 3, 3, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
-    "Bb": { frets: [-1, 1, 3, 3, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    Bb:   { frets: [-1, 1, 3, 3, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    B:    { frets: [-1, 2, 4, 4, 4, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
+
+    // === Minor ===
+    Cm:    { frets: [-1, 3, 5, 5, 4, 3], barres: [{ fret: 3, from: 1, to: 5 }], baseFret: 3 },
     "C#m": { frets: [-1, 4, 6, 6, 5, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    Dbm:   { frets: [-1, 4, 6, 6, 5, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    Dm:    { frets: [-1, -1, 0, 2, 3, 1] },
+    "D#m": { frets: [-1, -1, 1, 3, 4, 2], baseFret: 1 },
+    Ebm:   { frets: [-1, -1, 1, 3, 4, 2], baseFret: 1 },
+    Em:    { frets: [0, 2, 2, 0, 0, 0] },
+    Fm:    { frets: [1, 1, 3, 3, 2, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
     "F#m": { frets: [2, 4, 4, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    Gbm:   { frets: [2, 4, 4, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    Gm:    { frets: [3, 5, 5, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 5 }], baseFret: 3 },
     "G#m": { frets: [4, 6, 6, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
-    "Bbm": { frets: [-1, 1, 3, 3, 2, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
-    "Ebm": { frets: [-1, -1, 1, 3, 4, 2], baseFret: 1 },
-    "Abm": { frets: [4, 6, 6, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
-    C7: { frets: [-1, 3, 2, 3, 1, 0] },
-    D7: { frets: [-1, -1, 0, 2, 1, 2] },
-    E7: { frets: [0, 2, 0, 1, 0, 0] },
-    G7: { frets: [3, 2, 0, 0, 0, 1] },
-    A7: { frets: [-1, 0, 2, 0, 2, 0] },
-    B7: { frets: [-1, 2, 1, 2, 0, 2] },
+    Abm:   { frets: [4, 6, 6, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    Am:    { frets: [-1, 0, 2, 2, 1, 0] },
+    "A#m": { frets: [-1, 1, 3, 3, 2, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    Bbm:   { frets: [-1, 1, 3, 3, 2, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    Bm:    { frets: [-1, 2, 4, 4, 3, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
+
+    // === Dominant 7th ===
+    C7:    { frets: [-1, 3, 2, 3, 1, 0] },
+    "C#7": { frets: [-1, 4, 3, 4, 2, -1], baseFret: 1 },
+    Db7:   { frets: [-1, 4, 3, 4, 2, -1], baseFret: 1 },
+    D7:    { frets: [-1, -1, 0, 2, 1, 2] },
+    "D#7": { frets: [-1, -1, 1, 3, 2, 3], baseFret: 1 },
+    Eb7:   { frets: [-1, -1, 1, 3, 2, 3], baseFret: 1 },
+    E7:    { frets: [0, 2, 0, 1, 0, 0] },
+    F7:    { frets: [1, 1, 2, 1, 3, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
+    "F#7": { frets: [2, 4, 2, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    Gb7:   { frets: [2, 4, 2, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    G7:    { frets: [3, 2, 0, 0, 0, 1] },
+    "G#7": { frets: [4, 6, 4, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    Ab7:   { frets: [4, 6, 4, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    A7:    { frets: [-1, 0, 2, 0, 2, 0] },
+    "A#7": { frets: [-1, 1, 3, 1, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    Bb7:   { frets: [-1, 1, 3, 1, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    B7:    { frets: [-1, 2, 1, 2, 0, 2] },
+
+    // === Minor 7th ===
+    Cm7:    { frets: [-1, 3, 5, 3, 4, 3], barres: [{ fret: 3, from: 1, to: 5 }], baseFret: 3 },
+    "C#m7": { frets: [-1, 4, 6, 4, 5, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    Dm7:    { frets: [-1, -1, 0, 2, 1, 1] },
+    "D#m7": { frets: [-1, -1, 1, 3, 2, 2], baseFret: 1 },
+    Ebm7:   { frets: [-1, -1, 1, 3, 2, 2], baseFret: 1 },
+    Em7:    { frets: [0, 2, 0, 0, 0, 0] },
+    Fm7:    { frets: [1, 1, 3, 1, 2, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
+    "F#m7": { frets: [2, 4, 2, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    Gm7:    { frets: [3, 5, 3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 5 }], baseFret: 3 },
+    "G#m7": { frets: [4, 6, 4, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    Abm7:   { frets: [4, 6, 4, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    Am7:    { frets: [-1, 0, 2, 0, 1, 0] },
+    "A#m7": { frets: [-1, 1, 3, 1, 2, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    Bbm7:   { frets: [-1, 1, 3, 1, 2, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    Bm7:    { frets: [-1, 2, 4, 2, 3, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
+
+    // === Major 7th ===
+    CM7:    { frets: [-1, 3, 2, 0, 0, 0] },
+    Cmaj7:  { frets: [-1, 3, 2, 0, 0, 0] },
+    DM7:    { frets: [-1, -1, 0, 2, 2, 2] },
+    Dmaj7:  { frets: [-1, -1, 0, 2, 2, 2] },
+    EM7:    { frets: [0, 2, 1, 1, 0, 0] },
+    Emaj7:  { frets: [0, 2, 1, 1, 0, 0] },
+    FM7:    { frets: [1, 1, 2, 2, 3, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
+    Fmaj7:  { frets: [1, 1, 2, 2, 3, 1], barres: [{ fret: 1, from: 0, to: 5 }] },
+    GM7:    { frets: [3, 2, 0, 0, 0, 2] },
+    Gmaj7:  { frets: [3, 2, 0, 0, 0, 2] },
+    AM7:    { frets: [-1, 0, 2, 1, 2, 0] },
+    Amaj7:  { frets: [-1, 0, 2, 1, 2, 0] },
+    BM7:    { frets: [-1, 2, 4, 3, 4, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
+    Bmaj7:  { frets: [-1, 2, 4, 3, 4, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
+    "F#M7": { frets: [2, 4, 3, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    "F#maj7": { frets: [2, 4, 3, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    "BbM7": { frets: [-1, 1, 3, 2, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    Bbmaj7: { frets: [-1, 1, 3, 2, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    "EbM7": { frets: [-1, -1, 1, 3, 3, 3], baseFret: 1 },
+    Ebmaj7: { frets: [-1, -1, 1, 3, 3, 3], baseFret: 1 },
+    "AbM7": { frets: [4, 6, 5, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    Abmaj7: { frets: [4, 6, 5, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+
+    // === Suspended ===
+    Csus4: { frets: [-1, 3, 3, 0, 1, 1] },
+    Dsus4: { frets: [-1, -1, 0, 2, 3, 3] },
+    Dsus2: { frets: [-1, -1, 0, 2, 3, 0] },
+    Esus4: { frets: [0, 2, 2, 2, 0, 0] },
+    Gsus4: { frets: [3, 3, 0, 0, 1, 3] },
+    Asus4: { frets: [-1, 0, 2, 2, 3, 0] },
+    Asus2: { frets: [-1, 0, 2, 2, 0, 0] },
+    Bsus4: { frets: [-1, 2, 4, 4, 5, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
+
+    // === Diminished ===
+    Cdim:  { frets: [-1, 3, 4, 2, 4, 2] },
+    Ddim:  { frets: [-1, -1, 0, 1, 3, 1] },
+    Edim:  { frets: [0, 1, 2, 0, -1, -1] },
+    Fdim:  { frets: [1, 2, 3, 1, -1, -1] },
+    Gdim:  { frets: [3, 4, 5, 3, -1, -1] },
+    Adim:  { frets: [-1, 0, 1, 2, 1, -1] },
+    Bdim:  { frets: [-1, 2, 3, 4, 3, -1] },
+    "C#dim": { frets: [-1, 4, 5, 3, 5, 3], baseFret: 3 },
+    "F#dim": { frets: [2, 3, 4, 2, -1, -1] },
+
+    // === Augmented ===
+    Caug:  { frets: [-1, 3, 2, 1, 1, 0] },
+    Daug:  { frets: [-1, -1, 0, 3, 3, 2] },
+    Eaug:  { frets: [0, 3, 2, 1, 1, 0] },
+    Faug:  { frets: [1, 0, 3, 2, 2, 1] },
+    Gaug:  { frets: [3, 2, 1, 0, 0, 3] },
+    Aaug:  { frets: [-1, 0, 3, 2, 2, 1] },
+
+    // === Add9 ===
+    Cadd9: { frets: [-1, 3, 2, 0, 3, 0] },
+    Dadd9: { frets: [-1, -1, 0, 2, 3, 0] },
+    Eadd9: { frets: [0, 2, 2, 1, 0, 2] },
+    Gadd9: { frets: [3, 0, 0, 0, 0, 3] },
+    Aadd9: { frets: [-1, 0, 2, 2, 2, 2] },
+
+    // === 9th ===
+    C9:  { frets: [-1, 3, 2, 3, 3, 0] },
+    D9:  { frets: [-1, -1, 0, 2, 1, 0] },
+    E9:  { frets: [0, 2, 0, 1, 0, 2] },
+    G9:  { frets: [3, 2, 0, 0, 0, 1] },
+    A9:  { frets: [-1, 0, 2, 4, 2, 3] },
+
+    // === 7sus4 ===
+    A7sus4: { frets: [-1, 0, 2, 0, 3, 0] },
+    D7sus4: { frets: [-1, -1, 0, 2, 1, 3] },
+    E7sus4: { frets: [0, 2, 0, 2, 0, 0] },
+    G7sus4: { frets: [3, 3, 0, 0, 1, 1] },
+
+    // === m7b5 (half-diminished) ===
+    "Bm7b5":  { frets: [-1, 2, 3, 2, 3, -1] },
+    "Am7b5":  { frets: [-1, 0, 1, 2, 1, 3] },
+    "C#m7b5": { frets: [-1, 4, 5, 4, 5, -1], baseFret: 4 },
+    "F#m7b5": { frets: [2, 3, 2, 2, -1, -1] },
+    "Gm7b5":  { frets: [3, 4, 3, 3, -1, -1] },
+    "Em7b5":  { frets: [0, 1, 2, 0, 3, 0] },
+    "Dm7b5":  { frets: [-1, -1, 0, 1, 1, 1] },
+
+    // === dim7 ===
+    "Cdim7":  { frets: [-1, 3, 4, 2, 4, 2] },
+    "Ddim7":  { frets: [-1, -1, 0, 1, 0, 1] },
+    "Edim7":  { frets: [0, 1, 2, 0, 2, 0] },
+    "F#dim7": { frets: [2, 3, 4, 2, 4, 2] },
+    "Gdim7":  { frets: [3, 4, 5, 3, 5, 3] },
+    "Adim7":  { frets: [-1, 0, 1, 2, 1, 2] },
+    "Bdim7":  { frets: [-1, 2, 3, 1, 3, 1] },
   },
+
   cavaquinho: {
-    // Cavaquinho tuning: D G B D (standard Brazilian)
-    C:  { frets: [0, 0, 0, 2] },
-    D:  { frets: [0, 2, 3, 2] },
-    E:  { frets: [2, 1, 0, 2] },
-    F:  { frets: [3, 2, 1, 0] },
-    G:  { frets: [0, 0, 0, 0] },
-    A:  { frets: [2, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
-    B:  { frets: [4, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 3 }] },
-    Am: { frets: [2, 2, 1, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
-    Bm: { frets: [4, 4, 3, 4], barres: [{ fret: 4, from: 0, to: 3 }], baseFret: 4 },
-    Cm: { frets: [0, 0, 0, 1] },
-    Dm: { frets: [0, 2, 3, 1] },
-    Em: { frets: [2, 0, 0, 2] },
-    Fm: { frets: [3, 1, 1, 0], barres: [{ fret: 1, from: 1, to: 2 }] },
-    Gm: { frets: [0, 0, 0, 3] },
-    C7: { frets: [0, 0, 0, 0] },
-    D7: { frets: [0, 2, 1, 2] },
-    E7: { frets: [2, 1, 0, 0] },
-    G7: { frets: [0, 0, 0, 3] },
-    A7: { frets: [2, 2, 2, 0] },
-    B7: { frets: [4, 4, 4, 2], baseFret: 2 },
+    // === Major === (D-G-B-D tuning)
+    C:    { frets: [0, 0, 0, 2] },
     "C#": { frets: [1, 1, 1, 3], barres: [{ fret: 1, from: 0, to: 2 }] },
-    "Db": { frets: [1, 1, 1, 3], barres: [{ fret: 1, from: 0, to: 2 }] },
-    "Bb": { frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    Db:   { frets: [1, 1, 1, 3], barres: [{ fret: 1, from: 0, to: 2 }] },
+    D:    { frets: [0, 2, 3, 2] },
+    "D#": { frets: [1, 3, 4, 3], baseFret: 1 },
+    Eb:   { frets: [1, 3, 4, 3], baseFret: 1 },
+    E:    { frets: [2, 1, 0, 2] },
+    F:    { frets: [3, 2, 1, 0] },
     "F#": { frets: [4, 3, 2, 1] },
-    "Gb": { frets: [4, 3, 2, 1] },
+    Gb:   { frets: [4, 3, 2, 1] },
+    G:    { frets: [0, 0, 0, 0] },
+    "G#": { frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] },
+    Ab:   { frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] },
+    A:    { frets: [2, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
+    "A#": { frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    Bb:   { frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    B:    { frets: [4, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 3 }], baseFret: 4 },
+
+    // === Minor ===
+    Cm:    { frets: [0, 0, 0, 1] },
+    "C#m": { frets: [1, 1, 1, 2], barres: [{ fret: 1, from: 0, to: 2 }] },
+    Dm:    { frets: [0, 2, 3, 1] },
+    "D#m": { frets: [1, 3, 4, 2], baseFret: 1 },
+    Ebm:   { frets: [1, 3, 4, 2], baseFret: 1 },
+    Em:    { frets: [2, 0, 0, 2] },
+    Fm:    { frets: [3, 1, 1, 0], barres: [{ fret: 1, from: 1, to: 2 }] },
+    "F#m": { frets: [4, 2, 2, 1], baseFret: 1 },
+    Gm:    { frets: [0, 0, 0, 3] },
+    "G#m": { frets: [1, 1, 1, 4], barres: [{ fret: 1, from: 0, to: 2 }] },
+    Abm:   { frets: [1, 1, 1, 4], barres: [{ fret: 1, from: 0, to: 2 }] },
+    Am:    { frets: [2, 2, 1, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
+    "A#m": { frets: [3, 3, 2, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    Bbm:   { frets: [3, 3, 2, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    Bm:    { frets: [4, 4, 3, 4], barres: [{ fret: 4, from: 0, to: 3 }], baseFret: 4 },
+
+    // === Dominant 7th ===
+    C7:    { frets: [0, 0, 0, 0] },
+    "C#7": { frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] },
+    D7:    { frets: [0, 2, 1, 2] },
+    "D#7": { frets: [1, 3, 2, 3], baseFret: 1 },
+    Eb7:   { frets: [1, 3, 2, 3], baseFret: 1 },
+    E7:    { frets: [2, 1, 0, 0] },
+    F7:    { frets: [3, 2, 1, 3] },
+    "F#7": { frets: [4, 3, 2, 4], baseFret: 2 },
+    Gb7:   { frets: [4, 3, 2, 4], baseFret: 2 },
+    G7:    { frets: [0, 0, 0, 3] },
+    "G#7": { frets: [1, 1, 1, 4], barres: [{ fret: 1, from: 0, to: 2 }] },
+    Ab7:   { frets: [1, 1, 1, 4], barres: [{ fret: 1, from: 0, to: 2 }] },
+    A7:    { frets: [2, 2, 2, 0] },
+    "A#7": { frets: [3, 3, 3, 1], barres: [{ fret: 3, from: 0, to: 2 }], baseFret: 1 },
+    Bb7:   { frets: [3, 3, 3, 1], barres: [{ fret: 3, from: 0, to: 2 }], baseFret: 1 },
+    B7:    { frets: [4, 4, 4, 2], baseFret: 2 },
+
+    // === Minor 7th ===
+    Cm7:    { frets: [0, 0, 0, 0] },
+    Dm7:    { frets: [0, 2, 1, 1] },
+    Em7:    { frets: [2, 0, 0, 0] },
+    Fm7:    { frets: [3, 1, 1, 3], barres: [{ fret: 1, from: 1, to: 2 }] },
+    Gm7:    { frets: [0, 0, 0, 1] },
+    Am7:    { frets: [2, 2, 1, 0] },
+    Bm7:    { frets: [4, 4, 3, 2], baseFret: 2 },
+    "C#m7": { frets: [1, 1, 1, 2], barres: [{ fret: 1, from: 0, to: 2 }] },
+    "F#m7": { frets: [4, 2, 2, 4], baseFret: 2 },
+    "G#m7": { frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] },
+    Abm7:   { frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] },
+    Bbm7:   { frets: [3, 3, 2, 1], baseFret: 1 },
+
+    // === Major 7th ===
+    CM7:    { frets: [0, 0, 0, 2] },
+    Cmaj7:  { frets: [0, 0, 0, 2] },
+    DM7:    { frets: [0, 2, 3, 2] },
+    Dmaj7:  { frets: [0, 2, 3, 2] },
+    GM7:    { frets: [0, 0, 0, 4] },
+    Gmaj7:  { frets: [0, 0, 0, 4] },
+    AM7:    { frets: [2, 2, 2, 1] },
+    Amaj7:  { frets: [2, 2, 2, 1] },
+
+    // === Suspended ===
+    Dsus4: { frets: [0, 2, 3, 3] },
+    Asus4: { frets: [2, 2, 3, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
+    Esus4: { frets: [2, 2, 0, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
+
+    // === Diminished ===
+    Cdim:  { frets: [2, 0, 2, 1] },
+    Ddim:  { frets: [0, 1, 3, 1] },
+    Edim:  { frets: [2, 0, 2, 1] },
+    Fdim:  { frets: [3, 1, 0, 3] },
+    Gdim:  { frets: [0, 1, 0, 1] },
+
+    // === Augmented ===
+    Caug:  { frets: [0, 1, 0, 2] },
+    Daug:  { frets: [0, 3, 3, 2] },
+    Gaug:  { frets: [0, 1, 0, 0] },
   },
+
   ukulele: {
-    C:  { frets: [0, 0, 0, 3] },
-    D:  { frets: [2, 2, 2, 0] },
-    E:  { frets: [1, 4, 0, 2] },
-    F:  { frets: [2, 0, 1, 0] },
-    G:  { frets: [0, 2, 3, 2] },
-    A:  { frets: [2, 1, 0, 0] },
-    B:  { frets: [4, 3, 2, 2] },
-    Am: { frets: [2, 0, 0, 0] },
-    Dm: { frets: [2, 2, 1, 0] },
-    Em: { frets: [0, 4, 3, 2] },
+    C:    { frets: [0, 0, 0, 3] },
+    D:    { frets: [2, 2, 2, 0] },
+    E:    { frets: [1, 4, 0, 2] },
+    F:    { frets: [2, 0, 1, 0] },
+    G:    { frets: [0, 2, 3, 2] },
+    A:    { frets: [2, 1, 0, 0] },
+    B:    { frets: [4, 3, 2, 2] },
+    Am:   { frets: [2, 0, 0, 0] },
+    Dm:   { frets: [2, 2, 1, 0] },
+    Em:   { frets: [0, 4, 3, 2] },
+    Cm:   { frets: [0, 3, 3, 3] },
+    Fm:   { frets: [1, 0, 1, 3] },
+    Gm:   { frets: [0, 2, 3, 1] },
+    Bm:   { frets: [4, 2, 2, 2] },
+    C7:   { frets: [0, 0, 0, 1] },
+    D7:   { frets: [2, 2, 2, 3] },
+    E7:   { frets: [1, 2, 0, 2] },
+    F7:   { frets: [2, 3, 1, 3] },
+    G7:   { frets: [0, 2, 1, 2] },
+    A7:   { frets: [0, 1, 0, 0] },
+    B7:   { frets: [2, 3, 2, 2] },
+    Am7:  { frets: [0, 0, 0, 0] },
+    Dm7:  { frets: [2, 2, 1, 3] },
+    Em7:  { frets: [0, 2, 0, 2] },
+    Cm7:  { frets: [3, 3, 3, 3] },
+    "Bb": { frets: [3, 2, 1, 1] },
+    "F#": { frets: [3, 1, 2, 1] },
+    "F#m": { frets: [2, 1, 2, 0] },
   },
 };
 
 function getStringsForInstrument(instrument: Instrument): number {
   if (instrument === "guitar") return 6;
   return 4;
-}
-
-export function getChordVoicing(chord: string, instrument: Instrument): ChordVoicing | null {
-  if (instrument === "keyboard") return null;
-  const db = CHORD_DB[instrument];
-  if (!db) return null;
-  // Try exact match, then root+quality
-  return db[chord] || null;
 }
 
 export function drawChordDiagram(
@@ -118,7 +438,7 @@ export function drawChordDiagram(
     return;
   }
 
-  const voicing = getChordVoicing(chord, instrument);
+  const { voicing, simplified } = resolveChordVoicing(chord, instrument);
   const numStrings = getStringsForInstrument(instrument);
   const numFrets = 5;
   const padding = { top: 50, bottom: 20, left: 30, right: 30 };
@@ -136,7 +456,8 @@ export function drawChordDiagram(
   ctx.fillStyle = "hsl(220, 15%, 90%)";
   ctx.font = "bold 18px 'Space Grotesk', sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText(chord, w / 2, 24);
+  const title = simplified ? `${chord} *` : chord;
+  ctx.fillText(title, w / 2, 24);
 
   // Nut
   ctx.strokeStyle = "hsl(220, 15%, 60%)";
@@ -179,20 +500,17 @@ export function drawChordDiagram(
     const x = padding.left + s * stringSpacing;
 
     if (fret === -1) {
-      // Muted
       ctx.fillStyle = "hsl(0, 72%, 51%)";
       ctx.font = "16px sans-serif";
       ctx.textAlign = "center";
       ctx.fillText("×", x, padding.top - 8);
     } else if (fret === 0) {
-      // Open
       ctx.strokeStyle = "hsl(36, 95%, 55%)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(x, padding.top - 12, 6, 0, Math.PI * 2);
       ctx.stroke();
     } else {
-      // Fretted
       const y = padding.top + (fret - 0.5) * fretSpacing;
       ctx.fillStyle = "hsl(36, 95%, 55%)";
       ctx.beginPath();
@@ -224,6 +542,14 @@ export function drawChordDiagram(
     ctx.textAlign = "right";
     ctx.fillText(`${voicing.baseFret}fr`, padding.left - 8, padding.top + fretSpacing * 0.5 + 4);
   }
+
+  // Simplified indicator
+  if (simplified) {
+    ctx.fillStyle = "hsl(36, 80%, 50%)";
+    ctx.font = "10px 'Space Grotesk', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("* versão simplificada", w / 2, h - 4);
+  }
 }
 
 function drawKeyboard(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, chord: string) {
@@ -231,17 +557,15 @@ function drawKeyboard(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
   const h = canvas.height;
   ctx.clearRect(0, 0, w, h);
 
-  // Title
   ctx.fillStyle = "hsl(220, 15%, 90%)";
   ctx.font = "bold 18px 'Space Grotesk', sans-serif";
   ctx.textAlign = "center";
   ctx.fillText(chord, w / 2, 24);
 
   const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-  const whiteKeys = [0, 2, 4, 5, 7, 9, 11]; // C D E F G A B
-  const blackKeys = [1, 3, 6, 8, 10]; // C# D# F# G# A#
+  const whiteKeys = [0, 2, 4, 5, 7, 9, 11];
+  const blackKeys = [1, 3, 6, 8, 10];
 
-  // Parse chord to get notes
   const chordNotes = getChordNotes(chord, NOTES);
 
   const keyW = 32;
@@ -251,7 +575,6 @@ function drawKeyboard(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
   const startX = (w - 7 * keyW) / 2;
   const startY = 40;
 
-  // White keys
   for (let i = 0; i < 7; i++) {
     const x = startX + i * keyW;
     const noteIdx = whiteKeys[i];
@@ -271,8 +594,7 @@ function drawKeyboard(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, 
     }
   }
 
-  // Black keys
-  const blackKeyPositions = [0, 1, 3, 4, 5]; // relative to white key index
+  const blackKeyPositions = [0, 1, 3, 4, 5];
   for (let i = 0; i < blackKeys.length; i++) {
     const whiteIdx = blackKeyPositions[i];
     const x = startX + whiteIdx * keyW + keyW - blackKeyW / 2 - 1;
@@ -295,18 +617,16 @@ function getChordNotes(chord: string, NOTES: string[]): number[] {
   const quality = match[2] || "";
   let rootIdx = NOTES.indexOf(root);
   if (rootIdx === -1) {
-    // Try flat notation
     const flatMap: Record<string, string> = { Db: "C#", Eb: "D#", Gb: "F#", Ab: "G#", Bb: "A#" };
     rootIdx = NOTES.indexOf(flatMap[root] || root);
   }
   if (rootIdx === -1) return [];
 
-  // Intervals: major [0,4,7], minor [0,3,7], dim [0,3,6], aug [0,4,8]
   let intervals = [0, 4, 7];
   if (quality === "m" || quality === "min") intervals = [0, 3, 7];
   else if (quality === "dim") intervals = [0, 3, 6];
   else if (quality === "aug") intervals = [0, 4, 8];
-  else if (quality === "sus") intervals = [0, 5, 7]; // sus4
+  else if (quality === "sus") intervals = [0, 5, 7];
 
   return intervals.map((i) => (rootIdx + i) % 12);
 }

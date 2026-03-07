@@ -25,6 +25,7 @@ Deno.serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
+    // Use Gemini with grounding/search tool to find real chord data
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -36,7 +37,12 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a Brazilian music chord sheet (cifra) expert. Given a song name (and optionally artist), generate the complete cifra with chords and lyrics in Portuguese.
+            content: `You are a Brazilian music chord sheet (cifra) expert. Given a song name (and optionally artist), you MUST search the web for the real, accurate cifra from trusted sources like Cifra Club, Letras.mus.br, or Ultimate Guitar.
+
+CRITICAL RULES:
+1. You MUST base your response on real chord data found on the internet. Do NOT invent or hallucinate chords.
+2. If you cannot find the exact song or are not confident about the accuracy of the chords, return: {"error": "Música não encontrada. Por favor, cole o link direto da cifra para garantir a precisão."}
+3. Always prefer the most popular/verified version of the cifra.
 
 Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
 {
@@ -47,27 +53,38 @@ Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
   "style": "music style/genre (e.g. Samba, Pagode, MPB, Sertanejo)",
   "bpm": estimated BPM as number or null,
   "time_signature": "time signature e.g. 4/4",
-  "body_text": "the full lyrics with chord annotations. Format: chord line above lyric line, separated by newlines. Use standard chord notation (Am, F7M, G7, etc)."
+  "body_text": "the full lyrics with chord annotations in ChordPro format. Place chords inside brackets before the syllable they belong to, e.g. [Am]Hoje eu [G]sei. Include all verses, choruses, bridges.",
+  "source_url": "URL of the source where you found the cifra, or null"
 }
 
-Rules:
-- Write lyrics in Portuguese (original language).
-- Place chords ABOVE the corresponding lyrics on separate lines.
-- Use standard Brazilian cifra chord notation.
-- If you're not sure about the exact chords, provide your best approximation.
-- Include all verses, choruses, bridges.
-- If the song is not found or unknown, set title to null.`
+Rules for body_text format:
+- Use ChordPro format: chords in [brackets] inline with lyrics
+- Use standard Brazilian cifra chord notation (Am, F7M, G7, etc).
+- Include section markers like {title: Intro}, {comment: Refrão}, etc.
+- Include ALL verses, choruses, bridges.`
           },
           {
             role: 'user',
-            content: `Gere a cifra completa para: ${query}`,
+            content: `Busque na internet a cifra completa e precisa para: ${query}`,
           },
         ],
-        temperature: 0.3,
+        temperature: 0.1,
       }),
     });
 
     if (!aiResponse.ok) {
+      if (aiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Limite de requisições excedido. Tente novamente em instantes.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (aiResponse.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'Créditos insuficientes. Adicione créditos ao workspace.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
       const errText = await aiResponse.text();
       console.error('AI Gateway error:', errText);
       throw new Error('AI processing failed');
@@ -83,14 +100,22 @@ Rules:
     } catch {
       console.error('Failed to parse AI response:', content);
       return new Response(
-        JSON.stringify({ error: 'Não foi possível gerar a cifra. Tente com mais detalhes.' }),
+        JSON.stringify({ error: 'Não foi possível encontrar a cifra. Tente colar o link direto do site de cifras.' }),
         { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // If AI returned an error (couldn't find song)
+    if (parsed.error) {
+      return new Response(
+        JSON.stringify({ error: parsed.error }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (!parsed.title) {
       return new Response(
-        JSON.stringify({ error: 'Música não encontrada. Tente incluir o nome do artista.' }),
+        JSON.stringify({ error: 'Música não encontrada. Tente incluir o nome do artista ou cole o link direto.' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

@@ -25,7 +25,7 @@ export interface ChordProLine {
 const CHORDPRO_RE = /\[([^\]]+)\]/g;
 
 /** Regex to detect ChordPro directive lines like {title: ...} */
-const DIRECTIVE_RE = /^\s*\{[^}]+\}\s*$/;
+const _DIRECTIVE_RE = /^\s*\{[^}]+\}\s*$/;
 
 /**
  * Returns true if the text contains ChordPro chord markers like [Am].

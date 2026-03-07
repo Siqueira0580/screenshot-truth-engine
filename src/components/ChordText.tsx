@@ -16,6 +16,7 @@ interface ChordTextProps {
  */
 export default function ChordText({ text, className }: ChordTextProps) {
   const isChordPro = useMemo(() => isChordProFormat(text), [text]);
+  const lines = useMemo(() => text.split("\n"), [text]);
 
   if (isChordPro) {
     return (
@@ -24,9 +25,6 @@ export default function ChordText({ text, className }: ChordTextProps) {
       </div>
     );
   }
-
-  // Fallback: plain text with inline chord detection
-  const lines = useMemo(() => text.split("\n"), [text]);
 
   return (
     <pre className={className}>

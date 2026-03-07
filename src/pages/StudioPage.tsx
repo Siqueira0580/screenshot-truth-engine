@@ -38,16 +38,17 @@ export default function StudioPage() {
       const path = `${song.id}/full.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("audio-stems")
-        .upload(path, file, { upsert: true });
+        .upload(path, file, { upsert: true, contentType: file.type || "audio/mpeg" });
       if (upErr) throw upErr;
 
       const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
       const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("audio_tracks").insert({
+      const { error: dbErr } = await supabase.from("audio_tracks").insert({
         song_id: song.id,
         file_full: urlData.publicUrl,
-        user_id: user!.id,
-      } as any);
+        user_id: user?.id || null,
+      });
+      if (dbErr) throw dbErr;
 
       queryClient.invalidateQueries({ queryKey: ["songs"] });
       toast.success(`"${title}" adicionado!`);

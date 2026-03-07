@@ -182,7 +182,7 @@ export async function updateArtistPhoto(artistId: string, file: File) {
   return data as Artist;
 }
 
-export async function findOrCreateArtist(name: string): Promise<Artist> {
+export async function findOrCreateArtist(name: string, photoUrl?: string): Promise<Artist> {
   const { data: existing } = await supabase
     .from("artists")
     .select("*")
@@ -190,12 +190,20 @@ export async function findOrCreateArtist(name: string): Promise<Artist> {
     .limit(1);
 
   if (existing && existing.length > 0) {
+    // Update photo if missing and we have one now
+    if (photoUrl && !existing[0].photo_url) {
+      await supabase
+        .from("artists")
+        .update({ photo_url: photoUrl })
+        .eq("id", existing[0].id);
+      return { ...existing[0], photo_url: photoUrl } as Artist;
+    }
     return existing[0] as Artist;
   }
 
   const { data, error } = await supabase
     .from("artists")
-    .insert({ name: name.trim() })
+    .insert({ name: name.trim(), photo_url: photoUrl || null })
     .select()
     .single();
   if (error) throw error;

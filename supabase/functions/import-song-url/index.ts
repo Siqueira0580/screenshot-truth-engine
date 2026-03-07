@@ -149,7 +149,31 @@ Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
 
     console.log("Extracted:", result.title, "-", result.artist);
 
-    return new Response(JSON.stringify(result), {
+    // Step C: Fetch artist image from Deezer
+    let artist_image_url: string | null = null;
+    if (result.artist) {
+      try {
+        console.log("Fetching artist image from Deezer for:", result.artist);
+        const deezerRes = await fetch(
+          "https://api.deezer.com/search/artist?q=" + encodeURIComponent(result.artist)
+        );
+        if (deezerRes.ok) {
+          const deezerData = await deezerRes.json();
+          if (deezerData?.data?.length > 0) {
+            artist_image_url =
+              deezerData.data[0].picture_xl ||
+              deezerData.data[0].picture_big ||
+              deezerData.data[0].picture_medium ||
+              null;
+            console.log("Deezer artist image found:", artist_image_url);
+          }
+        }
+      } catch (deezerErr) {
+        console.warn("Deezer fetch failed (non-critical):", deezerErr);
+      }
+    }
+
+    return new Response(JSON.stringify({ ...result, artist_image_url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

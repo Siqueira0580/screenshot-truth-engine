@@ -162,53 +162,90 @@ export default function CompositionStudioPage() {
       <div className="flex-1 flex overflow-hidden relative">
         {/* Editor – 70% */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24">
-          {/* Sing button */}
+          {/* Record button */}
           <div className="flex justify-center mb-8">
             <button
+              onClick={handleRecordToggle}
+              disabled={isProcessing}
               className={cn(
                 "inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-lg font-bold uppercase tracking-wider text-primary-foreground",
-                "bg-gradient-to-r from-primary via-accent to-primary",
-                "shadow-[0_0_25px_hsl(195_100%_50%/0.35)] hover:shadow-[0_0_35px_hsl(195_100%_50%/0.55)]",
-                "transition-all duration-300 hover:scale-105 active:scale-95"
+                "transition-all duration-300",
+                isRecording
+                  ? "bg-destructive shadow-[0_0_30px_hsl(var(--destructive)/0.5)] animate-pulse"
+                  : isProcessing
+                    ? "bg-muted text-muted-foreground cursor-not-allowed"
+                    : "bg-gradient-to-r from-primary via-accent to-primary shadow-[0_0_25px_hsl(195_100%_50%/0.35)] hover:shadow-[0_0_35px_hsl(195_100%_50%/0.55)] hover:scale-105 active:scale-95"
               )}
             >
-              <Mic className="h-6 w-6" />
-              Cantar Nova Ideia
+              {isRecording ? (
+                <>
+                  <Square className="h-6 w-6" />
+                  A gravar... (Clique para parar)
+                </>
+              ) : isProcessing ? (
+                <>
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                  IA a deduzir a harmonia...
+                </>
+              ) : (
+                <>
+                  <Mic className="h-6 w-6" />
+                  Cantar Nova Ideia
+                </>
+              )}
             </button>
           </div>
 
           {/* ChordPro preview editor area */}
           <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
-            <div className="flex flex-wrap items-end mb-6">
-              {SAMPLE_CHORDPRO.map((token, i) => (
-                <span key={i} className="inline-flex flex-col mr-1 mb-2">
-                  <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
-                    {token.chord || "\u00A0"}
-                  </span>
-                  <span className="text-foreground whitespace-pre text-base">
-                    {token.lyric || "\u00A0"}
-                  </span>
-                </span>
-              ))}
-            </div>
-
-            {/* Second line placeholder */}
-            <div className="flex flex-wrap items-end mb-6">
-              {[
-                { chord: "Am7", lyric: "E o silêncio " },
-                { chord: "F7M", lyric: "fala mais " },
-                { chord: "G7", lyric: "que palavras" },
-              ].map((token, i) => (
-                <span key={i} className="inline-flex flex-col mr-1 mb-2">
-                  <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
-                    {token.chord || "\u00A0"}
-                  </span>
-                  <span className="text-foreground whitespace-pre text-base">
-                    {token.lyric || "\u00A0"}
-                  </span>
-                </span>
-              ))}
-            </div>
+            {parsedLines ? (
+              parsedLines.map((tokens, lineIdx) => (
+                <div key={lineIdx} className="flex flex-wrap items-end mb-6">
+                  {tokens.map((token, i) => (
+                    <span key={i} className="inline-flex flex-col mr-1 mb-2">
+                      <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
+                        {token.chord || "\u00A0"}
+                      </span>
+                      <span className="text-foreground whitespace-pre text-base">
+                        {token.lyric || "\u00A0"}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ))
+            ) : (
+              <>
+                {/* Sample placeholder */}
+                <div className="flex flex-wrap items-end mb-6">
+                  {SAMPLE_CHORDPRO.map((token, i) => (
+                    <span key={i} className="inline-flex flex-col mr-1 mb-2">
+                      <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
+                        {token.chord || "\u00A0"}
+                      </span>
+                      <span className="text-foreground whitespace-pre text-base">
+                        {token.lyric || "\u00A0"}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-end mb-6">
+                  {[
+                    { chord: "Am7", lyric: "E o silêncio " },
+                    { chord: "F7M", lyric: "fala mais " },
+                    { chord: "G7", lyric: "que palavras" },
+                  ].map((token, i) => (
+                    <span key={i} className="inline-flex flex-col mr-1 mb-2">
+                      <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
+                        {token.chord || "\u00A0"}
+                      </span>
+                      <span className="text-foreground whitespace-pre text-base">
+                        {token.lyric || "\u00A0"}
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Blinking cursor placeholder */}
             <div className="flex items-center gap-1 text-muted-foreground mt-4">

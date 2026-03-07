@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2 } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,6 +50,8 @@ const RHYME_RESULTS = {
 
 export default function CompositionStudioPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [compositionId, setCompositionId] = useState<string | null>(searchParams.get("id"));
   const [title, setTitle] = useState("");
   const [selectedKey, setSelectedKey] = useState("Am");
   const [bpm, setBpm] = useState("120");
@@ -58,6 +60,70 @@ export default function CompositionStudioPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Load existing composition if ID in URL
+  useEffect(() => {
+    if (!compositionId) return;
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("compositions")
+        .select("*")
+        .eq("id", compositionId)
+        .single();
+      if (error || !data) return;
+      setTitle(data.title || "");
+      setEditorText(data.body_text || "");
+      setSelectedKey(data.musical_key || "Am");
+      setBpm(String(data.bpm || 120));
+      setStyle(data.style || "Bossa Nova");
+    };
+    load();
+  }, [compositionId]);
+
+  const handleSave = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("Faça login para salvar sua composição.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = {
+        title: title || "Sem título",
+        body_text: editorText,
+        musical_key: selectedKey,
+        bpm: parseInt(bpm) || 120,
+        style,
+        user_id: user.id,
+      };
+
+      if (compositionId) {
+        const { error } = await supabase
+          .from("compositions")
+          .update(payload)
+          .eq("id", compositionId);
+        if (error) throw error;
+        toast.success("Composição atualizada!");
+      } else {
+        const { data, error } = await supabase
+          .from("compositions")
+          .insert(payload)
+          .select("id")
+          .single();
+        if (error) throw error;
+        setCompositionId(data.id);
+        setSearchParams({ id: data.id }, { replace: true });
+        toast.success("Composição salva!");
+      }
+    } catch (err) {
+      console.error("Save error:", err);
+      toast.error("Erro ao salvar a composição.");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [title, editorText, selectedKey, bpm, style, compositionId, setSearchParams]);
 
   const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
@@ -199,8 +265,9 @@ export default function CompositionStudioPage() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5">
-              <Save className="h-4 w-4" /> Salvar
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isSaving ? "A salvar..." : compositionId ? "Atualizar" : "Salvar"}
             </Button>
             <Button size="sm" className="gap-1.5">
               <Share2 className="h-4 w-4" /> Partilhar

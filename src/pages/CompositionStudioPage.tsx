@@ -2,6 +2,9 @@ import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2 } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -55,17 +58,67 @@ export default function CompositionStudioPage() {
   const [rhymeSearch, setRhymeSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorText, setEditorText] = useState("");
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
+  const transcribeAudio = useCallback(async (audioBlob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]); // strip data:...;base64,
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(audioBlob);
+      });
+
+      const { data, error } = await supabase.functions.invoke("transcribe-composition", {
+        body: {
+          audio_base64: base64,
+          mime_type: audioBlob.type,
+          style,
+          existing_text: editorText,
+        },
+      });
+
+      if (error) throw error;
+
+      const transcription = data?.transcription?.trim();
+      if (transcription) {
+        setEditorText((prev) => (prev ? prev + "\n" : "") + transcription);
+        toast.success("Transcrição concluída e inserida no editor!");
+      } else {
+        toast.warning("Não foi possível transcrever o áudio. Tente novamente.");
+      }
+    } catch (err) {
+      console.error("Transcription error:", err);
+      toast.error("Erro ao transcrever o áudio.");
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, [style, editorText]);
+
   const handleRecordToggle = useCallback(() => {
     toggleRecording(style, (result) => {
-      setEditorText((prev) => (prev ? prev + "\n" : "") + result.chordProText);
+      // Append any SpeechRecognition text captured during recording
+      if (result.chordProText) {
+        setEditorText((prev) => (prev ? prev + "\n" : "") + result.chordProText);
+      }
       setSelectedKey(result.detectedKey);
+      
+      // Send recorded audio to AI for proper transcription
+      if (result.audioUrl) {
+        fetch(result.audioUrl)
+          .then((r) => r.blob())
+          .then((blob) => transcribeAudio(blob))
+          .catch(console.error);
+      }
     });
-  }, [style, toggleRecording]);
+  }, [style, toggleRecording, transcribeAudio]);
 
-  // Append live transcription in real-time while recording
   const displayText = editorText + (isRecording && liveChordPro ? (editorText ? "\n" : "") + liveChordPro : "");
 
   const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];

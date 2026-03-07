@@ -34,7 +34,7 @@ export default function CompositionStudioPage() {
   const [compositionId, setCompositionId] = useState<string | null>(searchParams.get("id"));
   const [title, setTitle] = useState("");
   const [selectedKey, setSelectedKey] = useState("Am");
-  const [originalKey, setOriginalKey] = useState("Am"); // tom original da composição
+  const [originalKey, setOriginalKey] = useState(""); // tom original da composição — vazio até ser definido
   const [targetKey, setTargetKey] = useState(""); // empty = no transposition
   const [bpm, setBpm] = useState("120");
   const [style, setStyle] = useState("Bossa Nova");
@@ -59,7 +59,7 @@ export default function CompositionStudioPage() {
       setTitle(data.title || "");
       setEditorText(data.body_text || "");
       setSelectedKey(data.musical_key || "Am");
-      setOriginalKey(data.musical_key || "Am");
+      setOriginalKey(data.musical_key || "");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
       if (data.audio_url) setSavedAudioUrl(data.audio_url);

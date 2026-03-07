@@ -30,6 +30,9 @@ export default function SongsPage() {
     queryFn: fetchSongs,
   });
 
+  // Background enrichment: auto-fetches missing genre & artist photos
+  useAutoEnrichment(songs);
+
   const deleteM = useMutation({
     mutationFn: deleteSong,
     onSuccess: () => {

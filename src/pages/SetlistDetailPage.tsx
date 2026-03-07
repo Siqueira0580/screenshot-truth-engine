@@ -57,7 +57,7 @@ function prevSpeedCycle(current: number): number {
 // Sortable song item component
 function SortableSongItem({
   item, index, selectedSongs, toggleSelect, getVal, updateField,
-  removeMutation, isMobile,
+  removeMutation, isMobile, isTablet,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
@@ -130,7 +130,7 @@ function SortableSongItem({
         {/* Speed: Mobile = cycle buttons, Desktop = input */}
         <div className="flex items-center gap-1">
           <label className="text-xs text-muted-foreground whitespace-nowrap">Vel</label>
-          {isMobile ? (
+          {(isMobile || isTablet) ? (
             <div className="flex items-center gap-0.5">
               <Button
                 variant="outline" size="icon"
@@ -185,6 +185,7 @@ export default function SetlistDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const isTablet = typeof window !== "undefined" && window.innerWidth >= 768 && window.innerWidth < 1024;
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
   const [addOpen, setAddOpen] = useState(false);
@@ -587,6 +588,7 @@ export default function SetlistDetailPage() {
                     updateField={updateField}
                     removeMutation={removeMutation}
                     isMobile={isMobile}
+                    isTablet={isTablet}
                   />
                 ))}
               </div>

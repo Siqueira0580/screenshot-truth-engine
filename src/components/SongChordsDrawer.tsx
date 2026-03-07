@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
+
 import { drawChordDiagram } from "@/lib/chord-diagrams";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 

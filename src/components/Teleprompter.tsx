@@ -1,17 +1,18 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat } from "lucide-react";
+import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { transposeText, transposeKey } from "@/lib/transpose";
+import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
 
 const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 import MetronomePulse from "@/components/teleprompter/MetronomePulse";
 
 import ChordModal from "@/components/teleprompter/ChordModal";
 import SongChordsFAB from "@/components/SongChordsFAB";
+import { parseChordPro } from "@/lib/chordpro-parser";
 
 interface TeleprompterSong {
   title: string;
@@ -20,6 +21,7 @@ interface TeleprompterSong {
   musical_key?: string | null;
   bpm?: number | null;
   body_text?: string | null;
+  ai_chordpro_text?: string | null;
   loop_count?: number | null;
   auto_next?: boolean | null;
   speed?: number | null; // percentage value e.g. 250 = 2.5x
@@ -57,12 +59,20 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const [nearEnd, setNearEnd] = useState(false);
   const [songProgress, setSongProgress] = useState(0);
   const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);
+  const [useChordPro, setUseChordPro] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number | null>(null);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTime = useRef<number>(0);
   const songRefs = useRef<(HTMLDivElement | null)[]>([]);
   const repeatingRef = useRef(false);
+
+  // Auto-enable ChordPro mode if any song has AI chordpro text
+  useEffect(() => {
+    if (songs.some(s => s.ai_chordpro_text)) {
+      setUseChordPro(true);
+    }
+  }, [songs]);
 
   // Initialize loops remaining from song config
   useEffect(() => {
@@ -580,7 +590,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         onClick={handleBodyClick}
       >
         {songs.map((s, idx) => {
-          const body = displayBodies[idx];
           const sKey = transposeKey(s.musical_key, transpose);
           return (
             <div
@@ -628,21 +637,71 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               </div>
 
               {/* Song body */}
-              {body ? (
-                <pre
-                  className="chord-text whitespace-pre-wrap leading-relaxed text-foreground mx-auto max-w-4xl"
-                  style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: `${fontSize}px`,
-                    lineHeight: 1.8,
-                  }}
-                  dangerouslySetInnerHTML={{ __html: makeChordClickable(body) }}
-                />
-              ) : (
-                <p className="text-center text-muted-foreground text-xl my-12">
-                  Nenhuma cifra disponível
-                </p>
-              )}
+              {(() => {
+                const hasChordPro = useChordPro && s.ai_chordpro_text;
+                if (hasChordPro) {
+                  const transposedChordPro = transposeChordPro(s.ai_chordpro_text!, transpose);
+                  const parsedLines = parseChordPro(transposedChordPro);
+                  return (
+                    <div
+                      className="mx-auto max-w-4xl"
+                      style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
+                      onClick={handleBodyClick}
+                    >
+                      {parsedLines.map((line, lineIdx) => {
+                        // Filter out ChordPro directives like {title:...}
+                        const firstToken = line.tokens[0];
+                        if (firstToken && !firstToken.chord && firstToken.lyric.match(/^\{.*\}$/)) {
+                          return null;
+                        }
+                        return (
+                          <div key={lineIdx} className="flex flex-wrap items-end mb-0.5">
+                            {line.tokens.map((token, tokenIdx) => (
+                              <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
+                                <span
+                                  className="text-primary font-bold select-none leading-tight"
+                                  style={{ fontSize: `${Math.max(fontSize * 0.55, 12)}px` }}
+                                >
+                                  {token.chord ? (
+                                    <span
+                                      className="chord chord-clickable cursor-pointer hover:text-accent transition-colors underline decoration-primary/30 underline-offset-2"
+                                      data-chord={token.chord}
+                                    >
+                                      {token.chord}
+                                    </span>
+                                  ) : (
+                                    "\u00A0"
+                                  )}
+                                </span>
+                                <span className="text-foreground whitespace-pre" style={{ fontFamily: "var(--font-mono)" }}>
+                                  {token.lyric || "\u00A0"}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                const body = displayBodies[idx];
+                return body ? (
+                  <pre
+                    className="chord-text whitespace-pre-wrap leading-relaxed text-foreground mx-auto max-w-4xl"
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: `${fontSize}px`,
+                      lineHeight: 1.8,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: makeChordClickable(body) }}
+                  />
+                ) : (
+                  <p className="text-center text-muted-foreground text-xl my-12">
+                    Nenhuma cifra disponível
+                  </p>
+                );
+              })()}
             </div>
           );
         })}
@@ -755,6 +814,20 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             <ChevronUp className="h-3 w-3" />
           </Button>
         </div>
+
+        {/* ChordPro toggle */}
+        {songs.some(s => s.ai_chordpro_text) && (
+          <Button
+            variant={useChordPro ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setUseChordPro(v => !v)}
+            className={cn("gap-1.5 h-8", useChordPro ? "" : "text-foreground")}
+            title="Alternar cifra IA"
+          >
+            <Wand2 className="h-3.5 w-3.5" />
+            <span className="text-xs hidden sm:inline">Cifra IA</span>
+          </Button>
+        )}
 
         {/* Font size */}
         <div className="flex items-center gap-1">

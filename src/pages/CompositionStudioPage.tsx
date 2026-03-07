@@ -60,6 +60,7 @@ export default function CompositionStudioPage() {
       setSelectedKey(data.musical_key || "Am");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
+      if (data.audio_url) setSavedAudioUrl(data.audio_url);
     };
     load();
   }, [compositionId]);

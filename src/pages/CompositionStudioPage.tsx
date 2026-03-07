@@ -109,11 +109,11 @@ export default function CompositionStudioPage() {
       if (audioUrl) payload.audio_url = audioUrl;
 
       if (compositionId) {
-        const { error } = await supabase.from("compositions").update(payload).eq("id", compositionId);
+        const { error } = await supabase.from("compositions").update(payload as any).eq("id", compositionId);
         if (error) throw error;
         toast.success("Composição atualizada!");
       } else {
-        const { data, error } = await supabase.from("compositions").insert(payload).select("id").single();
+        const { data, error } = await supabase.from("compositions").insert(payload as any).select("id").single();
         if (error) throw error;
         setCompositionId(data.id);
         setSearchParams({ id: data.id }, { replace: true });

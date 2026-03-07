@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2 } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -11,9 +11,10 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { transposeChord } from "@/lib/transpose-chord";
 
 const KEYS = ["C", "C#", "D", "Dm", "D#", "E", "Em", "F", "F#", "G", "Gm", "G#", "A", "Am", "A#", "B", "Bm"];
-const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "MPB", "Worship", "Jazz", "Blues", "Forró", "Reggae"];
+const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "Worship", "Samba", "Pagode", "Jazz", "R&B", "MPB", "Blues", "Forró", "Reggae"];
 
 const CHORD_MAP: Record<string, string[]> = {
   C: ["C7M", "Dm7", "Em7", "F7M", "G7", "Am7", "Bm7(b5)"],
@@ -26,34 +27,13 @@ const CHORD_MAP: Record<string, string[]> = {
   Dm: ["Dm7", "Em7(b5)", "F7M", "Gm7", "Am7", "Bb7M", "C7"],
 };
 
-const SAMPLE_CHORDPRO = [
-  { chord: "Am7", lyric: "Quando a noite " },
-  { chord: "Dm7", lyric: "cai sobre a " },
-  { chord: "G7", lyric: "cidade" },
-  { chord: null, lyric: "" },
-  { chord: "C7M", lyric: "Eu penso em " },
-  { chord: "F7M", lyric: "você sem " },
-  { chord: "Bm7(b5)", lyric: "saudade" },
-  { chord: "E7", lyric: "" },
-];
-
-const VOICE_MEMOS = [
-  { id: 1, time: "14:30", name: "Batida Bossa" },
-  { id: 2, time: "14:45", name: "Melodia Assobio" },
-  { id: 3, time: "15:02", name: "Progressão Refrão" },
-];
-
-const RHYME_RESULTS = {
-  perfect: ["amar", "mar", "lugar", "cantar", "luar"],
-  imperfect: ["final", "sinal", "animal", "rical"],
-};
-
 export default function CompositionStudioPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [compositionId, setCompositionId] = useState<string | null>(searchParams.get("id"));
   const [title, setTitle] = useState("");
   const [selectedKey, setSelectedKey] = useState("Am");
+  const [targetKey, setTargetKey] = useState(""); // empty = no transposition
   const [bpm, setBpm] = useState("120");
   const [style, setStyle] = useState("Bossa Nova");
   const [rhymeSearch, setRhymeSearch] = useState("");
@@ -61,6 +41,7 @@ export default function CompositionStudioPage() {
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const audioBlobRef = useRef<Blob | null>(null);
 
   // Load existing composition if ID in URL
   useEffect(() => {
@@ -81,6 +62,14 @@ export default function CompositionStudioPage() {
     load();
   }, [compositionId]);
 
+  /** Transpose all chords inside brackets from detectedKey → targetKey */
+  const transposeChordProText = useCallback((text: string, fromKey: string, toKey: string): string => {
+    if (!toKey || fromKey === toKey) return text;
+    return text.replace(/\[([^\]]+)\]/g, (_match, chord: string) => {
+      return `[${transposeChord(chord, fromKey, toKey)}]`;
+    });
+  }, []);
+
   const handleSave = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -90,7 +79,26 @@ export default function CompositionStudioPage() {
 
     setIsSaving(true);
     try {
-      const payload = {
+      // 1) Upload audio if available
+      let audioUrl: string | null = null;
+      if (audioBlobRef.current) {
+        const ext = audioBlobRef.current.type.includes("webm") ? "webm" : "ogg";
+        const fileName = `${user.id}/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("compositions_audio")
+          .upload(fileName, audioBlobRef.current, { contentType: audioBlobRef.current.type });
+        if (uploadErr) {
+          console.error("Audio upload error:", uploadErr);
+        } else {
+          const { data: urlData } = supabase.storage
+            .from("compositions_audio")
+            .getPublicUrl(fileName);
+          audioUrl = urlData.publicUrl;
+        }
+      }
+
+      // 2) Save to DB
+      const payload: Record<string, unknown> = {
         title: title || "Sem título",
         body_text: editorText,
         musical_key: selectedKey,
@@ -98,32 +106,29 @@ export default function CompositionStudioPage() {
         style,
         user_id: user.id,
       };
+      if (audioUrl) payload.audio_url = audioUrl;
 
       if (compositionId) {
-        const { error } = await supabase
-          .from("compositions")
-          .update(payload)
-          .eq("id", compositionId);
+        const { error } = await supabase.from("compositions").update(payload as any).eq("id", compositionId);
         if (error) throw error;
         toast.success("Composição atualizada!");
       } else {
-        const { data, error } = await supabase
-          .from("compositions")
-          .insert(payload)
-          .select("id")
-          .single();
+        const { data, error } = await supabase.from("compositions").insert(payload as any).select("id").single();
         if (error) throw error;
         setCompositionId(data.id);
         setSearchParams({ id: data.id }, { replace: true });
         toast.success("Composição salva!");
       }
+
+      // Redirect to compositions list after short delay
+      setTimeout(() => navigate("/compositions"), 800);
     } catch (err) {
       console.error("Save error:", err);
       toast.error("Erro ao salvar a composição.");
     } finally {
       setIsSaving(false);
     }
-  }, [title, editorText, selectedKey, bpm, style, compositionId, setSearchParams]);
+  }, [title, editorText, selectedKey, bpm, style, compositionId, setSearchParams, navigate]);
 
   const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
@@ -134,7 +139,7 @@ export default function CompositionStudioPage() {
       const base64 = await new Promise<string>((resolve, reject) => {
         reader.onloadend = () => {
           const result = reader.result as string;
-          resolve(result.split(",")[1]); // strip data:...;base64,
+          resolve(result.split(",")[1]);
         };
         reader.onerror = reject;
         reader.readAsDataURL(audioBlob);
@@ -151,8 +156,17 @@ export default function CompositionStudioPage() {
 
       if (error) throw error;
 
-      const transcription = data?.transcription?.trim();
+      let transcription = data?.transcription?.trim();
       if (transcription) {
+        // Apply transposition if target key is set
+        const detectedKey = data?.detected_key || selectedKey;
+        if (targetKey && targetKey !== detectedKey) {
+          transcription = transposeChordProText(transcription, detectedKey, targetKey);
+          setSelectedKey(targetKey); // update displayed key to target
+        } else if (detectedKey) {
+          setSelectedKey(detectedKey);
+        }
+
         setEditorText((prev) => (prev ? prev + "\n" : "") + transcription);
         toast.success("Transcrição concluída e inserida no editor!");
       } else {
@@ -164,21 +178,21 @@ export default function CompositionStudioPage() {
     } finally {
       setIsTranscribing(false);
     }
-  }, [style, editorText]);
+  }, [style, editorText, selectedKey, targetKey, transposeChordProText]);
 
   const handleRecordToggle = useCallback(() => {
     toggleRecording(style, (result) => {
-      // Append any SpeechRecognition text captured during recording
-      if (result.chordProText) {
-        setEditorText((prev) => (prev ? prev + "\n" : "") + result.chordProText);
-      }
-      setSelectedKey(result.detectedKey);
-      
-      // Send recorded audio to AI for proper transcription
+      // Don't append SpeechRecognition text — wait for AI transcription only
+      // This fixes the duplication bug
+
+      // Store the blob for later upload
       if (result.audioUrl) {
         fetch(result.audioUrl)
           .then((r) => r.blob())
-          .then((blob) => transcribeAudio(blob))
+          .then((blob) => {
+            audioBlobRef.current = blob;
+            transcribeAudio(blob);
+          })
           .catch(console.error);
       }
     });
@@ -219,13 +233,13 @@ export default function CompositionStudioPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           {/* Left: back + title */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/compositions")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nova Composição..."
+              placeholder="Nome da Composição..."
               className="bg-transparent text-xl font-bold placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-foreground"
             />
           </div>
@@ -237,6 +251,18 @@ export default function CompositionStudioPage() {
                 <SelectValue placeholder="Tom" />
               </SelectTrigger>
               <SelectContent>
+                {KEYS.map((k) => (
+                  <SelectItem key={k} value={k}>{k}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={targetKey} onValueChange={setTargetKey}>
+              <SelectTrigger className="w-28 h-9 bg-secondary border-border text-sm">
+                <SelectValue placeholder="Tom Alvo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Sem transpor</SelectItem>
                 {KEYS.map((k) => (
                   <SelectItem key={k} value={k}>{k}</SelectItem>
                 ))}
@@ -267,7 +293,7 @@ export default function CompositionStudioPage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {isSaving ? "A salvar..." : compositionId ? "Atualizar" : "Salvar"}
+              {isSaving ? "Salvando no servidor..." : compositionId ? "Atualizar" : "Salvar Composição"}
             </Button>
             <Button size="sm" className="gap-1.5">
               <Share2 className="h-4 w-4" /> Partilhar
@@ -334,7 +360,7 @@ export default function CompositionStudioPage() {
             </div>
           )}
 
-          {/* Editable textarea + ChordPro preview */}
+          {/* Editable textarea */}
           <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
             <textarea
               value={isRecording ? displayText : editorText}
@@ -385,7 +411,6 @@ export default function CompositionStudioPage() {
             sidebarOpen ? "translate-x-0" : "translate-x-full"
           )}
         >
-          {/* Mobile close */}
           <div className="flex items-center justify-between p-3 border-b border-border lg:hidden">
             <span className="font-bold text-sm text-foreground">Co-piloto IA</span>
             <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>Fechar</Button>
@@ -402,9 +427,7 @@ export default function CompositionStudioPage() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Harmony tab */}
               <TabsContent value="harmony" className="space-y-4 mt-4">
-                {/* AI suggestion */}
                 <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
                   <div className="flex items-start gap-2">
                     <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
@@ -420,7 +443,6 @@ export default function CompositionStudioPage() {
                   </div>
                 </div>
 
-                {/* Chord palette */}
                 <div>
                   <p className="text-xs text-muted-foreground mb-2 font-medium">
                     Acordes em {selectedKey} • {style}
@@ -443,7 +465,6 @@ export default function CompositionStudioPage() {
                 </div>
               </TabsContent>
 
-              {/* Rhymes tab */}
               <TabsContent value="rhymes" className="space-y-4 mt-4">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -455,39 +476,14 @@ export default function CompositionStudioPage() {
                   />
                 </div>
 
-                <div>
-                  <p className="text-xs font-semibold text-primary mb-2">Rimas Perfeitas</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {RHYME_RESULTS.perfect.map((w) => (
-                      <span
-                        key={w}
-                        className="px-2.5 py-1 rounded-full bg-primary/15 text-primary text-xs font-medium cursor-pointer hover:bg-primary/25 transition-colors"
-                      >
-                        {w}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-muted-foreground mb-2">Rimas Imperfeitas</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {RHYME_RESULTS.imperfect.map((w) => (
-                      <span
-                        key={w}
-                        className="px-2.5 py-1 rounded-full bg-secondary text-muted-foreground text-xs font-medium cursor-pointer hover:bg-muted transition-colors"
-                      >
-                        {w}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                <p className="text-xs text-muted-foreground text-center py-4">
+                  Digite uma palavra acima para buscar rimas.
+                </p>
               </TabsContent>
             </Tabs>
           </div>
         </aside>
 
-        {/* Overlay for mobile sidebar */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/60 z-20 lg:hidden"
@@ -496,27 +492,21 @@ export default function CompositionStudioPage() {
         )}
       </div>
 
-      {/* ─── Voice Memos Footer ─── */}
-      <footer className="shrink-0 border-t border-border bg-card px-4 py-3 bottom-0 lg:bottom-0 bottom-16">
+      {/* ─── Footer ─── */}
+      <footer className="shrink-0 border-t border-border bg-card px-4 py-3">
         <div className="flex items-center gap-2 overflow-x-auto">
           <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-1">
             🎙️ Cofre de Ideias
           </span>
-          {VOICE_MEMOS.map((memo) => (
-            <button
-              key={memo.id}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap",
-                "bg-secondary border border-border text-foreground",
-                "hover:border-primary/40 hover:bg-primary/10 transition-colors"
-              )}
-            >
+          {audioUrl && (
+            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-secondary border border-border text-foreground">
               <PlayCircle className="h-3.5 w-3.5 text-primary" />
-              <span className="text-muted-foreground">{memo.time}</span>
-              <span>–</span>
-              <span>{memo.name}</span>
-            </button>
-          ))}
+              Gravação atual
+            </span>
+          )}
+          {!audioUrl && (
+            <span className="text-xs text-muted-foreground">Nenhuma gravação ainda.</span>
+          )}
         </div>
       </footer>
     </div>

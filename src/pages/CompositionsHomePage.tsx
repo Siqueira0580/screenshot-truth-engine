@@ -1,0 +1,163 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Plus, Search, Music2, Calendar, SortAsc, Loader2, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
+
+interface Composition {
+  id: string;
+  title: string;
+  style: string | null;
+  musical_key: string | null;
+  bpm: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export default function CompositionsHomePage() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [compositions, setCompositions] = useState<Composition[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState("recent");
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("compositions")
+        .select("id, title, style, musical_key, bpm, created_at, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false });
+      if (!error && data) setCompositions(data);
+      setLoading(false);
+    };
+    load();
+  }, [user]);
+
+  const filtered = compositions
+    .filter((c) => c.title.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sort === "az") return a.title.localeCompare(b.title);
+      if (sort === "created") return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    });
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const { error } = await supabase.from("compositions").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao apagar composição.");
+    } else {
+      setCompositions((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Composição apagada.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground p-4 lg:p-8">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Minhas Composições</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {compositions.length} composiç{compositions.length === 1 ? "ão" : "ões"} salva{compositions.length === 1 ? "" : "s"}
+          </p>
+        </div>
+        <Button className="gap-2" onClick={() => navigate("/compose")}>
+          <Plus className="h-4 w-4" /> Nova Composição
+        </Button>
+      </div>
+
+      {/* Search & Filter */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar composição por nome..."
+            className="pl-9 bg-secondary border-border"
+          />
+        </div>
+        <Select value={sort} onValueChange={setSort}>
+          <SelectTrigger className="w-48 bg-secondary border-border">
+            <SortAsc className="h-4 w-4 mr-2 text-muted-foreground" />
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="recent">Mais Recentes</SelectItem>
+            <SelectItem value="az">Ordem Alfabética (A-Z)</SelectItem>
+            <SelectItem value="created">Data de Criação</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <Music2 className="h-16 w-16 text-muted-foreground/30 mb-4" />
+          <p className="text-muted-foreground text-lg font-medium">
+            {search ? "Nenhuma composição encontrada." : "Nenhuma composição ainda."}
+          </p>
+          {!search && (
+            <Button className="mt-4 gap-2" onClick={() => navigate("/compose")}>
+              <Plus className="h-4 w-4" /> Criar Primeira Composição
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((comp) => (
+            <button
+              key={comp.id}
+              onClick={() => navigate(`/compose?id=${comp.id}`)}
+              className="text-left rounded-xl border border-border bg-card p-5 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+            >
+              <div className="flex items-start justify-between">
+                <h3 className="font-semibold text-foreground truncate flex-1">
+                  {comp.title || "Sem título"}
+                </h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  onClick={(e) => handleDelete(comp.id, e)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                {comp.musical_key && (
+                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                    {comp.musical_key}
+                  </span>
+                )}
+                {comp.bpm && <span>{comp.bpm} BPM</span>}
+                {comp.style && <span>• {comp.style}</span>}
+              </div>
+              <div className="flex items-center gap-1.5 mt-3 text-xs text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                {format(new Date(comp.updated_at), "dd MMM yyyy, HH:mm", { locale: pt })}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

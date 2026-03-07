@@ -57,7 +57,7 @@ function prevSpeedCycle(current: number): number {
 // Sortable song item component
 function SortableSongItem({
   item, index, selectedSongs, toggleSelect, getVal, updateField,
-  removeMutation, isMobile,
+  removeMutation, isMobile, isTablet,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {

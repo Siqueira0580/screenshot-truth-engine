@@ -77,18 +77,19 @@ export default function CompositionStudioPage() {
     });
   }, []);
 
-  const handleSave = useCallback(async () => {
+  // Core save logic — returns the composition id
+  const persistComposition = useCallback(async (opts: { silent?: boolean; uploadAudio?: boolean } = {}) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      toast.error("Faça login para salvar sua composição.");
-      return;
+      if (!opts.silent) toast.error("Faça login para salvar sua composição.");
+      return null;
     }
 
     setIsSaving(true);
     try {
-      // 1) Upload audio if available
+      // 1) Upload audio if requested and available
       let audioUrl: string | null = null;
-      if (audioBlobRef.current) {
+      if (opts.uploadAudio && audioBlobRef.current) {
         const ext = audioBlobRef.current.type.includes("webm") ? "webm" : "ogg";
         const fileName = `${user.id}/${Date.now()}.${ext}`;
         const { error: uploadErr } = await supabase.storage
@@ -119,24 +120,54 @@ export default function CompositionStudioPage() {
       if (compositionId) {
         const { error } = await supabase.from("compositions").update(payload as any).eq("id", compositionId);
         if (error) throw error;
-        toast.success("Composição atualizada!");
+        return compositionId;
       } else {
         const { data, error } = await supabase.from("compositions").insert(payload as any).select("id").single();
         if (error) throw error;
         setCompositionId(data.id);
         setSearchParams({ id: data.id }, { replace: true });
-        toast.success("Composição salva!");
+        return data.id;
       }
-
-      // Redirect to compositions list after short delay
-      setTimeout(() => navigate("/compositions"), 800);
     } catch (err) {
       console.error("Save error:", err);
-      toast.error("Erro ao salvar a composição.");
+      if (!opts.silent) toast.error("Erro ao salvar a composição.");
+      return null;
     } finally {
       setIsSaving(false);
     }
-  }, [title, editorText, selectedKey, bpm, style, compositionId, setSearchParams, navigate]);
+  }, [title, editorText, selectedKey, bpm, style, composers, compositionId, setSearchParams]);
+
+  // Manual save — uploads audio + redirects
+  const handleSave = useCallback(async () => {
+    const id = await persistComposition({ uploadAudio: true });
+    if (id) {
+      toast.success(compositionId ? "Composição atualizada!" : "Composição salva!");
+      setTimeout(() => navigate("/compositions"), 800);
+    }
+  }, [persistComposition, compositionId, navigate]);
+
+  // ─── Auto-save (debounced 3s) ───
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasInteracted = useRef(false);
+
+  // Mark that user started editing
+  useEffect(() => {
+    if (title || editorText || composers) hasInteracted.current = true;
+  }, [title, editorText, composers]);
+
+  useEffect(() => {
+    // Don't auto-save if user hasn't interacted or while recording/transcribing
+    if (!hasInteracted.current || isRecording || isTranscribing) return;
+
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      persistComposition({ silent: true });
+    }, 3000);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [title, editorText, selectedKey, bpm, style, composers, persistComposition, isRecording, isTranscribing]);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 

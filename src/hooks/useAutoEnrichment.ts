@@ -40,7 +40,9 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
             body: {
               song_id: song.id,
               artist: song.artist,
+              title: song.title,
               current_style: song.style,
+              current_bpm: song.bpm,
             },
           });
 

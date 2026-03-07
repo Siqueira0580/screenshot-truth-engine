@@ -4,10 +4,11 @@
  * suspended, complex tensions, and slash/inverted bass chords.
  */
 
-// Master regex for musical chord detection
-// Matches: C, F#m, G7, Bdim, Asus4, Cmaj7(#11), D/F#, Ebm7b5, etc.
+// Master regex for musical chord detection — supports Brazilian notation
+// Matches: C, F#m, G7, Bdim, Asus4, Cmaj7(#11), D/F#, Ebm7b5,
+//          D7M, Fº, G+, A7(9-), Bb7(9/13), C#m7(b5), Em7(9), F°7, etc.
 const CHORD_REGEX =
-  /\b([A-G][#b]?)(m(?:aj|in)?|M|maj|min|dim|aug|sus[24]?|add)?(\d{0,2})?((?:(?:#|b|♯|♭)\d{1,2}|sus[24]?|add\d{1,2}|no\d{1,2}|aug|dim|\+)*)(\((?:[#b♯♭]?\d{1,2}[,\s]*)+\))?(\/[A-G][#b]?)?\b/g;
+  /\b([A-G][#b♯♭]?)(m(?:aj|in)?|M|maj|min|dim|aug|sus[24]?|add|[º°])?(\d{0,2}[M+]?)?((?:(?:#|b|♯|♭)\d{1,2}|sus[24]?|add\d{1,2}|no\d{1,2}|aug|dim|\+)*)(\((?:[#b♯♭+\-]?\d{1,2}[,\/\s]*)+\))?(\/[A-G][#b♯♭]?)?\b/g;
 
 export interface ChordMatch {
   /** Full matched chord string */

@@ -1,6 +1,7 @@
 import { useEffect, useRef, forwardRef } from "react";
 import { drawChordDiagram } from "@/lib/chord-diagrams";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { useChordData } from "@/hooks/useChordData";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
@@ -20,28 +21,31 @@ interface ChordModalProps {
 const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, onClose }, _ref) => {
   const { preferredInstrument } = useUserPreferences();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { chordData, loading, source, simplified } = useChordData(
+    open ? chord : null,
+    preferredInstrument
+  );
 
   useEffect(() => {
-    if (!open || !chord) return;
+    if (!open || !chord || loading) return;
 
-    // The canvas may not be mounted yet when the dialog opens inside a Portal.
-    // We retry a few times with increasing delays to ensure the canvas is ready.
     let cancelled = false;
     const draw = (attempt = 0) => {
       if (cancelled) return;
       const canvas = canvasRef.current;
       if (canvas && canvas.getContext("2d")) {
-        drawChordDiagram(canvas, chord, preferredInstrument);
+        const preResolved = chordData && (source === "cache" || source === "ai")
+          ? chordData
+          : undefined;
+        drawChordDiagram(canvas, chord, preferredInstrument, preResolved, simplified);
       } else if (attempt < 5) {
         setTimeout(() => draw(attempt + 1), 60 * (attempt + 1));
       }
     };
 
-    // First attempt after a short delay for portal mount
     setTimeout(() => draw(0), 80);
-
     return () => { cancelled = true; };
-  }, [open, chord, preferredInstrument]);
+  }, [open, chord, preferredInstrument, chordData, loading, source, simplified]);
 
   if (!chord) return null;
 
@@ -55,13 +59,25 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
             <span className="text-xs text-muted-foreground">{INSTRUMENT_LABELS[preferredInstrument] || preferredInstrument}</span>
           </div>
           <div className="flex justify-center">
-            <canvas
-              ref={canvasRef}
-              width={200}
-              height={240}
-              className="rounded-lg"
-              style={{ display: 'block' }}
-            />
+            {loading ? (
+              <div className="flex flex-col items-center justify-center w-[200px] h-[240px] gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                <span className="text-xs text-muted-foreground">Calculando posição...</span>
+              </div>
+            ) : (
+              <div className="relative">
+                <canvas
+                  ref={canvasRef}
+                  width={200}
+                  height={240}
+                  className="rounded-lg"
+                  style={{ display: 'block' }}
+                />
+                {source === "ai" && (
+                  <span className="absolute bottom-1 right-1 text-[10px] text-muted-foreground/60">✨ IA</span>
+                )}
+              </div>
+            )}
           </div>
           <DialogPrimitive.Close className="absolute right-3 top-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
             <X className="h-4 w-4" />

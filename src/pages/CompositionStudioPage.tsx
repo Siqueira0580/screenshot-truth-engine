@@ -161,8 +161,8 @@ export default function CompositionStudioPage() {
       <div className="flex-1 flex overflow-hidden relative">
         {/* Editor – 70% */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24">
-          {/* Record button */}
-          <div className="flex justify-center mb-8">
+          {/* Record button + current note */}
+          <div className="flex flex-col items-center gap-3 mb-8">
             <button
               onClick={handleRecordToggle}
               disabled={isProcessing}
@@ -184,7 +184,7 @@ export default function CompositionStudioPage() {
               ) : isProcessing ? (
                 <>
                   <Loader2 className="h-6 w-6 animate-spin" />
-                  IA a deduzir a harmonia...
+                  A finalizar...
                 </>
               ) : (
                 <>
@@ -193,7 +193,22 @@ export default function CompositionStudioPage() {
                 </>
               )}
             </button>
+
+            {/* Real-time note indicator */}
+            {isRecording && currentNote && (
+              <div className="flex items-center gap-2 animate-pulse">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider">Nota detetada:</span>
+                <span className="text-2xl font-mono font-black text-primary">{currentNote}</span>
+              </div>
+            )}
           </div>
+
+          {/* Audio playback after recording */}
+          {audioUrl && !isRecording && (
+            <div className="mb-6 flex justify-center">
+              <audio controls src={audioUrl} className="w-full max-w-md rounded-lg" />
+            </div>
+          )}
 
           {/* ChordPro preview editor area */}
           <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">

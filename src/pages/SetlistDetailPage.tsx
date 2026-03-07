@@ -199,6 +199,7 @@ export default function SetlistDetailPage() {
   const [autoHideControls, setAutoHideControls] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const [sortBy, setSortBy] = useState<SortBy>("manual");
   const [filterKey, setFilterKey] = useState("all");

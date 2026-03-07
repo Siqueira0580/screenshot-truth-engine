@@ -29,6 +29,7 @@ export default function SetlistToolbar({
   someSelected,
   onSelectAll,
   selectionCount,
+  onCreateFromSelection,
 }: SetlistToolbarProps) {
   const sortOptions: { value: SortBy; label: string; icon: React.ReactNode }[] = [
     { value: "manual", label: "123", icon: <Hash className="h-3.5 w-3.5" /> },

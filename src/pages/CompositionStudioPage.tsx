@@ -54,8 +54,46 @@ export default function CompositionStudioPage() {
   const [style, setStyle] = useState("Bossa Nova");
   const [rhymeSearch, setRhymeSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [editorText, setEditorText] = useState("");
+
+  const { isRecording, isProcessing, toggleRecording } = useAudioRecorder();
+
+  const handleRecordToggle = useCallback(() => {
+    toggleRecording(style, (result) => {
+      setEditorText((prev) => (prev ? prev + "\n" : "") + result.chordProText);
+      setSelectedKey(result.detectedKey);
+    });
+  }, [style, toggleRecording]);
 
   const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];
+
+  // Parse editorText into renderable ChordPro tokens
+  const parsedLines = editorText
+    ? editorText.split("\n").map((line) => {
+        const tokens: { chord: string | null; lyric: string }[] = [];
+        const regex = /\[([^\]]+)\]([^\[]*)/g;
+        let match;
+        let lastIndex = 0;
+
+        // Text before first chord
+        const firstBracket = line.indexOf("[");
+        if (firstBracket > 0) {
+          tokens.push({ chord: null, lyric: line.slice(0, firstBracket) });
+        }
+
+        while ((match = regex.exec(line)) !== null) {
+          tokens.push({ chord: match[1], lyric: match[2] });
+          lastIndex = regex.lastIndex;
+        }
+
+        // If no chords found, treat as plain lyric line
+        if (tokens.length === 0 && line.trim()) {
+          tokens.push({ chord: null, lyric: line });
+        }
+
+        return tokens;
+      })
+    : null;
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">

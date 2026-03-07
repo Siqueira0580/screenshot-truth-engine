@@ -314,6 +314,11 @@ export default function CompositionStudioPage() {
             <Button size="sm" className="gap-1.5">
               <Share2 className="h-4 w-4" /> Partilhar
             </Button>
+            {compositionId && (
+              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setShowDeleteModal(true)}>
+                <Trash2 className="h-4 w-4" /> Excluir
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -525,6 +530,14 @@ export default function CompositionStudioPage() {
           )}
         </div>
       </footer>
+
+      <ConfirmDeleteModal
+        open={showDeleteModal}
+        onOpenChange={setShowDeleteModal}
+        onConfirm={handleDelete}
+        title="Apagar Composição"
+        description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

@@ -18,9 +18,9 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
       (s) =>
         s.artist &&
         !processedIdsRef.current.has(s.id) &&
-        (!s.style || !(s as any).enrichment_status) &&
-        (s as any).enrichment_status !== "done" &&
-        (s as any).enrichment_status !== "failed"
+        s.enrichment_status !== "done" &&
+        s.enrichment_status !== "failed" &&
+        (!s.style || !s.bpm)
     );
   }, [songs]);
 

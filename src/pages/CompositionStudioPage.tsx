@@ -828,10 +828,10 @@ export default function CompositionStudioPage() {
           {/* Editable textarea */}
           <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
             <textarea
-              value={isRecording ? displayText : editorText}
-              onChange={(e) => { if (!isRecording) setEditorText(e.target.value); }}
-              readOnly={isRecording}
-              placeholder="Comece a digitar sua composição ou clique em Cantar Nova Ideia..."
+              value={editorText}
+              onChange={(e) => { if (!isActiveRecording) setEditorText(e.target.value); }}
+              readOnly={isActiveRecording}
+              placeholder="Comece a digitar sua composição ou clique no botão de microfone..."
               className="w-full h-96 bg-transparent text-foreground font-mono resize-none focus:outline-none placeholder:text-muted-foreground text-base leading-relaxed"
             />
           </div>

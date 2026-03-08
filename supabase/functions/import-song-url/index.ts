@@ -209,8 +209,11 @@ serve(async (req) => {
       .replace(/\n{3,}/g, "\n\n")
       .trim();
 
+    // If we extracted a <pre> block with bracketed chords, prioritize it
+    // Otherwise fall back to the stripped version
+    const contentForAI = preExtracted || stripped;
     // Limit to ~8000 chars to stay within token limits
-    const truncated = stripped.slice(0, 8000);
+    const truncated = contentForAI.slice(0, 8000);
 
     // Step B: AI Processing (enhanced prompt with extra fields)
     console.log("Sending to AI for ChordPro extraction...");

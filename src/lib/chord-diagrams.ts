@@ -537,14 +537,6 @@ export function drawChordDiagram(
   // Clear
   ctx.clearRect(0, 0, w, h);
 
-  // ── Title ──
-  ctx.fillStyle = textBright;
-  ctx.font = `600 ${Math.round(w * 0.11)}px system-ui, -apple-system, 'Segoe UI', sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const title = simplified ? `${chord} *` : chord;
-  ctx.fillText(title, w / 2, titleAreaH * 0.5);
-
   // ── Top indicators: X (muted) and O (open) ──
   if (voicing) {
     const indY = titleAreaH + indicatorAreaH * 0.5;

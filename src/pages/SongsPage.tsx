@@ -170,11 +170,11 @@ export default function SongsPage() {
   }, [songs, search, sortMode]);
 
   return (
-    <div className="space-y-4 w-full overflow-hidden">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Músicas</h1>
-          <p className="text-muted-foreground mt-1">{songs.length} música{songs.length !== 1 ? "s" : ""} na biblioteca</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Músicas</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{songs.length} música{songs.length !== 1 ? "s" : ""} na biblioteca</p>
         </div>
       </div>
 
@@ -184,39 +184,39 @@ export default function SongsPage() {
           <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="library" className="space-y-4 mt-4">
-          <div className="flex items-center gap-2 justify-end flex-wrap">
+        <TabsContent value="library" className="space-y-3 mt-3">
+          <div className="flex items-center gap-1.5 justify-end flex-wrap">
             <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
             <input ref={sheetPdfInputRef} type="file" accept=".pdf" className="hidden" onChange={handleSheetPdfUpload} />
-            <Button variant="outline" onClick={() => sheetPdfInputRef.current?.click()} disabled={uploadingSheetPdf} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              {uploadingSheetPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="h-4 w-4" /><span className="hidden md:inline">Upload PDF</span></>}
+            <Button variant="outline" onClick={() => sheetPdfInputRef.current?.click()} disabled={uploadingSheetPdf} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              {uploadingSheetPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="h-4 w-4" /><span className="hidden md:inline text-xs">Upload PDF</span></>}
             </Button>
-            <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline">Importar PDFs</span></>)}
+            <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline text-xs">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline text-xs">Importar PDFs</span></>)}
             </Button>
-            <Button variant="outline" onClick={() => setImportLinkOpen(true)} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              <Link2 className="h-4 w-4" /><span className="hidden md:inline">Importar Link</span>
+            <Button variant="outline" onClick={() => setImportLinkOpen(true)} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              <Link2 className="h-4 w-4" /><span className="hidden md:inline text-xs">Link</span>
             </Button>
-            <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              <Plus className="h-4 w-4" /><span className="hidden md:inline">Nova Música</span>
+            <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              <Plus className="h-4 w-4" /><span className="hidden md:inline text-xs">Nova</span>
             </Button>
           </div>
 
           {/* Search + Sort */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[180px]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
             </div>
             <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-              <SelectTrigger className="w-[200px] bg-background/50 border-primary/20">
+              <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Adicionadas Recentemente</SelectItem>
+                <SelectItem value="recent">Recentes</SelectItem>
                 <SelectItem value="oldest">Mais Antigas</SelectItem>
-                <SelectItem value="az">Alfabética (A-Z)</SelectItem>
-                <SelectItem value="za">Alfabética (Z-A)</SelectItem>
+                <SelectItem value="az">A-Z</SelectItem>
+                <SelectItem value="za">Z-A</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -424,59 +424,54 @@ export default function StudyPage() {
           <div className={cn(
             "border-border bg-card flex flex-col shrink-0",
             isMobile
-              ? "fixed inset-x-0 bottom-16 z-50 max-h-[calc(100vh-8rem)] w-full overflow-y-auto border-t rounded-t-2xl shadow-2xl"
+              ? "fixed inset-x-0 bottom-16 z-50 max-h-[60vh] w-full overflow-y-auto border-t rounded-t-2xl shadow-2xl px-3 pb-3"
               : "w-72 border-l"
           )}>
-            {/* Mobile close handle */}
+            {/* Mobile close button */}
             {isMobile && (
-              <button onClick={() => setShowMixer(false)} className="flex justify-center py-2">
-                <div className="w-12 h-1.5 rounded-full bg-muted-foreground/30" />
-              </button>
-            )}
-
-            {/* Transport */}
-            <div className="p-3 border-b border-border space-y-2">
-              <div className="flex items-center gap-2 justify-center">
-                <Button variant="outline" size="icon" className="h-8 w-8 sm:h-8 sm:w-8" onClick={handleStop}><Square className="h-3.5 w-3.5" /></Button>
-                <Button size="icon" onClick={isPlaying ? handlePause : handlePlay} disabled={loading} className="h-14 w-14 sm:h-12 sm:w-12 rounded-full">
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
+              <div className="flex items-center justify-between py-2 sticky top-0 bg-card z-10">
+                <button onClick={() => setShowMixer(false)} className="flex-1 flex justify-center">
+                  <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+                </button>
+                <Button variant="ghost" size="sm" className="h-7 text-xs shrink-0" onClick={() => setShowMixer(false)}>
+                  Fechar
                 </Button>
               </div>
-              <div className="space-y-1">
-                <Slider value={[currentTime]} max={duration || 1} step={0.1} onValueChange={handleSeek} className="cursor-pointer" />
-                <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
+            )}
+
+            {/* Transport — compact on mobile */}
+            <div className="p-2 border-b border-border space-y-1.5">
+              <div className="flex items-center gap-2 justify-center">
+                <Button variant="outline" size="icon" className="h-7 w-7" onClick={handleStop}><Square className="h-3 w-3" /></Button>
+                <Button size="icon" onClick={isPlaying ? handlePause : handlePlay} disabled={loading} className="h-10 w-10 rounded-full">
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
+                </Button>
+              </div>
+              <Slider value={[currentTime]} max={duration || 1} step={0.1} onValueChange={handleSeek} className="cursor-pointer" />
+              <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
               </div>
             </div>
 
-            {/* Transposition */}
-            <div className="p-3 border-b border-border space-y-2">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Transposição</label>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose(t => t - 1)}><ChevronDown className="h-3.5 w-3.5" /></Button>
-                <span className="font-mono text-sm font-semibold w-10 text-center">{transpose > 0 ? `+${transpose}` : transpose}</span>
-                <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose(t => t + 1)}><ChevronUp className="h-3.5 w-3.5" /></Button>
-                {transpose !== 0 && <Button variant="ghost" size="sm" className="text-xs h-7 ml-auto" onClick={() => setTranspose(0)}>Reset</Button>}
+            {/* Transposition + Volume — single row on mobile */}
+            <div className="flex items-center gap-3 p-2 border-b border-border">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[10px] text-muted-foreground uppercase font-medium">Tom</span>
+                <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => setTranspose(t => t - 1)}><ChevronDown className="h-3 w-3" /></Button>
+                <span className="font-mono text-xs font-semibold w-6 text-center">{transpose > 0 ? `+${transpose}` : transpose}</span>
+                <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => setTranspose(t => t + 1)}><ChevronUp className="h-3 w-3" /></Button>
               </div>
-              {song?.musical_key && transpose !== 0 && (
-                <p className="text-[10px] text-muted-foreground">{song.musical_key} → {displayKey}</p>
-              )}
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                <Volume2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                <Slider value={[masterVol]} max={100} step={1} onValueChange={v => setMasterVol(v[0])} className="w-full" />
+              </div>
             </div>
 
-            {/* Master volume */}
-            <div className="p-3 border-b border-border space-y-2">
-              <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                <Volume2 className="h-3 w-3" /> Volume
-              </label>
-              <Slider value={[masterVol]} max={100} step={1} onValueChange={v => setMasterVol(v[0])} />
-            </div>
-
-            {/* Stem mixer */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+            {/* Stem mixer — compact cards */}
+            <div className="p-2 space-y-1.5">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mixer</h3>
+                <h3 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Mixer</h3>
                 {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
                   <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5" onClick={() => {
                     setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
@@ -498,36 +493,34 @@ export default function StudyPage() {
 
                 return (
                   <div key={type} className={cn(
-                    "rounded-lg border p-3 space-y-2 transition-all w-full",
+                    "rounded-lg border p-2 transition-all w-full",
                     isEffectivelyMuted ? "border-border bg-muted/30 opacity-50" : "border-border bg-secondary/30",
                     isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
                   )}>
-                    <div className="flex flex-col sm:flex-row w-full gap-3 sm:items-center">
-                      <div className="flex flex-wrap items-center gap-2 sm:w-32 sm:shrink-0">
-                        <Icon className={cn("h-4 w-4 shrink-0", color)} />
-                        <span className="text-sm font-medium">{label}</span>
-                        <div className="ml-auto flex gap-1.5">
-                          <button
-                            className={cn(
-                              "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
-                              isMutedStem ? "bg-destructive text-destructive-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                            )}
-                            onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
-                          >M</button>
-                          <button
-                            className={cn(
-                              "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
-                              isSoloed ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                            )}
-                            onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
-                          >S</button>
-                        </div>
+                    <div className="flex items-center gap-2 w-full">
+                      <Icon className={cn("h-3.5 w-3.5 shrink-0", color)} />
+                      <span className="text-xs font-medium w-10 shrink-0">{label}</span>
+                      <div className="flex gap-1 shrink-0">
+                        <button
+                          className={cn(
+                            "h-6 w-6 rounded text-[10px] font-black flex items-center justify-center transition-colors",
+                            isMutedStem ? "bg-destructive text-destructive-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                          )}
+                          onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
+                        >M</button>
+                        <button
+                          className={cn(
+                            "h-6 w-6 rounded text-[10px] font-black flex items-center justify-center transition-colors",
+                            isSoloed ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                          )}
+                          onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
+                        >S</button>
                       </div>
                       <Slider
                         value={[stemVols[type]]} max={100} step={1}
                         onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
                         disabled={isEffectivelyMuted}
-                        className="py-1 w-full"
+                        className="flex-1 min-w-0"
                       />
                     </div>
                   </div>

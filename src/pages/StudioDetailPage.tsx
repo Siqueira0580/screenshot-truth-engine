@@ -511,19 +511,19 @@ export default function StudioDetailPage() {
                     <Icon className={cn("h-4 w-4", color)} />
                     <span className="text-xs font-medium flex-1">{label}</span>
                   </div>
-                  <div className="flex gap-1.5">
-                    <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-6 px-2 text-[10px] font-bold"
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
                       onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}>
                       <VolumeX className="h-3 w-3 mr-1" /> M
                     </Button>
-                    <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-6 px-2 text-[10px] font-bold"
+                    <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
                       onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
                       <Star className="h-3 w-3 mr-1" /> S
                     </Button>
                     <Button
                       variant={gateStems[type] ? "default" : "outline"}
                       size="sm"
-                      className="h-6 px-2 text-[10px] font-bold"
+                      className="h-7 px-2 text-[10px] font-bold"
                       title="Limpar Ruído (Noise Gate)"
                       onClick={() => {
                         const next = !gateStems[type];

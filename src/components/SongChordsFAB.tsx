@@ -29,7 +29,7 @@ export default function SongChordsFAB({ bodyText, className }: SongChordsFABProp
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`fixed z-[90] bottom-6 right-6 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95 ${className ?? ""}`}
+        className={`fixed z-[90] bottom-20 lg:bottom-6 right-6 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95 ${className ?? ""}`}
         aria-label="Dicionário de acordes"
         title="Dicionário de acordes"
       >

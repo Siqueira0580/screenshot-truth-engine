@@ -811,9 +811,9 @@ export default function CompositionStudioPage() {
           </TooltipProvider>
 
           {/* Audio playback after recording */}
-          {(audioUrl || savedAudioUrl) && !isRecording && (
+          {(recorderAudioUrl || savedAudioUrl) && !isActiveRecording && (
             <div className="mb-6 flex flex-col items-center gap-2">
-              <audio controls src={audioUrl || savedAudioUrl || undefined} className="w-full max-w-md rounded-lg" />
+              <audio controls src={recorderAudioUrl || savedAudioUrl || undefined} className="w-full max-w-md rounded-lg" />
               <Button
                 variant="ghost"
                 size="sm"

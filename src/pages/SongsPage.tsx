@@ -231,6 +231,10 @@ export default function SongsPage() {
       {tourVisible && (
         <OnboardingTour onComplete={() => { dismissTour(); setTourVisible(false); }} />
       )}
+
+      {wizardVisible && !tourVisible && (
+        <PersonalizationWizard onComplete={() => setWizardVisible(false)} />
+      )}
     </div>
   );
 }

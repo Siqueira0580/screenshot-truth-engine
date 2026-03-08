@@ -33,7 +33,7 @@ export default function CompositionStudioPage() {
   const [sharedWithEmails, setSharedWithEmails] = useState<string[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [title, setTitle] = useState("");
-  const [selectedKey, setSelectedKey] = useState("Am");
+  const [selectedKey, setSelectedKey] = useState("");
   const [originalKey, setOriginalKey] = useState(""); // tom original da composição — vazio até ser definido
   const [targetKey, setTargetKey] = useState(""); // empty = no transposition
   const [bpm, setBpm] = useState("120");
@@ -125,7 +125,7 @@ export default function CompositionStudioPage() {
       if (error || !data) return;
       setTitle(data.title || "");
       setEditorText(data.body_text || "");
-      setSelectedKey(data.musical_key || "Am");
+      setSelectedKey(data.musical_key || "");
       setOriginalKey(data.musical_key || "");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
@@ -430,8 +430,8 @@ export default function CompositionStudioPage() {
 
   const displayText = editorText;
 
-  const chords = HARMONIC_FIELDS[selectedKey] || HARMONIC_FIELDS["Am"] || [];
-  const progressions = getProgressions(selectedKey);
+  const chords = (selectedKey && HARMONIC_FIELDS[selectedKey]) || [];
+  const progressions = selectedKey ? getProgressions(selectedKey) : [];
   const isMinor = selectedKey.endsWith("m");
 
   // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───
@@ -470,7 +470,7 @@ export default function CompositionStudioPage() {
   // ─── Clear page handler ───
   const handleClearPage = useCallback(() => {
     setEditorText("");
-    setSelectedKey("Am");
+    setSelectedKey("");
     setOriginalKey("");
     setTitle("");
     setComposers("");
@@ -542,9 +542,15 @@ export default function CompositionStudioPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5 h-9 px-3">
                   <Music className="h-4 w-4 text-primary" />
-                  <span className="font-mono font-bold">{selectedKey}</span>
-                  {originalKey && originalKey !== selectedKey && (
-                    <span className="text-[10px] text-muted-foreground ml-0.5">(orig: {originalKey})</span>
+                  {selectedKey ? (
+                    <>
+                      <span className="font-mono font-bold">{selectedKey}</span>
+                      {originalKey && originalKey !== selectedKey && (
+                        <span className="text-[10px] text-muted-foreground ml-0.5">(orig: {originalKey})</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">Definir Tom</span>
                   )}
                 </Button>
               </PopoverTrigger>

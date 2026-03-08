@@ -35,10 +35,14 @@ Sua tarefa é:
 1. Transcrever EXATAMENTE o que foi dito/cantado no áudio, em português brasileiro.
 2. Se possível, identificar as notas/acordes que estão sendo cantados e adicioná-los no formato ChordPro (ex: [G]palavra [Am]outra).
 3. Se não conseguir identificar acordes com certeza, retorne apenas o texto transcrito SEM colchetes.
-4. Retorne APENAS o texto transcrito (com ou sem acordes). SEM explicações, comentários ou metadados.
-5. Mantenha quebras de linha naturais para versos.
-6. Se o áudio estiver vazio ou inaudível, retorne uma string vazia.
-${style ? `7. O estilo musical é: ${style}. Use isso como contexto para harmonização.` : ""}`;
+4. Mantenha quebras de linha naturais para versos.
+5. Se o áudio estiver vazio ou inaudível, retorne uma string vazia.
+${style ? `6. O estilo musical é: ${style}. Use isso como contexto para harmonização.` : ""}
+
+FORMATO DE RESPOSTA OBRIGATÓRIO — responda APENAS com um JSON válido, sem markdown, sem explicações:
+{"transcription": "texto transcrito aqui com [Acordes] se detectados", "detected_key": "tom detectado ou null"}
+
+Para detected_key: analise a progressão de acordes que você inseriu e deduza o tom real (ex: se usou [G], [Em], [C], [D] → detected_key: "G"). Se não inseriu acordes, retorne null.`;
 
     // Build the user message with inline audio data for Gemini
     const userContent: any[] = [
@@ -94,13 +98,30 @@ ${style ? `7. O estilo musical é: ${style}. Use isso como contexto para harmoni
     }
 
     const aiData = await aiResponse.json();
-    const transcription: string =
+    const rawContent: string =
       aiData.choices?.[0]?.message?.content?.trim() ?? "";
 
-    console.log("Transcription result:", transcription.substring(0, 100));
+    console.log("Raw AI response:", rawContent.substring(0, 200));
+
+    // Parse JSON response from AI
+    let transcription = "";
+    let detected_key: string | null = null;
+    try {
+      // Strip markdown code fences if present
+      const cleanJson = rawContent.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+      const parsed = JSON.parse(cleanJson);
+      transcription = parsed.transcription?.trim() ?? "";
+      detected_key = parsed.detected_key || null;
+    } catch {
+      // Fallback: treat entire response as plain transcription text
+      console.log("Could not parse JSON, using raw text as transcription");
+      transcription = rawContent;
+    }
+
+    console.log("Transcription result:", transcription.substring(0, 100), "Detected key:", detected_key);
 
     return new Response(
-      JSON.stringify({ transcription }),
+      JSON.stringify({ transcription, detected_key }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {

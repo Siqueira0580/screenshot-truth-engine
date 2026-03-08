@@ -503,41 +503,46 @@ export default function StudioDetailPage() {
 
               return (
                 <div key={type} className={cn(
-                  "rounded-lg border p-3 space-y-3 transition-all",
+                  "rounded-lg border p-3 space-y-3 transition-all w-full",
                   isEffectivelyMuted ? "border-border bg-muted/30 opacity-50" : "border-border bg-secondary/30",
                   isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
                 )}>
-                  <div className="flex items-center gap-2">
-                    <Icon className={cn("h-4 w-4", color)} />
-                    <span className="text-xs font-medium flex-1">{label}</span>
+                  <div className="flex flex-col sm:flex-row w-full gap-3 sm:items-center">
+                    <div className="flex flex-wrap items-center gap-2 sm:w-40 sm:shrink-0">
+                      <Icon className={cn("h-4 w-4", color)} />
+                      <span className="text-xs font-medium">{label}</span>
+                      <div className="ml-auto flex flex-wrap gap-1.5">
+                        <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
+                          onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}>
+                          <VolumeX className="h-3 w-3 mr-1" /> M
+                        </Button>
+                        <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
+                          onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
+                          <Star className="h-3 w-3 mr-1" /> S
+                        </Button>
+                        <Button
+                          variant={gateStems[type] ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 px-2 text-[10px] font-bold"
+                          title="Limpar Ruído (Noise Gate)"
+                          onClick={() => {
+                            const next = !gateStems[type];
+                            setGateStems(prev => ({ ...prev, [type]: next }));
+                            engineRef.current?.setGateEnabled(type, next);
+                          }}
+                        >
+                          <AudioLines className="h-3 w-3 mr-1" /> G
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <Slider value={[stemVols[type]]} max={100} step={1}
+                        onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
+                        disabled={isEffectivelyMuted}
+                        className="w-full" />
+                      <p className="text-[10px] text-muted-foreground text-center font-mono mt-1">{stemVols[type]}%</p>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
-                      onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}>
-                      <VolumeX className="h-3 w-3 mr-1" /> M
-                    </Button>
-                    <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
-                      onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
-                      <Star className="h-3 w-3 mr-1" /> S
-                    </Button>
-                    <Button
-                      variant={gateStems[type] ? "default" : "outline"}
-                      size="sm"
-                      className="h-7 px-2 text-[10px] font-bold"
-                      title="Limpar Ruído (Noise Gate)"
-                      onClick={() => {
-                        const next = !gateStems[type];
-                        setGateStems(prev => ({ ...prev, [type]: next }));
-                        engineRef.current?.setGateEnabled(type, next);
-                      }}
-                    >
-                      <AudioLines className="h-3 w-3 mr-1" /> G
-                    </Button>
-                  </div>
-                  <Slider value={[stemVols[type]]} max={100} step={1}
-                    onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
-                    disabled={isEffectivelyMuted} />
-                  <p className="text-[10px] text-muted-foreground text-center font-mono">{stemVols[type]}%</p>
                 </div>
               );
             })}

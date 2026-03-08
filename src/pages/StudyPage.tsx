@@ -502,32 +502,34 @@ export default function StudyPage() {
                     isEffectivelyMuted ? "border-border bg-muted/30 opacity-50" : "border-border bg-secondary/30",
                     isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
                   )}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Icon className={cn("h-4 w-4 shrink-0", color)} />
-                      <span className="text-sm font-medium flex-1 min-w-0 truncate">{label}</span>
-                      <div className="flex gap-1.5 shrink-0">
-                        <button
-                          className={cn(
-                            "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
-                            isMutedStem ? "bg-destructive text-destructive-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                          )}
-                          onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
-                        >M</button>
-                        <button
-                          className={cn(
-                            "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
-                            isSoloed ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                          )}
-                          onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
-                        >S</button>
+                    <div className="flex flex-col sm:flex-row w-full gap-3 sm:items-center">
+                      <div className="flex flex-wrap items-center gap-2 sm:w-32 sm:shrink-0">
+                        <Icon className={cn("h-4 w-4 shrink-0", color)} />
+                        <span className="text-sm font-medium">{label}</span>
+                        <div className="ml-auto flex gap-1.5">
+                          <button
+                            className={cn(
+                              "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
+                              isMutedStem ? "bg-destructive text-destructive-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                            )}
+                            onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
+                          >M</button>
+                          <button
+                            className={cn(
+                              "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
+                              isSoloed ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                            )}
+                            onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
+                          >S</button>
+                        </div>
                       </div>
+                      <Slider
+                        value={[stemVols[type]]} max={100} step={1}
+                        onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
+                        disabled={isEffectivelyMuted}
+                        className="py-1 w-full"
+                      />
                     </div>
-                    <Slider
-                      value={[stemVols[type]]} max={100} step={1}
-                      onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
-                      disabled={isEffectivelyMuted}
-                      className="py-1 w-full"
-                    />
                   </div>
                 );
               })}

@@ -1,4 +1,5 @@
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Compass } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { DeezerTrack } from "@/hooks/useTopCharts";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 

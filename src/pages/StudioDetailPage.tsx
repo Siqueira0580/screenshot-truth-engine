@@ -252,7 +252,7 @@ export default function StudioDetailPage() {
   if (!songId) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 w-full max-w-[100vw] overflow-x-hidden">
       {/* Back button + title */}
       <div className="flex items-center gap-3">
         <Button type="button" variant="ghost" size="icon" onClick={() => navigate(-1)}>

@@ -474,8 +474,8 @@ export default function StudyPage() {
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mixer</h3>
                 {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
                   <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5" onClick={() => {
-                    setMutedStems({ full: false, vocals: false, percussion: false, harmony: false });
-                    setSoloStems({ full: false, vocals: false, percussion: false, harmony: false });
+                    setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                    setSoloStems({ vocals: false, percussion: false, harmony: false, guitar: false });
                   }}>Reset</Button>
                 )}
               </div>

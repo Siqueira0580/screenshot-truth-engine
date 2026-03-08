@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput } from "lucide-react";
+import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { createSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,10 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { transposeChord } from "@/lib/transpose-chord";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
+const ALL_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+  "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "A#m", "Bm"];
 const KEYS = ["C", "C#", "D", "Dm", "D#", "E", "Em", "F", "F#", "G", "Gm", "G#", "A", "Am", "A#", "B", "Bm"];
 const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "Worship", "Samba", "Pagode", "Jazz", "R&B", "MPB", "Blues", "Forró", "Reggae"];
 
@@ -48,6 +51,7 @@ export default function CompositionStudioPage() {
   const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
   const audioBlobRef = useRef<Blob | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [tonePopoverOpen, setTonePopoverOpen] = useState(false);
 
   /** Export composition as a song to Studio (creates song + audio_tracks) */
   const handleExportToStudio = useCallback(async () => {
@@ -72,12 +76,10 @@ export default function CompositionStudioPage() {
 
       if (savedAudioUrl) {
         try {
-          // Extract the storage path from the public URL
           const pathMatch = savedAudioUrl.split("/compositions_audio/");
           let blob: Blob | null = null;
 
           if (pathMatch.length === 2) {
-            // Use Supabase SDK download to avoid CORS issues
             const storagePath = decodeURIComponent(pathMatch[1]);
             const { data: dlData, error: dlErr } = await supabase.storage
               .from("compositions_audio")
@@ -87,7 +89,6 @@ export default function CompositionStudioPage() {
             }
           }
 
-          // Fallback: try direct fetch
           if (!blob) {
             const res = await fetch(savedAudioUrl);
             if (res.ok) blob = await res.blob();
@@ -220,14 +221,19 @@ export default function CompositionStudioPage() {
     }
   }, [title, editorText, selectedKey, bpm, style, composers, compositionId, setSearchParams]);
 
-  // Manual save — uploads audio + redirects
+  // Manual save — NO LONGER navigates, just shows toast
   const handleSave = useCallback(async () => {
     const id = await persistComposition({ uploadAudio: true });
     if (id) {
-      toast.success(compositionId ? "Composição atualizada!" : "Composição salva!");
-      setTimeout(() => navigate("/compositions"), 800);
+      toast.success(compositionId ? "Cifra salva!" : "Composição salva!");
     }
-  }, [persistComposition, compositionId, navigate]);
+  }, [persistComposition, compositionId]);
+
+  // Exit button — saves FIRST, then navigates
+  const handleExit = useCallback(async () => {
+    await persistComposition({ silent: true, uploadAudio: true });
+    navigate("/compositions");
+  }, [persistComposition, navigate]);
 
   // Auto-save refs (effect placed after useAudioRecorder below)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -242,13 +248,11 @@ export default function CompositionStudioPage() {
 
   const handleDeleteAudio = useCallback(async () => {
     try {
-      // Remove from storage if saved URL exists
       if (savedAudioUrl) {
         const path = savedAudioUrl.split("/compositions_audio/")[1];
         if (path) {
           await supabase.storage.from("compositions_audio").remove([decodeURIComponent(path)]);
         }
-        // Clear audio_url in DB
         if (compositionId) {
           await supabase.from("compositions").update({ audio_url: null } as any).eq("id", compositionId);
         }
@@ -277,14 +281,14 @@ export default function CompositionStudioPage() {
 
   const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
 
-  // ─── Auto-save (debounced 3s) ───
+  // ─── Auto-save (debounced 10s) ───
   useEffect(() => {
     if (!hasInteracted.current || isRecording || isTranscribing) return;
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
       persistComposition({ silent: true });
-    }, 3000);
+    }, 10000);
 
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
@@ -317,9 +321,7 @@ export default function CompositionStudioPage() {
 
       let transcription = data?.transcription?.trim();
       if (transcription) {
-        // Apply transposition if target key is set
         const detectedKey = data?.detected_key || selectedKey;
-        // Set original key from audio detection if not already defined
         if (!originalKey && detectedKey) {
           setOriginalKey(detectedKey);
         }
@@ -345,10 +347,6 @@ export default function CompositionStudioPage() {
 
   const handleRecordToggle = useCallback(() => {
     toggleRecording(style, (result) => {
-      // Don't append SpeechRecognition text — wait for AI transcription only
-      // This fixes the duplication bug
-
-      // Store the blob for later upload
       if (result.audioUrl) {
         fetch(result.audioUrl)
           .then((r) => r.blob())
@@ -360,6 +358,17 @@ export default function CompositionStudioPage() {
       }
     });
   }, [style, toggleRecording, transcribeAudio]);
+
+  // Handle tone selection from the unified popover
+  const handleToneSelect = useCallback((newKey: string) => {
+    // If there's text with chords, transpose from current to new key
+    if (editorText.includes("[") && newKey !== selectedKey) {
+      setEditorText((prev) => transposeChordProText(prev, selectedKey, newKey));
+      toast.success(`Transposto de ${selectedKey} para ${newKey}`);
+    }
+    setSelectedKey(newKey);
+    setTonePopoverOpen(false);
+  }, [editorText, selectedKey, transposeChordProText]);
 
   const displayText = editorText + (isRecording && liveChordPro ? (editorText ? "\n" : "") + liveChordPro : "");
 
@@ -389,15 +398,19 @@ export default function CompositionStudioPage() {
       })
     : null;
 
+  // Major keys for the popover grid (12 major + 12 minor)
+  const MAJOR_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  const MINOR_KEYS = ["Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "A#m", "Bm"];
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       {/* ─── Header ─── */}
       <header className="shrink-0 border-b border-border bg-card px-4 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          {/* Left: back + title */}
+          {/* Left: exit + title */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/compositions")}>
-              <ArrowLeft className="h-5 w-5" />
+            <Button variant="outline" size="icon" onClick={handleExit} title="Salvar e sair">
+              <X className="h-5 w-5" />
             </Button>
             <input
               value={title}
@@ -413,57 +426,111 @@ export default function CompositionStudioPage() {
             />
           </div>
 
-          {/* Center: filters */}
+          {/* Center: filters — SINGLE tone button + BPM + style */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Original key badge / selector */}
-            <span className="inline-flex items-center gap-1 rounded-md bg-accent/20 border border-accent/40 px-2.5 h-9 text-sm font-semibold text-accent-foreground">
-              <Music className="h-3.5 w-3.5 text-accent" />
-              Original:
-              {originalKey ? (
-                <span className="text-accent ml-1">{originalKey}</span>
-              ) : (
-                <Select value="" onValueChange={(k) => { setOriginalKey(k); setSelectedKey(k); }}>
-                  <SelectTrigger className="w-20 h-7 bg-transparent border-accent/40 text-accent text-xs px-1.5 py-0 ml-1">
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {KEYS.map((k) => (
-                      <SelectItem key={k} value={k}>{k}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </span>
+            {/* Unified Tone Popover */}
+            <Popover open={tonePopoverOpen} onOpenChange={setTonePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 h-9 px-3">
+                  <Music className="h-4 w-4 text-primary" />
+                  <span className="font-mono font-bold">{selectedKey}</span>
+                  {originalKey && originalKey !== selectedKey && (
+                    <span className="text-[10px] text-muted-foreground ml-0.5">(orig: {originalKey})</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="start">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-foreground">Tom / Transposição</p>
+                    {originalKey && (
+                      <span className="text-[11px] text-[hsl(var(--accent))] font-medium">
+                        Original: {originalKey}
+                      </span>
+                    )}
+                  </div>
 
-            <Select value={selectedKey} onValueChange={setSelectedKey}>
-              <SelectTrigger className="w-24 h-9 bg-secondary border-border text-sm">
-                <SelectValue placeholder="Tom" />
-              </SelectTrigger>
-              <SelectContent>
-                {KEYS.map((k) => (
-                  <SelectItem key={k} value={k}>{k}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {/* Set original key if not set */}
+                  {!originalKey && (
+                    <p className="text-xs text-muted-foreground">
+                      Selecione o tom original da composição. Ele será destacado em ciano.
+                    </p>
+                  )}
 
-            <Select value={targetKey} onValueChange={(newTarget) => {
-              setTargetKey(newTarget);
-              if (newTarget && newTarget !== "none" && newTarget !== selectedKey && editorText.includes("[")) {
-                setEditorText((prev) => transposeChordProText(prev, selectedKey, newTarget));
-                setSelectedKey(newTarget);
-                toast.success(`Transposto de ${selectedKey} para ${newTarget}`);
-              }
-            }}>
-              <SelectTrigger className="w-28 h-9 bg-secondary border-border text-sm">
-                <SelectValue placeholder="Transpor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sem transpor</SelectItem>
-                {KEYS.map((k) => (
-                  <SelectItem key={k} value={k}>{k}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {/* Major keys */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">Maiores</p>
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {MAJOR_KEYS.map((k) => {
+                        const isOriginal = originalKey === k;
+                        const isCurrent = selectedKey === k;
+                        return (
+                          <button
+                            key={k}
+                            onClick={() => {
+                              if (!originalKey) setOriginalKey(k);
+                              handleToneSelect(k);
+                            }}
+                            className={cn(
+                              "rounded-md px-1.5 py-1.5 text-xs font-mono font-bold transition-all text-center",
+                              isOriginal
+                                ? "bg-[hsl(195_100%_50%/0.15)] text-[hsl(195_100%_50%)] border border-[hsl(195_100%_50%/0.5)] shadow-[0_0_8px_hsl(195_100%_50%/0.2)]"
+                                : isCurrent
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-secondary text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}
+                          >
+                            {k}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Minor keys */}
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">Menores</p>
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {MINOR_KEYS.map((k) => {
+                        const isOriginal = originalKey === k;
+                        const isCurrent = selectedKey === k;
+                        return (
+                          <button
+                            key={k}
+                            onClick={() => {
+                              if (!originalKey) setOriginalKey(k);
+                              handleToneSelect(k);
+                            }}
+                            className={cn(
+                              "rounded-md px-1.5 py-1.5 text-xs font-mono font-bold transition-all text-center",
+                              isOriginal
+                                ? "bg-[hsl(195_100%_50%/0.15)] text-[hsl(195_100%_50%)] border border-[hsl(195_100%_50%/0.5)] shadow-[0_0_8px_hsl(195_100%_50%/0.2)]"
+                                : isCurrent
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-secondary text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                            )}
+                          >
+                            {k}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Reset original key */}
+                  {originalKey && (
+                    <button
+                      onClick={() => {
+                        handleToneSelect(originalKey);
+                      }}
+                      className="w-full text-xs text-[hsl(195_100%_50%)] hover:underline text-center pt-1"
+                    >
+                      ↩ Voltar ao tom original ({originalKey})
+                    </button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
 
             <Input
               type="number"
@@ -489,7 +556,7 @@ export default function CompositionStudioPage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {isSaving ? "Salvando no servidor..." : compositionId ? "Atualizar" : "Salvar Composição"}
+              {isSaving ? "Salvando..." : compositionId ? "Salvar" : "Salvar Composição"}
             </Button>
             <Button size="sm" className="gap-1.5" variant="secondary" onClick={handleExportToStudio} disabled={isExporting}>
               {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileOutput className="h-4 w-4" />}

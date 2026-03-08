@@ -6,13 +6,7 @@ interface UseScreenShareOptions {
   isMaster: boolean;
 }
 
-interface SignalPayload {
-  type: "offer" | "answer" | "ice-candidate";
-  data: any;
-  senderId: string;
-}
-
-export function useScreenShare({ sessionId, isMaster }: UseScreenShareOptions) {
+export function useScreenShare({ sessionId }: UseScreenShareOptions) {
   const [isSharing, setIsSharing] = useState(false);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [viewerCount, setViewerCount] = useState(0);

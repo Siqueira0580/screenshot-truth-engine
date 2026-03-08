@@ -9,7 +9,7 @@ interface ScreenSharePanelProps {
   setlistId: string;
 }
 
-export default function ScreenSharePanel({ setlistId }: ScreenSharePanelProps) {
+export default function ScreenSharePanel({ setlistId: _setlistId }: ScreenSharePanelProps) {
   const [sessionId] = useState(() => crypto.randomUUID().slice(0, 8));
   const [copied, setCopied] = useState(false);
 

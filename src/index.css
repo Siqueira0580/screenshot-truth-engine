@@ -114,3 +114,8 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Rhythmic Flow - Polygonal pill clip path */
+.clip-polygon-pill {
+  clip-path: polygon(8% 0, 92% 0, 100% 40%, 95% 100%, 5% 100%, 0 55%);
+}

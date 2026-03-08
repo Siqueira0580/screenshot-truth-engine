@@ -416,8 +416,6 @@ export default function CompositionStudioPage() {
     }
   }, [recordingState, startRecording, pauseRecording, resumeRecording]);
 
-  // Playback ref
-  const playbackRef = useRef<HTMLAudioElement | null>(null);
 
   // Handle tone selection from the unified popover
   const handleToneSelect = useCallback((newKey: string) => {

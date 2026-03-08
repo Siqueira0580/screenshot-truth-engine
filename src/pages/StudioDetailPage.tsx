@@ -26,10 +26,10 @@ interface AudioTrack {
 }
 
 const STEM_DISPLAY: { type: StemType; label: string; icon: typeof Music2; color: string }[] = [
-  { type: "full", label: "Mix Completo", icon: Music2, color: "text-primary" },
   { type: "vocals", label: "Voz", icon: Mic2, color: "text-blue-400" },
   { type: "percussion", label: "Percussão", icon: Drum, color: "text-orange-400" },
   { type: "harmony", label: "Harmonia", icon: Piano, color: "text-emerald-400" },
+  { type: "guitar", label: "Guitarra", icon: Guitar, color: "text-rose-400" },
 ];
 
 function formatTime(s: number) {

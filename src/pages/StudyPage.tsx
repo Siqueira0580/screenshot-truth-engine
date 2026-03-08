@@ -316,7 +316,7 @@ export default function StudyPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
+        <div className="flex flex-wrap items-center gap-2 w-full">
           <Button variant="ghost" size="icon" onClick={() => setEditFormOpen(true)} className="shrink-0 h-8 w-8" title="Editar Música">
             <Edit3 className="h-4 w-4" />
           </Button>

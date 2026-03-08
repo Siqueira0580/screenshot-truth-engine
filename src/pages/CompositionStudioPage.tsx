@@ -40,7 +40,7 @@ export default function CompositionStudioPage() {
   const [style, setStyle] = useState("Bossa Nova");
   const [composers, setComposers] = useState("");
   const [rhymeSearch, setRhymeSearch] = useState("");
-  const [rhymeResults, setRhymeResults] = useState<{ word: string; score: number }[]>([]);
+  const [rhymeResults, setRhymeResults] = useState<string[]>([]);
   const [isLoadingRhymes, setIsLoadingRhymes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showEditor, setShowEditor] = useState(false);

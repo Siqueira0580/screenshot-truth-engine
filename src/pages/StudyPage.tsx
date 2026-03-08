@@ -182,7 +182,7 @@ export default function StudyPage() {
     ? artists.find(a => a.name.toLowerCase() === song.artist!.toLowerCase())?.photo_url
     : null;
 
-  const hasAnyStem = audioTrack && (audioTrack.file_full || audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony);
+  const hasAnyStem = audioTrack && (audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony || audioTrack.file_guitar);
 
   // Initialize audio engine
   useEffect(() => {

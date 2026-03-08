@@ -662,23 +662,16 @@ export function drawChordDiagram(
         : fret;
       const y = gridTop + (relativeFret - 0.5) * fretSpacing;
 
-      // Subtle fill
-      ctx.fillStyle = accentFillHSL;
+      // Solid fill dot
+      ctx.fillStyle = accentHSL;
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Ring border
-      ctx.strokeStyle = dotStroke;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Finger number
+      // Finger number (white on blue)
       if (fingers[s] > 0) {
-        ctx.fillStyle = accentHSL;
-        ctx.font = `600 ${Math.round(dotRadius * 1.1)}px system-ui, sans-serif`;
+        ctx.fillStyle = fingerTextColor;
+        ctx.font = `700 ${Math.round(dotRadius * 1.15)}px system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(String(fingers[s]), x, y + 0.5);

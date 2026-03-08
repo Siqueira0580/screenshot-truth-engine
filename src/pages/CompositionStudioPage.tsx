@@ -33,7 +33,7 @@ export default function CompositionStudioPage() {
   const [sharedWithEmails, setSharedWithEmails] = useState<string[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [title, setTitle] = useState("");
-  const [selectedKey, setSelectedKey] = useState("Am");
+  const [selectedKey, setSelectedKey] = useState("");
   const [originalKey, setOriginalKey] = useState(""); // tom original da composição — vazio até ser definido
   const [targetKey, setTargetKey] = useState(""); // empty = no transposition
   const [bpm, setBpm] = useState("120");

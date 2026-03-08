@@ -254,7 +254,7 @@ export default function StudioDetailPage() {
   return (
     <div className="space-y-5 w-full max-w-[100vw] overflow-x-hidden">
       {/* Back button + title */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="button" variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>

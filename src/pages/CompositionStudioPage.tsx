@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X } from "lucide-react";
+import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X, UserPlus } from "lucide-react";
+import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { createSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";

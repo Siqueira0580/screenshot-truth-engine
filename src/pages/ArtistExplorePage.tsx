@@ -113,7 +113,7 @@ export default function ArtistExplorePage() {
       const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
       const title = file.name.replace(/\.pdf$/i, "").trim();
 
-      await createSong({
+      await createSongAndAddToLibrary({
         title,
         artist: decodedName,
         composer: null,

@@ -31,6 +31,8 @@ export default function CompositionStudioPage() {
   const [style, setStyle] = useState("Bossa Nova");
   const [composers, setComposers] = useState("");
   const [rhymeSearch, setRhymeSearch] = useState("");
+  const [rhymeResults, setRhymeResults] = useState<{ word: string; score: number }[]>([]);
+  const [isLoadingRhymes, setIsLoadingRhymes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -39,6 +41,8 @@ export default function CompositionStudioPage() {
   const audioBlobRef = useRef<Blob | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [tonePopoverOpen, setTonePopoverOpen] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const rhymeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Export composition as a song to Studio (creates song + audio_tracks) */
   const handleExportToStudio = useCallback(async () => {

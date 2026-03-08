@@ -483,8 +483,8 @@ export default function StudioDetailPage() {
           <div className={cn("grid gap-4", hasSeparatedStems ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 max-w-xs")}>
             {STEM_DISPLAY.map(({ type, label, icon: Icon, color }) => {
               const colMap: Record<StemType, keyof AudioTrack> = {
-                full: "file_full", vocals: "file_vocals",
-                percussion: "file_percussion", harmony: "file_harmony",
+                vocals: "file_vocals", percussion: "file_percussion",
+                harmony: "file_harmony", guitar: "file_guitar",
               };
               const hasFile = audioTrack && audioTrack[colMap[type]];
               if (!hasFile) return null;

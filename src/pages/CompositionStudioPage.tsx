@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X, UserPlus, Eraser } from "lucide-react";
+import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, Loader2, Trash2, FileOutput, X, UserPlus, Eraser, Headphones } from "lucide-react";
 import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -14,6 +14,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { transposeChord } from "@/lib/transpose-chord";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
@@ -602,30 +604,32 @@ export default function CompositionStudioPage() {
             </Select>
           </div>
 
-          {/* Right: actions */}
+          {/* Right: share dropdown */}
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setShowClearModal(true)} title="Limpar prancheta">
-              <Eraser className="h-4 w-4" />
-              Limpar
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {isSaving ? "Salvando..." : compositionId ? "Salvar" : "Salvar Composição"}
-            </Button>
-            <Button size="sm" className="gap-1.5" variant="secondary" onClick={handleExportToStudio} disabled={isExporting}>
-              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileOutput className="h-4 w-4" />}
-              {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
-            </Button>
-            {/* Invite — only for owner */}
             {isOwner && compositionId && (
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowInviteModal(true)}>
-                <UserPlus className="h-4 w-4" /> Convidar
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Share2 className="h-4 w-4" />
+                    Compartilhar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowInviteModal(true)} className="gap-2 cursor-pointer">
+                    <UserPlus className="h-4 w-4" />
+                    Convidar Parceiro
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportToStudio} disabled={isExporting} className="gap-2 cursor-pointer">
+                    <Headphones className="h-4 w-4" />
+                    {isExporting ? "Exportando..." : "Enviar para o Estúdio"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-            {/* Delete — only for owner */}
-            {isOwner && compositionId && (
-              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setShowDeleteModal(true)}>
-                <Trash2 className="h-4 w-4" /> Excluir
+            {!isOwner && (
+              <Button size="sm" className="gap-1.5" variant="secondary" onClick={handleExportToStudio} disabled={isExporting}>
+                {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
+                {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
               </Button>
             )}
           </div>
@@ -635,7 +639,56 @@ export default function CompositionStudioPage() {
       {/* ─── Main split ─── */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Editor – 70% */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 relative">
+          {/* ─── Floating Action Bar ─── */}
+          <TooltipProvider delayDuration={200}>
+            <div className="absolute right-4 lg:right-8 top-4 z-10 flex flex-col gap-3 rounded-full bg-card/60 backdrop-blur-md border border-border p-2 shadow-lg">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left"><p>Salvar</p></TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                    onClick={() => setShowClearModal(true)}
+                  >
+                    <Eraser className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left"><p>Limpar</p></TooltipContent>
+              </Tooltip>
+
+              {isOwner && compositionId && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/20 transition-all"
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left"><p>Excluir</p></TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </TooltipProvider>
           {/* Record button + current note */}
           <div className="flex flex-col items-center gap-3 mb-8">
             <button

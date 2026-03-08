@@ -221,7 +221,14 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
       }
     }
 
-    return new Response(JSON.stringify({ ...result, artist_image_url }), {
+    return new Response(JSON.stringify({
+      ...result,
+      musical_key: finalMusicalKey,
+      composer: finalComposer,
+      youtube_url: finalYoutubeUrl,
+      bpm: result.bpm || null,
+      artist_image_url,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

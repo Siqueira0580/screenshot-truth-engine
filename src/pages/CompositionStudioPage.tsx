@@ -431,7 +431,7 @@ export default function CompositionStudioPage() {
     setTitle("");
     setComposers("");
     setBpm("120");
-    setSavedAudioUrl(null);
+    setAudioTakes([]);
     audioBlobRef.current = null;
     setShowClearModal(false);
     toast.success("Composição limpa!");

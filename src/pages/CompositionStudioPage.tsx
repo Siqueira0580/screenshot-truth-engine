@@ -441,15 +441,26 @@ export default function CompositionStudioPage() {
     if (!word.trim()) { setRhymeResults([]); return; }
     setIsLoadingRhymes(true);
     try {
-      const res = await fetch(`https://rhymebrain.com/talk?function=getRhymes&word=${encodeURIComponent(word.trim())}&lang=pt`);
+      const { data: fnData, error } = await supabase.functions.invoke("rhyme-proxy", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        body: undefined,
+      });
+      // Edge functions don't support GET with query params easily, use POST approach
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const filtered = (data as { word: string; score: number }[])
-        .filter((r) => r.score > 250)
-        .slice(0, 30);
+        .filter((r) => r.score >= 100)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 40);
       setRhymeResults(filtered);
     } catch (err) {
       console.error("Rhyme fetch error:", err);
-      toast.error("Erro ao buscar rimas.");
+      toast.error("Erro ao buscar rimas. Verifique sua conexão.");
       setRhymeResults([]);
     } finally {
       setIsLoadingRhymes(false);

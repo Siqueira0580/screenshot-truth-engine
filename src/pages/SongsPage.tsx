@@ -15,6 +15,7 @@ import { useAutoEnrichment } from "@/hooks/useAutoEnrichment";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ExploreTab from "@/components/explore/ExploreTab";
 import OnboardingTour, { useOnboardingTour } from "@/components/OnboardingTour";
+import PersonalizationWizard, { usePersonalizationWizard } from "@/components/PersonalizationWizard";
 
 export default function SongsPage() {
   const { user } = useAuth();

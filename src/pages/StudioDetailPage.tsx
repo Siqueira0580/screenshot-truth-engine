@@ -288,7 +288,7 @@ export default function StudioDetailPage() {
         {/* Key + BPM + actions row */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {(originalKey || song?.bpm) ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {originalKey && (
                 <div className="text-center">
                   <span className="inline-block rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-mono font-bold text-primary">

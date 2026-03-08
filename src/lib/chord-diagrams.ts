@@ -501,168 +501,206 @@ export function drawChordDiagram(
     simplified = resolved.simplified;
   }
   const numStrings = getStringsForInstrument(instrument);
-  const numFrets = 5;
+  const numFrets = 4;
   const w = canvas.width;
   const h = canvas.height;
+  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
 
   const isFirstPosition = !voicing?.baseFret || voicing.baseFret <= 1;
-  const nutH = 4;
-  const padding = { top: 38, bottom: 28, left: 32, right: 20 };
-  const gridW = w - padding.left - padding.right;
-  const gridH = h - padding.top - padding.bottom;
+
+  // Premium layout constants
+  const indicatorAreaH = Math.round(h * 0.1);   // top X/O area
+  const titleAreaH = Math.round(h * 0.14);       // chord name
+  const nutH = isFirstPosition ? 3 : 0;
+  const bottomPad = Math.round(h * 0.06);
+  const sidePad = Math.round(w * 0.16);
+
+  const gridTop = titleAreaH + indicatorAreaH + nutH;
+  const gridH = h - gridTop - bottomPad;
+  const gridW = w - sidePad * 2;
   const stringSpacing = gridW / (numStrings - 1);
   const fretSpacing = gridH / numFrets;
-  const dotRadius = Math.min(stringSpacing, fretSpacing) * 0.34;
+  const dotRadius = Math.min(stringSpacing, fretSpacing) * 0.3;
+
+  // Theme colors
+  const accentHSL = "hsl(217, 91%, 60%)";       // primary blue
+  const accentFillHSL = "hsl(217, 91%, 60%, 0.18)";
+  const gridColor = "hsl(220, 13%, 28%)";
+  const gridColorLight = "hsl(220, 13%, 22%)";
+  const textMuted = "hsl(220, 10%, 50%)";
+  const textBright = "hsl(220, 15%, 85%)";
+  const dotFill = accentHSL;
+  const dotStroke = accentHSL;
+  const fingerTextColor = "#fff";
+  const barreColor = "hsl(217, 70%, 50%)";
 
   // Clear
   ctx.clearRect(0, 0, w, h);
 
   // ── Title ──
-  ctx.fillStyle = "#444";
-  ctx.font = `bold ${Math.round(w * 0.09)}px 'Helvetica Neue', Arial, sans-serif`;
+  ctx.fillStyle = textBright;
+  ctx.font = `600 ${Math.round(w * 0.11)}px system-ui, -apple-system, 'Segoe UI', sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const title = simplified ? `${chord} *` : chord;
-  ctx.fillText(title, w / 2, 16);
+  ctx.fillText(title, w / 2, titleAreaH * 0.5);
 
-  // ── Nut (thick bar at first position) ──
-  if (isFirstPosition) {
-    ctx.fillStyle = "#333";
-    ctx.fillRect(padding.left - 1, padding.top - nutH, gridW + 2, nutH);
+  // ── Top indicators: X (muted) and O (open) ──
+  if (voicing) {
+    const indY = titleAreaH + indicatorAreaH * 0.5;
+    const indR = Math.max(3, dotRadius * 0.45);
+    for (let s = 0; s < voicing.frets.length; s++) {
+      const fret = voicing.frets[s];
+      const x = sidePad + s * stringSpacing;
+      if (fret === -1) {
+        // X mark
+        ctx.strokeStyle = textMuted;
+        ctx.lineWidth = 1.2;
+        const sz = indR * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(x - sz, indY - sz);
+        ctx.lineTo(x + sz, indY + sz);
+        ctx.moveTo(x + sz, indY - sz);
+        ctx.lineTo(x - sz, indY + sz);
+        ctx.stroke();
+      } else if (fret === 0) {
+        // O mark
+        ctx.strokeStyle = accentHSL;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(x, indY, indR, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
   }
 
-  // ── Base fret indicator (e.g. "5ª") ──
+  // ── Nut (thin elegant bar) ──
+  if (isFirstPosition) {
+    ctx.fillStyle = textBright;
+    ctx.fillRect(sidePad - 0.5, gridTop - nutH, gridW + 1, nutH);
+  }
+
+  // ── Base fret indicator ──
   if (!isFirstPosition && voicing?.baseFret) {
-    ctx.fillStyle = "#666";
-    ctx.font = `bold ${Math.round(fretSpacing * 0.38)}px 'Helvetica Neue', Arial, sans-serif`;
+    ctx.fillStyle = textMuted;
+    ctx.font = `500 ${Math.round(fretSpacing * 0.32)}px system-ui, -apple-system, sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${voicing.baseFret}ª`, padding.left - 6, padding.top + fretSpacing * 0.5);
+    ctx.fillText(`${voicing.baseFret}fr`, sidePad - 5, gridTop + fretSpacing * 0.5);
   }
 
-  // ── Grid: frets (horizontal lines) ──
-  ctx.strokeStyle = "#bbb";
-  ctx.lineWidth = 1;
+  // ── Grid: frets (thin horizontal lines) ──
+  ctx.strokeStyle = gridColor;
+  ctx.lineWidth = 0.7;
   for (let f = 0; f <= numFrets; f++) {
-    const y = padding.top + f * fretSpacing;
+    const y = gridTop + f * fretSpacing;
     ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(padding.left + gridW, y);
+    ctx.moveTo(sidePad, y);
+    ctx.lineTo(sidePad + gridW, y);
     ctx.stroke();
   }
 
-  // ── Grid: strings (vertical lines) ──
-  ctx.strokeStyle = "#999";
-  ctx.lineWidth = 1;
+  // ── Grid: strings (thin vertical lines) ──
+  ctx.strokeStyle = gridColorLight;
+  ctx.lineWidth = 0.6;
   for (let s = 0; s < numStrings; s++) {
-    const x = padding.left + s * stringSpacing;
+    const x = sidePad + s * stringSpacing;
     ctx.beginPath();
-    ctx.moveTo(x, padding.top);
-    ctx.lineTo(x, padding.top + gridH);
+    ctx.moveTo(x, gridTop);
+    ctx.lineTo(x, gridTop + gridH);
     ctx.stroke();
   }
 
   if (!voicing) {
-    ctx.fillStyle = "#888";
-    ctx.font = "12px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillStyle = textMuted;
+    ctx.font = `400 ${Math.round(w * 0.07)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("Diagrama indisponível", w / 2, h / 2);
+    ctx.fillText("Indisponível", w / 2, gridTop + gridH / 2);
     return;
   }
 
   const fingers = assignFingers(voicing.frets, voicing.barres);
 
-  // ── Barres ──
+  // ── Barres (rounded, semi-transparent) ──
   if (voicing.barres) {
     for (const barre of voicing.barres) {
-      const y = padding.top + (barre.fret - 0.5) * fretSpacing;
-      const x1 = padding.left + barre.from * stringSpacing;
-      const x2 = padding.left + barre.to * stringSpacing;
-      ctx.fillStyle = "#555";
+      const relativeFret = voicing.baseFret && voicing.baseFret > 1
+        ? barre.fret - voicing.baseFret + 1
+        : barre.fret;
+      const y = gridTop + (relativeFret - 0.5) * fretSpacing;
+      const x1 = sidePad + barre.from * stringSpacing;
+      const x2 = sidePad + barre.to * stringSpacing;
+      const barreR = dotRadius * 0.85;
+
+      ctx.fillStyle = barreColor;
+      ctx.globalAlpha = 0.85;
       ctx.beginPath();
-      ctx.moveTo(x1, y - dotRadius);
-      ctx.lineTo(x2, y - dotRadius);
-      ctx.arc(x2, y, dotRadius, -Math.PI / 2, Math.PI / 2);
-      ctx.lineTo(x1, y + dotRadius);
-      ctx.arc(x1, y, dotRadius, Math.PI / 2, -Math.PI / 2);
+      ctx.moveTo(x1, y - barreR);
+      ctx.lineTo(x2, y - barreR);
+      ctx.arc(x2, y, barreR, -Math.PI / 2, Math.PI / 2);
+      ctx.lineTo(x1, y + barreR);
+      ctx.arc(x1, y, barreR, Math.PI / 2, -Math.PI / 2);
       ctx.closePath();
       ctx.fill();
-      // Finger number on barre (at the "from" end)
-      ctx.fillStyle = "#fff";
-      ctx.font = `bold ${Math.round(dotRadius * 1.3)}px 'Helvetica Neue', Arial, sans-serif`;
+      ctx.globalAlpha = 1;
+
+      // Finger "1" label
+      ctx.fillStyle = fingerTextColor;
+      ctx.font = `600 ${Math.round(barreR * 1.2)}px system-ui, sans-serif`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText("1", x1, y + 1);
+      ctx.fillText("1", x1, y + 0.5);
     }
   }
 
-  // ── Fret dots with finger numbers ──
+  // ── Fret dots (colored rings with subtle fill) ──
   for (let s = 0; s < voicing.frets.length; s++) {
     const fret = voicing.frets[s];
-    const x = padding.left + s * stringSpacing;
+    const x = sidePad + s * stringSpacing;
 
     if (fret > 0) {
-      // Skip dots that are fully covered by barre
       const isCoveredByBarre = voicing.barres?.some(
         b => fret === b.fret && s >= b.from && s <= b.to
       );
       if (isCoveredByBarre) continue;
 
-      const y = padding.top + (fret - 0.5) * fretSpacing;
-      ctx.fillStyle = "#555";
+      const relativeFret = voicing.baseFret && voicing.baseFret > 1
+        ? fret - voicing.baseFret + 1
+        : fret;
+      const y = gridTop + (relativeFret - 0.5) * fretSpacing;
+
+      // Subtle fill
+      ctx.fillStyle = accentFillHSL;
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Finger number
-      if (fingers[s] > 0) {
-        ctx.fillStyle = "#fff";
-        ctx.font = `bold ${Math.round(dotRadius * 1.3)}px 'Helvetica Neue', Arial, sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(String(fingers[s]), x, y + 1);
-      }
-    }
-  }
-
-  // ── Bottom indicators: open (○) and muted (●) ──
-  const indicatorY = padding.top + gridH + 16;
-  const indicatorR = 4;
-  for (let s = 0; s < voicing.frets.length; s++) {
-    const fret = voicing.frets[s];
-    const x = padding.left + s * stringSpacing;
-
-    if (fret === 0) {
-      // Open string: hollow circle
-      ctx.strokeStyle = "#666";
+      // Ring border
+      ctx.strokeStyle = dotStroke;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.arc(x, indicatorY, indicatorR, 0, Math.PI * 2);
+      ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
       ctx.stroke();
-    } else if (fret === -1) {
-      // Muted string: filled circle
-      ctx.fillStyle = "#333";
-      ctx.beginPath();
-      ctx.arc(x, indicatorY, indicatorR, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // Fretted string: hollow circle
-      ctx.strokeStyle = "#bbb";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(x, indicatorY, indicatorR, 0, Math.PI * 2);
-      ctx.stroke();
+
+      // Finger number
+      if (fingers[s] > 0) {
+        ctx.fillStyle = accentHSL;
+        ctx.font = `600 ${Math.round(dotRadius * 1.1)}px system-ui, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(String(fingers[s]), x, y + 0.5);
+      }
     }
   }
 
   // ── Simplified indicator ──
   if (simplified) {
-    ctx.fillStyle = "#999";
-    ctx.font = "9px 'Helvetica Neue', Arial, sans-serif";
+    ctx.fillStyle = textMuted;
+    ctx.font = `400 ${Math.round(w * 0.055)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
-    ctx.fillText("* simplificado", w / 2, h - 2);
+    ctx.fillText("* simplificado", w / 2, h - 1);
   }
 }
 

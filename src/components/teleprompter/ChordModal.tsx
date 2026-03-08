@@ -60,21 +60,21 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
           </div>
           <div className="flex justify-center">
             {loading ? (
-              <div className="flex flex-col items-center justify-center w-[200px] h-[240px] gap-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-                <span className="text-xs text-muted-foreground">Calculando posição...</span>
+              <div className="flex flex-col items-center justify-center w-[140px] h-[170px] gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
+                <span className="text-[10px] text-muted-foreground">Carregando...</span>
               </div>
             ) : (
               <div className="relative">
                 <canvas
                   ref={canvasRef}
-                  width={200}
-                  height={240}
+                  width={140}
+                  height={170}
                   className="rounded-lg"
                   style={{ display: 'block' }}
                 />
                 {source === "ai" && (
-                  <span className="absolute bottom-1 right-1 text-[10px] text-muted-foreground/60">✨ IA</span>
+                  <span className="absolute bottom-0.5 right-0.5 text-[9px] text-muted-foreground/50">✨</span>
                 )}
               </div>
             )}

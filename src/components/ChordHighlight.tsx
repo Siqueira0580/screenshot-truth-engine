@@ -63,15 +63,15 @@ export default function ChordHighlight({ chord }: ChordHighlightProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {loading ? (
-          <div className="flex flex-col items-center justify-center w-[160px] h-[220px] gap-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
-            <span className="text-xs text-muted-foreground">Calculando posição...</span>
+          <div className="flex flex-col items-center justify-center w-[110px] h-[140px] gap-1.5">
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary border-t-transparent" />
+            <span className="text-[10px] text-muted-foreground">Carregando...</span>
           </div>
         ) : (
           <div className="relative">
-            <canvas ref={canvasRef} width={160} height={220} className="rounded block" />
+            <canvas ref={canvasRef} width={110} height={140} className="rounded block" />
             {source === "ai" && (
-              <span className="absolute bottom-1 right-1 text-[9px] text-muted-foreground/60">✨ IA</span>
+              <span className="absolute bottom-0.5 right-0.5 text-[8px] text-muted-foreground/50">✨</span>
             )}
           </div>
         )}

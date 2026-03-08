@@ -71,13 +71,13 @@ export default function ArtistExplorePage() {
       if (!title || !content) throw new Error("Não foi possível extrair a cifra deste link.");
 
       const finalArtist = (artist || decodedName).trim().replace(/\s+/g, " ");
-      const { error: insertError } = await supabase.from("songs").insert({
+      const newSong = await createSongAndAddToLibrary({
         title: title.trim(),
         artist: finalArtist,
         style: genre || null,
         body_text: content,
       });
-      if (insertError) throw new Error(insertError.message);
+      if (!newSong) throw new Error("Erro ao salvar música");
 
       try {
         await findOrCreateArtist(finalArtist, artistPhoto || undefined);

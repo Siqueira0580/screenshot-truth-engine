@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp, Link2 } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp, Link2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchSongs, deleteSong, createSong, findOrCreateArtist } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,17 +19,22 @@ import OnboardingTour, { useOnboardingTour } from "@/components/OnboardingTour";
 import PersonalizationWizard from "@/components/PersonalizationWizard";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
+type SortMode = "recent" | "oldest" | "az" | "za";
+
 export default function SongsPage() {
   const { user } = useAuth();
   const { wizardCompleted, loading: prefsLoading } = useUserPreferences();
   const [search, setSearch] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [formOpen, setFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<string | null>(null);
   const [importingPdfs, setImportingPdfs] = useState(false);
   const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 0 });
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [importLinkOpen, setImportLinkOpen] = useState(false);
+  const [uploadingSheetPdf, setUploadingSheetPdf] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const sheetPdfInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
   const [tourVisible, setTourVisible] = useState(showTour);
@@ -100,11 +106,69 @@ export default function SongsPage() {
     if (pdfInputRef.current) pdfInputRef.current.value = "";
   };
 
-  const filtered = songs.filter(
-    (s) =>
-      s.title.toLowerCase().includes(search.toLowerCase()) ||
-      (s.artist && s.artist.toLowerCase().includes(search.toLowerCase()))
-  );
+  const handleSheetPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== "application/pdf") {
+      toast.error("Selecione um arquivo PDF válido");
+      return;
+    }
+    setUploadingSheetPdf(true);
+    try {
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: uploadError } = await supabase.storage
+        .from("sheet_music")
+        .upload(fileName, file, { contentType: "application/pdf" });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
+      const title = file.name.replace(/\.pdf$/i, "").trim();
+
+      await createSong({
+        title,
+        artist: null,
+        composer: null,
+        musical_key: null,
+        style: null,
+        bpm: null,
+        time_signature: "4/4",
+        body_text: null,
+        pdf_url: urlData.publicUrl,
+      } as any);
+
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      toast.success("PDF de partitura enviado com sucesso!");
+    } catch (err: any) {
+      toast.error("Erro ao enviar PDF: " + (err.message || "Tente novamente"));
+    } finally {
+      setUploadingSheetPdf(false);
+      if (sheetPdfInputRef.current) sheetPdfInputRef.current.value = "";
+    }
+  };
+
+  const filtered = useMemo(() => {
+    let list = songs.filter(
+      (s) =>
+        s.title.toLowerCase().includes(search.toLowerCase()) ||
+        (s.artist && s.artist.toLowerCase().includes(search.toLowerCase()))
+    );
+
+    switch (sortMode) {
+      case "oldest":
+        list = [...list].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case "az":
+        list = [...list].sort((a, b) => a.title.localeCompare(b.title, "pt"));
+        break;
+      case "za":
+        list = [...list].sort((a, b) => b.title.localeCompare(a.title, "pt"));
+        break;
+      case "recent":
+      default:
+        list = [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+    }
+    return list;
+  }, [songs, search, sortMode]);
 
   return (
     <div className="space-y-4 w-full overflow-hidden">
@@ -122,8 +186,12 @@ export default function SongsPage() {
         </TabsList>
 
         <TabsContent value="library" className="space-y-4 mt-4">
-          <div className="flex items-center gap-2 justify-end">
+          <div className="flex items-center gap-2 justify-end flex-wrap">
             <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
+            <input ref={sheetPdfInputRef} type="file" accept=".pdf" className="hidden" onChange={handleSheetPdfUpload} />
+            <Button variant="outline" onClick={() => sheetPdfInputRef.current?.click()} disabled={uploadingSheetPdf} size="icon" className="md:w-auto md:px-4 md:gap-2">
+              {uploadingSheetPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="h-4 w-4" /><span className="hidden md:inline">Upload PDF</span></>}
+            </Button>
             <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="md:w-auto md:px-4 md:gap-2">
               {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline">Importar PDFs</span></>)}
             </Button>
@@ -134,10 +202,26 @@ export default function SongsPage() {
               <Plus className="h-4 w-4" /><span className="hidden md:inline">Nova Música</span>
             </Button>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+
+          {/* Search + Sort */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+            </div>
+            <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
+              <SelectTrigger className="w-[200px] bg-background/50 border-primary/20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="recent">Adicionadas Recentemente</SelectItem>
+                <SelectItem value="oldest">Mais Antigas</SelectItem>
+                <SelectItem value="az">Alfabética (A-Z)</SelectItem>
+                <SelectItem value="za">Alfabética (Z-A)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
           {isLoading ? (
             <div className="grid gap-3">{[1, 2, 3].map((i) => (<div key={i} className="h-20 animate-pulse rounded-lg bg-card" />))}</div>
           ) : filtered.length === 0 ? (
@@ -151,7 +235,14 @@ export default function SongsPage() {
                 <div key={song.id} className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30 animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">{i + 1}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold truncate">{song.title}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold truncate">{song.title}</p>
+                      {(song as any).pdf_url && (
+                        <span className="shrink-0 text-red-500" title="Partitura PDF">
+                          <FileText className="h-4 w-4" />
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       {song.artist && <span>{song.artist}</span>}
                       {song.musical_key && <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">{song.musical_key}</span>}

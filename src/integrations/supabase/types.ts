@@ -380,6 +380,7 @@ export type Database = {
           id: string
           loop_count: number | null
           musical_key: string | null
+          pdf_url: string | null
           style: string | null
           time_signature: string | null
           title: string
@@ -399,6 +400,7 @@ export type Database = {
           id?: string
           loop_count?: number | null
           musical_key?: string | null
+          pdf_url?: string | null
           style?: string | null
           time_signature?: string | null
           title: string
@@ -418,6 +420,7 @@ export type Database = {
           id?: string
           loop_count?: number | null
           musical_key?: string | null
+          pdf_url?: string | null
           style?: string | null
           time_signature?: string | null
           title?: string

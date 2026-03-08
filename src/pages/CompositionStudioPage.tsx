@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X } from "lucide-react";
+import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { createSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,22 +15,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { transposeChord } from "@/lib/transpose-chord";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import { HARMONIC_FIELDS, getProgressions, getRomanNumeral } from "@/lib/music-theory";
 
-const ALL_KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
-  "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "A#m", "Bm"];
-const KEYS = ["C", "C#", "D", "Dm", "D#", "E", "Em", "F", "F#", "G", "Gm", "G#", "A", "Am", "A#", "B", "Bm"];
 const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "Worship", "Samba", "Pagode", "Jazz", "R&B", "MPB", "Blues", "Forró", "Reggae"];
-
-const CHORD_MAP: Record<string, string[]> = {
-  C: ["C7M", "Dm7", "Em7", "F7M", "G7", "Am7", "Bm7(b5)"],
-  D: ["D7M", "Em7", "F#m7", "G7M", "A7", "Bm7", "C#m7(b5)"],
-  E: ["E7M", "F#m7", "G#m7", "A7M", "B7", "C#m7", "D#m7(b5)"],
-  G: ["G7M", "Am7", "Bm7", "C7M", "D7", "Em7", "F#m7(b5)"],
-  A: ["A7M", "Bm7", "C#m7", "D7M", "E7", "F#m7", "G#m7(b5)"],
-  Am: ["Am7", "Bm7(b5)", "C7M", "Dm7", "Em7", "F7M", "G7"],
-  Em: ["Em7", "F#m7(b5)", "G7M", "Am7", "Bm7", "C7M", "D7"],
-  Dm: ["Dm7", "Em7(b5)", "F7M", "Gm7", "Am7", "Bb7M", "C7"],
-};
 
 export default function CompositionStudioPage() {
   const navigate = useNavigate();
@@ -44,6 +31,8 @@ export default function CompositionStudioPage() {
   const [style, setStyle] = useState("Bossa Nova");
   const [composers, setComposers] = useState("");
   const [rhymeSearch, setRhymeSearch] = useState("");
+  const [rhymeResults, setRhymeResults] = useState<{ word: string; score: number }[]>([]);
+  const [isLoadingRhymes, setIsLoadingRhymes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -52,6 +41,8 @@ export default function CompositionStudioPage() {
   const audioBlobRef = useRef<Blob | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [tonePopoverOpen, setTonePopoverOpen] = useState(false);
+  const [showClearModal, setShowClearModal] = useState(false);
+  const rhymeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Export composition as a song to Studio (creates song + audio_tracks) */
   const handleExportToStudio = useCallback(async () => {
@@ -372,7 +363,56 @@ export default function CompositionStudioPage() {
 
   const displayText = editorText + (isRecording && liveChordPro ? (editorText ? "\n" : "") + liveChordPro : "");
 
-  const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];
+  const chords = HARMONIC_FIELDS[selectedKey] || HARMONIC_FIELDS["Am"] || [];
+  const progressions = getProgressions(selectedKey);
+  const isMinor = selectedKey.endsWith("m");
+
+  // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───
+  const fetchRhymes = useCallback(async (word: string) => {
+    if (!word.trim()) { setRhymeResults([]); return; }
+    setIsLoadingRhymes(true);
+    try {
+      const res = await fetch(`https://rhymebrain.com/talk?function=getRhymes&word=${encodeURIComponent(word.trim())}&lang=pt`);
+      const data = await res.json();
+      const filtered = (data as { word: string; score: number }[])
+        .filter((r) => r.score > 250)
+        .slice(0, 30);
+      setRhymeResults(filtered);
+    } catch (err) {
+      console.error("Rhyme fetch error:", err);
+      toast.error("Erro ao buscar rimas.");
+      setRhymeResults([]);
+    } finally {
+      setIsLoadingRhymes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current);
+    if (!rhymeSearch.trim()) { setRhymeResults([]); return; }
+    rhymeTimerRef.current = setTimeout(() => fetchRhymes(rhymeSearch), 500);
+    return () => { if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current); };
+  }, [rhymeSearch, fetchRhymes]);
+
+  const handleCopyRhyme = useCallback((word: string) => {
+    navigator.clipboard.writeText(word).then(() => {
+      toast.success(`"${word}" copiada!`);
+    }).catch(() => toast.error("Erro ao copiar."));
+  }, []);
+
+  // ─── Clear page handler ───
+  const handleClearPage = useCallback(() => {
+    setEditorText("");
+    setSelectedKey("Am");
+    setOriginalKey("");
+    setTitle("");
+    setComposers("");
+    setBpm("120");
+    setSavedAudioUrl(null);
+    audioBlobRef.current = null;
+    setShowClearModal(false);
+    toast.success("Composição limpa!");
+  }, []);
 
   // Parse displayText into renderable ChordPro tokens
   const parsedLines = displayText
@@ -554,6 +594,9 @@ export default function CompositionStudioPage() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10" onClick={() => setShowClearModal(true)} title="Limpar página">
+              <Trash2 className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isSaving ? "Salvando..." : compositionId ? "Salvar" : "Salvar Composição"}
@@ -708,36 +751,54 @@ export default function CompositionStudioPage() {
               </TabsList>
 
               <TabsContent value="harmony" className="space-y-4 mt-4">
-                <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-primary mb-1">Sugestão da IA</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Tente uma cadência II-V-I para o refrão:{" "}
-                        <span className="text-primary font-mono font-bold">Dm7</span> →{" "}
-                        <span className="text-primary font-mono font-bold">G7</span> →{" "}
-                        <span className="text-primary font-mono font-bold">C7M</span>
-                      </p>
+                {/* AI Progressions — dynamic based on current key */}
+                {progressions.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                      <p className="text-xs font-semibold text-primary">Sugestões de Progressão em {selectedKey}</p>
                     </div>
+                    {progressions.map((prog, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          const chordLine = prog.chords.map(c => `[${c}]`).join(" ");
+                          setEditorText(prev => prev ? prev + "\n" + chordLine : chordLine);
+                          toast.success(`Progressão "${prog.name}" inserida!`);
+                        }}
+                        className="w-full rounded-lg bg-primary/10 border border-primary/20 p-3 text-left hover:bg-primary/20 transition-colors"
+                      >
+                        <p className="text-[11px] font-semibold text-primary">{prog.name}</p>
+                        <p className="text-[10px] text-muted-foreground mb-1">{prog.numerals}</p>
+                        <p className="text-xs font-mono font-bold text-foreground">
+                          {prog.chords.join(" → ")}
+                        </p>
+                      </button>
+                    ))}
                   </div>
-                </div>
+                )}
 
                 <div>
                   <p className="text-xs text-muted-foreground mb-2 font-medium">
-                    Acordes em {selectedKey} • {style}
+                    Campo Harmônico de {selectedKey}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    {chords.map((chord) => (
+                    {chords.map((chord, idx) => (
                       <button
                         key={chord}
+                        onClick={() => {
+                          setEditorText(prev => prev ? prev + `[${chord}]` : `[${chord}]`);
+                          toast.success(`${chord} inserido!`);
+                        }}
                         className={cn(
-                          "flex items-center justify-center gap-1 rounded-lg border border-border bg-secondary px-2 py-2.5",
-                          "text-xs font-mono font-bold text-foreground cursor-grab",
+                          "flex flex-col items-center justify-center rounded-lg border border-border bg-secondary px-2 py-2.5",
+                          "text-xs font-mono font-bold text-foreground",
                           "hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-colors"
                         )}
                       >
-                        <GripVertical className="h-3 w-3 text-muted-foreground opacity-50" />
+                        <span className="text-[9px] text-muted-foreground font-normal mb-0.5">
+                          {getRomanNumeral(idx, isMinor)}
+                        </span>
                         {chord}
                       </button>
                     ))}
@@ -751,14 +812,48 @@ export default function CompositionStudioPage() {
                   <Input
                     value={rhymeSearch}
                     onChange={(e) => setRhymeSearch(e.target.value)}
-                    placeholder="Procurar rima para..."
+                    placeholder="Digite uma palavra para rimar..."
                     className="pl-9 h-9 bg-secondary border-border text-sm"
                   />
                 </div>
 
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  Digite uma palavra acima para buscar rimas.
-                </p>
+                {isLoadingRhymes && (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <span className="ml-2 text-xs text-muted-foreground">Buscando rimas...</span>
+                  </div>
+                )}
+
+                {!isLoadingRhymes && rhymeResults.length > 0 && (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {rhymeResults.map((r) => (
+                      <button
+                        key={r.word}
+                        onClick={() => handleCopyRhyme(r.word)}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-medium border border-border bg-secondary text-foreground",
+                          "hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors",
+                          "active:scale-95"
+                        )}
+                        title="Clique para copiar"
+                      >
+                        {r.word}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!isLoadingRhymes && rhymeResults.length === 0 && rhymeSearch.trim() && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Nenhuma rima encontrada para "{rhymeSearch}".
+                  </p>
+                )}
+
+                {!rhymeSearch.trim() && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Digite uma palavra acima para buscar rimas. Clique numa rima para copiá-la.
+                  </p>
+                )}
               </TabsContent>
             </Tabs>
           </div>
@@ -804,6 +899,14 @@ export default function CompositionStudioPage() {
         onConfirm={handleDeleteAudio}
         title="Excluir Áudio"
         description="Tem certeza que deseja excluir o áudio gravado? Esta ação não pode ser desfeita."
+      />
+
+      <ConfirmDeleteModal
+        open={showClearModal}
+        onOpenChange={setShowClearModal}
+        onConfirm={handleClearPage}
+        title="Limpar Página"
+        description="Tem certeza que deseja apagar toda a composição? O texto, acordes e tom serão resetados. Esta ação não pode ser desfeita."
       />
     </div>
   );

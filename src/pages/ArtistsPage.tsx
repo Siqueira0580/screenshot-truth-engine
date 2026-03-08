@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Users, Trash2, SortAsc, SortDesc, TrendingUp, Music } from "lucide-react";
+import { Plus, Users, Trash2, SortAsc, SortDesc, TrendingUp, Music, Search, List, Grid2x2, Maximize } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,12 +14,15 @@ import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 type SortMode = "alpha_asc" | "alpha_desc" | "most_accessed";
+type ViewMode = "list" | "medium" | "large";
 
 export default function ArtistsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState("");
   const [about, setAbout] = useState("");
   const [sort, setSort] = useState<SortMode>("alpha_asc");
+  const [viewMode, setViewMode] = useState<ViewMode>("medium");
+  const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
   const { data: artists = [], isLoading } = useQuery({
@@ -32,7 +35,6 @@ export default function ArtistsPage() {
     queryFn: fetchSongs,
   });
 
-  // Song count per artist
   const artistSongCount = useMemo(() => {
     const map: Record<string, number> = {};
     for (const song of songs) {
@@ -56,7 +58,14 @@ export default function ArtistsPage() {
   }, [songs]);
 
   const sortedArtists = useMemo(() => {
-    const list = [...artists];
+    let list = [...artists];
+
+    // Filter by search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((a) => a.name.toLowerCase().includes(q));
+    }
+
     switch (sort) {
       case "alpha_desc":
         list.sort((a, b) => b.name.localeCompare(a.name, "pt"));
@@ -72,7 +81,7 @@ export default function ArtistsPage() {
         list.sort((a, b) => a.name.localeCompare(b.name, "pt"));
     }
     return list;
-  }, [artists, sort, artistAccessMap]);
+  }, [artists, sort, artistAccessMap, searchQuery]);
 
   const createM = useMutation({
     mutationFn: () => createArtist({ name, about: about || undefined }),
@@ -93,6 +102,13 @@ export default function ArtistsPage() {
       toast.success("Artista excluído");
     },
   });
+
+  const gridClass =
+    viewMode === "list"
+      ? "grid gap-2 grid-cols-1"
+      : viewMode === "large"
+      ? "grid gap-6 grid-cols-1 lg:grid-cols-2"
+      : "grid gap-4 grid-cols-2 lg:grid-cols-3";
 
   return (
     <div className="space-y-6">
@@ -126,6 +142,39 @@ export default function ArtistsPage() {
         </Button>
       </div>
 
+      {/* Search + View Toggle */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[180px]">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar artista..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 bg-background/50 border-primary/20"
+          />
+        </div>
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(v) => v && setViewMode(v as ViewMode)}
+          className="rounded-lg"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(0,255,255,0.1)",
+          }}
+        >
+          <ToggleGroupItem value="list" aria-label="Lista" className="px-2.5">
+            <List className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="medium" aria-label="Cards médios" className="px-2.5">
+            <Grid2x2 className="h-4 w-4" />
+          </ToggleGroupItem>
+          <ToggleGroupItem value="large" aria-label="Cards grandes" className="px-2.5">
+            <Maximize className="h-4 w-4" />
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
+
       {/* Sort Controls */}
       <div className="flex items-center gap-3">
         <ToggleGroup
@@ -150,9 +199,9 @@ export default function ArtistsPage() {
         </ToggleGroup>
       </div>
 
-      {/* Grid */}
+      {/* Grid / List */}
       {isLoading ? (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
+        <div className={gridClass}>
           {[1, 2, 3].map((i) => (
             <div
               key={i}
@@ -177,11 +226,15 @@ export default function ArtistsPage() {
           >
             <Users className="h-9 w-9 text-primary/60" />
           </div>
-          <p className="text-lg font-bold text-foreground">Nenhum artista cadastrado</p>
-          <p className="text-sm text-muted-foreground mt-1">Importe músicas ou adicione artistas manualmente.</p>
+          <p className="text-lg font-bold text-foreground">
+            {searchQuery ? "Nenhum artista encontrado" : "Nenhum artista cadastrado"}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {searchQuery ? "Tente um termo diferente." : "Importe músicas ou adicione artistas manualmente."}
+          </p>
         </motion.div>
       ) : (
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
+        <div className={gridClass}>
           {sortedArtists.map((artist, i) => {
             const songCount = artistSongCount[artist.name.toLowerCase()] || 0;
             const initials = artist.name
@@ -191,6 +244,51 @@ export default function ArtistsPage() {
               .slice(0, 2)
               .toUpperCase();
 
+            if (viewMode === "list") {
+              return (
+                <motion.div
+                  key={artist.id}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                >
+                  <Link
+                    to={`/artist/${encodeURIComponent(artist.name)}`}
+                    state={{ photoUrl: artist.photo_url }}
+                    className="group flex items-center gap-4 rounded-lg p-3 transition-all hover:bg-primary/5"
+                    style={{ border: "1px solid hsl(var(--border))" }}
+                  >
+                    <div
+                      className="w-12 h-12 rounded-full overflow-hidden shrink-0"
+                      style={{ border: "2px solid rgba(0,255,255,0.25)" }}
+                    >
+                      {artist.photo_url ? (
+                        <img src={artist.photo_url} alt={artist.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-secondary flex items-center justify-center text-sm font-black text-primary">
+                          {initials}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-foreground text-sm truncate">{artist.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {songCount} música{songCount !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteM.mutate(artist.id); }}
+                      className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
+                    </button>
+                  </Link>
+                </motion.div>
+              );
+            }
+
+            // medium & large share the card layout, just sized differently
+            const isLarge = viewMode === "large";
             return (
               <motion.div
                 key={artist.id}
@@ -216,13 +314,11 @@ export default function ArtistsPage() {
                     e.currentTarget.style.boxShadow = "none";
                   }}
                 >
-                  {/* Top accent line */}
                   <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-cyan-400/60 via-transparent to-fuchsia-500/40 opacity-60 group-hover:opacity-100 transition-opacity" />
 
-                  <div className="p-5 flex flex-col items-center text-center gap-3">
-                    {/* Avatar */}
+                  <div className={`flex flex-col items-center text-center gap-3 ${isLarge ? "p-8" : "p-5"}`}>
                     <div
-                      className="w-20 h-20 rounded-full overflow-hidden shrink-0 transition-all duration-300 group-hover:scale-105"
+                      className={`rounded-full overflow-hidden shrink-0 transition-all duration-300 group-hover:scale-105 ${isLarge ? "w-32 h-32" : "w-20 h-20"}`}
                       style={{
                         border: "2px solid rgba(0,255,255,0.3)",
                         boxShadow: "0 0 20px rgba(0,255,255,0.1)",
@@ -231,16 +327,14 @@ export default function ArtistsPage() {
                       {artist.photo_url ? (
                         <img src={artist.photo_url} alt={artist.name} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-slate-800 flex items-center justify-center text-xl font-black text-primary">
+                        <div className={`w-full h-full bg-secondary flex items-center justify-center font-black text-primary ${isLarge ? "text-3xl" : "text-xl"}`}>
                           {initials}
                         </div>
                       )}
                     </div>
 
-                    {/* Name */}
-                    <h3 className="font-bold text-foreground text-sm leading-tight line-clamp-2">{artist.name}</h3>
+                    <h3 className={`font-bold text-foreground leading-tight line-clamp-2 ${isLarge ? "text-lg" : "text-sm"}`}>{artist.name}</h3>
 
-                    {/* Song count badge */}
                     <Badge
                       variant="outline"
                       className="text-[10px] font-semibold px-2.5 py-0.5"
@@ -255,24 +349,16 @@ export default function ArtistsPage() {
                     </Badge>
                   </div>
 
-                  {/* Delete button */}
                   <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      deleteM.mutate(artist.id);
-                    }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteM.mutate(artist.id); }}
                     className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10"
                   >
                     <Trash2 className="h-3.5 w-3.5 text-destructive/70" />
                   </button>
 
-                  {/* Bottom chamfer accent */}
                   <div
                     className="absolute bottom-0 right-0 w-[20px] h-[20px]"
-                    style={{
-                      background: "linear-gradient(135deg, transparent 50%, rgba(0,255,255,0.15) 50%)",
-                    }}
+                    style={{ background: "linear-gradient(135deg, transparent 50%, rgba(0,255,255,0.15) 50%)" }}
                   />
                 </Link>
               </motion.div>
@@ -314,9 +400,7 @@ export default function ArtistsPage() {
               <Button
                 type="submit"
                 disabled={createM.isPending}
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--primary)), #a855f7)",
-                }}
+                style={{ background: "linear-gradient(135deg, hsl(var(--primary)), #a855f7)" }}
               >
                 Criar
               </Button>

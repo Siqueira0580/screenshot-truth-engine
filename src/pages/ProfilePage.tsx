@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save, User } from "lucide-react";
+import { Camera, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import DangerZone from "@/components/DangerZone";
 

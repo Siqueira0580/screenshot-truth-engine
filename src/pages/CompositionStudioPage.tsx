@@ -431,7 +431,7 @@ export default function CompositionStudioPage() {
   const displayText = editorText;
 
   const chords = (selectedKey && HARMONIC_FIELDS[selectedKey]) || [];
-  const progressions = getProgressions(selectedKey);
+  const progressions = selectedKey ? getProgressions(selectedKey) : [];
   const isMinor = selectedKey.endsWith("m");
 
   // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───

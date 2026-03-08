@@ -42,6 +42,7 @@ export default function CompositionStudioPage() {
   const [rhymeResults, setRhymeResults] = useState<{ word: string; score: number }[]>([]);
   const [isLoadingRhymes, setIsLoadingRhymes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

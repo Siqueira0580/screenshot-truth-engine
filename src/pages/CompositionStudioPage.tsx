@@ -615,10 +615,14 @@ export default function CompositionStudioPage() {
               {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileOutput className="h-4 w-4" />}
               {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
             </Button>
-            <Button size="sm" className="gap-1.5">
-              <Share2 className="h-4 w-4" /> Partilhar
-            </Button>
-            {compositionId && (
+            {/* Invite — only for owner */}
+            {isOwner && compositionId && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowInviteModal(true)}>
+                <UserPlus className="h-4 w-4" /> Convidar
+              </Button>
+            )}
+            {/* Delete — only for owner */}
+            {isOwner && compositionId && (
               <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setShowDeleteModal(true)}>
                 <Trash2 className="h-4 w-4" /> Excluir
               </Button>

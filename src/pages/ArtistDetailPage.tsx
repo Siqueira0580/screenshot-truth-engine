@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { fetchArtists, fetchSongsByArtist, updateArtistPhoto } from "@/lib/supabase-queries";

@@ -12,8 +12,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
 
 interface Composition {
   id: string;
@@ -33,6 +31,7 @@ export default function CompositionsHomePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -57,15 +56,21 @@ export default function CompositionsHomePage() {
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const { error } = await supabase.from("compositions").delete().eq("id", id);
+    setDeleteTarget(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("compositions").delete().eq("id", deleteTarget);
     if (error) {
       toast.error("Erro ao apagar composição.");
     } else {
-      setCompositions((prev) => prev.filter((c) => c.id !== id));
+      setCompositions((prev) => prev.filter((c) => c.id !== deleteTarget));
       toast.success("Composição apagada.");
     }
+    setDeleteTarget(null);
   };
 
   return (

@@ -240,7 +240,7 @@ Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
           },
           {
             role: "user",
-            content: `Extraia a cifra deste texto de site:\n\n${truncated}`,
+            content: `Extraia a cifra deste texto de site. ${preExtracted ? "Os acordes já estão entre colchetes [Acorde]. Preserve EXATAMENTE os espaços horizontais e a formatação original. NÃO re-alinhe os acordes." : ""}\n\n${truncated}`,
           },
         ],
         tools: [

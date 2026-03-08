@@ -241,27 +241,29 @@ export default function CompositionStudioPage() {
   }, [title, editorText, composers]);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeleteAudioModal, setShowDeleteAudioModal] = useState(false);
 
-  const handleDeleteAudio = useCallback(async () => {
+  const handleDeleteTake = useCallback(async (takeId: string) => {
     try {
-      if (savedAudioUrl) {
-        const path = savedAudioUrl.split("/compositions_audio/")[1];
+      const take = audioTakes.find((t) => t.id === takeId);
+      if (take?.url) {
+        const path = take.url.split("/compositions_audio/")[1];
         if (path) {
           await supabase.storage.from("compositions_audio").remove([decodeURIComponent(path)]);
         }
-        if (compositionId) {
-          await supabase.from("compositions").update({ audio_url: null } as any).eq("id", compositionId);
-        }
       }
-      setSavedAudioUrl(null);
-      audioBlobRef.current = null;
-      toast.success("Áudio excluído com sucesso.");
+      await supabase.from("composition_audios" as any).delete().eq("id", takeId);
+      setAudioTakes((prev) => prev.filter((t) => t.id !== takeId));
+      toast.success("Gravação excluída.");
     } catch (err) {
-      console.error("Delete audio error:", err);
-      toast.error("Erro ao excluir o áudio.");
+      console.error("Delete take error:", err);
+      toast.error("Erro ao excluir a gravação.");
     }
-  }, [savedAudioUrl, compositionId]);
+  }, [audioTakes]);
+
+  const handleRenameTake = useCallback(async (takeId: string, newTitle: string) => {
+    setAudioTakes((prev) => prev.map((t) => t.id === takeId ? { ...t, title: newTitle } : t));
+    await supabase.from("composition_audios" as any).update({ title: newTitle }).eq("id", takeId);
+  }, []);
 
   const handleDelete = useCallback(async () => {
     if (!compositionId) return;

@@ -3,9 +3,10 @@ import type { DeezerTrack } from "@/hooks/useTopCharts";
 
 interface FeaturedArtistsProps {
   tracks: DeezerTrack[];
+  title?: string;
 }
 
-export default function FeaturedArtists({ tracks }: FeaturedArtistsProps) {
+export default function FeaturedArtists({ tracks, title = "🎤 Artistas em Destaque" }: FeaturedArtistsProps) {
   // Deduplicate artists
   const seen = new Set<number>();
   const artists = tracks
@@ -19,7 +20,7 @@ export default function FeaturedArtists({ tracks }: FeaturedArtistsProps) {
   return (
     <div>
       <h2 className="text-lg font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 mb-4">
-        🎤 Artistas em Destaque
+        {title}
       </h2>
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-4 pb-4 px-1">

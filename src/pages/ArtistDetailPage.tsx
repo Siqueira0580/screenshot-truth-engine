@@ -174,36 +174,65 @@ export default function ArtistDetailPage() {
       ) : (
         <div className="grid gap-2">
           {songs.map((song, i) => (
-            <Link
+            <div
               key={song.id}
-              to={`/songs/${song.id}`}
               className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30 animate-fade-in"
               style={{ animationDelay: `${i * 30}ms` }}
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
-                {i + 1}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold truncate">{song.title}</p>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  {song.musical_key && (
-                    <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
-                      {song.musical_key}
-                    </span>
-                  )}
-                  {song.bpm && <span>{song.bpm} BPM</span>}
-                  {(song as any).access_count > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" />
-                      {(song as any).access_count}
-                    </span>
-                  )}
+              <Link to={`/songs/${song.id}`} className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
+                  {i + 1}
                 </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold truncate">{song.title}</p>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    {song.musical_key && (
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
+                        {song.musical_key}
+                      </span>
+                    )}
+                    {song.bpm && <span>{song.bpm} BPM</span>}
+                    {(song as any).access_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {(song as any).access_count}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                  onClick={() => navigate(`/songs/${song.id}`)}
+                  title="Editar"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => setDeleteTarget({ id: song.id, title: song.title })}
+                  title="Remover"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        title="Remover música"
+        description={`Tem certeza que deseja remover "${deleteTarget?.title}" do seu repertório? A música continuará disponível no catálogo global.`}
+      />
     </div>
   );
 }

@@ -135,6 +135,7 @@ export default function ImportSongModal({
         queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
       }
 
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
       queryClient.invalidateQueries({ queryKey: ["songs"] });
       toast.success(`"${title}" importada com sucesso!`);
       handleClose();

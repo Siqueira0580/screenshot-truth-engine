@@ -516,7 +516,7 @@ export default function CompositionStudioPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           {/* Left: exit + title column */}
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            <Button variant="ghost" size="icon" onClick={handleExit} className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground">
+            <Button type="button" variant="ghost" size="icon" onClick={handleExit} className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground">
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex flex-col flex-1 min-w-0">

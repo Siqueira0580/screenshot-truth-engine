@@ -67,6 +67,7 @@ export type Database = {
           ai_chordpro_text: string | null
           created_at: string
           file_full: string | null
+          file_guitar: string | null
           file_harmony: string | null
           file_percussion: string | null
           file_vocals: string | null
@@ -79,6 +80,7 @@ export type Database = {
           ai_chordpro_text?: string | null
           created_at?: string
           file_full?: string | null
+          file_guitar?: string | null
           file_harmony?: string | null
           file_percussion?: string | null
           file_vocals?: string | null
@@ -91,6 +93,7 @@ export type Database = {
           ai_chordpro_text?: string | null
           created_at?: string
           file_full?: string | null
+          file_guitar?: string | null
           file_harmony?: string | null
           file_percussion?: string | null
           file_vocals?: string | null

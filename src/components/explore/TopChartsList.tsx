@@ -5,6 +5,7 @@ import type { DeezerTrack } from "@/hooks/useTopCharts";
 interface TopChartsListProps {
   tracks: DeezerTrack[];
   onAddSong: (track: DeezerTrack) => void;
+  title?: string;
 }
 
 // Meandering offsets for the "rhythmic flow" path effect
@@ -21,13 +22,13 @@ const FLOW_OFFSETS = [
   { ml: "ml-8 md:ml-16" },
 ];
 
-export default function TopChartsList({ tracks, onAddSong }: TopChartsListProps) {
+export default function TopChartsList({ tracks, onAddSong, title = "🏆 Top 10 Global" }: TopChartsListProps) {
   const topTen = tracks.slice(0, 10);
 
   return (
     <div className="relative">
       <h2 className="text-lg font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 mb-6">
-        🏆 Top 10 Global
+        {title}
       </h2>
 
       {/* Flowing curved connector line (decorative SVG) */}

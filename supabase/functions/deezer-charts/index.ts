@@ -20,10 +20,10 @@ serve(async (req) => {
   }
 
   try {
-    let body: { genre?: string; action?: string; artists?: string[] } = {};
+    let body: { genre?: string; action?: string; artists?: string[]; limit?: number } = {};
     try { body = await req.json(); } catch {}
 
-    // --- Artist search mode ---
+    // --- Artist search mode (photos only) ---
     if (body.action === "search-artists" && body.artists?.length) {
       const results = await Promise.all(
         body.artists.map(async (name: string) => {
@@ -47,6 +47,28 @@ serve(async (req) => {
         })
       );
       return new Response(JSON.stringify({ data: results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Personalized tracks for specific artists ---
+    if (body.action === "personalized-tracks" && body.artists?.length) {
+      const perArtist = Math.max(1, Math.floor(20 / body.artists.length));
+      const allTracks: any[] = [];
+
+      await Promise.all(
+        body.artists.map(async (name: string) => {
+          try {
+            const res = await fetch(
+              `https://api.deezer.com/search?q=artist:"${encodeURIComponent(name)}"&limit=${perArtist}&order=RANKING`
+            );
+            const json = await res.json();
+            if (json.data) allTracks.push(...json.data);
+          } catch {}
+        })
+      );
+
+      return new Response(JSON.stringify({ data: allTracks }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

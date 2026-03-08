@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePersonalizedCharts } from "@/hooks/usePersonalizedCharts";
 import { useTopCharts, type DeezerTrack } from "@/hooks/useTopCharts";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -11,8 +12,30 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export default function ExploreTab() {
   const [category, setCategory] = useState("Todos");
-  const { data: tracks = [], isLoading, isError } = useTopCharts(category);
+  const { data: personalizedTracks = [], isLoading: pLoading, isError: pError, isPersonalized, favoriteArtists } = usePersonalizedCharts();
+  const { data: categoryTracks = [], isLoading: cLoading, isError: cError } = useTopCharts(category);
   const queryClient = useQueryClient();
+
+  // When personalized and category is "Todos", use personalized data; otherwise use category filter
+  const usePersonalized = isPersonalized && category === "Todos";
+  const tracks = usePersonalized ? personalizedTracks : categoryTracks;
+  const isLoading = usePersonalized ? pLoading : cLoading;
+  const isError = usePersonalized ? pError : cError;
+
+  // Build featured artists from user preferences when personalized
+  const featuredArtistOverrides = usePersonalized
+    ? favoriteArtists.map((a, i) => ({
+        id: Number(a.id) || 90000 + i,
+        title: "",
+        artist: {
+          id: Number(a.id) || 90000 + i,
+          name: a.name,
+          picture_medium: a.imageUrl || "",
+          picture_xl: a.imageUrl || "",
+        },
+        album: { cover_medium: "", cover_xl: "" },
+      } as DeezerTrack))
+    : null;
 
   const handleAddSong = (track: DeezerTrack) => {
     toast(`Deseja adicionar "${track.title}" de "${track.artist.name}" à sua biblioteca e buscar a cifra?`, {
@@ -50,8 +73,15 @@ export default function ExploreTab() {
       ) : (
         <>
           <HeroCarousel tracks={tracks} onAddSong={handleAddSong} />
-          <TopChartsList tracks={tracks} onAddSong={handleAddSong} />
-          <FeaturedArtists tracks={tracks} />
+          <TopChartsList
+            tracks={tracks}
+            onAddSong={handleAddSong}
+            title={usePersonalized ? "🏆 O Seu Top 10" : "🏆 Top 10 Global"}
+          />
+          <FeaturedArtists
+            tracks={featuredArtistOverrides || tracks}
+            title={usePersonalized ? "🎤 Os Seus Artistas" : "🎤 Artistas em Destaque"}
+          />
         </>
       )}
     </div>

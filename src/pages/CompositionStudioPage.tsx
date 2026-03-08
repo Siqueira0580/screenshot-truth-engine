@@ -1035,23 +1035,6 @@ export default function CompositionStudioPage() {
         )}
       </div>
 
-      {/* ─── Footer ─── */}
-      <footer className="shrink-0 border-t border-border bg-card px-4 py-3">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-1">
-            🎙️ Cofre de Ideias
-          </span>
-          {(recorderAudioUrl || savedAudioUrl) && (
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-secondary border border-border text-foreground">
-              <PlayCircle className="h-3.5 w-3.5 text-primary" />
-              Gravação atual
-            </span>
-          )}
-          {!recorderAudioUrl && !savedAudioUrl && (
-            <span className="text-xs text-muted-foreground">Nenhuma gravação ainda.</span>
-          )}
-        </div>
-      </footer>
 
       <ConfirmDeleteModal
         open={showDeleteModal}
@@ -1059,14 +1042,6 @@ export default function CompositionStudioPage() {
         onConfirm={handleDelete}
         title="Apagar Composição"
         description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
-      />
-
-      <ConfirmDeleteModal
-        open={showDeleteAudioModal}
-        onOpenChange={setShowDeleteAudioModal}
-        onConfirm={handleDeleteAudio}
-        title="Excluir Áudio"
-        description="Tem certeza que deseja excluir o áudio gravado? Esta ação não pode ser desfeita."
       />
 
       <ConfirmDeleteModal

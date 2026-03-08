@@ -298,12 +298,11 @@ export default function StudyPage() {
             <p className="text-xs text-muted-foreground truncate">{song?.artist}</p>
           </div>
         </div>
+
         <div className="flex items-center gap-2 shrink-0">
           <Button variant="ghost" size="icon" onClick={() => navigate(`/songs/${songId}`)} className="shrink-0" title="Editar Música">
             <Edit3 className="h-4 w-4" />
           </Button>
-
-        <div className="flex items-center gap-1 shrink-0">
           {displayKey && (
             <Popover>
               <PopoverTrigger asChild>

@@ -1018,10 +1018,10 @@ export default function CompositionStudioPage() {
 
                 {!isLoadingRhymes && rhymeResults.length > 0 && (
                   <div className="grid grid-cols-2 gap-1.5">
-                    {rhymeResults.map((r) => (
+                    {rhymeResults.map((word) => (
                       <button
-                        key={r.word}
-                        onClick={() => handleCopyRhyme(r.word)}
+                        key={word}
+                        onClick={() => handleCopyRhyme(word)}
                         className={cn(
                           "rounded-full px-3 py-1.5 text-xs font-medium border border-border bg-secondary text-foreground",
                           "hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors",
@@ -1029,7 +1029,7 @@ export default function CompositionStudioPage() {
                         )}
                         title="Clique para copiar"
                       >
-                        {r.word}
+                        {word}
                       </button>
                     ))}
                   </div>

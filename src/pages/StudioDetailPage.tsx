@@ -420,7 +420,7 @@ export default function StudioDetailPage() {
       {/* Transport controls */}
       {hasAnyStem && (
         <div className="p-4 rounded-xl bg-card border border-border space-y-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" size="icon" onClick={handleStop}>
               <Square className="h-4 w-4" />
             </Button>

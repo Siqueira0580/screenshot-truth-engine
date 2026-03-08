@@ -523,7 +523,7 @@ export default function StudyPage() {
       </div>
 
       <ChordModal chord={selectedChord} open={chordModalOpen} onClose={() => setChordModalOpen(false)} />
-      <SongFormDialog open={editFormOpen} onOpenChange={setEditFormOpen} songId={songId} />
+      <QuickEditLyricsModal open={editFormOpen} onOpenChange={setEditFormOpen} songId={songId!} songTitle={song?.title || ""} bodyText={song?.body_text || null} />
       <SongChordsFAB bodyText={displayBody} />
     </div>
   );

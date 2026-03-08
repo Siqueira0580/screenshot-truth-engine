@@ -1,7 +1,8 @@
 import { useState, useCallback } from "react";
-import { Monitor, MonitorOff, Copy, Check, Share2, Users } from "lucide-react";
+import { Monitor, MonitorOff, Copy, Check, MessageCircle, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useScreenShare } from "@/hooks/useScreenShare";
 import { toast } from "sonner";
 
@@ -31,10 +32,9 @@ export default function ScreenSharePanel({ setlistId: _setlistId }: ScreenShareP
     }
   }, [inviteUrl]);
 
-  const handleShareWhatsApp = useCallback(() => {
-    const text = `🎬 Olá! Clique no link para acompanhar o meu ecrã no ensaio:\n\n${inviteUrl}\n\n_Smart Cifra Live_ 🎸`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-  }, [inviteUrl]);
+  const whatsAppUrl = `https://wa.me/?text=${encodeURIComponent(
+    `🎬 Olá! Clique no link para acompanhar a cifra no ensaio:\n\n${inviteUrl}\n\n_Smart Cifra Live_ 🎸`
+  )}`;
 
   if (!isSharing) {
     return (
@@ -46,17 +46,18 @@ export default function ScreenSharePanel({ setlistId: _setlistId }: ScreenShareP
         title="Transmitir ecrã para os músicos"
       >
         <Monitor className="h-4 w-4" />
-        <span className="hidden sm:inline">Transmitir Tela</span>
+        📺 Transmitir Tela (Gerar Link)
       </Button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 animate-fade-in">
+    <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 animate-fade-in">
+      {/* Header row */}
       <div className="flex items-center gap-2 flex-wrap">
         <Badge variant="default" className="gap-1 animate-pulse">
           <Monitor className="h-3 w-3" />
-          Transmitindo
+          Transmissão Ativa
         </Badge>
         {viewerCount > 0 && (
           <Badge variant="secondary" className="gap-1">
@@ -66,27 +67,36 @@ export default function ScreenSharePanel({ setlistId: _setlistId }: ScreenShareP
         )}
         <Button variant="destructive" size="sm" onClick={stopScreenShare} className="gap-1 ml-auto">
           <MonitorOff className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Parar</span>
+          Parar
         </Button>
       </div>
 
-      {/* Link display + share buttons */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <code className="flex-1 min-w-0 truncate text-xs bg-background/80 rounded px-2 py-1.5 border border-border font-mono select-all">
-          {inviteUrl}
-        </code>
-        <Button variant="outline" size="sm" onClick={handleCopyLink} className="gap-1 shrink-0">
-          {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
-          <span className="hidden sm:inline">{copied ? "Copiado" : "Copiar"}</span>
-        </Button>
-        <Button
-          size="sm"
-          onClick={handleShareWhatsApp}
-          className="gap-1 shrink-0 bg-[#25D366] hover:bg-[#1da851] text-white"
-        >
-          <Share2 className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">WhatsApp</span>
-        </Button>
+      {/* Invite panel */}
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-medium text-foreground">
+          📡 Transmissão Ativa. Envie o link para a banda:
+        </p>
+        <Input
+          readOnly
+          value={inviteUrl}
+          className="font-mono text-xs select-all bg-background"
+          onFocus={(e) => e.target.select()}
+        />
+        <div className="flex items-center gap-2">
+          <a
+            href={whatsAppUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-white bg-[#25D366] hover:bg-[#1da851] transition-colors"
+          >
+            <MessageCircle className="h-4 w-4" />
+            Enviar via WhatsApp
+          </a>
+          <Button variant="outline" size="sm" onClick={handleCopyLink} className="gap-1">
+            {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+            {copied ? "Copiado!" : "Copiar Link"}
+          </Button>
+        </div>
       </div>
 
       {error && <p className="text-xs text-destructive">{error}</p>}

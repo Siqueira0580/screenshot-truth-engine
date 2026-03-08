@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X, UserPlus } from "lucide-react";
+import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X, UserPlus, Eraser } from "lucide-react";
 import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -604,8 +604,9 @@ export default function CompositionStudioPage() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10" onClick={() => setShowClearModal(true)} title="Limpar página">
-              <Trash2 className="h-4 w-4" />
+            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setShowClearModal(true)} title="Limpar prancheta">
+              <Eraser className="h-4 w-4" />
+              Limpar
             </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
@@ -919,8 +920,8 @@ export default function CompositionStudioPage() {
         open={showClearModal}
         onOpenChange={setShowClearModal}
         onConfirm={handleClearPage}
-        title="Limpar Página"
-        description="Tem certeza que deseja apagar toda a composição? O texto, acordes e tom serão resetados. Esta ação não pode ser desfeita."
+        title="Limpar prancheta?"
+        description="Tem certeza de que deseja apagar toda a sua composição atual? Esta ação não poderá ser desfeita e você perderá o texto não salvo."
       />
 
       {compositionId && (

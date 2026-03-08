@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, Sparkles, ChevronRight, ChevronLeft, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 const STYLES = ["Rock", "Pop", "Worship", "Sertanejo", "Samba", "Pagode", "MPB", "Jazz"];
 
@@ -36,17 +37,6 @@ const ARTISTS_SEED: ArtistEntry[] = [
   { id: "20", name: "Luan Santana", genre: ["Sertanejo"], imageUrl: null },
 ];
 
-const STORAGE_KEY = "smartcifra_preferences";
-
-export function usePersonalizationWizard() {
-  const prefs = localStorage.getItem(STORAGE_KEY);
-  const parsed = prefs ? JSON.parse(prefs) : null;
-  return {
-    shouldShow: !parsed,
-    preferences: parsed as { styles: string[]; artists: ArtistEntry[]; skipped?: boolean } | null,
-  };
-}
-
 interface Props {
   onComplete: () => void;
 }
@@ -58,28 +48,26 @@ const slideVariants = {
 };
 
 export default function PersonalizationWizard({ onComplete }: Props) {
+  const { saveWizardPreferences } = useUserPreferences();
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
   const [artists, setArtists] = useState<ArtistEntry[]>(ARTISTS_SEED);
   const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const goTo = useCallback((s: number) => {
     setDirection(s > step ? 1 : -1);
     setStep(s);
   }, [step]);
 
-  // Fetch Deezer photos when entering step 3
   useEffect(() => {
     if (step !== 3) return;
-
     const filtered = ARTISTS_SEED.filter((a) => a.genre.some((g) => selectedStyles.includes(g)));
     if (filtered.length === 0) return;
-
     const names = filtered.map((a) => a.name);
     setLoadingPhotos(true);
-
     supabase.functions
       .invoke("deezer-charts", { body: { action: "search-artists", artists: names } })
       .then(({ data }) => {
@@ -97,14 +85,18 @@ export default function PersonalizationWizard({ onComplete }: Props) {
       .finally(() => setLoadingPhotos(false));
   }, [step, selectedStyles]);
 
-  const handleSkip = () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ skipped: true, styles: [], artists: [] }));
+  const handleSkip = async () => {
+    setSaving(true);
+    await saveWizardPreferences([], [], true);
+    setSaving(false);
     onComplete();
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    setSaving(true);
     const chosen = artists.filter((a) => selectedArtists.includes(a.id));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ styles: selectedStyles, artists: chosen }));
+    await saveWizardPreferences(selectedStyles, chosen);
+    setSaving(false);
     onComplete();
   };
 
@@ -137,11 +129,9 @@ export default function PersonalizationWizard({ onComplete }: Props) {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", damping: 22, stiffness: 260 }}
       >
-        {/* Glow accents */}
         <div className="pointer-events-none absolute -top-24 -left-24 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -right-24 h-48 w-48 rounded-full bg-[hsl(310,80%,55%)]/20 blur-3xl" />
 
-        {/* Step dots */}
         <div className="flex justify-center gap-2 mb-6">
           {[1, 2, 3].map((s) => (
             <div
@@ -159,125 +149,55 @@ export default function PersonalizationWizard({ onComplete }: Props) {
 
         <AnimatePresence mode="wait" custom={direction}>
           {step === 1 && (
-            <motion.div
-              key="step1"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25 }}
-              className="flex flex-col items-center text-center gap-6"
-            >
+            <motion.div key="step1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="flex flex-col items-center text-center gap-6">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-[hsl(310,80%,55%)] shadow-lg">
                 <Sparkles className="h-8 w-8 text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold font-[family-name:var(--font-display)] text-foreground">
-                  O seu Estúdio, as suas Regras
-                </h2>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
-                  Queremos que o Smart Cifra tenha a sua cara. Personalize a sua aba Explorar com os seus estilos e cantores favoritos.
-                </p>
+                <h2 className="text-2xl font-bold font-[family-name:var(--font-display)] text-foreground">O seu Estúdio, as suas Regras</h2>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">Queremos que o Smart Cifra tenha a sua cara. Personalize a sua aba Explorar com os seus estilos e cantores favoritos.</p>
               </div>
               <div className="flex flex-col gap-3 w-full max-w-xs">
-                <button
-                  onClick={() => goTo(2)}
-                  className="w-full rounded-xl bg-gradient-to-r from-primary to-[hsl(310,80%,55%)] px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_hsl(195_100%_50%/0.3)] transition hover:shadow-[0_0_30px_hsl(195_100%_50%/0.5)] hover:scale-[1.02] active:scale-[0.98]"
-                >
+                <button onClick={() => goTo(2)} className="w-full rounded-xl bg-gradient-to-r from-primary to-[hsl(310,80%,55%)] px-6 py-3 text-sm font-semibold text-primary-foreground shadow-[0_0_20px_hsl(195_100%_50%/0.3)] transition hover:shadow-[0_0_30px_hsl(195_100%_50%/0.5)] hover:scale-[1.02] active:scale-[0.98]">
                   Personalizar Agora
                 </button>
-                <button
-                  onClick={handleSkip}
-                  className="w-full rounded-xl border border-border px-6 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground"
-                >
-                  Talvez Depois
+                <button onClick={handleSkip} disabled={saving} className="w-full rounded-xl border border-border px-6 py-3 text-sm font-medium text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-50">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Talvez Depois"}
                 </button>
               </div>
             </motion.div>
           )}
 
           {step === 2 && (
-            <motion.div
-              key="step2"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25 }}
-              className="flex flex-col gap-5"
-            >
+            <motion.div key="step2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="flex flex-col gap-5">
               <div className="text-center">
-                <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-foreground">
-                  Quais estilos você curte?
-                </h2>
+                <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-foreground">Quais estilos você curte?</h2>
                 <p className="mt-1 text-sm text-muted-foreground">Selecione pelo menos 1 estilo.</p>
               </div>
-
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {STYLES.map((style) => {
                   const active = selectedStyles.includes(style);
                   return (
-                    <button
-                      key={style}
-                      onClick={() => toggleStyle(style)}
-                      className={`relative rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-200 ${
-                        active
-                          ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_hsl(195_100%_50%/0.25)]"
-                          : "border-border bg-secondary/30 text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"
-                      }`}
-                      style={active ? { clipPath: "polygon(6% 0, 100% 0, 100% 85%, 94% 100%, 0 100%, 0 15%)" } : undefined}
-                    >
+                    <button key={style} onClick={() => toggleStyle(style)} className={`relative rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-200 ${active ? "border-primary bg-primary/10 text-primary shadow-[0_0_12px_hsl(195_100%_50%/0.25)]" : "border-border bg-secondary/30 text-muted-foreground hover:border-muted-foreground/40 hover:text-foreground"}`} style={active ? { clipPath: "polygon(6% 0, 100% 0, 100% 85%, 94% 100%, 0 100%, 0 15%)" } : undefined}>
                       {active && <Check className="absolute top-1.5 right-1.5 h-3.5 w-3.5 text-primary" />}
                       {style}
                     </button>
                   );
                 })}
               </div>
-
               <div className="flex justify-between pt-2">
-                <button
-                  onClick={() => goTo(1)}
-                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Voltar
-                </button>
-                <button
-                  onClick={() => goTo(3)}
-                  disabled={selectedStyles.length === 0}
-                  className="flex items-center gap-1 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  Avançar <ChevronRight className="h-4 w-4" />
-                </button>
+                <button onClick={() => goTo(1)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"><ChevronLeft className="h-4 w-4" /> Voltar</button>
+                <button onClick={() => goTo(3)} disabled={selectedStyles.length === 0} className="flex items-center gap-1 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed">Avançar <ChevronRight className="h-4 w-4" /></button>
               </div>
             </motion.div>
           )}
 
           {step === 3 && (
-            <motion.div
-              key="step3"
-              custom={direction}
-              variants={slideVariants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ duration: 0.25 }}
-              className="flex flex-col gap-5"
-            >
+            <motion.div key="step3" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.25 }} className="flex flex-col gap-5">
               <div className="text-center">
-                <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-foreground">
-                  Escolha seus artistas
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Selecionados:{" "}
-                  <span className="font-mono font-bold text-[hsl(310,80%,55%)]">
-                    {selectedArtists.length}
-                  </span>
-                  /10
-                </p>
+                <h2 className="text-xl font-bold font-[family-name:var(--font-display)] text-foreground">Escolha seus artistas</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Selecionados: <span className="font-mono font-bold text-[hsl(310,80%,55%)]">{selectedArtists.length}</span>/10</p>
               </div>
-
               {loadingPhotos ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -288,81 +208,39 @@ export default function PersonalizationWizard({ onComplete }: Props) {
                   {filteredArtists.map((artist) => {
                     const active = selectedArtists.includes(artist.id);
                     return (
-                      <button
-                        key={artist.id}
-                        onClick={() => toggleArtist(artist.id)}
-                        className="flex flex-col items-center gap-2 group"
-                      >
-                        <div
-                          className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 transition-all duration-200 ${
-                            active
-                              ? "border-[hsl(310,80%,55%)] shadow-[0_0_16px_hsl(310_80%_55%/0.4)]"
-                              : "border-border group-hover:border-muted-foreground/50"
-                          }`}
-                        >
+                      <button key={artist.id} onClick={() => toggleArtist(artist.id)} className="flex flex-col items-center gap-2 group">
+                        <div className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 transition-all duration-200 ${active ? "border-[hsl(310,80%,55%)] shadow-[0_0_16px_hsl(310_80%_55%/0.4)]" : "border-border group-hover:border-muted-foreground/50"}`}>
                           {artist.imageUrl ? (
-                            <img
-                              src={artist.imageUrl}
-                              alt={artist.name}
-                              className="h-full w-full object-cover"
-                              loading="lazy"
-                            />
+                            <img src={artist.imageUrl} alt={artist.name} className="h-full w-full object-cover" loading="lazy" />
                           ) : (
-                            <div className="h-full w-full bg-gradient-to-br from-secondary to-muted flex items-center justify-center text-lg font-bold text-muted-foreground">
-                              {artist.name.charAt(0)}
-                            </div>
+                            <div className="h-full w-full bg-gradient-to-br from-secondary to-muted flex items-center justify-center text-lg font-bold text-muted-foreground">{artist.name.charAt(0)}</div>
                           )}
                           {active && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="absolute inset-0 flex items-center justify-center bg-[hsl(310,80%,55%)]/40"
-                            >
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute inset-0 flex items-center justify-center bg-[hsl(310,80%,55%)]/40">
                               <Check className="h-6 w-6 text-primary-foreground drop-shadow" />
                             </motion.div>
                           )}
                         </div>
-                        <span
-                          className={`text-xs font-medium text-center leading-tight transition ${
-                            active ? "text-foreground" : "text-muted-foreground"
-                          }`}
-                        >
-                          {artist.name}
-                        </span>
+                        <span className={`text-xs font-medium text-center leading-tight transition ${active ? "text-foreground" : "text-muted-foreground"}`}>{artist.name}</span>
                       </button>
                     );
                   })}
                   {filteredArtists.length === 0 && (
-                    <p className="col-span-full text-center text-sm text-muted-foreground py-8">
-                      Nenhum artista encontrado para os estilos selecionados.
-                    </p>
+                    <p className="col-span-full text-center text-sm text-muted-foreground py-8">Nenhum artista encontrado para os estilos selecionados.</p>
                   )}
                 </div>
               )}
-
               <div className="flex justify-between pt-2">
-                <button
-                  onClick={() => goTo(2)}
-                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
-                >
-                  <ChevronLeft className="h-4 w-4" /> Voltar
-                </button>
-                <button
-                  onClick={handleFinish}
-                  className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-primary to-[hsl(310,80%,55%)] px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_16px_hsl(195_100%_50%/0.25)] transition hover:shadow-[0_0_24px_hsl(195_100%_50%/0.4)] hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  Concluir <Sparkles className="h-4 w-4" />
+                <button onClick={() => goTo(2)} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"><ChevronLeft className="h-4 w-4" /> Voltar</button>
+                <button onClick={handleFinish} disabled={saving} className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-primary to-[hsl(310,80%,55%)] px-5 py-2 text-sm font-semibold text-primary-foreground shadow-[0_0_16px_hsl(195_100%_50%/0.25)] transition hover:shadow-[0_0_24px_hsl(195_100%_50%/0.4)] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <><span>Concluir</span> <Sparkles className="h-4 w-4" /></>}
                 </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Close */}
-        <button
-          onClick={handleSkip}
-          className="absolute top-3 right-3 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition"
-        >
+        <button onClick={handleSkip} disabled={saving} className="absolute top-3 right-3 rounded-full p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary transition">
           <X className="h-4 w-4" />
         </button>
       </motion.div>

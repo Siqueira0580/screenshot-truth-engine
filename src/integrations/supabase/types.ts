@@ -239,31 +239,40 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           email: string | null
+          favorite_artists: Json | null
+          favorite_styles: string[] | null
           first_name: string | null
           id: string
           last_name: string | null
           phone: string | null
           preferred_instrument: string
+          wizard_completed: boolean
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          favorite_artists?: Json | null
+          favorite_styles?: string[] | null
           first_name?: string | null
           id: string
           last_name?: string | null
           phone?: string | null
           preferred_instrument?: string
+          wizard_completed?: boolean
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           email?: string | null
+          favorite_artists?: Json | null
+          favorite_styles?: string[] | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           phone?: string | null
           preferred_instrument?: string
+          wizard_completed?: boolean
         }
         Relationships: []
       }

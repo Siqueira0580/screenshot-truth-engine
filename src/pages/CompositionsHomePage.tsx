@@ -11,6 +11,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 interface Composition {
   id: string;
@@ -30,6 +31,7 @@ export default function CompositionsHomePage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -54,15 +56,21 @@ export default function CompositionsHomePage() {
       return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
     });
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDeleteClick = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const { error } = await supabase.from("compositions").delete().eq("id", id);
+    setDeleteTarget(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    const { error } = await supabase.from("compositions").delete().eq("id", deleteTarget);
     if (error) {
       toast.error("Erro ao apagar composição.");
     } else {
-      setCompositions((prev) => prev.filter((c) => c.id !== id));
+      setCompositions((prev) => prev.filter((c) => c.id !== deleteTarget));
       toast.success("Composição apagada.");
     }
+    setDeleteTarget(null);
   };
 
   return (
@@ -144,7 +152,7 @@ export default function CompositionsHomePage() {
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => handleDelete(comp.id, e)}
+                  onClick={(e) => handleDeleteClick(comp.id, e)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -166,6 +174,14 @@ export default function CompositionsHomePage() {
           ))}
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onConfirm={handleConfirmDelete}
+        title="Apagar Composição"
+        description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

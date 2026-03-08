@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, Loader2, Trash2, X, UserPlus, Eraser, Headphones, Play, Pause, Volume2 } from "lucide-react";
+import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, Loader2, Trash2, ArrowLeft, UserPlus, Eraser, Headphones, Pause, Volume2, Code, Eye } from "lucide-react";
 import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -42,6 +42,7 @@ export default function CompositionStudioPage() {
   const [rhymeResults, setRhymeResults] = useState<{ word: string; score: number }[]>([]);
   const [isLoadingRhymes, setIsLoadingRhymes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -474,23 +475,25 @@ export default function CompositionStudioPage() {
       {/* ─── Header ─── */}
       <header className="shrink-0 border-b border-border bg-card px-4 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          {/* Left: exit + title */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Button variant="outline" size="icon" onClick={handleExit} title="Salvar e sair">
-              <X className="h-5 w-5" />
+          {/* Left: exit + title column */}
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <Button variant="ghost" size="icon" onClick={handleExit} className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nome da Composição..."
-              className="bg-transparent text-xl font-bold placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-foreground"
-            />
-            <input
-              value={composers}
-              onChange={(e) => setComposers(e.target.value)}
-              placeholder="Compositores..."
-              className="bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-muted-foreground"
-            />
+            <div className="flex flex-col flex-1 min-w-0">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Nome da Composição..."
+                className="bg-transparent text-xl font-bold placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-foreground"
+              />
+              <input
+                value={composers}
+                onChange={(e) => setComposers(e.target.value)}
+                placeholder="Compositores..."
+                className="bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-muted-foreground mt-0.5"
+              />
+            </div>
           </div>
 
           {/* Center: filters — SINGLE tone button + BPM + style */}
@@ -825,21 +828,35 @@ export default function CompositionStudioPage() {
             </div>
           )}
 
-          {/* Editable textarea */}
-          <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
-            <textarea
-              value={editorText}
-              onChange={(e) => { if (!isActiveRecording) setEditorText(e.target.value); }}
-              readOnly={isActiveRecording}
-              placeholder="Comece a digitar sua composição ou clique no botão de microfone..."
-              className="w-full h-96 bg-transparent text-foreground font-mono resize-none focus:outline-none placeholder:text-muted-foreground text-base leading-relaxed"
-            />
+          {/* Toggle Editor / Preview button */}
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowEditor(!showEditor)}
+            >
+              {showEditor ? <Eye className="h-4 w-4" /> : <Code className="h-4 w-4" />}
+              {showEditor ? "Ver Cifra" : "Editar Cifra / Letra"}
+            </Button>
           </div>
 
-          {/* ChordPro rendered preview */}
-          {displayText && (
-            <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono mt-4">
-              <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Pré-visualização</p>
+          {/* Editable textarea — shown when showEditor is true OR no content */}
+          {(showEditor || !editorText.trim()) && (
+            <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
+              <textarea
+                value={editorText}
+                onChange={(e) => { if (!isActiveRecording) setEditorText(e.target.value); }}
+                readOnly={isActiveRecording}
+                placeholder="Comece a digitar sua composição ou clique no botão de microfone..."
+                className="w-full h-96 bg-transparent text-foreground font-mono resize-none focus:outline-none placeholder:text-muted-foreground text-base leading-relaxed"
+              />
+            </div>
+          )}
+
+          {/* ChordPro rendered preview — always visible when there's content and editor is hidden */}
+          {displayText && !showEditor && (
+            <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono">
               {parsedLines?.map((tokens, lineIdx) => (
                 <div key={lineIdx} className="flex flex-wrap items-end mb-4">
                   {tokens.map((token, i) => (

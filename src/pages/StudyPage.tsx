@@ -20,7 +20,7 @@ import { useChordProParser } from "@/hooks/useChordProParser";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SongChordsFAB from "@/components/SongChordsFAB";
-import SongFormDialog from "@/components/SongFormDialog";
+import QuickEditLyricsModal from "@/components/QuickEditLyricsModal";
 
 const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
@@ -523,7 +523,7 @@ export default function StudyPage() {
       </div>
 
       <ChordModal chord={selectedChord} open={chordModalOpen} onClose={() => setChordModalOpen(false)} />
-      <SongFormDialog open={editFormOpen} onOpenChange={setEditFormOpen} songId={songId} />
+      <QuickEditLyricsModal open={editFormOpen} onOpenChange={setEditFormOpen} songId={songId!} songTitle={song?.title || ""} bodyText={song?.body_text || null} />
       <SongChordsFAB bodyText={displayBody} />
     </div>
   );

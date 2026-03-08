@@ -445,9 +445,6 @@ export default function CompositionStudioPage() {
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
         { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
       );
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
-        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
-      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const filtered = (data as { word: string; score: number }[])

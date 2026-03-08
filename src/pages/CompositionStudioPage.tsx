@@ -828,21 +828,35 @@ export default function CompositionStudioPage() {
             </div>
           )}
 
-          {/* Editable textarea */}
-          <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
-            <textarea
-              value={editorText}
-              onChange={(e) => { if (!isActiveRecording) setEditorText(e.target.value); }}
-              readOnly={isActiveRecording}
-              placeholder="Comece a digitar sua composição ou clique no botão de microfone..."
-              className="w-full h-96 bg-transparent text-foreground font-mono resize-none focus:outline-none placeholder:text-muted-foreground text-base leading-relaxed"
-            />
+          {/* Toggle Editor / Preview button */}
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShowEditor(!showEditor)}
+            >
+              {showEditor ? <Eye className="h-4 w-4" /> : <Code className="h-4 w-4" />}
+              {showEditor ? "Ver Cifra" : "Editar Cifra / Letra"}
+            </Button>
           </div>
 
-          {/* ChordPro rendered preview */}
-          {displayText && (
-            <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono mt-4">
-              <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wider">Pré-visualização</p>
+          {/* Editable textarea — shown when showEditor is true OR no content */}
+          {(showEditor || !editorText.trim()) && (
+            <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono min-h-[300px]">
+              <textarea
+                value={editorText}
+                onChange={(e) => { if (!isActiveRecording) setEditorText(e.target.value); }}
+                readOnly={isActiveRecording}
+                placeholder="Comece a digitar sua composição ou clique no botão de microfone..."
+                className="w-full h-96 bg-transparent text-foreground font-mono resize-none focus:outline-none placeholder:text-muted-foreground text-base leading-relaxed"
+              />
+            </div>
+          )}
+
+          {/* ChordPro rendered preview — always visible when there's content and editor is hidden */}
+          {displayText && !showEditor && (
+            <div className="rounded-xl border border-border bg-secondary/30 p-6 font-mono">
               {parsedLines?.map((tokens, lineIdx) => (
                 <div key={lineIdx} className="flex flex-wrap items-end mb-4">
                   {tokens.map((token, i) => (

@@ -98,13 +98,30 @@ Para detected_key: analise a progressão de acordes que você inseriu e deduza o
     }
 
     const aiData = await aiResponse.json();
-    const transcription: string =
+    const rawContent: string =
       aiData.choices?.[0]?.message?.content?.trim() ?? "";
 
-    console.log("Transcription result:", transcription.substring(0, 100));
+    console.log("Raw AI response:", rawContent.substring(0, 200));
+
+    // Parse JSON response from AI
+    let transcription = "";
+    let detected_key: string | null = null;
+    try {
+      // Strip markdown code fences if present
+      const cleanJson = rawContent.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+      const parsed = JSON.parse(cleanJson);
+      transcription = parsed.transcription?.trim() ?? "";
+      detected_key = parsed.detected_key || null;
+    } catch {
+      // Fallback: treat entire response as plain transcription text
+      console.log("Could not parse JSON, using raw text as transcription");
+      transcription = rawContent;
+    }
+
+    console.log("Transcription result:", transcription.substring(0, 100), "Detected key:", detected_key);
 
     return new Response(
-      JSON.stringify({ transcription }),
+      JSON.stringify({ transcription, detected_key }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (error) {

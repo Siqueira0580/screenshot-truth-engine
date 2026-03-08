@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano, Guitar,
-  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch, BookOpen,
+  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch, BookOpen, AudioLines,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,9 @@ export default function StudioDetailPage() {
     vocals: false, percussion: false, harmony: false, guitar: false,
   });
   const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({
+    vocals: false, percussion: false, harmony: false, guitar: false,
+  });
+  const [gateStems, setGateStems] = useState<Record<StemType, boolean>>({
     vocals: false, percussion: false, harmony: false, guitar: false,
   });
   const [uploadingNew, setUploadingNew] = useState(false);
@@ -471,10 +474,13 @@ export default function StudioDetailPage() {
         <div className="p-4 rounded-xl bg-card border border-border">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mixer — Stems</h3>
-            {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
+            {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean) || Object.values(gateStems).some(Boolean)) && (
               <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
                 setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
                 setSoloStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                setGateStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                // Disable all gates on engine
+                (["vocals", "percussion", "harmony", "guitar"] as StemType[]).forEach(t => engineRef.current?.setGateEnabled(t, false));
               }}>
                 Reset
               </Button>
@@ -512,6 +518,19 @@ export default function StudioDetailPage() {
                     <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-6 px-2 text-[10px] font-bold"
                       onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
                       <Star className="h-3 w-3 mr-1" /> S
+                    </Button>
+                    <Button
+                      variant={gateStems[type] ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 px-2 text-[10px] font-bold"
+                      title="Limpar Ruído (Noise Gate)"
+                      onClick={() => {
+                        const next = !gateStems[type];
+                        setGateStems(prev => ({ ...prev, [type]: next }));
+                        engineRef.current?.setGateEnabled(type, next);
+                      }}
+                    >
+                      <AudioLines className="h-3 w-3 mr-1" /> G
                     </Button>
                   </div>
                   <Slider value={[stemVols[type]]} max={100} step={1}

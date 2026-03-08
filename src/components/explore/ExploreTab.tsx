@@ -11,7 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 export default function ExploreTab() {
   const [category, setCategory] = useState("Todos");
-  const { data: tracks = [], isLoading, isError } = useTopCharts();
+  const { data: tracks = [], isLoading, isError } = useTopCharts(category);
   const queryClient = useQueryClient();
 
   const handleAddSong = (track: DeezerTrack) => {
@@ -27,8 +27,7 @@ export default function ExploreTab() {
             });
             queryClient.invalidateQueries({ queryKey: ["songs"] });
             toast.success(`"${track.title}" adicionada à biblioteca!`);
-            console.log("TODO: buscar cifra para", track.title, track.artist.name);
-          } catch (err) {
+          } catch {
             toast.error("Erro ao adicionar música");
           }
         },
@@ -36,28 +35,25 @@ export default function ExploreTab() {
     });
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
-      </div>
-    );
-  }
-
-  if (isError || tracks.length === 0) {
-    return (
-      <div className="text-center py-20 text-slate-500">
-        <p>Não foi possível carregar os destaques. Tente novamente mais tarde.</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       <CategoryPills selected={category} onSelect={setCategory} />
-      <HeroCarousel tracks={tracks} onAddSong={handleAddSong} />
-      <TopChartsList tracks={tracks} onAddSong={handleAddSong} />
-      <FeaturedArtists tracks={tracks} />
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+        </div>
+      ) : isError || tracks.length === 0 ? (
+        <div className="text-center py-20 text-slate-500">
+          <p>Não foi possível carregar os destaques. Tente novamente mais tarde.</p>
+        </div>
+      ) : (
+        <>
+          <HeroCarousel tracks={tracks} onAddSong={handleAddSong} />
+          <TopChartsList tracks={tracks} onAddSong={handleAddSong} />
+          <FeaturedArtists tracks={tracks} />
+        </>
+      )}
     </div>
   );
 }

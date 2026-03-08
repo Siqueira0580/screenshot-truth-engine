@@ -154,50 +154,50 @@ export default function SetlistsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredAndSorted.map((sl: any, i) => (
             <Link
               key={sl.id}
               to={`/setlists/${sl.id}`}
-              className="group relative rounded-lg border border-border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-lg animate-fade-in"
+              className="group relative rounded-lg border border-border bg-card p-3 sm:p-4 transition-all hover:border-primary/30 hover:shadow-lg animate-fade-in overflow-hidden"
               style={{ animationDelay: `${i * 50}ms` }}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-lg truncate">{sl.name}</h3>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2">{sl.name}</h3>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
+                      <Calendar className="h-3 w-3 shrink-0" />
                       {sl.show_date
                         ? format(new Date(sl.show_date), "dd/MM/yyyy")
                         : format(new Date(sl.created_at), "dd/MM/yyyy")}
                     </span>
                     {sl.start_time && (
                       <span className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5" />
+                        <Clock className="h-3 w-3 shrink-0" />
                         {sl.start_time}{sl.end_time && ` - ${sl.end_time}`}
                       </span>
                     )}
                     {sl.show_duration && (
-                      <Badge variant="outline" className="text-xs font-normal h-5">
+                      <Badge variant="outline" className="text-[10px] font-normal h-4 px-1.5">
                         {sl.show_duration}min
                       </Badge>
                     )}
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1 text-[11px] text-muted-foreground">
                     <span>Criado: {format(new Date(sl.created_at), "dd/MM/yyyy", { locale: ptBR })}</span>
                     {sl.updated_at && sl.updated_at !== sl.created_at && (
                       <span className="flex items-center gap-1">
-                        <RefreshCw className="h-3 w-3" />
+                        <RefreshCw className="h-2.5 w-2.5" />
                         {formatDaysAgo(sl.updated_at)}
                       </span>
                     )}
                   </div>
 
                   {sl.musicians && (sl.musicians as string[]).length > 0 && (
-                    <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                      <Users className="h-3 w-3" />
+                    <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground">
+                      <Users className="h-2.5 w-2.5 shrink-0" />
                       <span className="truncate">{(sl.musicians as string[]).join(", ")}</span>
                     </div>
                   )}
@@ -205,13 +205,13 @@ export default function SetlistsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="shrink-0"
+                  className="shrink-0 h-7 w-7"
                   onClick={(e) => {
                     e.preventDefault();
                     setDeleteTarget(sl.id);
                   }}
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
                 </Button>
               </div>
             </Link>

@@ -51,13 +51,13 @@ export default function StudioDetailPage() {
   const [pitch, setPitch] = useState(0);
   const [masterVol, setMasterVol] = useState(80);
   const [stemVols, setStemVols] = useState<Record<StemType, number>>({
-    full: 100, vocals: 100, percussion: 100, harmony: 100,
+    vocals: 100, percussion: 100, harmony: 100, guitar: 100,
   });
   const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({
-    full: false, vocals: false, percussion: false, harmony: false,
+    vocals: false, percussion: false, harmony: false, guitar: false,
   });
   const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({
-    full: false, vocals: false, percussion: false, harmony: false,
+    vocals: false, percussion: false, harmony: false, guitar: false,
   });
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);

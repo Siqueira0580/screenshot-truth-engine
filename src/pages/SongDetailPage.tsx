@@ -259,18 +259,19 @@ export default function SongDetailPage() {
 
       {/* AI Cipher (priority) */}
       {aiChordPro && (
-        <div className="rounded-lg border border-border bg-card p-6 space-y-3">
+        <div className="rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3">
           <AutoCipherViewer
             chordProText={transposeChordPro(aiChordPro, transpose)}
             onSave={handleSaveChordPro}
           />
           <Button
             variant="default"
+            size="sm"
             onClick={() => setConfirmSaveAsDefault(true)}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
           >
             <Save className="h-4 w-4" />
-            Salvar como Cifra Padrão
+            Salvar como Padrão
           </Button>
         </div>
       )}

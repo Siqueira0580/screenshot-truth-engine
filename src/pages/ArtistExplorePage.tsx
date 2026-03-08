@@ -321,6 +321,24 @@ export default function ArtistExplorePage() {
               )}
             </Button>
           </div>
+          {/* PDF Upload */}
+          <div className="mt-3 flex items-center gap-2">
+            <input ref={sheetPdfInputRef} type="file" accept=".pdf" className="hidden" onChange={handleSheetPdfUpload} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => sheetPdfInputRef.current?.click()}
+              disabled={uploadingSheetPdf}
+              className="gap-2 text-xs font-semibold border-primary/20 hover:border-primary/40"
+            >
+              {uploadingSheetPdf ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileText className="h-3.5 w-3.5" />
+              )}
+              Upload PDF de Partitura
+            </Button>
+          </div>
         </motion.div>
       )}
 

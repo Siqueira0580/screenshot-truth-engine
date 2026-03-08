@@ -487,7 +487,7 @@ export default function StudioDetailPage() {
               </Button>
             )}
           </div>
-          <div className={cn("grid gap-4", hasSeparatedStems ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 max-w-xs")}>
+          <div className={cn("grid gap-4 w-full", hasSeparatedStems ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 max-w-xs")}>
             {STEM_DISPLAY.map(({ type, label, icon: Icon, color }) => {
               const colMap: Record<StemType, keyof AudioTrack> = {
                 vocals: "file_vocals", percussion: "file_percussion",

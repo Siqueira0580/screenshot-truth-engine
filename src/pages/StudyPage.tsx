@@ -20,6 +20,7 @@ import { useChordProParser } from "@/hooks/useChordProParser";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SongChordsFAB from "@/components/SongChordsFAB";
+import SongFormDialog from "@/components/SongFormDialog";
 
 const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 
@@ -156,6 +157,7 @@ export default function StudyPage() {
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
   const [showMixer, setShowMixer] = useState(false);
+  const [editFormOpen, setEditFormOpen] = useState(false);
 
   const { data: song } = useQuery({ queryKey: ["song", songId], queryFn: () => fetchSong(songId!), enabled: !!songId });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
@@ -300,7 +302,7 @@ export default function StudyPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/songs/${songId}`)} className="shrink-0" title="Editar Música">
+          <Button variant="ghost" size="icon" onClick={() => setEditFormOpen(true)} className="shrink-0" title="Editar Música">
             <Edit3 className="h-4 w-4" />
           </Button>
           {displayKey && (
@@ -521,6 +523,7 @@ export default function StudyPage() {
       </div>
 
       <ChordModal chord={selectedChord} open={chordModalOpen} onClose={() => setChordModalOpen(false)} />
+      <SongFormDialog open={editFormOpen} onOpenChange={setEditFormOpen} songId={songId} />
       <SongChordsFAB bodyText={displayBody} />
     </div>
   );

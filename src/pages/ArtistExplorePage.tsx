@@ -1,13 +1,13 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Music, Download, Loader2, Play, Compass, Disc3 } from "lucide-react";
+import { ArrowLeft, Music, Download, Loader2, Play, Compass, Disc3, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { findOrCreateArtist } from "@/lib/supabase-queries";
+import { findOrCreateArtist, createSong } from "@/lib/supabase-queries";
 import type { Database } from "@/integrations/supabase/types";
 
 type Song = Database["public"]["Tables"]["songs"]["Row"];
@@ -23,6 +23,8 @@ export default function ArtistExplorePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [importUrl, setImportUrl] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [uploadingSheetPdf, setUploadingSheetPdf] = useState(false);
+  const sheetPdfInputRef = useRef<HTMLInputElement>(null);
 
   const fetchSongs = useCallback(() => {
     if (!decodedName) return;
@@ -91,6 +93,48 @@ export default function ArtistExplorePage() {
       toast.error(err.message || "Erro ao importar. Tente novamente.");
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const handleSheetPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== "application/pdf") {
+      toast.error("Selecione um arquivo PDF válido");
+      return;
+    }
+    setUploadingSheetPdf(true);
+    try {
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: uploadError } = await supabase.storage
+        .from("sheet_music")
+        .upload(fileName, file, { contentType: "application/pdf" });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
+      const title = file.name.replace(/\.pdf$/i, "").trim();
+
+      await createSong({
+        title,
+        artist: decodedName,
+        composer: null,
+        musical_key: null,
+        style: null,
+        bpm: null,
+        time_signature: "4/4",
+        body_text: null,
+        pdf_url: urlData.publicUrl,
+      } as any);
+
+      try { await findOrCreateArtist(decodedName, artistPhoto || undefined); } catch {}
+
+      toast.success("PDF de partitura enviado com sucesso!");
+      setImportUrl("");
+      fetchSongs();
+    } catch (err: any) {
+      toast.error("Erro ao enviar PDF: " + (err.message || "Tente novamente"));
+    } finally {
+      setUploadingSheetPdf(false);
+      if (sheetPdfInputRef.current) sheetPdfInputRef.current.value = "";
     }
   };
 
@@ -275,6 +319,24 @@ export default function ArtistExplorePage() {
                   <Download className="h-4 w-4 mr-1.5" /> Importar
                 </>
               )}
+            </Button>
+          </div>
+          {/* PDF Upload */}
+          <div className="mt-3 flex items-center gap-2">
+            <input ref={sheetPdfInputRef} type="file" accept=".pdf" className="hidden" onChange={handleSheetPdfUpload} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => sheetPdfInputRef.current?.click()}
+              disabled={uploadingSheetPdf}
+              className="gap-2 text-xs font-semibold border-primary/20 hover:border-primary/40"
+            >
+              {uploadingSheetPdf ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileText className="h-3.5 w-3.5" />
+              )}
+              Upload PDF de Partitura
             </Button>
           </div>
         </motion.div>

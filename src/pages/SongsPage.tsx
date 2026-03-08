@@ -170,11 +170,11 @@ export default function SongsPage() {
   }, [songs, search, sortMode]);
 
   return (
-    <div className="space-y-4 w-full overflow-hidden">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Músicas</h1>
-          <p className="text-muted-foreground mt-1">{songs.length} música{songs.length !== 1 ? "s" : ""} na biblioteca</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Músicas</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{songs.length} música{songs.length !== 1 ? "s" : ""} na biblioteca</p>
         </div>
       </div>
 
@@ -184,39 +184,39 @@ export default function SongsPage() {
           <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="library" className="space-y-4 mt-4">
-          <div className="flex items-center gap-2 justify-end flex-wrap">
+        <TabsContent value="library" className="space-y-3 mt-3">
+          <div className="flex items-center gap-1.5 justify-end flex-wrap">
             <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
             <input ref={sheetPdfInputRef} type="file" accept=".pdf" className="hidden" onChange={handleSheetPdfUpload} />
-            <Button variant="outline" onClick={() => sheetPdfInputRef.current?.click()} disabled={uploadingSheetPdf} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              {uploadingSheetPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="h-4 w-4" /><span className="hidden md:inline">Upload PDF</span></>}
+            <Button variant="outline" onClick={() => sheetPdfInputRef.current?.click()} disabled={uploadingSheetPdf} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              {uploadingSheetPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="h-4 w-4" /><span className="hidden md:inline text-xs">Upload PDF</span></>}
             </Button>
-            <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline">Importar PDFs</span></>)}
+            <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline text-xs">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline text-xs">Importar PDFs</span></>)}
             </Button>
-            <Button variant="outline" onClick={() => setImportLinkOpen(true)} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              <Link2 className="h-4 w-4" /><span className="hidden md:inline">Importar Link</span>
+            <Button variant="outline" onClick={() => setImportLinkOpen(true)} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              <Link2 className="h-4 w-4" /><span className="hidden md:inline text-xs">Link</span>
             </Button>
-            <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="md:w-auto md:px-4 md:gap-2">
-              <Plus className="h-4 w-4" /><span className="hidden md:inline">Nova Música</span>
+            <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+              <Plus className="h-4 w-4" /><span className="hidden md:inline text-xs">Nova</span>
             </Button>
           </div>
 
           {/* Search + Sort */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[180px]">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
             </div>
             <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-              <SelectTrigger className="w-[200px] bg-background/50 border-primary/20">
+              <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Adicionadas Recentemente</SelectItem>
+                <SelectItem value="recent">Recentes</SelectItem>
                 <SelectItem value="oldest">Mais Antigas</SelectItem>
-                <SelectItem value="az">Alfabética (A-Z)</SelectItem>
-                <SelectItem value="za">Alfabética (Z-A)</SelectItem>
+                <SelectItem value="az">A-Z</SelectItem>
+                <SelectItem value="za">Z-A</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -232,28 +232,27 @@ export default function SongsPage() {
           ) : (
             <div className="grid gap-2">
               {filtered.map((song, i) => (
-                <div key={song.id} className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30 animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">{i + 1}</div>
+                <div key={song.id} className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 sm:p-4 transition-colors hover:border-primary/30 animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-xs sm:text-sm font-bold">{i + 1}</div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold truncate">{song.title}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-semibold text-sm sm:text-base truncate">{song.title}</p>
                       {(song as any).pdf_url && (
                         <span className="shrink-0 text-red-500" title="Partitura PDF">
-                          <FileText className="h-4 w-4" />
+                          <FileText className="h-3.5 w-3.5" />
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                      {song.artist && <span>{song.artist}</span>}
-                      {song.musical_key && <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">{song.musical_key}</span>}
-                      {song.bpm && <span>{song.bpm} BPM</span>}
-                      {song.style && <span>{song.style}</span>}
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
+                      {song.artist && <span className="truncate max-w-[120px] sm:max-w-none">{song.artist}</span>}
+                      {song.musical_key && <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-mono font-medium text-secondary-foreground">{song.musical_key}</span>}
+                      {song.bpm && <span className="hidden sm:inline">{song.bpm} BPM</span>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" asChild><Link to={`/songs/${song.id}`}><Eye className="h-4 w-4" /></Link></Button>
-                    <Button variant="ghost" size="icon" onClick={() => { setEditingSong(song.id); setFormOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(song.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <div className="flex items-center gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link to={`/songs/${song.id}`}><Eye className="h-4 w-4" /></Link></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:inline-flex" onClick={() => { setEditingSong(song.id); setFormOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(song.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                   </div>
                 </div>
               ))}

@@ -175,51 +175,52 @@ export default function SongDetailPage() {
 
 
   return (
-    <div className="max-w-4xl space-y-6 animate-fade-in">
-      <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+    <div className="max-w-4xl space-y-4 sm:space-y-6 animate-fade-in overflow-x-hidden">
+      <Button type="button" variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate(-1)}>
         <ArrowLeft className="h-4 w-4" />
         Voltar
       </Button>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-4xl font-bold tracking-tight">{song.title}</h1>
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">{song.title}</h1>
+          <div className="flex items-center gap-2 shrink-0">
             {song.body_text && (
               <Button
                 variant="outline"
+                size="sm"
                 onClick={handleGenerateCipher}
                 disabled={generating}
-                className="gap-2"
+                className="gap-1.5 text-xs sm:text-sm"
               >
                 {generating ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Wand2 className="h-4 w-4" />
                 )}
-                {generating ? "Gerando..." : aiChordPro ? "Regerar Cifra IA" : "Gerar Cifra IA"}
+                <span className="hidden sm:inline">{generating ? "Gerando..." : aiChordPro ? "Regerar Cifra IA" : "Gerar Cifra IA"}</span>
+                <span className="sm:hidden">{generating ? "..." : "Cifra IA"}</span>
               </Button>
             )}
             {song.body_text && (
-              <ShowButton onClick={() => setTeleprompterOpen(true)} />
+              <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
             )}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
           {song.artist && (
             <span className="flex items-center gap-1">
-              <Music2 className="h-4 w-4" />
+              <Music2 className="h-3.5 w-3.5" />
               {song.artist}
             </span>
           )}
-          {song.composer && <span>Compositor: {song.composer}</span>}
           {displayKey && (
-            <span className="rounded bg-primary/10 px-2 py-0.5 text-sm font-mono font-semibold text-primary">
+            <span className="rounded bg-primary/10 px-2 py-0.5 font-mono font-semibold text-primary text-xs">
               Tom: {displayKey}
             </span>
           )}
           {song.bpm && <span>{song.bpm} BPM</span>}
-          {song.style && <span>{song.style}</span>}
+          {song.style && <span className="hidden sm:inline">{song.style}</span>}
         </div>
       </div>
 
@@ -258,18 +259,19 @@ export default function SongDetailPage() {
 
       {/* AI Cipher (priority) */}
       {aiChordPro && (
-        <div className="rounded-lg border border-border bg-card p-6 space-y-3">
+        <div className="rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3">
           <AutoCipherViewer
             chordProText={transposeChordPro(aiChordPro, transpose)}
             onSave={handleSaveChordPro}
           />
           <Button
             variant="default"
+            size="sm"
             onClick={() => setConfirmSaveAsDefault(true)}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
           >
             <Save className="h-4 w-4" />
-            Salvar como Cifra Padrão
+            Salvar como Padrão
           </Button>
         </div>
       )}
@@ -294,10 +296,10 @@ export default function SongDetailPage() {
 
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg border border-border bg-card p-3 sm:p-6">
           <ChordText
             text={displayBody}
-            className="chord-text whitespace-pre-wrap font-mono text-sm leading-7 text-foreground"
+            className="chord-text whitespace-pre-wrap font-mono text-xs sm:text-sm leading-6 sm:leading-7 text-foreground"
           />
         </div>
       )}

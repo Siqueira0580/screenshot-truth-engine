@@ -61,19 +61,19 @@ export default function StudioPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 overflow-x-hidden">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Estúdio de Ensaio</h1>
-        <p className="text-muted-foreground mt-1">Player multitrack com mixer e transposição</p>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Estúdio de Ensaio</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">Player multitrack com mixer e transposição</p>
       </div>
 
       {/* Search + Upload */}
-      <div className="flex gap-2 max-w-md">
+      <div className="flex gap-2 w-full">
         <Input
           placeholder="Buscar música..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="h-9 flex-1"
+          className="h-9 flex-1 min-w-0 text-sm"
         />
         <input
           ref={newAudioRef}
@@ -88,12 +88,12 @@ export default function StudioPage() {
         />
         <Button
           size="sm"
-          className="h-9 gap-1.5"
+          className="h-9 gap-1.5 shrink-0"
           disabled={uploadingNew}
           onClick={() => newAudioRef.current?.click()}
         >
           {uploadingNew ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-          Novo
+          <span className="hidden sm:inline">Novo</span>
         </Button>
       </div>
 

@@ -5,7 +5,7 @@ import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp, Link2, FileTe
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchUserLibrary, removeFromUserLibrary, createSongAndAddToLibrary, findOrCreateArtist, addToUserLibrary } from "@/lib/supabase-queries";
+import { fetchUserLibrary, removeFromUserLibrary, createSongAndAddToLibrary, findOrCreateArtist } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";

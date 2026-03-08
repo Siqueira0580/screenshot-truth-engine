@@ -177,7 +177,7 @@ export default function CompositionsHomePage() {
 
       <ConfirmDeleteModal
         open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
         onConfirm={handleConfirmDelete}
         title="Apagar Composição"
         description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."

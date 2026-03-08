@@ -451,7 +451,7 @@ export default function StudioDetailPage() {
                   </span>
                 )}
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPitch(p => p - 1)}>
                   <ChevronDown className="h-3.5 w-3.5" />
                 </Button>

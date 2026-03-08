@@ -1,4 +1,4 @@
-import { BadgeCheck, Play } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import type { DeezerTrack } from "@/hooks/useTopCharts";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 

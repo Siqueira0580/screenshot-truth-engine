@@ -604,30 +604,32 @@ export default function CompositionStudioPage() {
             </Select>
           </div>
 
-          {/* Right: actions */}
+          {/* Right: share dropdown */}
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setShowClearModal(true)} title="Limpar prancheta">
-              <Eraser className="h-4 w-4" />
-              Limpar
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {isSaving ? "Salvando..." : compositionId ? "Salvar" : "Salvar Composição"}
-            </Button>
-            <Button size="sm" className="gap-1.5" variant="secondary" onClick={handleExportToStudio} disabled={isExporting}>
-              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileOutput className="h-4 w-4" />}
-              {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
-            </Button>
-            {/* Invite — only for owner */}
             {isOwner && compositionId && (
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowInviteModal(true)}>
-                <UserPlus className="h-4 w-4" /> Convidar
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Share2 className="h-4 w-4" />
+                    Compartilhar
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowInviteModal(true)} className="gap-2 cursor-pointer">
+                    <UserPlus className="h-4 w-4" />
+                    Convidar Parceiro
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportToStudio} disabled={isExporting} className="gap-2 cursor-pointer">
+                    <Headphones className="h-4 w-4" />
+                    {isExporting ? "Exportando..." : "Enviar para o Estúdio"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-            {/* Delete — only for owner */}
-            {isOwner && compositionId && (
-              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setShowDeleteModal(true)}>
-                <Trash2 className="h-4 w-4" /> Excluir
+            {!isOwner && (
+              <Button size="sm" className="gap-1.5" variant="secondary" onClick={handleExportToStudio} disabled={isExporting}>
+                {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Headphones className="h-4 w-4" />}
+                {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
               </Button>
             )}
           </div>

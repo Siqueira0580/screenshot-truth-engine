@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, Loader2, Trash2, FileOutput, X, UserPlus, Eraser, Headphones } from "lucide-react";
+import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, Loader2, Trash2, FileOutput, X, UserPlus, Eraser, Headphones, Play, Pause } from "lucide-react";
 import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
@@ -640,101 +640,117 @@ export default function CompositionStudioPage() {
       <div className="flex-1 flex overflow-hidden relative">
         {/* Editor – 70% */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 relative">
-          {/* ─── Floating Action Bar ─── */}
+          {/* ─── Horizontal Toolbar above editor ─── */}
           <TooltipProvider delayDuration={200}>
-            <div className="absolute right-4 lg:right-8 top-4 z-10 flex flex-col gap-3 rounded-full bg-card/60 backdrop-blur-md border border-border p-2 shadow-lg">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left"><p>Salvar</p></TooltipContent>
-              </Tooltip>
+            <div className="flex items-center justify-between mb-4">
+              {/* ─── Circular Record Control ─── */}
+              <div className="flex items-center gap-3">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={handleRecordToggle}
+                      disabled={isProcessing || isTranscribing}
+                      className={cn(
+                        "relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 focus:outline-none",
+                        isRecording
+                          ? "bg-destructive/20 border-2 border-destructive shadow-[0_0_20px_hsl(var(--destructive)/0.4)] animate-pulse"
+                          : isTranscribing || isProcessing
+                            ? "bg-muted border-2 border-border cursor-not-allowed"
+                            : "bg-primary/10 border-2 border-primary/50 shadow-[0_0_16px_hsl(var(--primary)/0.25)] hover:shadow-[0_0_24px_hsl(var(--primary)/0.45)] hover:scale-105 active:scale-95"
+                      )}
+                    >
+                      {isRecording ? (
+                        <Pause className="h-6 w-6 text-destructive" />
+                      ) : isTranscribing || isProcessing ? (
+                        <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
+                      ) : (
+                        <Mic className="h-6 w-6 text-primary" />
+                      )}
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <p>{isRecording ? "Pausar gravação" : isTranscribing ? "A transcrever..." : "Gravar ideia"}</p>
+                  </TooltipContent>
+                </Tooltip>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                    onClick={() => setShowClearModal(true)}
-                  >
-                    <Eraser className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left"><p>Limpar</p></TooltipContent>
-              </Tooltip>
+                {isRecording && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={handleRecordToggle}
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10 border border-destructive/40 text-destructive hover:bg-destructive/20 transition-all"
+                      >
+                        <Square className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><p>Parar gravação</p></TooltipContent>
+                  </Tooltip>
+                )}
 
-              {isOwner && compositionId && (
+                {isRecording && (
+                  <span className="text-sm font-medium text-destructive animate-pulse">Compondo...</span>
+                )}
+                {isTranscribing && (
+                  <span className="text-sm font-medium text-muted-foreground">IA a transcrever...</span>
+                )}
+
+                {isRecording && currentNote && (
+                  <div className="flex items-center gap-1.5 ml-2 animate-pulse">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Nota:</span>
+                    <span className="text-lg font-mono font-black text-primary">{currentNote}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Right: editor tool icons */}
+              <div className="flex items-center gap-1">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/20 transition-all"
-                      onClick={() => setShowDeleteModal(true)}
+                      className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all"
+                      onClick={handleSave}
+                      disabled={isSaving}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent side="left"><p>Excluir</p></TooltipContent>
+                  <TooltipContent side="bottom"><p>Salvar</p></TooltipContent>
                 </Tooltip>
-              )}
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                      onClick={() => setShowClearModal(true)}
+                    >
+                      <Eraser className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom"><p>Limpar</p></TooltipContent>
+                </Tooltip>
+
+                {isOwner && compositionId && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/20 transition-all"
+                        onClick={() => setShowDeleteModal(true)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><p>Excluir</p></TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </TooltipProvider>
-          {/* Record button + current note */}
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <button
-              onClick={handleRecordToggle}
-              disabled={isProcessing || isTranscribing}
-              className={cn(
-                "inline-flex items-center gap-3 rounded-2xl px-8 py-4 text-lg font-bold uppercase tracking-wider text-primary-foreground",
-                "transition-all duration-300",
-                isRecording
-                  ? "bg-destructive shadow-[0_0_30px_hsl(var(--destructive)/0.5)] animate-pulse"
-                  : (isProcessing || isTranscribing)
-                    ? "bg-muted text-muted-foreground cursor-not-allowed"
-                    : "bg-gradient-to-r from-primary via-accent to-primary shadow-[0_0_25px_hsl(195_100%_50%/0.35)] hover:shadow-[0_0_35px_hsl(195_100%_50%/0.55)] hover:scale-105 active:scale-95"
-              )}
-            >
-              {isRecording ? (
-                <>
-                  <Square className="h-6 w-6" />
-                  A gravar... (Clique para parar)
-                </>
-              ) : isTranscribing ? (
-                <>
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  IA a transcrever o áudio...
-                </>
-              ) : isProcessing ? (
-                <>
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                  A finalizar...
-                </>
-              ) : (
-                <>
-                  <Mic className="h-6 w-6" />
-                  Cantar Nova Ideia
-                </>
-              )}
-            </button>
-
-            {/* Real-time note indicator */}
-            {isRecording && currentNote && (
-              <div className="flex items-center gap-2 animate-pulse">
-                <span className="text-xs text-muted-foreground uppercase tracking-wider">Nota detetada:</span>
-                <span className="text-2xl font-mono font-black text-primary">{currentNote}</span>
-              </div>
-            )}
-          </div>
 
           {/* Audio playback after recording */}
           {(audioUrl || savedAudioUrl) && !isRecording && (

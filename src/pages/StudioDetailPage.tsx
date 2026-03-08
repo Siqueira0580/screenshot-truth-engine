@@ -270,21 +270,23 @@ export default function StudioDetailPage() {
       </div>
 
       {/* Now playing header */}
-      <div className="flex items-center gap-4 p-4 rounded-xl bg-card border border-border">
-        {artistPhoto ? (
-          <img src={artistPhoto} alt="" className="h-16 w-16 rounded-lg object-cover shadow-lg" />
-        ) : (
-          <div className="h-16 w-16 rounded-lg bg-secondary flex items-center justify-center">
-            <Music2 className="h-8 w-8 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 rounded-xl bg-card border border-border">
+        <div className="flex items-center gap-4 min-w-0 flex-1 w-full">
+          {artistPhoto ? (
+            <img src={artistPhoto} alt="" className="h-14 w-14 md:h-16 md:w-16 rounded-lg object-cover shadow-lg shrink-0" />
+          ) : (
+            <div className="h-14 w-14 md:h-16 md:w-16 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+              <Music2 className="h-7 w-7 md:h-8 md:w-8 text-muted-foreground" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg md:text-xl font-bold truncate">{song?.title}</h2>
+            {song?.artist && <p className="text-sm text-muted-foreground truncate">{song.artist}</p>}
           </div>
-        )}
-        <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-bold truncate">{song?.title}</h2>
-          {song?.artist && <p className="text-muted-foreground">{song.artist}</p>}
         </div>
 
-        {/* Key + BPM display / detection */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Key + BPM + actions row */}
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {(originalKey || song?.bpm) ? (
             <div className="flex items-center gap-2">
               {originalKey && (
@@ -308,7 +310,6 @@ export default function StudioDetailPage() {
                   <p className="text-[10px] text-muted-foreground mt-0.5">BPM</p>
                 </div>
               )}
-              {/* Re-analyze button */}
               {audioTrack?.file_full && (
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleAnalyzeAudio} disabled={detectingKey} title="Re-analisar áudio">
                   {detectingKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5" />}
@@ -331,19 +332,19 @@ export default function StudioDetailPage() {
               {detectingKey ? "Analisando..." : "Analisar Áudio"}
             </Button>
           ) : null}
-        </div>
 
-        {audioTrack?.file_full && !hasSeparatedStems && (
-          <Button onClick={handleSeparateStems} disabled={separating} className="gap-2 shrink-0" variant="outline">
-            {separating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scissors className="h-4 w-4" />}
-            {separating ? "Separando..." : "Separar Stems"}
-          </Button>
-        )}
-        {hasSeparatedStems && (
-          <span className="text-xs text-emerald-400 font-medium shrink-0 flex items-center gap-1">
-            <Scissors className="h-3.5 w-3.5" /> Stems prontos
-          </span>
-        )}
+          {audioTrack?.file_full && !hasSeparatedStems && (
+            <Button onClick={handleSeparateStems} disabled={separating} className="gap-2 shrink-0" variant="outline">
+              {separating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Scissors className="h-4 w-4" />}
+              {separating ? "Separando..." : "Separar Stems"}
+            </Button>
+          )}
+          {hasSeparatedStems && (
+            <span className="text-xs text-emerald-400 font-medium shrink-0 flex items-center gap-1">
+              <Scissors className="h-3.5 w-3.5" /> Stems prontos
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Separation progress */}

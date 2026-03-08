@@ -157,6 +157,7 @@ export default function StudyPage() {
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
   const [showMixer, setShowMixer] = useState(false);
+  const [editFormOpen, setEditFormOpen] = useState(false);
 
   const { data: song } = useQuery({ queryKey: ["song", songId], queryFn: () => fetchSong(songId!), enabled: !!songId });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });

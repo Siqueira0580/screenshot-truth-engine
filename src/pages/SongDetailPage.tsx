@@ -32,6 +32,7 @@ function extractYoutubeId(url: string | null): string | null {
 
 export default function SongDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);

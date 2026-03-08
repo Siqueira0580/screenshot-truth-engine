@@ -424,7 +424,7 @@ export default function StudyPage() {
           <div className={cn(
             "border-border bg-card flex flex-col shrink-0",
             isMobile
-              ? "fixed inset-x-0 bottom-0 z-50 max-h-[70vh] overflow-y-auto border-t rounded-t-2xl shadow-2xl"
+              ? "fixed inset-x-0 bottom-16 z-50 max-h-[calc(100vh-8rem)] w-full overflow-y-auto border-t rounded-t-2xl shadow-2xl"
               : "w-72 border-l"
           )}>
             {/* Mobile close handle */}

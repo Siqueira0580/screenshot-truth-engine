@@ -639,7 +639,56 @@ export default function CompositionStudioPage() {
       {/* ─── Main split ─── */}
       <div className="flex-1 flex overflow-hidden relative">
         {/* Editor – 70% */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8 pb-24 relative">
+          {/* ─── Floating Action Bar ─── */}
+          <TooltipProvider delayDuration={200}>
+            <div className="absolute right-4 lg:right-8 top-4 z-10 flex flex-col gap-3 rounded-full bg-card/60 backdrop-blur-md border border-border p-2 shadow-lg">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)] transition-all"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left"><p>Salvar</p></TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                    onClick={() => setShowClearModal(true)}
+                  >
+                    <Eraser className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left"><p>Limpar</p></TooltipContent>
+              </Tooltip>
+
+              {isOwner && compositionId && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/20 transition-all"
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left"><p>Excluir</p></TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </TooltipProvider>
           {/* Record button + current note */}
           <div className="flex flex-col items-center gap-3 mb-8">
             <button

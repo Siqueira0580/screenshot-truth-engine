@@ -32,6 +32,7 @@ function extractYoutubeId(url: string | null): string | null {
 
 export default function SongDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);
@@ -172,7 +173,6 @@ export default function SongDetailPage() {
   const displayKey = transposeKey(song.musical_key, transpose);
   const displayBody = song.body_text ? transposeText(song.body_text, transpose) : null;
 
-  const navigate = useNavigate();
 
   return (
     <div className="max-w-4xl space-y-6 animate-fade-in">

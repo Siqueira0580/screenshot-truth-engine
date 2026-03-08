@@ -13,7 +13,7 @@ const navItems = [
   { to: "/songs", icon: Music, label: "Músicas" },
   { to: "/setlists", icon: ListMusic, label: "Setlists" },
   { to: "/artists", icon: Users, label: "Artistas" },
-  { to: "/compose", icon: PenTool, label: "Compor" },
+  { to: "/compositions", icon: PenTool, label: "Compor" },
   { to: "/studio", icon: Headphones, label: "Estúdio" },
 ];
 

@@ -118,7 +118,7 @@ export default function ImportSongModal({
         } catch { /* non-critical */ }
       }
 
-      const newSong = await createSong({
+      const newSong = await createSongAndAddToLibrary({
         title,
         artist,
         style,

@@ -296,10 +296,10 @@ export default function SongDetailPage() {
 
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg border border-border bg-card p-3 sm:p-6">
           <ChordText
             text={displayBody}
-            className="chord-text whitespace-pre-wrap font-mono text-sm leading-7 text-foreground"
+            className="chord-text whitespace-pre-wrap font-mono text-xs sm:text-sm leading-6 sm:leading-7 text-foreground"
           />
         </div>
       )}

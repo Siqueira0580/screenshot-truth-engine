@@ -581,9 +581,9 @@ export function drawChordDiagram(
     ctx.fillText(`${voicing.baseFret}fr`, sidePad - 5, gridTop + fretSpacing * 0.5);
   }
 
-  // ── Grid: frets (thin horizontal lines) ──
-  ctx.strokeStyle = gridColor;
-  ctx.lineWidth = 0.7;
+  // ── Grid: frets (visible horizontal lines) ──
+  ctx.strokeStyle = "hsl(220, 13%, 42%)";
+  ctx.lineWidth = 1.2;
   for (let f = 0; f <= numFrets; f++) {
     const y = gridTop + f * fretSpacing;
     ctx.beginPath();
@@ -592,9 +592,9 @@ export function drawChordDiagram(
     ctx.stroke();
   }
 
-  // ── Grid: strings (thin vertical lines) ──
-  ctx.strokeStyle = gridColorLight;
-  ctx.lineWidth = 0.6;
+  // ── Grid: strings (visible vertical lines) ──
+  ctx.strokeStyle = "hsl(220, 13%, 38%)";
+  ctx.lineWidth = 1;
   for (let s = 0; s < numStrings; s++) {
     const x = sidePad + s * stringSpacing;
     ctx.beginPath();

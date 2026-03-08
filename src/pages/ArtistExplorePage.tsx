@@ -189,6 +189,7 @@ export default function ArtistExplorePage() {
 
         {/* Back button */}
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           onClick={() => navigate(-1)}

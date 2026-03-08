@@ -44,7 +44,7 @@ export default function DangerZone() {
       setResetOpen(false);
       setConfirmText("");
       // Force full reload to trigger onboarding again
-      window.location.href = "/songs";
+      navigate("/songs");
     } catch (err: any) {
       toast.error("Erro ao resetar: " + (err.message || "Tente novamente"));
     } finally {

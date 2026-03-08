@@ -175,7 +175,7 @@ export default function SongDetailPage() {
   return (
     <div className="max-w-4xl space-y-6 animate-fade-in">
       <Button variant="ghost" asChild className="gap-2">
-        <Link to="/">
+        <Link to="/songs">
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </Link>

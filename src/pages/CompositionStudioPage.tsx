@@ -430,7 +430,7 @@ export default function CompositionStudioPage() {
 
   const displayText = editorText;
 
-  const chords = HARMONIC_FIELDS[selectedKey] || HARMONIC_FIELDS["Am"] || [];
+  const chords = (selectedKey && HARMONIC_FIELDS[selectedKey]) || [];
   const progressions = getProgressions(selectedKey);
   const isMinor = selectedKey.endsWith("m");
 

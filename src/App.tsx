@@ -24,6 +24,7 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import LandingPage from "@/pages/LandingPage";
+import LiveViewerPage from "@/pages/LiveViewerPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>
+              <Route path="/live/:sessionId" element={<LiveViewerPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </UserPreferencesProvider>

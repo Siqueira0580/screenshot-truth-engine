@@ -171,6 +171,7 @@ export type Database = {
           created_at: string
           id: string
           musical_key: string | null
+          shared_with_emails: string[] | null
           style: string | null
           title: string
           updated_at: string
@@ -184,6 +185,7 @@ export type Database = {
           created_at?: string
           id?: string
           musical_key?: string | null
+          shared_with_emails?: string[] | null
           style?: string | null
           title?: string
           updated_at?: string
@@ -197,6 +199,7 @@ export type Database = {
           created_at?: string
           id?: string
           musical_key?: string | null
+          shared_with_emails?: string[] | null
           style?: string | null
           title?: string
           updated_at?: string

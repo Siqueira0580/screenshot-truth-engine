@@ -1,6 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X } from "lucide-react";
+import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput, X, UserPlus } from "lucide-react";
+import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { createSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,8 +23,12 @@ const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "Worship", "Samba", "P
 
 export default function CompositionStudioPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [compositionId, setCompositionId] = useState<string | null>(searchParams.get("id"));
+  const [compositionOwnerId, setCompositionOwnerId] = useState<string | null>(null);
+  const [sharedWithEmails, setSharedWithEmails] = useState<string[]>([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [title, setTitle] = useState("");
   const [selectedKey, setSelectedKey] = useState("Am");
   const [originalKey, setOriginalKey] = useState(""); // tom original da composição — vazio até ser definido
@@ -122,6 +128,8 @@ export default function CompositionStudioPage() {
     }
   }, [title, editorText, selectedKey, bpm, style, composers, savedAudioUrl, navigate]);
 
+  const isOwner = !compositionId || compositionOwnerId === user?.id;
+
   // Load existing composition if ID in URL
   useEffect(() => {
     if (!compositionId) return;
@@ -140,6 +148,8 @@ export default function CompositionStudioPage() {
       setStyle(data.style || "Bossa Nova");
       setComposers((data as any).composers || "");
       if (data.audio_url) setSavedAudioUrl(data.audio_url);
+      setCompositionOwnerId(data.user_id);
+      setSharedWithEmails((data as any).shared_with_emails || []);
     };
     load();
   }, [compositionId]);
@@ -605,10 +615,14 @@ export default function CompositionStudioPage() {
               {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileOutput className="h-4 w-4" />}
               {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
             </Button>
-            <Button size="sm" className="gap-1.5">
-              <Share2 className="h-4 w-4" /> Partilhar
-            </Button>
-            {compositionId && (
+            {/* Invite — only for owner */}
+            {isOwner && compositionId && (
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowInviteModal(true)}>
+                <UserPlus className="h-4 w-4" /> Convidar
+              </Button>
+            )}
+            {/* Delete — only for owner */}
+            {isOwner && compositionId && (
               <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setShowDeleteModal(true)}>
                 <Trash2 className="h-4 w-4" /> Excluir
               </Button>
@@ -908,6 +922,16 @@ export default function CompositionStudioPage() {
         title="Limpar Página"
         description="Tem certeza que deseja apagar toda a composição? O texto, acordes e tom serão resetados. Esta ação não pode ser desfeita."
       />
+
+      {compositionId && (
+        <InviteCollaboratorModal
+          open={showInviteModal}
+          onOpenChange={setShowInviteModal}
+          compositionId={compositionId}
+          currentEmails={sharedWithEmails}
+          onUpdated={setSharedWithEmails}
+        />
+      )}
     </div>
   );
 }

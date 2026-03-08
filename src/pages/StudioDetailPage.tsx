@@ -516,6 +516,19 @@ export default function StudioDetailPage() {
                       onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
                       <Star className="h-3 w-3 mr-1" /> S
                     </Button>
+                    <Button
+                      variant={gateStems[type] ? "default" : "outline"}
+                      size="sm"
+                      className="h-6 px-2 text-[10px] font-bold"
+                      title="Limpar Ruído (Noise Gate)"
+                      onClick={() => {
+                        const next = !gateStems[type];
+                        setGateStems(prev => ({ ...prev, [type]: next }));
+                        engineRef.current?.setGateEnabled(type, next);
+                      }}
+                    >
+                      <AudioLines className="h-3 w-3 mr-1" /> G
+                    </Button>
                   </div>
                   <Slider value={[stemVols[type]]} max={100} step={1}
                     onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}

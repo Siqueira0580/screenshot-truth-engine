@@ -16,18 +16,8 @@ import { cn } from "@/lib/utils";
 import { transposeChord } from "@/lib/transpose-chord";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { HARMONIC_FIELDS, getProgressions, getRomanNumeral } from "@/lib/music-theory";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "Worship", "Samba", "Pagode", "Jazz", "R&B", "MPB", "Blues", "Forró", "Reggae"];
-
-interface RhymeResult {
-  word: string;
-  score: number;
-  freq: number;
-}
 
 export default function CompositionStudioPage() {
   const navigate = useNavigate();

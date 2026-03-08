@@ -47,7 +47,7 @@ export default function CompositionStudioPage() {
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
+  const [audioTakes, setAudioTakes] = useState<AudioTake[]>([]);
   const audioBlobRef = useRef<Blob | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [tonePopoverOpen, setTonePopoverOpen] = useState(false);

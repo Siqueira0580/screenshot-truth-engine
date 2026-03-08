@@ -16,16 +16,18 @@ export interface DeezerTrack {
   };
 }
 
-async function fetchTopCharts(): Promise<DeezerTrack[]> {
-  const { data, error } = await supabase.functions.invoke("deezer-charts");
+async function fetchTopCharts(genre: string): Promise<DeezerTrack[]> {
+  const { data, error } = await supabase.functions.invoke("deezer-charts", {
+    body: { genre },
+  });
   if (error) throw error;
   return data?.data ?? [];
 }
 
-export function useTopCharts() {
+export function useTopCharts(genre: string = "Todos") {
   return useQuery({
-    queryKey: ["deezer-top-charts"],
-    queryFn: fetchTopCharts,
+    queryKey: ["deezer-top-charts", genre],
+    queryFn: () => fetchTopCharts(genre),
     staleTime: 1000 * 60 * 30,
     retry: 1,
   });

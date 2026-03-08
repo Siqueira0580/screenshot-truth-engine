@@ -53,28 +53,28 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
     <DialogPrimitive.Root open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[200] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-[200] grid w-full max-w-[240px] translate-x-[-50%] translate-y-[-50%] gap-3 border bg-background p-5 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg">
+        <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-[200] grid w-full max-w-[200px] translate-x-[-50%] translate-y-[-50%] gap-2 border bg-background p-4 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg">
           <div className="flex flex-col items-center space-y-1">
             <DialogPrimitive.Title className="font-mono text-xl text-primary">{chord}</DialogPrimitive.Title>
             <span className="text-xs text-muted-foreground">{INSTRUMENT_LABELS[preferredInstrument] || preferredInstrument}</span>
           </div>
           <div className="flex justify-center">
             {loading ? (
-              <div className="flex flex-col items-center justify-center w-[200px] h-[240px] gap-2">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-                <span className="text-xs text-muted-foreground">Calculando posição...</span>
+              <div className="flex flex-col items-center justify-center w-[140px] h-[170px] gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
+                <span className="text-[10px] text-muted-foreground">Carregando...</span>
               </div>
             ) : (
               <div className="relative">
                 <canvas
                   ref={canvasRef}
-                  width={200}
-                  height={240}
+                  width={140}
+                  height={170}
                   className="rounded-lg"
                   style={{ display: 'block' }}
                 />
                 {source === "ai" && (
-                  <span className="absolute bottom-1 right-1 text-[10px] text-muted-foreground/60">✨ IA</span>
+                  <span className="absolute bottom-0.5 right-0.5 text-[9px] text-muted-foreground/50">✨</span>
                 )}
               </div>
             )}

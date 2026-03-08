@@ -282,11 +282,13 @@ export default function CompositionStudioPage() {
     }
   }, [compositionId, navigate]);
 
-  const { isRecording, isProcessing, chordProText: liveChordPro, audioUrl, currentNote, toggleRecording } = useAudioRecorder();
+  const { recordingState, audioUrl: recorderAudioUrl, currentNote, startRecording, pauseRecording, resumeRecording, stopRecording, getResult } = useAudioRecorder();
+
+  const isActiveRecording = recordingState === "recording" || recordingState === "paused";
 
   // ─── Auto-save (debounced 10s) ───
   useEffect(() => {
-    if (!hasInteracted.current || isRecording || isTranscribing) return;
+    if (!hasInteracted.current || isActiveRecording || isTranscribing) return;
 
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
@@ -296,7 +298,7 @@ export default function CompositionStudioPage() {
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [title, editorText, selectedKey, bpm, style, composers, persistComposition, isRecording, isTranscribing]);
+  }, [title, editorText, selectedKey, bpm, style, composers, persistComposition, isActiveRecording, isTranscribing]);
 
   const transcribeAudio = useCallback(async (audioBlob: Blob) => {
     setIsTranscribing(true);
@@ -348,19 +350,32 @@ export default function CompositionStudioPage() {
     }
   }, [style, editorText, selectedKey, targetKey, transposeChordProText]);
 
-  const handleRecordToggle = useCallback(() => {
-    toggleRecording(style, (result) => {
-      if (result.audioUrl) {
-        fetch(result.audioUrl)
-          .then((r) => r.blob())
-          .then((blob) => {
-            audioBlobRef.current = blob;
-            transcribeAudio(blob);
-          })
-          .catch(console.error);
+  // When recording finishes (state changes to "recorded"), auto-transcribe
+  const prevRecordingState = useRef(recordingState);
+  useEffect(() => {
+    if (prevRecordingState.current !== "recorded" && recordingState === "recorded") {
+      const result = getResult();
+      if (result) {
+        audioBlobRef.current = result.audioBlob;
+        transcribeAudio(result.audioBlob);
       }
-    });
-  }, [style, toggleRecording, transcribeAudio]);
+    }
+    prevRecordingState.current = recordingState;
+  }, [recordingState, getResult, transcribeAudio]);
+
+  // Master button handler
+  const handleMasterButton = useCallback(() => {
+    if (recordingState === "idle" || recordingState === "recorded") {
+      startRecording();
+    } else if (recordingState === "recording") {
+      pauseRecording();
+    } else if (recordingState === "paused") {
+      resumeRecording();
+    }
+  }, [recordingState, startRecording, pauseRecording, resumeRecording]);
+
+  // Playback ref
+  const playbackRef = useRef<HTMLAudioElement | null>(null);
 
   // Handle tone selection from the unified popover
   const handleToneSelect = useCallback((newKey: string) => {

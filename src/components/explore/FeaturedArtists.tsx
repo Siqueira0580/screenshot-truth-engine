@@ -1,4 +1,5 @@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 import type { DeezerTrack } from "@/hooks/useTopCharts";
 
 interface FeaturedArtistsProps {
@@ -7,6 +8,7 @@ interface FeaturedArtistsProps {
 }
 
 export default function FeaturedArtists({ tracks, title = "🎤 Artistas em Destaque" }: FeaturedArtistsProps) {
+  const navigate = useNavigate();
   // Deduplicate artists
   const seen = new Set<number>();
   const artists = tracks
@@ -28,6 +30,7 @@ export default function FeaturedArtists({ tracks, title = "🎤 Artistas em Dest
             <div
               key={track.artist.id}
               className="shrink-0 w-[130px] md:w-[150px] group cursor-pointer"
+              onClick={() => navigate(`/artist/${encodeURIComponent(track.artist.name)}`, { state: { photoUrl: track.artist.picture_xl || track.artist.picture_medium } })}
             >
               {/* Semi-circular / polygonal panel */}
               <div

@@ -1,5 +1,6 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Compass } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { DeezerTrack } from "@/hooks/useTopCharts";
 
 interface TopChartsListProps {
@@ -8,7 +9,6 @@ interface TopChartsListProps {
   title?: string;
 }
 
-// Meandering offsets for the "rhythmic flow" path effect
 const FLOW_OFFSETS = [
   { ml: "ml-0" },
   { ml: "ml-6 md:ml-10" },
@@ -22,8 +22,15 @@ const FLOW_OFFSETS = [
   { ml: "ml-8 md:ml-16" },
 ];
 
-export default function TopChartsList({ tracks, onAddSong, title = "🏆 Top 10 Global" }: TopChartsListProps) {
+export default function TopChartsList({ tracks, title = "🏆 Top 10 Global" }: TopChartsListProps) {
   const topTen = tracks.slice(0, 10);
+  const navigate = useNavigate();
+
+  const handleExplore = (track: DeezerTrack) => {
+    navigate(`/artist/${encodeURIComponent(track.artist.name)}`, {
+      state: { photoUrl: track.artist.picture_xl || track.artist.picture_medium },
+    });
+  };
 
   return (
     <div className="relative">
@@ -31,7 +38,6 @@ export default function TopChartsList({ tracks, onAddSong, title = "🏆 Top 10 
         {title}
       </h2>
 
-      {/* Flowing curved connector line (decorative SVG) */}
       <div className="absolute left-8 md:left-16 top-16 bottom-0 w-[2px] opacity-20"
         style={{ background: "linear-gradient(180deg, #06b6d4, #d946ef, #06b6d4)" }}
       />
@@ -42,10 +48,9 @@ export default function TopChartsList({ tracks, onAddSong, title = "🏆 Top 10 
           return (
             <button
               key={track.id}
-              onClick={() => onAddSong(track)}
+              onClick={() => handleExplore(track)}
               className={`${offset.ml} flex items-center gap-3 w-fit max-w-full pr-4 transition-all duration-300 hover:scale-[1.02] group relative`}
             >
-              {/* Rank diamond/polygon */}
               <div
                 className="shrink-0 w-10 h-10 flex items-center justify-center text-sm font-black text-white relative"
                 style={{
@@ -60,7 +65,6 @@ export default function TopChartsList({ tracks, onAddSong, title = "🏆 Top 10 
                 {i + 1}
               </div>
 
-              {/* Card body - asymmetric shape */}
               <div
                 className="flex items-center gap-3 py-2.5 px-4 pr-6 bg-slate-800/50 border border-cyan-500/10 group-hover:border-cyan-400/30 group-hover:shadow-[0_0_15px_rgba(0,255,255,0.1)] transition-all duration-300"
                 style={{ clipPath: "polygon(0 0, 98% 0, 100% 40%, 97% 100%, 2% 100%, 0 70%)" }}
@@ -80,6 +84,7 @@ export default function TopChartsList({ tracks, onAddSong, title = "🏆 Top 10 
                     {track.artist.name}
                   </span>
                 </div>
+                <Compass className="h-4 w-4 text-cyan-400/50 group-hover:text-cyan-300 ml-2 shrink-0 transition-colors" />
               </div>
             </button>
           );

@@ -25,6 +25,7 @@ import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import LandingPage from "@/pages/LandingPage";
 import LiveViewerPage from "@/pages/LiveViewerPage";
+import ArtistExplorePage from "@/pages/ArtistExplorePage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/study/:songId" element={<StudyPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
               </Route>
               <Route path="/live/:sessionId" element={<LiveViewerPage />} />
               <Route path="*" element={<NotFound />} />

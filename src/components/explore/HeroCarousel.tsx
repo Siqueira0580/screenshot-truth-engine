@@ -1,4 +1,5 @@
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Compass } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { DeezerTrack } from "@/hooks/useTopCharts";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -7,10 +8,17 @@ interface HeroCarouselProps {
   onAddSong: (track: DeezerTrack) => void;
 }
 
-export default function HeroCarousel({ tracks, onAddSong }: HeroCarouselProps) {
+export default function HeroCarousel({ tracks }: HeroCarouselProps) {
   const heroTracks = tracks.slice(0, 4);
   const mainTrack = heroTracks[0];
   const secondaryTracks = heroTracks.slice(1, 4);
+  const navigate = useNavigate();
+
+  const goToArtist = (track: DeezerTrack) => {
+    navigate(`/artist/${encodeURIComponent(track.artist.name)}`, {
+      state: { photoUrl: track.artist.picture_xl || track.artist.picture_medium },
+    });
+  };
 
   if (!mainTrack) return null;
 
@@ -24,7 +32,7 @@ export default function HeroCarousel({ tracks, onAddSong }: HeroCarouselProps) {
       <div
         className="relative w-full overflow-hidden cursor-pointer group"
         style={{ clipPath: "polygon(0 0, 100% 0, 100% 75%, 92% 100%, 0 95%)" }}
-        onClick={() => onAddSong(mainTrack)}
+        onClick={() => goToArtist(mainTrack)}
       >
         <div className="relative h-[280px] md:h-[340px]">
           {/* Background gradient */}
@@ -56,8 +64,10 @@ export default function HeroCarousel({ tracks, onAddSong }: HeroCarouselProps) {
               </h3>
               <BadgeCheck className="h-5 w-5 md:h-6 md:w-6 shrink-0 text-cyan-400" />
             </div>
-            <p className="text-sm md:text-base text-slate-300 mb-4">{mainTrack.artist.name}</p>
-
+            <p className="text-sm md:text-base text-slate-300 mb-2">{mainTrack.artist.name}</p>
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-400 group-hover:text-cyan-300 transition-colors">
+              <Compass className="h-3.5 w-3.5" /> Explorar
+            </span>
           </div>
         </div>
       </div>
@@ -70,7 +80,7 @@ export default function HeroCarousel({ tracks, onAddSong }: HeroCarouselProps) {
               key={track.id}
               className="shrink-0 w-[200px] md:w-[240px] relative cursor-pointer group overflow-hidden"
               style={{ clipPath: "polygon(0 0, 95% 0, 100% 20%, 100% 100%, 5% 100%, 0 85%)" }}
-              onClick={() => onAddSong(track)}
+              onClick={() => goToArtist(track)}
             >
               <div className="relative h-[140px] md:h-[160px]">
                 <img

@@ -67,12 +67,12 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
             ) : (
               <div className="relative">
                 <canvas
-70:                   ref={canvasRef}
-71:                   width={140}
-72:                   height={150}
-73:                   className="rounded-lg"
-74:                   style={{ display: 'block' }}
-75:                 />
+                  ref={canvasRef}
+                  width={140}
+                  height={150}
+                  className="rounded-lg"
+                  style={{ display: 'block' }}
+                />
                 {source === "ai" && (
                   <span className="absolute bottom-0.5 right-0.5 text-[9px] text-muted-foreground/50">✨</span>
                 )}

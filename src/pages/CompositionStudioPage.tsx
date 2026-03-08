@@ -436,25 +436,20 @@ export default function CompositionStudioPage() {
   const harmonyProgressions = getProgressions(harmonyKey);
   const isHarmonyMinor = harmonyKey.endsWith("m");
 
-  // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───
+  // ─── Rhyme generation via AI (Edge Function) ───
   const fetchRhymes = useCallback(async (word: string) => {
     if (!word.trim()) { setRhymeResults([]); return; }
     setIsLoadingRhymes(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
-        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const filtered = (data as { word: string; score: number }[])
-        .filter((r) => r.score >= 100)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 40);
-      setRhymeResults(filtered);
+      const { data, error } = await supabase.functions.invoke("generate-rhymes", {
+        body: { word: word.trim() },
+      });
+      if (error) throw error;
+      const rhymes = Array.isArray(data?.rhymes) ? data.rhymes.filter((r: unknown) => typeof r === "string") : [];
+      setRhymeResults(rhymes);
     } catch (err) {
-      console.error("Rhyme fetch error:", err);
-      toast.error("Erro ao buscar rimas. Verifique sua conexão.");
+      console.error("Rhyme generation error:", err);
+      toast.error("Não foi possível gerar rimas no momento.");
       setRhymeResults([]);
     } finally {
       setIsLoadingRhymes(false);

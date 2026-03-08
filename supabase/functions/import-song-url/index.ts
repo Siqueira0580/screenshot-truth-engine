@@ -163,7 +163,40 @@ serve(async (req) => {
     };
     console.log("DOM-extracted metadata:", JSON.stringify(domMeta));
 
-    // Strip scripts, styles, and HTML tags to get raw text
+    // Step A3: Smart chord extraction — convert <b> chord tags to [chord] brackets
+    // before stripping HTML, to preserve alignment for ChordPro format.
+    // Cifra Club uses <b>Chord</b> inside <pre> blocks.
+    let processedHtml = html;
+    
+    // First, try to isolate the <pre> content (where chords+lyrics live)
+    const preMatch = processedHtml.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+    let preExtracted = "";
+    
+    if (preMatch) {
+      let preContent = preMatch[1];
+      // Remove hidden spans, tablature divs, and irrelevant elements
+      preContent = preContent.replace(/<span[^>]*style=["'][^"']*display\s*:\s*none[^"']*["'][^>]*>[\s\S]*?<\/span>/gi, "");
+      preContent = preContent.replace(/<div[^>]*class=["'][^"']*tablatura[^"']*["'][^>]*>[\s\S]*?<\/div>/gi, "");
+      // Convert <b> tags (chords) to [Chord] bracket notation
+      preContent = preContent.replace(/<b[^>]*>([\s\S]*?)<\/b>/gi, "[$1]");
+      // Convert <strong> tags too (some sites use these)
+      preContent = preContent.replace(/<strong[^>]*>([\s\S]*?)<\/strong>/gi, "[$1]");
+      // Replace <br> with newlines
+      preContent = preContent.replace(/<br\s*\/?>/gi, "\n");
+      // Strip remaining HTML tags but preserve text and spaces
+      preContent = preContent.replace(/<[^>]+>/g, "");
+      // Decode HTML entities
+      preContent = preContent.replace(/&nbsp;/g, " ");
+      preContent = preContent.replace(/&amp;/g, "&");
+      preContent = preContent.replace(/&lt;/g, "<");
+      preContent = preContent.replace(/&gt;/g, ">");
+      preContent = preContent.replace(/&#\d+;/g, "");
+      // Normalize excessive blank lines but PRESERVE horizontal spaces
+      preContent = preContent.replace(/\n\s*\n\s*\n/g, "\n\n");
+      preExtracted = preContent.trim();
+    }
+
+    // Also create a general stripped version for AI context (metadata, etc.)
     const stripped = html
       .replace(/<script[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -176,8 +209,11 @@ serve(async (req) => {
       .replace(/\n{3,}/g, "\n\n")
       .trim();
 
+    // If we extracted a <pre> block with bracketed chords, prioritize it
+    // Otherwise fall back to the stripped version
+    const contentForAI = preExtracted || stripped;
     // Limit to ~8000 chars to stay within token limits
-    const truncated = stripped.slice(0, 8000);
+    const truncated = contentForAI.slice(0, 8000);
 
     // Step B: AI Processing (enhanced prompt with extra fields)
     console.log("Sending to AI for ChordPro extraction...");
@@ -204,7 +240,7 @@ Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
           },
           {
             role: "user",
-            content: `Extraia a cifra deste texto de site:\n\n${truncated}`,
+            content: `Extraia a cifra deste texto de site. ${preExtracted ? "Os acordes já estão entre colchetes [Acorde]. Preserve EXATAMENTE os espaços horizontais e a formatação original. NÃO re-alinhe os acordes." : ""}\n\n${truncated}`,
           },
         ],
         tools: [

@@ -21,7 +21,7 @@ export default function ChordText({ text, className }: ChordTextProps) {
   if (isChordPro) {
     return (
       <div className={className}>
-        <ChordProDisplay text={text} className="font-mono text-lg leading-relaxed" />
+        <ChordProDisplay text={text} className="font-mono text-lg leading-relaxed whitespace-pre-wrap" />
       </div>
     );
   }

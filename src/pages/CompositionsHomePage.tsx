@@ -152,7 +152,7 @@ export default function CompositionsHomePage() {
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                  onClick={(e) => handleDelete(comp.id, e)}
+                  onClick={(e) => handleDeleteClick(comp.id, e)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -174,6 +174,14 @@ export default function CompositionsHomePage() {
           ))}
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Apagar Composição"
+        description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

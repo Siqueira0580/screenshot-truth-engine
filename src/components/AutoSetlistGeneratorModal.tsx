@@ -188,6 +188,28 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
             </div>
           </div>
 
+          {/* Source */}
+          <div className="space-y-3">
+            <Label>Fonte das Músicas</Label>
+            <RadioGroup
+              value={source}
+              onValueChange={(v) => setSource(v as "all" | "setlists")}
+              className="flex flex-col gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="all" id="src-all" />
+                <Label htmlFor="src-all" className="cursor-pointer font-normal">Todas as minhas músicas</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="setlists" id="src-setlists" />
+                <Label htmlFor="src-setlists" className="cursor-pointer font-normal">
+                  Somente músicas de outros repertórios
+                  <span className="block text-xs text-muted-foreground">Mix com músicas já validadas em shows</span>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           {/* Occasion */}
           <div className="space-y-2">
             <Label>Ocasião</Label>

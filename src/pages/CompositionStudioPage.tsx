@@ -441,13 +441,10 @@ export default function CompositionStudioPage() {
     if (!word.trim()) { setRhymeResults([]); return; }
     setIsLoadingRhymes(true);
     try {
-      const { data: fnData, error } = await supabase.functions.invoke("rhyme-proxy", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        body: undefined,
-      });
-      // Edge functions don't support GET with query params easily, use POST approach
       const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
+      );
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
         { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
       );

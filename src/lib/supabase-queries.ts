@@ -15,7 +15,96 @@ async function getCurrentUserId(): Promise<string> {
   return user.id;
 }
 
-// Songs (PUBLIC - no user_id filter)
+// ─── USER LIBRARY (junction table) ───
+
+/** Fetch only songs in the current user's personal library */
+export async function fetchUserLibrary() {
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("user_library")
+    .select("song_id, added_at, songs(*)")
+    .eq("user_id", userId)
+    .order("added_at", { ascending: false });
+  if (error) throw error;
+  return (data || []).map((row: any) => ({ ...row.songs, added_at: row.added_at })) as (Song & { added_at: string })[];
+}
+
+/** Add a song to the user's personal library */
+export async function addToUserLibrary(songId: string) {
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from("user_library")
+    .upsert({ user_id: userId, song_id: songId }, { onConflict: "user_id,song_id" });
+  if (error) throw error;
+}
+
+/** Remove a song from the user's personal library (does NOT delete the global song) */
+export async function removeFromUserLibrary(songId: string) {
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from("user_library")
+    .delete()
+    .eq("user_id", userId)
+    .eq("song_id", songId);
+  if (error) throw error;
+}
+
+/** Bulk-add all global songs to user library */
+export async function addAllSongsToLibrary() {
+  const userId = await getCurrentUserId();
+  const { data: allSongs } = await supabase.from("songs").select("id");
+  if (!allSongs || allSongs.length === 0) return;
+  const inserts = allSongs.map((s) => ({ user_id: userId, song_id: s.id }));
+  // batch in chunks of 500
+  for (let i = 0; i < inserts.length; i += 500) {
+    const chunk = inserts.slice(i, i + 500);
+    await supabase.from("user_library").upsert(chunk, { onConflict: "user_id,song_id" });
+  }
+}
+
+/** Add songs matching certain artists/styles to user library */
+export async function addFilteredSongsToLibrary(artists: string[], styles: string[]) {
+  const userId = await getCurrentUserId();
+  let songIds: string[] = [];
+
+  if (artists.length > 0) {
+    const { data } = await supabase
+      .from("songs")
+      .select("id")
+      .in("artist", artists);
+    if (data) songIds.push(...data.map((s) => s.id));
+  }
+
+  if (styles.length > 0) {
+    const { data } = await supabase
+      .from("songs")
+      .select("id")
+      .in("style", styles);
+    if (data) songIds.push(...data.map((s) => s.id));
+  }
+
+  const unique = [...new Set(songIds)];
+  if (unique.length === 0) return;
+
+  const inserts = unique.map((sid) => ({ user_id: userId, song_id: sid }));
+  for (let i = 0; i < inserts.length; i += 500) {
+    const chunk = inserts.slice(i, i + 500);
+    await supabase.from("user_library").upsert(chunk, { onConflict: "user_id,song_id" });
+  }
+}
+
+/** Clear entire user library */
+export async function clearUserLibrary() {
+  const userId = await getCurrentUserId();
+  const { error } = await supabase
+    .from("user_library")
+    .delete()
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+// ─── GLOBAL SONGS ───
+
 export async function fetchSongs() {
   const { data, error } = await supabase
     .from("songs")
@@ -46,6 +135,17 @@ export async function createSong(song: SongInsert) {
   return data as Song;
 }
 
+/** Create a song globally AND add it to the user's library */
+export async function createSongAndAddToLibrary(song: SongInsert) {
+  const created = await createSong(song);
+  try {
+    await addToUserLibrary(created.id);
+  } catch (e) {
+    console.warn("Could not add to user library:", e);
+  }
+  return created;
+}
+
 export async function updateSong(id: string, song: Partial<SongInsert>) {
   const { data, error } = await supabase.from("songs").update(song).eq("id", id).select().single();
   if (error) throw error;
@@ -57,9 +157,9 @@ export async function deleteSong(id: string) {
   if (error) throw error;
 }
 
-// Setlists (PRIVATE - user_id scoped via RLS + explicit insert)
+// ─── SETLISTS ───
+
 export async function fetchSetlists() {
-  // RLS handles filtering by user_id automatically
   const { data, error } = await supabase
     .from("setlists")
     .select("*")
@@ -146,7 +246,8 @@ export async function bulkUpdateSetlistItems(
   }
 }
 
-// Artists (PUBLIC - no user_id filter)
+// ─── ARTISTS ───
+
 export async function fetchArtists() {
   const { data, error } = await supabase.from("artists").select("*").order("name");
   if (error) throw error;
@@ -187,7 +288,6 @@ export async function updateArtistPhoto(artistId: string, file: File) {
   return data as Artist;
 }
 
-/** Normalize artist name: trim whitespace and title-case */
 function normalizeArtistName(raw: string): string {
   return raw
     .trim()
@@ -205,7 +305,6 @@ export async function findOrCreateArtist(name: string, photoUrl?: string): Promi
     .limit(1);
 
   if (existing && existing.length > 0) {
-    // Update photo if missing and we have one now
     if (photoUrl && !existing[0].photo_url) {
       await supabase
         .from("artists")
@@ -225,10 +324,7 @@ export async function findOrCreateArtist(name: string, photoUrl?: string): Promi
   return data as Artist;
 }
 
-export async function fetchSongsByArtist(
-  artistName: string,
-  sort: string = "alpha_asc"
-) {
+export async function fetchSongsByArtist(artistName: string, sort: string = "alpha_asc") {
   let query = supabase.from("songs").select("*").ilike("artist", artistName);
 
   switch (sort) {

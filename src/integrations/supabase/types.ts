@@ -244,6 +244,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          library_setup_completed: boolean
           phone: string | null
           preferred_instrument: string
           wizard_completed: boolean
@@ -257,6 +258,7 @@ export type Database = {
           first_name?: string | null
           id: string
           last_name?: string | null
+          library_setup_completed?: boolean
           phone?: string | null
           preferred_instrument?: string
           wizard_completed?: boolean
@@ -270,6 +272,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          library_setup_completed?: boolean
           phone?: string | null
           preferred_instrument?: string
           wizard_completed?: boolean
@@ -466,6 +469,35 @@ export type Database = {
             columns: ["setlist_id"]
             isOneToOne: false
             referencedRelation: "setlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_library: {
+        Row: {
+          added_at: string
+          id: string
+          song_id: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          song_id: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          song_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_library_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
             referencedColumns: ["id"]
           },
         ]

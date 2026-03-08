@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, LogOut, Save, User } from "lucide-react";
+import { Camera, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
+import DangerZone from "@/components/DangerZone";
 
 interface Profile {
   id: string;
@@ -21,12 +22,11 @@ interface Profile {
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [firstName, setFirstName] = useState("");
@@ -221,20 +221,8 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Button
-        variant="destructive"
-        className="w-full"
-        disabled={loggingOut}
-        onClick={async () => {
-          setLoggingOut(true);
-          await supabase.auth.signOut();
-          toast.success("Sessão terminada com sucesso.");
-          navigate("/");
-        }}
-      >
-        {loggingOut ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LogOut className="h-4 w-4 mr-2" />}
-        {loggingOut ? "A sair..." : "Sair da Conta"}
-      </Button>
+      {/* Danger Zone */}
+      <DangerZone />
     </div>
   );
 }

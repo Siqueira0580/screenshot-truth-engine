@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { findOrCreateArtist, createSong } from "@/lib/supabase-queries";
+import { findOrCreateArtist, createSongAndAddToLibrary } from "@/lib/supabase-queries";
 import type { Database } from "@/integrations/supabase/types";
 
 type Song = Database["public"]["Tables"]["songs"]["Row"];
@@ -71,13 +71,13 @@ export default function ArtistExplorePage() {
       if (!title || !content) throw new Error("Não foi possível extrair a cifra deste link.");
 
       const finalArtist = (artist || decodedName).trim().replace(/\s+/g, " ");
-      const { error: insertError } = await supabase.from("songs").insert({
+      const newSong = await createSongAndAddToLibrary({
         title: title.trim(),
         artist: finalArtist,
         style: genre || null,
         body_text: content,
       });
-      if (insertError) throw new Error(insertError.message);
+      if (!newSong) throw new Error("Erro ao salvar música");
 
       try {
         await findOrCreateArtist(finalArtist, artistPhoto || undefined);
@@ -113,7 +113,7 @@ export default function ArtistExplorePage() {
       const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
       const title = file.name.replace(/\.pdf$/i, "").trim();
 
-      await createSong({
+      await createSongAndAddToLibrary({
         title,
         artist: decodedName,
         composer: null,

@@ -13,6 +13,7 @@ import { Sparkles, Loader2, Music2, Check, X, ArrowLeft, Mic } from "lucide-reac
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
+import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -136,7 +137,8 @@ export default function ImportSongModal({
         // Song already exists globally — just add to user's library
         await addToUserLibrary(songId);
         if (setlistId) {
-          await addSongToSetlist(setlistId, songId, setlistPosition ?? 999);
+          const speed = calculateOptimalScrollSpeed(null, previewData.bpm || null);
+          await addSongToSetlist(setlistId, songId, setlistPosition ?? 999, speed);
           queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
         }
         toast.success(`"${title}" já existia — adicionada à sua biblioteca!`);
@@ -155,7 +157,8 @@ export default function ImportSongModal({
         });
 
         if (setlistId && newSong?.id) {
-          await addSongToSetlist(setlistId, newSong.id, setlistPosition ?? 999);
+          const speed = calculateOptimalScrollSpeed(bodyText, previewData.bpm || null);
+          await addSongToSetlist(setlistId, newSong.id, setlistPosition ?? 999, speed);
           queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
         }
         toast.success(`"${title}" importada com sucesso!`);

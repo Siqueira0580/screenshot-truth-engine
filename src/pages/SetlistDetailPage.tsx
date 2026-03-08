@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus } from "lucide-react";
@@ -416,7 +417,11 @@ export default function SetlistDetailPage() {
 
   // Mutations
   const addMutation = useMutation({
-    mutationFn: (songId: string) => addSongToSetlist(id!, songId, items.length + 1),
+    mutationFn: (songId: string) => {
+      const song = allSongs.find((s) => s.id === songId);
+      const autoSpeed = calculateOptimalScrollSpeed(song?.body_text, song?.bpm);
+      return addSongToSetlist(id!, songId, items.length + 1, autoSpeed);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
       toast.success("Música adicionada!");

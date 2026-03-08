@@ -473,8 +473,8 @@ export default function StudioDetailPage() {
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mixer — Stems</h3>
             {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
               <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
-                setMutedStems({ full: false, vocals: false, percussion: false, harmony: false });
-                setSoloStems({ full: false, vocals: false, percussion: false, harmony: false });
+                setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                setSoloStems({ vocals: false, percussion: false, harmony: false, guitar: false });
               }}>
                 Reset
               </Button>

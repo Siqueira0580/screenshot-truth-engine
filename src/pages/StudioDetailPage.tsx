@@ -59,6 +59,9 @@ export default function StudioDetailPage() {
   const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({
     vocals: false, percussion: false, harmony: false, guitar: false,
   });
+  const [gateStems, setGateStems] = useState<Record<StemType, boolean>>({
+    vocals: false, percussion: false, harmony: false, guitar: false,
+  });
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);
   const [separationProgress, setSeparationProgress] = useState({ percent: 0, label: "" });

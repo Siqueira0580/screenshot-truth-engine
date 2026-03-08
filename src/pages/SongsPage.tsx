@@ -15,6 +15,7 @@ import { useAutoEnrichment } from "@/hooks/useAutoEnrichment";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ExploreTab from "@/components/explore/ExploreTab";
 import OnboardingTour, { useOnboardingTour } from "@/components/OnboardingTour";
+import PersonalizationWizard, { usePersonalizationWizard } from "@/components/PersonalizationWizard";
 
 export default function SongsPage() {
   const { user } = useAuth();
@@ -29,6 +30,8 @@ export default function SongsPage() {
   const queryClient = useQueryClient();
   const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
   const [tourVisible, setTourVisible] = useState(showTour);
+  const { shouldShow: showWizard } = usePersonalizationWizard();
+  const [wizardVisible, setWizardVisible] = useState(showWizard);
 
   const { data: songs = [], isLoading } = useQuery({
     queryKey: ["songs"],
@@ -227,6 +230,10 @@ export default function SongsPage() {
 
       {tourVisible && (
         <OnboardingTour onComplete={() => { dismissTour(); setTourVisible(false); }} />
+      )}
+
+      {wizardVisible && !tourVisible && (
+        <PersonalizationWizard onComplete={() => setWizardVisible(false)} />
       )}
     </div>
   );

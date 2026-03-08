@@ -30,6 +30,8 @@ export default function SongsPage() {
   const queryClient = useQueryClient();
   const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
   const [tourVisible, setTourVisible] = useState(showTour);
+  const { shouldShow: showWizard } = usePersonalizationWizard();
+  const [wizardVisible, setWizardVisible] = useState(showWizard);
 
   const { data: songs = [], isLoading } = useQuery({
     queryKey: ["songs"],

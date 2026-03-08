@@ -465,6 +465,10 @@ export default function CompositionStudioPage() {
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isSaving ? "Salvando no servidor..." : compositionId ? "Atualizar" : "Salvar Composição"}
             </Button>
+            <Button size="sm" className="gap-1.5" variant="secondary" onClick={handleExportToStudio} disabled={isExporting}>
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileOutput className="h-4 w-4" />}
+              {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
+            </Button>
             <Button size="sm" className="gap-1.5">
               <Share2 className="h-4 w-4" /> Partilhar
             </Button>

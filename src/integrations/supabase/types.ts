@@ -162,6 +162,41 @@ export type Database = {
         }
         Relationships: []
       }
+      composition_audios: {
+        Row: {
+          audio_url: string
+          composition_id: string
+          created_at: string
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          audio_url: string
+          composition_id: string
+          created_at?: string
+          id?: string
+          title?: string
+          user_id: string
+        }
+        Update: {
+          audio_url?: string
+          composition_id?: string
+          created_at?: string
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "composition_audios_composition_id_fkey"
+            columns: ["composition_id"]
+            isOneToOne: false
+            referencedRelation: "compositions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compositions: {
         Row: {
           audio_url: string | null

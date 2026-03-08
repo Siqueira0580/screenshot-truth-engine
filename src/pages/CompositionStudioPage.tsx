@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, Loader2, Trash2, ArrowLeft, UserPlus, Eraser, Headphones, Pause, Volume2, Code, Eye } from "lucide-react";
+import { Save, Share2, Mic, Square, Music, Sparkles, Search, Loader2, Trash2, ArrowLeft, UserPlus, Eraser, Headphones, Pause, Code, Eye } from "lucide-react";
 import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
+import AudioTakesList, { type AudioTake } from "@/components/AudioTakesList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
 import { createSong } from "@/lib/supabase-queries";
@@ -46,7 +47,7 @@ export default function CompositionStudioPage() {
   const [editorText, setEditorText] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
+  const [audioTakes, setAudioTakes] = useState<AudioTake[]>([]);
   const audioBlobRef = useRef<Blob | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [tonePopoverOpen, setTonePopoverOpen] = useState(false);
@@ -61,7 +62,6 @@ export default function CompositionStudioPage() {
 
     setIsExporting(true);
     try {
-      // 1) Create song
       const song = await createSong({
         title: title || "Sem título",
         body_text: editorText || null,
@@ -71,31 +71,16 @@ export default function CompositionStudioPage() {
         composer: composers || null,
       });
 
-      // 2) If there's audio, upload to audio-stems and create audio_tracks
+      // Use first audio take if available
       let fileFullUrl: string | null = null;
+      const firstTake = audioTakes[0];
 
-      if (savedAudioUrl) {
+      if (firstTake?.url) {
         try {
-          const pathMatch = savedAudioUrl.split("/compositions_audio/");
-          let blob: Blob | null = null;
-
-          if (pathMatch.length === 2) {
-            const storagePath = decodeURIComponent(pathMatch[1]);
-            const { data: dlData, error: dlErr } = await supabase.storage
-              .from("compositions_audio")
-              .download(storagePath);
-            if (!dlErr && dlData) {
-              blob = dlData;
-            }
-          }
-
-          if (!blob) {
-            const res = await fetch(savedAudioUrl);
-            if (res.ok) blob = await res.blob();
-          }
-
-          if (blob) {
-            const ext = savedAudioUrl.includes(".webm") ? "webm" : savedAudioUrl.includes(".ogg") ? "ogg" : "mp3";
+          const res = await fetch(firstTake.url);
+          if (res.ok) {
+            const blob = await res.blob();
+            const ext = firstTake.url.includes(".webm") ? "webm" : firstTake.url.includes(".ogg") ? "ogg" : "mp3";
             const path = `${song.id}/full.${ext}`;
             const { error: upErr } = await supabase.storage
               .from("audio-stems")
@@ -103,18 +88,13 @@ export default function CompositionStudioPage() {
             if (!upErr) {
               const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
               fileFullUrl = urlData.publicUrl;
-            } else {
-              console.error("Upload to audio-stems failed:", upErr);
             }
-          } else {
-            console.error("Could not download audio from compositions_audio");
           }
         } catch (audioErr) {
           console.error("Audio export error:", audioErr);
         }
       }
 
-      // 3) Create audio_tracks record
       await supabase.from("audio_tracks").insert({
         song_id: song.id,
         file_full: fileFullUrl,
@@ -129,7 +109,7 @@ export default function CompositionStudioPage() {
     } finally {
       setIsExporting(false);
     }
-  }, [title, editorText, selectedKey, bpm, style, composers, savedAudioUrl, navigate]);
+  }, [title, editorText, selectedKey, bpm, style, composers, audioTakes, navigate]);
 
   const isOwner = !compositionId || compositionOwnerId === user?.id;
 
@@ -150,7 +130,20 @@ export default function CompositionStudioPage() {
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
       setComposers((data as any).composers || "");
-      if (data.audio_url) setSavedAudioUrl(data.audio_url);
+      // Load audio takes from composition_audios table
+      const { data: takesData } = await supabase
+        .from("composition_audios" as any)
+        .select("*")
+        .eq("composition_id", compositionId)
+        .order("created_at", { ascending: false });
+      if (takesData && (takesData as any[]).length > 0) {
+        setAudioTakes((takesData as any[]).map((t: any) => ({
+          id: t.id,
+          url: t.audio_url,
+          title: t.title || "",
+          createdAt: t.created_at,
+        })));
+      }
       setCompositionOwnerId(data.user_id);
       setSharedWithEmails((data as any).shared_with_emails || []);
     };
@@ -248,27 +241,29 @@ export default function CompositionStudioPage() {
   }, [title, editorText, composers]);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeleteAudioModal, setShowDeleteAudioModal] = useState(false);
 
-  const handleDeleteAudio = useCallback(async () => {
+  const handleDeleteTake = useCallback(async (takeId: string) => {
     try {
-      if (savedAudioUrl) {
-        const path = savedAudioUrl.split("/compositions_audio/")[1];
+      const take = audioTakes.find((t) => t.id === takeId);
+      if (take?.url) {
+        const path = take.url.split("/compositions_audio/")[1];
         if (path) {
           await supabase.storage.from("compositions_audio").remove([decodeURIComponent(path)]);
         }
-        if (compositionId) {
-          await supabase.from("compositions").update({ audio_url: null } as any).eq("id", compositionId);
-        }
       }
-      setSavedAudioUrl(null);
-      audioBlobRef.current = null;
-      toast.success("Áudio excluído com sucesso.");
+      await supabase.from("composition_audios" as any).delete().eq("id", takeId);
+      setAudioTakes((prev) => prev.filter((t) => t.id !== takeId));
+      toast.success("Gravação excluída.");
     } catch (err) {
-      console.error("Delete audio error:", err);
-      toast.error("Erro ao excluir o áudio.");
+      console.error("Delete take error:", err);
+      toast.error("Erro ao excluir a gravação.");
     }
-  }, [savedAudioUrl, compositionId]);
+  }, [audioTakes]);
+
+  const handleRenameTake = useCallback(async (takeId: string, newTitle: string) => {
+    setAudioTakes((prev) => prev.map((t) => t.id === takeId ? { ...t, title: newTitle } : t));
+    await supabase.from("composition_audios" as any).update({ title: newTitle }).eq("id", takeId);
+  }, []);
 
   const handleDelete = useCallback(async () => {
     if (!compositionId) return;
@@ -359,10 +354,56 @@ export default function CompositionStudioPage() {
       if (result) {
         audioBlobRef.current = result.audioBlob;
         transcribeAudio(result.audioBlob);
+
+        // Save audio take to storage + DB
+        (async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          // Ensure composition is persisted first
+          let compId = compositionId;
+          if (!compId) {
+            const id = await persistComposition({ silent: true });
+            if (!id) return;
+            compId = id;
+          }
+
+          const ext = result.audioBlob.type.includes("webm") ? "webm" : "ogg";
+          const fileName = `${user.id}/${Date.now()}.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("compositions_audio")
+            .upload(fileName, result.audioBlob, { contentType: result.audioBlob.type });
+          if (uploadErr) { console.error("Upload error:", uploadErr); return; }
+
+          const { data: urlData } = supabase.storage.from("compositions_audio").getPublicUrl(fileName);
+          const now = new Date();
+          const autoTitle = `Ideia - ${now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+
+          const { data: inserted, error: dbErr } = await supabase
+            .from("composition_audios" as any)
+            .insert({
+              composition_id: compId,
+              user_id: user.id,
+              title: autoTitle,
+              audio_url: urlData.publicUrl,
+            })
+            .select()
+            .single();
+
+          if (!dbErr && inserted) {
+            const row = inserted as any;
+            setAudioTakes((prev) => [{
+              id: row.id,
+              url: row.audio_url,
+              title: row.title,
+              createdAt: row.created_at,
+            }, ...prev]);
+          }
+        })();
       }
     }
     prevRecordingState.current = recordingState;
-  }, [recordingState, getResult, transcribeAudio]);
+  }, [recordingState, getResult, transcribeAudio, compositionId, persistComposition]);
 
   // Master button handler
   const handleMasterButton = useCallback(() => {
@@ -375,8 +416,6 @@ export default function CompositionStudioPage() {
     }
   }, [recordingState, startRecording, pauseRecording, resumeRecording]);
 
-  // Playback ref
-  const playbackRef = useRef<HTMLAudioElement | null>(null);
 
   // Handle tone selection from the unified popover
   const handleToneSelect = useCallback((newKey: string) => {
@@ -436,7 +475,7 @@ export default function CompositionStudioPage() {
     setTitle("");
     setComposers("");
     setBpm("120");
-    setSavedAudioUrl(null);
+    setAudioTakes([]);
     audioBlobRef.current = null;
     setShowClearModal(false);
     toast.success("Composição limpa!");
@@ -661,36 +700,8 @@ export default function CompositionStudioPage() {
           {/* ─── Horizontal Toolbar above editor ─── */}
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center justify-between mb-4">
-              {/* ─── 3-Button Recording Control: [ Play ] — [ Rec/Pause ] — [ Stop ] ─── */}
+              {/* ─── Recording Control: [ Rec/Pause ] — [ Stop ] ─── */}
               <div className="flex items-center gap-6">
-                {/* LEFT: Play/Listen — only when recorded */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        const src = recorderAudioUrl || savedAudioUrl;
-                        if (!src) return;
-                        if (!playbackRef.current) {
-                          playbackRef.current = new Audio(src);
-                        } else {
-                          playbackRef.current.src = src;
-                        }
-                        playbackRef.current.play();
-                      }}
-                      disabled={!recorderAudioUrl && !savedAudioUrl}
-                      className={cn(
-                        "flex items-center justify-center w-10 h-10 rounded-full border transition-all",
-                        (recorderAudioUrl || savedAudioUrl)
-                          ? "border-primary/50 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-105"
-                          : "border-border text-muted-foreground/40 bg-muted/30 cursor-not-allowed"
-                      )}
-                    >
-                      <Volume2 className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom"><p>Ouvir gravação</p></TooltipContent>
-                </Tooltip>
-
                 {/* CENTER: Master Record/Pause button */}
                 <div className="flex flex-col items-center gap-1">
                   <Tooltip>
@@ -813,18 +824,14 @@ export default function CompositionStudioPage() {
             </div>
           </TooltipProvider>
 
-          {/* Audio playback after recording */}
-          {(recorderAudioUrl || savedAudioUrl) && !isActiveRecording && (
-            <div className="mb-6 flex flex-col items-center gap-2">
-              <audio controls src={recorderAudioUrl || savedAudioUrl || undefined} className="w-full max-w-md rounded-lg" />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
-                onClick={() => setShowDeleteAudioModal(true)}
-              >
-                <Trash2 className="h-3.5 w-3.5" /> Excluir áudio
-              </Button>
+          {/* ─── Audio Takes List (Gaveta de Ideias) ─── */}
+          {audioTakes.length > 0 && !isActiveRecording && (
+            <div className="mb-6">
+              <AudioTakesList
+                takes={audioTakes}
+                onRename={handleRenameTake}
+                onDelete={handleDeleteTake}
+              />
             </div>
           )}
 
@@ -1026,23 +1033,6 @@ export default function CompositionStudioPage() {
         )}
       </div>
 
-      {/* ─── Footer ─── */}
-      <footer className="shrink-0 border-t border-border bg-card px-4 py-3">
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-1">
-            🎙️ Cofre de Ideias
-          </span>
-          {(recorderAudioUrl || savedAudioUrl) && (
-            <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium bg-secondary border border-border text-foreground">
-              <PlayCircle className="h-3.5 w-3.5 text-primary" />
-              Gravação atual
-            </span>
-          )}
-          {!recorderAudioUrl && !savedAudioUrl && (
-            <span className="text-xs text-muted-foreground">Nenhuma gravação ainda.</span>
-          )}
-        </div>
-      </footer>
 
       <ConfirmDeleteModal
         open={showDeleteModal}
@@ -1050,14 +1040,6 @@ export default function CompositionStudioPage() {
         onConfirm={handleDelete}
         title="Apagar Composição"
         description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
-      />
-
-      <ConfirmDeleteModal
-        open={showDeleteAudioModal}
-        onOpenChange={setShowDeleteAudioModal}
-        onConfirm={handleDeleteAudio}
-        title="Excluir Áudio"
-        description="Tem certeza que deseja excluir o áudio gravado? Esta ação não pode ser desfeita."
       />
 
       <ConfirmDeleteModal

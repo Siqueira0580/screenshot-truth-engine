@@ -62,7 +62,6 @@ export default function CompositionStudioPage() {
 
     setIsExporting(true);
     try {
-      // 1) Create song
       const song = await createSong({
         title: title || "Sem título",
         body_text: editorText || null,
@@ -72,31 +71,16 @@ export default function CompositionStudioPage() {
         composer: composers || null,
       });
 
-      // 2) If there's audio, upload to audio-stems and create audio_tracks
+      // Use first audio take if available
       let fileFullUrl: string | null = null;
+      const firstTake = audioTakes[0];
 
-      if (savedAudioUrl) {
+      if (firstTake?.url) {
         try {
-          const pathMatch = savedAudioUrl.split("/compositions_audio/");
-          let blob: Blob | null = null;
-
-          if (pathMatch.length === 2) {
-            const storagePath = decodeURIComponent(pathMatch[1]);
-            const { data: dlData, error: dlErr } = await supabase.storage
-              .from("compositions_audio")
-              .download(storagePath);
-            if (!dlErr && dlData) {
-              blob = dlData;
-            }
-          }
-
-          if (!blob) {
-            const res = await fetch(savedAudioUrl);
-            if (res.ok) blob = await res.blob();
-          }
-
-          if (blob) {
-            const ext = savedAudioUrl.includes(".webm") ? "webm" : savedAudioUrl.includes(".ogg") ? "ogg" : "mp3";
+          const res = await fetch(firstTake.url);
+          if (res.ok) {
+            const blob = await res.blob();
+            const ext = firstTake.url.includes(".webm") ? "webm" : firstTake.url.includes(".ogg") ? "ogg" : "mp3";
             const path = `${song.id}/full.${ext}`;
             const { error: upErr } = await supabase.storage
               .from("audio-stems")
@@ -104,18 +88,13 @@ export default function CompositionStudioPage() {
             if (!upErr) {
               const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
               fileFullUrl = urlData.publicUrl;
-            } else {
-              console.error("Upload to audio-stems failed:", upErr);
             }
-          } else {
-            console.error("Could not download audio from compositions_audio");
           }
         } catch (audioErr) {
           console.error("Audio export error:", audioErr);
         }
       }
 
-      // 3) Create audio_tracks record
       await supabase.from("audio_tracks").insert({
         song_id: song.id,
         file_full: fileFullUrl,
@@ -130,7 +109,7 @@ export default function CompositionStudioPage() {
     } finally {
       setIsExporting(false);
     }
-  }, [title, editorText, selectedKey, bpm, style, composers, savedAudioUrl, navigate]);
+  }, [title, editorText, selectedKey, bpm, style, composers, audioTakes, navigate]);
 
   const isOwner = !compositionId || compositionOwnerId === user?.id;
 

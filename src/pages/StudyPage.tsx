@@ -302,7 +302,7 @@ export default function StudyPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/songs/${songId}`)} className="shrink-0" title="Editar Música">
+          <Button variant="ghost" size="icon" onClick={() => setEditFormOpen(true)} className="shrink-0" title="Editar Música">
             <Edit3 className="h-4 w-4" />
           </Button>
           {displayKey && (

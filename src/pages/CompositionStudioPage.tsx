@@ -920,8 +920,8 @@ export default function CompositionStudioPage() {
         open={showClearModal}
         onOpenChange={setShowClearModal}
         onConfirm={handleClearPage}
-        title="Limpar Página"
-        description="Tem certeza que deseja apagar toda a composição? O texto, acordes e tom serão resetados. Esta ação não pode ser desfeita."
+        title="Limpar prancheta?"
+        description="Tem certeza de que deseja apagar toda a sua composição atual? Esta ação não poderá ser desfeita e você perderá o texto não salvo."
       />
 
       {compositionId && (

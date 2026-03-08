@@ -26,7 +26,9 @@ const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[
 
 export default function ArtistDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [sort, setSort] = useState<SortOption>("alpha_asc");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 

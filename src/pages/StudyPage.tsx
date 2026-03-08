@@ -20,6 +20,7 @@ import { useChordProParser } from "@/hooks/useChordProParser";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SongChordsFAB from "@/components/SongChordsFAB";
+import SongFormDialog from "@/components/SongFormDialog";
 
 const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 

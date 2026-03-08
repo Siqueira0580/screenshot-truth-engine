@@ -8,12 +8,17 @@ interface HeroCarouselProps {
   onAddSong: (track: DeezerTrack) => void;
 }
 
-export default function HeroCarousel({ tracks, onAddSong }: HeroCarouselProps) {
+export default function HeroCarousel({ tracks }: HeroCarouselProps) {
   const heroTracks = tracks.slice(0, 4);
   const mainTrack = heroTracks[0];
   const secondaryTracks = heroTracks.slice(1, 4);
+  const navigate = useNavigate();
 
-  if (!mainTrack) return null;
+  const goToArtist = (track: DeezerTrack) => {
+    navigate(`/artist/${encodeURIComponent(track.artist.name)}`, {
+      state: { photoUrl: track.artist.picture_xl || track.artist.picture_medium },
+    });
+  };
 
   return (
     <div className="space-y-4">

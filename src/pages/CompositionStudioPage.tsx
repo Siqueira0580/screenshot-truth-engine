@@ -430,9 +430,11 @@ export default function CompositionStudioPage() {
 
   const displayText = editorText;
 
-  const chords = (selectedKey && HARMONIC_FIELDS[selectedKey]) || [];
-  const progressions = selectedKey ? getProgressions(selectedKey) : [];
-  const isMinor = selectedKey.endsWith("m");
+  // Harmony tab uses its own independent key
+  const [harmonyKey, setHarmonyKey] = useState("C");
+  const harmonyChords = HARMONIC_FIELDS[harmonyKey] || [];
+  const harmonyProgressions = getProgressions(harmonyKey);
+  const isHarmonyMinor = harmonyKey.endsWith("m");
 
   // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───
   const fetchRhymes = useCallback(async (word: string) => {

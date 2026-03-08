@@ -96,6 +96,48 @@ export default function ArtistExplorePage() {
     }
   };
 
+  const handleSheetPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || file.type !== "application/pdf") {
+      toast.error("Selecione um arquivo PDF válido");
+      return;
+    }
+    setUploadingSheetPdf(true);
+    try {
+      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: uploadError } = await supabase.storage
+        .from("sheet_music")
+        .upload(fileName, file, { contentType: "application/pdf" });
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
+      const title = file.name.replace(/\.pdf$/i, "").trim();
+
+      await createSong({
+        title,
+        artist: decodedName,
+        composer: null,
+        musical_key: null,
+        style: null,
+        bpm: null,
+        time_signature: "4/4",
+        body_text: null,
+        pdf_url: urlData.publicUrl,
+      } as any);
+
+      try { await findOrCreateArtist(decodedName, artistPhoto || undefined); } catch {}
+
+      toast.success("PDF de partitura enviado com sucesso!");
+      setImportUrl("");
+      fetchSongs();
+    } catch (err: any) {
+      toast.error("Erro ao enviar PDF: " + (err.message || "Tente novamente"));
+    } finally {
+      setUploadingSheetPdf(false);
+      if (sheetPdfInputRef.current) sheetPdfInputRef.current.value = "";
+    }
+  };
+
   const initials = decodedName
     .split(" ")
     .map((w) => w[0])

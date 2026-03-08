@@ -594,6 +594,9 @@ export default function CompositionStudioPage() {
 
           {/* Right: actions */}
           <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" className="h-9 w-9 text-destructive hover:bg-destructive/10" onClick={() => setShowClearModal(true)} title="Limpar página">
+              <Trash2 className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isSaving ? "Salvando..." : compositionId ? "Salvar" : "Salvar Composição"}

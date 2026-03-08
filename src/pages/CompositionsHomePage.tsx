@@ -11,6 +11,9 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 
 interface Composition {
   id: string;

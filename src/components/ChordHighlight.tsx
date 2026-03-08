@@ -69,7 +69,7 @@ export default function ChordHighlight({ chord }: ChordHighlightProps) {
           </div>
         ) : (
           <div className="relative">
-            <canvas ref={canvasRef} width={110} height={140} className="rounded block" />
+            <canvas ref={canvasRef} width={110} height={120} className="rounded block" />
             {source === "ai" && (
               <span className="absolute bottom-0.5 right-0.5 text-[8px] text-muted-foreground/50">✨</span>
             )}

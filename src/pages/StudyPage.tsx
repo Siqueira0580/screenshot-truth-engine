@@ -292,26 +292,28 @@ export default function StudyPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-card shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          {artistPhoto ? (
-            <img src={artistPhoto} alt="" className="h-10 w-10 rounded-lg object-cover" />
-          ) : (
-            <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-              <BookOpen className="h-5 w-5 text-muted-foreground" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 py-3 border-b border-border bg-card shrink-0">
+        <div className="flex items-center gap-3 w-full sm:w-auto sm:flex-1 min-w-0">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {artistPhoto ? (
+              <img src={artistPhoto} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />
+            ) : (
+              <div className="h-10 w-10 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                <BookOpen className="h-5 w-5 text-muted-foreground" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-bold truncate">{song?.title || "Carregando..."}</h1>
+              <p className="text-xs text-muted-foreground truncate">{song?.artist}</p>
             </div>
-          )}
-          <div className="min-w-0">
-            <h1 className="text-lg font-bold truncate">{song?.title || "Carregando..."}</h1>
-            <p className="text-xs text-muted-foreground truncate">{song?.artist}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setEditFormOpen(true)} className="shrink-0" title="Editar Música">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
+          <Button variant="ghost" size="icon" onClick={() => setEditFormOpen(true)} className="shrink-0 h-8 w-8" title="Editar Música">
             <Edit3 className="h-4 w-4" />
           </Button>
           {displayKey && (
@@ -353,7 +355,6 @@ export default function StudyPage() {
               {song.bpm} <span className="text-[10px] text-muted-foreground">BPM</span>
             </span>
           )}
-          {/* Mobile mixer toggle */}
           {hasAnyStem && isMobile && (
             <Button variant="outline" size="sm" onClick={() => setShowMixer(v => !v)} className="gap-1">
               <Music2 className="h-3.5 w-3.5" />
@@ -367,7 +368,7 @@ export default function StudyPage() {
       <div className="flex flex-1 min-h-0 flex-col md:flex-row">
         {/* Lyrics panel */}
         <div className="flex-1 flex flex-col min-w-0">
-          <div className="flex items-center gap-2 px-4 py-1.5 bg-muted/30 border-b border-border text-xs">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-1.5 bg-muted/30 border-b border-border text-xs">
             <span className="text-muted-foreground font-medium">Rolagem:</span>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setScrollSpeed(s => Math.max(s - 0.2, 0.5))}><Minus className="h-3 w-3" /></Button>
             <span className="font-mono w-8 text-center">{scrollSpeed.toFixed(1)}x</span>
@@ -393,7 +394,7 @@ export default function StudyPage() {
             </Button>
           </div>
 
-          <div ref={lyricsRef} className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
+          <div ref={lyricsRef} className="flex-1 overflow-y-auto overflow-x-auto px-3 sm:px-6 py-6 w-full max-w-[100vw]">
             {song?.pdf_url ? (
               <div style={{ height: "300vh" }}>
                 <iframe

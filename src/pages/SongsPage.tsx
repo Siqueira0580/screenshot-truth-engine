@@ -124,7 +124,7 @@ export default function SongsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="library" className="w-full">
+      <Tabs defaultValue="explore" className="w-full">
         <TabsList className="w-full grid grid-cols-2">
           <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
           <TabsTrigger value="explore">🔍 Explorar</TabsTrigger>

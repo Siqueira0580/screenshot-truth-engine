@@ -1,4 +1,4 @@
-import { BadgeCheck, Play } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
 import type { DeezerTrack } from "@/hooks/useTopCharts";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -58,20 +58,6 @@ export default function HeroCarousel({ tracks, onAddSong }: HeroCarouselProps) {
             </div>
             <p className="text-sm md:text-base text-slate-300 mb-4">{mainTrack.artist.name}</p>
 
-            <button
-              className="self-start flex items-center gap-2 px-6 py-2.5 font-bold text-sm uppercase tracking-wider text-white transition-all duration-300 hover:shadow-[0_0_25px_rgba(0,255,255,0.5)]"
-              style={{
-                clipPath: "polygon(8% 0, 100% 0, 92% 100%, 0 100%)",
-                background: "linear-gradient(135deg, #06b6d4, #d946ef)",
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onAddSong(mainTrack);
-              }}
-            >
-              <Play className="h-4 w-4" />
-              Aprender a tocar
-            </button>
           </div>
         </div>
       </div>

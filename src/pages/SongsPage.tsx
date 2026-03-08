@@ -224,6 +224,10 @@ export default function SongsPage() {
         onConfirm={() => { if (deleteTarget) { deleteM.mutate(deleteTarget); setDeleteTarget(null); } }}
         description="Tem a certeza de que deseja excluir esta música? Esta ação não pode ser desfeita."
       />
+
+      {tourVisible && (
+        <OnboardingTour onComplete={() => { dismissTour(); setTourVisible(false); }} />
+      )}
     </div>
   );
 }

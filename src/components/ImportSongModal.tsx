@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, Loader2, Music2, Check, X, ArrowLeft, Mic } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { createSong, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
+import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -118,25 +118,52 @@ export default function ImportSongModal({
         } catch { /* non-critical */ }
       }
 
-      const newSong = await createSong({
-        title,
-        artist,
-        style,
-        body_text: bodyText,
-        musical_key: previewData.musical_key || null,
-        bpm: previewData.bpm || null,
-        composer: previewData.composer || null,
-        time_signature: previewData.time_signature || null,
-        youtube_url: previewData.youtube_url || null,
-      });
+      // Check for duplicate: same title + artist already in global songs
+      let songId: string | null = null;
+      if (artist) {
+        const { data: existing } = await supabase
+          .from("songs")
+          .select("id")
+          .ilike("title", title)
+          .ilike("artist", artist)
+          .limit(1);
+        if (existing && existing.length > 0) {
+          songId = existing[0].id;
+        }
+      }
 
-      if (setlistId && newSong?.id) {
-        await addSongToSetlist(setlistId, newSong.id, setlistPosition ?? 999);
-        queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
+      if (songId) {
+        // Song already exists globally — just add to user's library
+        await addToUserLibrary(songId);
+        if (setlistId) {
+          await addSongToSetlist(setlistId, songId, setlistPosition ?? 999);
+          queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
+        }
+        toast.success(`"${title}" já existia — adicionada à sua biblioteca!`);
+      } else {
+        // Create new song + add to library
+        const newSong = await createSongAndAddToLibrary({
+          title,
+          artist,
+          style,
+          body_text: bodyText,
+          musical_key: previewData.musical_key || null,
+          bpm: previewData.bpm || null,
+          composer: previewData.composer || null,
+          time_signature: previewData.time_signature || null,
+          youtube_url: previewData.youtube_url || null,
+        });
+
+        if (setlistId && newSong?.id) {
+          await addSongToSetlist(setlistId, newSong.id, setlistPosition ?? 999);
+          queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
+        }
+        toast.success(`"${title}" importada com sucesso!`);
       }
 
       queryClient.invalidateQueries({ queryKey: ["songs"] });
-      toast.success(`"${title}" importada com sucesso!`);
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
+      queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
       handleClose();
     } catch (err) {
       console.error("Save error:", err);

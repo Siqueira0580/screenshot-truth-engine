@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Play, Pause, Square, Music2, Mic2, Drum, Piano,
+  Play, Pause, Square, Music2, Mic2, Drum, Piano, Guitar,
   Volume2, ChevronUp, ChevronDown, Loader2,
   ArrowLeft, Minus, Plus, BookOpen, Edit3,
 } from "lucide-react";

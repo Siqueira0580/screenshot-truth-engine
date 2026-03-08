@@ -157,7 +157,8 @@ export default function ImportSongModal({
         });
 
         if (setlistId && newSong?.id) {
-          await addSongToSetlist(setlistId, newSong.id, setlistPosition ?? 999);
+          const speed = calculateOptimalScrollSpeed(bodyText, previewData.bpm || null);
+          await addSongToSetlist(setlistId, newSong.id, setlistPosition ?? 999, speed);
           queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
         }
         toast.success(`"${title}" importada com sucesso!`);

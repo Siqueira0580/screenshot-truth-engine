@@ -566,9 +566,9 @@ export function drawChordDiagram(
     }
   }
 
-  // ── Nut (thin elegant bar) ──
+  // ── Nut (thick bar for first position) ──
   if (isFirstPosition) {
-    ctx.fillStyle = textBright;
+    ctx.fillStyle = "hsl(220, 15%, 80%)";
     ctx.fillRect(sidePad - 0.5, gridTop - nutH, gridW + 1, nutH);
   }
 

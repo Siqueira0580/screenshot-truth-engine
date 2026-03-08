@@ -14,7 +14,7 @@ export default function ChordProDisplay({ text, className }: ChordProDisplayProp
   const { lines } = useChordProParser(text);
 
   return (
-    <div className={`${className} font-mono`}>
+    <div className={className}>
       {lines.map((line, lineIdx) => {
         // Filter out directive lines like {title:...}
         const firstToken = line.tokens[0];
@@ -22,25 +22,12 @@ export default function ChordProDisplay({ text, className }: ChordProDisplayProp
           return null;
         }
 
-        // Check if this line has any chords
-        const hasChords = line.tokens.some(t => t.chord);
-
-        if (!hasChords) {
-          // Pure lyric/text line — render as a single pre-formatted line
-          const fullText = line.tokens.map(t => t.lyric).join("");
-          return (
-            <div key={lineIdx} className="whitespace-pre leading-relaxed min-h-[1.5em]">
-              <span className="text-foreground">{fullText || "\u00A0"}</span>
-            </div>
-          );
-        }
-
         return (
           <div key={lineIdx} className="flex flex-wrap items-end mb-1">
             {line.tokens.map((token, tokenIdx) => (
-              <span key={tokenIdx} className="inline-flex flex-col">
+              <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
                 {/* Chord row */}
-                <span className="text-primary font-bold text-sm h-5 leading-5 select-none whitespace-pre">
+                <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
                   {token.chord ? (
                     <ChordHighlight chord={token.chord} />
                   ) : (

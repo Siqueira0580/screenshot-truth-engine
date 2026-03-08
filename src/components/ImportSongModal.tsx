@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, Loader2, Music2, Check, ArrowLeft, Mic, Youtube } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { createSongAndAddToLibrary, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
+import { createSong, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -118,7 +118,7 @@ export default function ImportSongModal({
         } catch { /* non-critical */ }
       }
 
-      const newSong = await createSongAndAddToLibrary({
+      const newSong = await createSong({
         title,
         artist,
         style,
@@ -135,7 +135,6 @@ export default function ImportSongModal({
         queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
       }
 
-      queryClient.invalidateQueries({ queryKey: ["user-library"] });
       queryClient.invalidateQueries({ queryKey: ["songs"] });
       toast.success(`"${title}" importada com sucesso!`);
       handleClose();

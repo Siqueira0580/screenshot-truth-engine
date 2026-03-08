@@ -1,5 +1,5 @@
 /**
- * Multi-track audio engine using Web Audio API with pitch shifting.
+ * Multi-track audio engine using Web Audio API with pitch shifting and noise gate.
  * Uses Tone.js PitchShift for semitone transposition without tempo change.
  */
 import * as Tone from "tone";
@@ -10,7 +10,18 @@ interface StemChannel {
   player: Tone.Player;
   gain: Tone.Gain;
   pitchShift: Tone.PitchShift;
+  /** Gate gain node – sits between pitchShift and user gain */
+  gateGain: Tone.Gain;
+  /** Analyser for RMS measurement */
+  analyser: Tone.Analyser;
+  /** Whether the noise gate is active for this stem */
+  gateEnabled: boolean;
 }
+
+/** Noise gate configuration */
+const GATE_THRESHOLD_DB = -40; // dB below which we close the gate
+const GATE_ATTACK = 0.05; // seconds – open fast
+const GATE_RELEASE = 0.1; // seconds – close smoothly
 
 export class MultitrackEngine {
   private channels: Map<StemType, StemChannel> = new Map();
@@ -20,6 +31,7 @@ export class MultitrackEngine {
   private _duration = 0;
   private _pitch = 0;
   private animFrameId: number | null = null;
+  private gateFrameId: number | null = null;
   private onTimeUpdate?: (time: number, duration: number) => void;
   private onPlayStateChange?: (playing: boolean) => void;
   private onLoadStateChange?: (loading: boolean) => void;
@@ -39,27 +51,30 @@ export class MultitrackEngine {
   }
 
   async loadStem(type: StemType, url: string) {
-    // Dispose existing channel
     this.disposeChannel(type);
-
     this.onLoadStateChange?.(true);
 
     try {
       const player = new Tone.Player(url);
       const pitchShift = new Tone.PitchShift({ pitch: this._pitch });
+      const analyser = new Tone.Analyser("waveform", 256);
+      const gateGain = new Tone.Gain(1);
       const gain = new Tone.Gain(1);
 
+      // Routing: player → pitchShift → analyser → gateGain → gain → master
       player.connect(pitchShift);
-      pitchShift.connect(gain);
+      pitchShift.connect(analyser);
+      pitchShift.connect(gateGain);
+      gateGain.connect(gain);
       gain.connect(this.masterGain);
 
-      // Wait for buffer to load
       await Tone.loaded();
 
-      const channel: StemChannel = { player, gain, pitchShift };
+      const channel: StemChannel = {
+        player, gain, pitchShift, gateGain, analyser,
+        gateEnabled: false,
+      };
       this.channels.set(type, channel);
-
-      // Update duration from longest stem
       this.updateDuration();
     } finally {
       this.onLoadStateChange?.(false);
@@ -82,6 +97,8 @@ export class MultitrackEngine {
       existing.player.stop();
       existing.player.dispose();
       existing.pitchShift.dispose();
+      existing.analyser.dispose();
+      existing.gateGain.dispose();
       existing.gain.dispose();
       this.channels.delete(type);
     }
@@ -91,7 +108,6 @@ export class MultitrackEngine {
     if (this.channels.size === 0) return;
     await Tone.start();
 
-    // Sync all players
     this.channels.forEach((ch) => {
       if (ch.player.buffer.loaded) {
         ch.player.start(undefined, this._currentTime);
@@ -101,6 +117,7 @@ export class MultitrackEngine {
     this._isPlaying = true;
     this.onPlayStateChange?.(true);
     this.startTimeTracking();
+    this.startGateProcessing();
   }
 
   pause() {
@@ -112,6 +129,7 @@ export class MultitrackEngine {
     this._isPlaying = false;
     this.onPlayStateChange?.(false);
     this.stopTimeTracking();
+    this.stopGateProcessing();
   }
 
   stop() {
@@ -146,6 +164,23 @@ export class MultitrackEngine {
     });
   }
 
+  /** Enable or disable the noise gate for a specific stem */
+  setGateEnabled(type: StemType, enabled: boolean) {
+    const ch = this.channels.get(type);
+    if (ch) {
+      ch.gateEnabled = enabled;
+      if (!enabled) {
+        // Restore full gain immediately when disabling
+        ch.gateGain.gain.cancelScheduledValues(Tone.now());
+        ch.gateGain.gain.setValueAtTime(1, Tone.now());
+      }
+    }
+  }
+
+  isGateEnabled(type: StemType): boolean {
+    return this.channels.get(type)?.gateEnabled ?? false;
+  }
+
   get isPlaying() {
     return this._isPlaying;
   }
@@ -161,6 +196,52 @@ export class MultitrackEngine {
   get loadedStems(): StemType[] {
     return Array.from(this.channels.keys());
   }
+
+  // ── Noise Gate Processing ──────────────────────────────────
+
+  private startGateProcessing() {
+    const processGate = () => {
+      if (!this._isPlaying) return;
+
+      this.channels.forEach((ch) => {
+        if (!ch.gateEnabled) return;
+
+        // Read waveform from analyser
+        const waveform = ch.analyser.getValue() as Float32Array;
+        if (!waveform || waveform.length === 0) return;
+
+        // Calculate RMS
+        let sumSq = 0;
+        for (let i = 0; i < waveform.length; i++) {
+          sumSq += waveform[i] * waveform[i];
+        }
+        const rms = Math.sqrt(sumSq / waveform.length);
+        const rmsDb = rms > 0 ? 20 * Math.log10(rms) : -100;
+
+        const now = Tone.now();
+        if (rmsDb >= GATE_THRESHOLD_DB) {
+          // Signal above threshold → open gate (attack)
+          ch.gateGain.gain.setTargetAtTime(1, now, GATE_ATTACK);
+        } else {
+          // Signal below threshold → close gate (release)
+          ch.gateGain.gain.setTargetAtTime(0, now, GATE_RELEASE);
+        }
+      });
+
+      this.gateFrameId = requestAnimationFrame(processGate);
+    };
+
+    this.gateFrameId = requestAnimationFrame(processGate);
+  }
+
+  private stopGateProcessing() {
+    if (this.gateFrameId !== null) {
+      cancelAnimationFrame(this.gateFrameId);
+      this.gateFrameId = null;
+    }
+  }
+
+  // ── Time Tracking ──────────────────────────────────────────
 
   private startTimeTracking() {
     const startWall = Tone.now();

@@ -361,46 +361,59 @@ export default function ArtistExplorePage() {
               Repertório ({songs.length})
             </p>
             {songs.map((song, i) => (
-              <motion.button
+              <motion.div
                 key={song.id}
                 initial={{ opacity: 0, x: -16 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
-                onClick={() => navigate(`/songs/${song.id}`)}
                 className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group text-left bg-card/40 border border-border/50 hover:border-primary/30 hover:bg-card/60"
-                style={{
-                  boxShadow: "none",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow =
-                    "0 0 25px hsl(var(--primary) / 0.06), inset 0 0 20px hsl(var(--primary) / 0.02)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = "none";
-                }}
               >
-                <div className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10 group-hover:bg-primary/15 transition-colors">
-                  <Play className="h-4 w-4 text-primary" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-sm text-foreground truncate">
-                    {song.title}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {song.musical_key && (
-                      <span className="text-[11px] text-muted-foreground">
-                        Tom: {song.musical_key}
-                      </span>
-                    )}
-                    {song.style && (
-                      <span className="text-[11px] text-muted-foreground/50">
-                        • {song.style}
-                      </span>
-                    )}
+                <button
+                  onClick={() => navigate(`/songs/${song.id}`)}
+                  className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                >
+                  <div className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                    <Play className="h-4 w-4 text-primary" />
                   </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-sm text-foreground truncate">
+                      {song.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {song.musical_key && (
+                        <span className="text-[11px] text-muted-foreground">
+                          Tom: {song.musical_key}
+                        </span>
+                      )}
+                      {song.style && (
+                        <span className="text-[11px] text-muted-foreground/50">
+                          • {song.style}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-primary"
+                    onClick={() => navigate(`/songs/${song.id}`)}
+                    title="Editar"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    onClick={() => setDeleteTarget({ id: song.id, title: song.title })}
+                    title="Remover"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-                <Compass className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
-              </motion.button>
+              </motion.div>
             ))}
           </motion.div>
         ) : (

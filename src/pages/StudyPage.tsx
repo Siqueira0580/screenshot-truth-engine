@@ -369,9 +369,9 @@ export default function StudyPage() {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 min-h-0 flex-col md:flex-row">
+      <div className="flex flex-1 min-h-0 flex-col md:flex-row overflow-hidden">
         {/* Lyrics panel */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
           <div className="flex flex-wrap items-center gap-2 px-4 py-1.5 bg-muted/30 border-b border-border text-xs">
             <span className="text-muted-foreground font-medium">Rolagem:</span>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setScrollSpeed(s => Math.max(s - 0.2, 0.5))}><Minus className="h-3 w-3" /></Button>

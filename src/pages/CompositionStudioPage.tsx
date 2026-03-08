@@ -702,36 +702,8 @@ export default function CompositionStudioPage() {
           {/* ─── Horizontal Toolbar above editor ─── */}
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center justify-between mb-4">
-              {/* ─── 3-Button Recording Control: [ Play ] — [ Rec/Pause ] — [ Stop ] ─── */}
+              {/* ─── Recording Control: [ Rec/Pause ] — [ Stop ] ─── */}
               <div className="flex items-center gap-6">
-                {/* LEFT: Play/Listen — only when recorded */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => {
-                        const src = recorderAudioUrl || savedAudioUrl;
-                        if (!src) return;
-                        if (!playbackRef.current) {
-                          playbackRef.current = new Audio(src);
-                        } else {
-                          playbackRef.current.src = src;
-                        }
-                        playbackRef.current.play();
-                      }}
-                      disabled={!recorderAudioUrl && !savedAudioUrl}
-                      className={cn(
-                        "flex items-center justify-center w-10 h-10 rounded-full border transition-all",
-                        (recorderAudioUrl || savedAudioUrl)
-                          ? "border-primary/50 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-105"
-                          : "border-border text-muted-foreground/40 bg-muted/30 cursor-not-allowed"
-                      )}
-                    >
-                      <Volume2 className="h-4 w-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom"><p>Ouvir gravação</p></TooltipContent>
-                </Tooltip>
-
                 {/* CENTER: Master Record/Pause button */}
                 <div className="flex flex-col items-center gap-1">
                   <Tooltip>

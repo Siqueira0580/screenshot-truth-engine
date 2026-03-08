@@ -40,7 +40,7 @@ export default function CompositionStudioPage() {
   const [style, setStyle] = useState("Bossa Nova");
   const [composers, setComposers] = useState("");
   const [rhymeSearch, setRhymeSearch] = useState("");
-  const [rhymeResults, setRhymeResults] = useState<{ word: string; score: number }[]>([]);
+  const [rhymeResults, setRhymeResults] = useState<string[]>([]);
   const [isLoadingRhymes, setIsLoadingRhymes] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
@@ -436,25 +436,20 @@ export default function CompositionStudioPage() {
   const harmonyProgressions = getProgressions(harmonyKey);
   const isHarmonyMinor = harmonyKey.endsWith("m");
 
-  // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───
+  // ─── Rhyme generation via AI (Edge Function) ───
   const fetchRhymes = useCallback(async (word: string) => {
     if (!word.trim()) { setRhymeResults([]); return; }
     setIsLoadingRhymes(true);
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
-        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const filtered = (data as { word: string; score: number }[])
-        .filter((r) => r.score >= 100)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 40);
-      setRhymeResults(filtered);
+      const { data, error } = await supabase.functions.invoke("generate-rhymes", {
+        body: { word: word.trim() },
+      });
+      if (error) throw error;
+      const rhymes = Array.isArray(data?.rhymes) ? data.rhymes.filter((r: unknown) => typeof r === "string") : [];
+      setRhymeResults(rhymes);
     } catch (err) {
-      console.error("Rhyme fetch error:", err);
-      toast.error("Erro ao buscar rimas. Verifique sua conexão.");
+      console.error("Rhyme generation error:", err);
+      toast.error("Não foi possível gerar rimas no momento.");
       setRhymeResults([]);
     } finally {
       setIsLoadingRhymes(false);
@@ -464,7 +459,7 @@ export default function CompositionStudioPage() {
   useEffect(() => {
     if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current);
     if (!rhymeSearch.trim()) { setRhymeResults([]); return; }
-    rhymeTimerRef.current = setTimeout(() => fetchRhymes(rhymeSearch), 500);
+    rhymeTimerRef.current = setTimeout(() => fetchRhymes(rhymeSearch), 800);
     return () => { if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current); };
   }, [rhymeSearch, fetchRhymes]);
 
@@ -1017,16 +1012,16 @@ export default function CompositionStudioPage() {
                 {isLoadingRhymes && (
                   <div className="flex items-center justify-center py-6">
                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    <span className="ml-2 text-xs text-muted-foreground">Buscando rimas...</span>
+                    <span className="ml-2 text-xs text-muted-foreground">Gerando rimas com IA...</span>
                   </div>
                 )}
 
                 {!isLoadingRhymes && rhymeResults.length > 0 && (
                   <div className="grid grid-cols-2 gap-1.5">
-                    {rhymeResults.map((r) => (
+                    {rhymeResults.map((word) => (
                       <button
-                        key={r.word}
-                        onClick={() => handleCopyRhyme(r.word)}
+                        key={word}
+                        onClick={() => handleCopyRhyme(word)}
                         className={cn(
                           "rounded-full px-3 py-1.5 text-xs font-medium border border-border bg-secondary text-foreground",
                           "hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors",
@@ -1034,7 +1029,7 @@ export default function CompositionStudioPage() {
                         )}
                         title="Clique para copiar"
                       >
-                        {r.word}
+                        {word}
                       </button>
                     ))}
                   </div>

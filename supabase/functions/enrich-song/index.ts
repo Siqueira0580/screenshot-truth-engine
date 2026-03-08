@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { song_id, artist, title, current_style, current_bpm } = await req.json();
+    const { song_id, artist, title, current_style, current_bpm, current_musical_key, current_composer } = await req.json();
 
     if (!song_id) {
       return new Response(JSON.stringify({ error: "song_id is required" }), {
@@ -27,7 +27,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const updates: Record<string, string | null> = {};
+    const updates: Record<string, string | number | null> = {};
     let artistImageUrl: string | null = null;
 
     // Step 1: Fetch artist image from Deezer
@@ -66,19 +66,23 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Classify genre and BPM via AI if missing
+    // Step 2: Classify genre, BPM, tone, and composers via AI if missing
     const needsGenre = !current_style && artist;
     const needsBpm = (!current_bpm || current_bpm === 0) && artist && title;
+    const needsKey = !current_musical_key && artist && title;
+    const needsComposer = !current_composer && artist && title;
 
-    if (needsGenre || needsBpm) {
+    if (needsGenre || needsBpm || needsKey || needsComposer) {
       try {
         const openaiKey = Deno.env.get("LOVABLE_API_KEY");
         if (openaiKey) {
-          const promptParts: string[] = [];
-          if (needsGenre) promptParts.push("gênero musical (em português, ex: Sertanejo, MPB, Pop Rock)");
-          if (needsBpm) promptParts.push("BPM (batidas por minuto) original de estúdio");
+          const fieldDescriptions: string[] = [];
+          if (needsGenre) fieldDescriptions.push('"genre": gênero musical em português (ex: Sertanejo, MPB, Pop Rock) ou null se não souber');
+          if (needsBpm) fieldDescriptions.push('"bpm": BPM original de estúdio como número inteiro ou null se não souber');
+          if (needsKey) fieldDescriptions.push('"tone": tom original da música (ex: C, Am, G#m) ou null se não souber');
+          if (needsComposer) fieldDescriptions.push('"composers": nomes dos compositores separados por vírgula ou null se não souber');
 
-          const aiRes = await fetch("https://api.lovable.dev/v1/chat/completions", {
+          const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${openaiKey}`,
@@ -90,14 +94,14 @@ serve(async (req) => {
                 {
                   role: "system",
                   content:
-                    'You are a music metadata expert. Return ONLY valid JSON with the requested fields. No explanation, no markdown.',
+                    'You are a music metadata expert. Return ONLY valid JSON with the requested fields. No explanation, no markdown. If you are not sure about a value, return null for that field. Never invent data.',
                 },
                 {
                   role: "user",
-                  content: `Analise a música "${title || ''}" de "${artist}". Retorne um JSON com: ${promptParts.join(" e ")}. Formato: { "genre": "string ou null", "bpm": number ou null }`,
+                  content: `Analise a música "${title || ''}" de "${artist}". Retorne um JSON com: ${fieldDescriptions.join("; ")}. Formato exato: { ${needsGenre ? '"genre": "string|null"' : ''}${needsBpm ? ', "bpm": number|null' : ''}${needsKey ? ', "tone": "string|null"' : ''}${needsComposer ? ', "composers": "string|null"' : ''} }`,
                 },
               ],
-              max_tokens: 60,
+              max_tokens: 120,
               temperature: 0.1,
             }),
           });
@@ -105,19 +109,26 @@ serve(async (req) => {
           if (aiRes.ok) {
             const aiData = await aiRes.json();
             const raw = aiData.choices?.[0]?.message?.content?.trim();
+            console.log(`AI response for "${title}": ${raw}`);
             try {
               const parsed = JSON.parse(raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
               if (needsGenre && parsed.genre && typeof parsed.genre === "string" && parsed.genre.length < 40) {
                 updates.style = parsed.genre;
               }
-              if (needsBpm && parsed.bpm && typeof parsed.bpm === "number" && parsed.bpm > 20 && parsed.bpm < 300) {
-                updates.bpm = String(parsed.bpm);
+              if (needsBpm && parsed.bpm != null) {
+                const bpmVal = typeof parsed.bpm === "string" ? parseInt(parsed.bpm, 10) : parsed.bpm;
+                if (typeof bpmVal === "number" && bpmVal > 20 && bpmVal < 300) {
+                  updates.bpm = bpmVal;
+                }
+              }
+              if (needsKey && parsed.tone && typeof parsed.tone === "string" && parsed.tone.length < 10) {
+                updates.musical_key = parsed.tone;
+              }
+              if (needsComposer && parsed.composers && typeof parsed.composers === "string" && parsed.composers.length < 200) {
+                updates.composer = parsed.composers;
               }
             } catch {
-              // Fallback: try to extract genre only
-              if (needsGenre && raw && raw.length < 40 && !raw.includes('{')) {
-                updates.style = raw;
-              }
+              console.error("Failed to parse AI JSON response");
             }
           }
         }
@@ -135,7 +146,6 @@ serve(async (req) => {
       .eq("id", song_id);
 
     if (updateError) {
-      // Mark as failed so we don't retry
       await supabase
         .from("songs")
         .update({ enrichment_status: "failed" } as any)
@@ -148,7 +158,9 @@ serve(async (req) => {
         success: true,
         artist_image_url: artistImageUrl,
         style: updates.style || null,
-        bpm: updates.bpm ? Number(updates.bpm) : null,
+        bpm: updates.bpm || null,
+        musical_key: updates.musical_key || null,
+        composer: updates.composer || null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

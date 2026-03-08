@@ -20,7 +20,7 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
         !processedIdsRef.current.has(s.id) &&
         s.enrichment_status !== "done" &&
         s.enrichment_status !== "failed" &&
-        (!s.style || !s.bpm)
+        (!s.style || !s.bpm || !s.musical_key || !s.composer)
     );
   }, [songs]);
 
@@ -43,11 +43,12 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
               title: song.title,
               current_style: song.style,
               current_bpm: song.bpm,
+              current_musical_key: song.musical_key,
+              current_composer: song.composer,
             },
           });
 
           if (!error && data) {
-            // Update React Query cache silently
             queryClient.setQueryData<Song[]>(["songs"], (old) => {
               if (!old) return old;
               return old.map((s) =>
@@ -56,6 +57,8 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
                       ...s,
                       style: data.style || s.style,
                       bpm: data.bpm || s.bpm,
+                      musical_key: data.musical_key || s.musical_key,
+                      composer: data.composer || s.composer,
                       enrichment_status: "done",
                     }
                   : s
@@ -66,7 +69,6 @@ export function useAutoEnrichment(songs: Song[] | undefined) {
           console.warn(`Enrichment failed for song ${song.id}:`, e);
         }
 
-        // Throttle: wait 2s between each call
         await new Promise((r) => setTimeout(r, THROTTLE_MS));
       }
       processingRef.current = false;

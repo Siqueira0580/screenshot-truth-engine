@@ -130,7 +130,20 @@ export default function CompositionStudioPage() {
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");
       setComposers((data as any).composers || "");
-      if (data.audio_url) setSavedAudioUrl(data.audio_url);
+      // Load audio takes from composition_audios table
+      const { data: takesData } = await supabase
+        .from("composition_audios" as any)
+        .select("*")
+        .eq("composition_id", compositionId)
+        .order("created_at", { ascending: false });
+      if (takesData && (takesData as any[]).length > 0) {
+        setAudioTakes((takesData as any[]).map((t: any) => ({
+          id: t.id,
+          url: t.audio_url,
+          title: t.title || "",
+          createdAt: t.created_at,
+        })));
+      }
       setCompositionOwnerId(data.user_id);
       setSharedWithEmails((data as any).shared_with_emails || []);
     };

@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { fetchArtists, fetchSongsByArtist, updateArtistPhoto } from "@/lib/supabase-queries";
+import { fetchArtists, fetchSongsByArtist, updateArtistPhoto, removeFromUserLibrary } from "@/lib/supabase-queries";
 import { toast } from "sonner";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import {
   Select,
   SelectContent,
@@ -25,7 +26,9 @@ const SORT_OPTIONS: { value: SortOption; label: string; icon: React.ReactNode }[
 
 export default function ArtistDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [sort, setSort] = useState<SortOption>("alpha_asc");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -49,6 +52,17 @@ export default function ArtistDetailPage() {
       toast.success("Foto atualizada!");
     },
     onError: () => toast.error("Erro ao enviar foto"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (songId: string) => removeFromUserLibrary(songId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
+      toast.success("Música removida do repertório!");
+      setDeleteTarget(null);
+    },
+    onError: () => toast.error("Erro ao remover música"),
   });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -160,36 +174,65 @@ export default function ArtistDetailPage() {
       ) : (
         <div className="grid gap-2">
           {songs.map((song, i) => (
-            <Link
+            <div
               key={song.id}
-              to={`/songs/${song.id}`}
               className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30 animate-fade-in"
               style={{ animationDelay: `${i * 30}ms` }}
             >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
-                {i + 1}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold truncate">{song.title}</p>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  {song.musical_key && (
-                    <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
-                      {song.musical_key}
-                    </span>
-                  )}
-                  {song.bpm && <span>{song.bpm} BPM</span>}
-                  {(song as any).access_count > 0 && (
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" />
-                      {(song as any).access_count}
-                    </span>
-                  )}
+              <Link to={`/songs/${song.id}`} className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
+                  {i + 1}
                 </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold truncate">{song.title}</p>
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    {song.musical_key && (
+                      <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
+                        {song.musical_key}
+                      </span>
+                    )}
+                    {song.bpm && <span>{song.bpm} BPM</span>}
+                    {(song as any).access_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Eye className="h-3 w-3" />
+                        {(song as any).access_count}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+              <div className="flex items-center gap-1 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                  onClick={() => navigate(`/songs/${song.id}`)}
+                  title="Editar"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  onClick={() => setDeleteTarget({ id: song.id, title: song.title })}
+                  title="Remover"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        title="Remover música"
+        description={`Tem certeza que deseja remover "${deleteTarget?.title}" do seu repertório? A música continuará disponível no catálogo global.`}
+      />
     </div>
   );
 }

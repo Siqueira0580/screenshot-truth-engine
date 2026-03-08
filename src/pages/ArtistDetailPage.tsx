@@ -4,8 +4,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { fetchArtists, fetchSongsByArtist, updateArtistPhoto } from "@/lib/supabase-queries";
+import { fetchArtists, fetchSongsByArtist, updateArtistPhoto, removeFromUserLibrary } from "@/lib/supabase-queries";
 import { toast } from "sonner";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import {
   Select,
   SelectContent,

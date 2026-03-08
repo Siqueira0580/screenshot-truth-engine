@@ -199,7 +199,8 @@ export default function ArtistsPage() {
                 transition={{ delay: i * 0.05 }}
               >
                 <Link
-                  to={`/artists/${artist.id}`}
+                  to={`/artist/${encodeURIComponent(artist.name)}`}
+                  state={{ photoUrl: artist.photo_url }}
                   className="group relative block overflow-hidden transition-all duration-300"
                   style={{
                     clipPath: "polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%)",

@@ -77,7 +77,6 @@ const App = () => (
                 <Route path="/setlists" element={<SetlistsPage />} />
                 <Route path="/setlists/:id" element={<SetlistDetailPage />} />
                 <Route path="/artists" element={<ArtistsPage />} />
-                <Route path="/artists/:id" element={<ArtistDetailPage />} />
                 <Route path="/studio" element={<StudioPage />} />
                 <Route path="/studio/:songId" element={<StudioDetailPage />} />
                 <Route path="/compositions" element={<CompositionsHomePage />} />

@@ -260,6 +260,10 @@ export default function StudyPage() {
     return () => { if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current); };
   }, [isScrolling, scrollSpeed]);
 
+  useEffect(() => {
+    setIsScrolling(isPlaying);
+  }, [isPlaying]);
+
   const handlePlay = () => { engineRef.current?.play(); setIsScrolling(true); };
   const handlePause = () => { engineRef.current?.pause(); setIsScrolling(false); };
   const handleStop = () => { engineRef.current?.stop(); setIsScrolling(false); if (lyricsRef.current) lyricsRef.current.scrollTop = 0; };

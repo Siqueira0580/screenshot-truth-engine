@@ -42,6 +42,7 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
   const [sizeMode, setSizeMode] = useState<"duration" | "quantity">("quantity");
   const [duration, setDuration] = useState("7200");
   const [quantity, setQuantity] = useState(20);
+  const [source, setSource] = useState<"all" | "setlists">("all");
   const [loading, setLoading] = useState(false);
 
   const toggleStyle = (style: string) => {

@@ -42,6 +42,7 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
   const [sizeMode, setSizeMode] = useState<"duration" | "quantity">("quantity");
   const [duration, setDuration] = useState("7200");
   const [quantity, setQuantity] = useState(20);
+  const [source, setSource] = useState<"all" | "setlists">("all");
   const [loading, setLoading] = useState(false);
 
   const toggleStyle = (style: string) => {
@@ -60,15 +61,42 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
 
     setLoading(true);
     try {
-      // Fetch songs, optionally filtering by style
-      let query = supabase.from("songs").select("*");
-      if (selectedStyles.size > 0) {
-        // Filter by style column using OR of ilike matches
-        const styleFilters = Array.from(selectedStyles).map((s) => `style.ilike.%${s}%`).join(",");
-        query = query.or(styleFilters);
+      let songs: any[] | null = null;
+
+      if (source === "setlists") {
+        // Fetch unique song IDs from all existing setlists
+        const { data: items, error: itemsErr } = await supabase
+          .from("setlist_items")
+          .select("song_id, setlist_id, setlists!inner(user_id)");
+        if (itemsErr) throw itemsErr;
+
+        const uniqueSongIds = [...new Set((items || []).map((i: any) => i.song_id))];
+        if (uniqueSongIds.length === 0) {
+          toast.error("Nenhuma música encontrada nos seus repertórios existentes");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch those songs, applying style filter if needed
+        let query = supabase.from("songs").select("*").in("id", uniqueSongIds);
+        if (selectedStyles.size > 0) {
+          const styleFilters = Array.from(selectedStyles).map((s) => `style.ilike.%${s}%`).join(",");
+          query = query.or(styleFilters);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+        songs = data;
+      } else {
+        // Fetch all songs, optionally filtering by style
+        let query = supabase.from("songs").select("*");
+        if (selectedStyles.size > 0) {
+          const styleFilters = Array.from(selectedStyles).map((s) => `style.ilike.%${s}%`).join(",");
+          query = query.or(styleFilters);
+        }
+        const { data, error } = await query;
+        if (error) throw error;
+        songs = data;
       }
-      const { data: songs, error } = await query;
-      if (error) throw error;
 
       if (!songs || songs.length === 0) {
         toast.error("Nenhuma música encontrada no acervo com esses filtros");
@@ -158,6 +186,28 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
                 </Badge>
               ))}
             </div>
+          </div>
+
+          {/* Source */}
+          <div className="space-y-3">
+            <Label>Fonte das Músicas</Label>
+            <RadioGroup
+              value={source}
+              onValueChange={(v) => setSource(v as "all" | "setlists")}
+              className="flex flex-col gap-2"
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="all" id="src-all" />
+                <Label htmlFor="src-all" className="cursor-pointer font-normal">Todas as minhas músicas</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="setlists" id="src-setlists" />
+                <Label htmlFor="src-setlists" className="cursor-pointer font-normal">
+                  Somente músicas de outros repertórios
+                  <span className="block text-xs text-muted-foreground">Mix com músicas já validadas em shows</span>
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
 
           {/* Occasion */}

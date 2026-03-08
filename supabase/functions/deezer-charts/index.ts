@@ -5,12 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map category names to Deezer genre IDs
 const GENRE_MAP: Record<string, number> = {
   "Rock": 152,
   "Pop": 132,
   "Sertanejo": 466,
-  "Worship": 461,   // Gospel/Religious
+  "Worship": 461,
   "Samba": 65,
   "Pagode": 65,
 };
@@ -21,16 +20,44 @@ serve(async (req) => {
   }
 
   try {
-    let body: { genre?: string } = {};
+    let body: { genre?: string; action?: string; artists?: string[] } = {};
     try { body = await req.json(); } catch {}
 
+    // --- Artist search mode ---
+    if (body.action === "search-artists" && body.artists?.length) {
+      const results = await Promise.all(
+        body.artists.map(async (name: string) => {
+          try {
+            const res = await fetch(
+              `https://api.deezer.com/search/artist?q=${encodeURIComponent(name)}&limit=1`
+            );
+            const json = await res.json();
+            const artist = json.data?.[0];
+            if (artist) {
+              return {
+                name,
+                deezer_id: artist.id,
+                picture: artist.picture_medium || artist.picture,
+              };
+            }
+            return { name, deezer_id: null, picture: null };
+          } catch {
+            return { name, deezer_id: null, picture: null };
+          }
+        })
+      );
+      return new Response(JSON.stringify({ data: results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // --- Default: chart/genre tracks ---
     const genre = body.genre || "Todos";
     let url: string;
 
     if (genre === "Todos" || !GENRE_MAP[genre]) {
       url = "https://api.deezer.com/chart/0/tracks?limit=20";
     } else {
-      // Use Deezer search endpoint filtered by genre name
       url = `https://api.deezer.com/search?q=${encodeURIComponent(genre)}&limit=20&order=RANKING`;
     }
 

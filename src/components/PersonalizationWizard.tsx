@@ -1,31 +1,39 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Sparkles, ChevronRight, ChevronLeft, X } from "lucide-react";
+import { Check, Sparkles, ChevronRight, ChevronLeft, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const STYLES = ["Rock", "Pop", "Worship", "Sertanejo", "Samba", "Pagode", "MPB", "Jazz"];
 
-const ARTISTS = [
-  { id: "1", name: "Coldplay", genre: ["Rock", "Pop"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb989ed05e1f0570cc4726c2d3" },
-  { id: "2", name: "Djavan", genre: ["MPB"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb4b4e0e0e0e0e0e0e0e0e0e0e" },
-  { id: "3", name: "Marisa Monte", genre: ["MPB"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb55d16a0fba9a7ae21b7e58da" },
-  { id: "4", name: "Victor & Leo", genre: ["Sertanejo"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebf0c1c1c1c1c1c1c1c1c1c1c1" },
-  { id: "5", name: "Diante do Trono", genre: ["Worship"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb2a2a2a2a2a2a2a2a2a2a2a2a" },
-  { id: "6", name: "Jorge & Mateus", genre: ["Sertanejo"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb3b3b3b3b3b3b3b3b3b3b3b3b" },
-  { id: "7", name: "Anavitória", genre: ["Pop", "MPB"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb4c4c4c4c4c4c4c4c4c4c4c4c" },
-  { id: "8", name: "Thiaguinho", genre: ["Pagode", "Samba"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb5d5d5d5d5d5d5d5d5d5d5d5d" },
-  { id: "9", name: "Fernandinho", genre: ["Worship"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb6e6e6e6e6e6e6e6e6e6e6e6e" },
-  { id: "10", name: "Foo Fighters", genre: ["Rock"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb7f7f7f7f7f7f7f7f7f7f7f7f" },
-  { id: "11", name: "Péricles", genre: ["Pagode", "Samba"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb8a8a8a8a8a8a8a8a8a8a8a8a" },
-  { id: "12", name: "Hillsong", genre: ["Worship"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eb9b9b9b9b9b9b9b9b9b9b9b9b" },
-  { id: "13", name: "Gusttavo Lima", genre: ["Sertanejo"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebacacacacacacacacacacacac" },
-  { id: "14", name: "Gilberto Gil", genre: ["MPB", "Samba"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebbdbdbdbdbdbdbdbdbdbdbdbd" },
-  { id: "15", name: "U2", genre: ["Rock"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebcececececececececececece" },
-  { id: "16", name: "Anitta", genre: ["Pop"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebdfdfdfdfdfdfdfdfdfdfdfdf" },
-  { id: "17", name: "Zeca Pagodinho", genre: ["Pagode", "Samba"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebe0e0e0e0e0e0e0e0e0e0e0e0" },
-  { id: "18", name: "Norah Jones", genre: ["Jazz"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebf1f1f1f1f1f1f1f1f1f1f1f1" },
-  { id: "19", name: "Imagine Dragons", genre: ["Rock", "Pop"], imageUrl: "https://i.scdn.co/image/ab6761610000e5eba2a2a2a2a2a2a2a2a2a2a2a2" },
-  { id: "20", name: "Luan Santana", genre: ["Sertanejo"], imageUrl: "https://i.scdn.co/image/ab6761610000e5ebb3b3b3b3b3b3b3b3b3b3b3b3" },
+interface ArtistEntry {
+  id: string;
+  name: string;
+  genre: string[];
+  imageUrl: string | null;
+}
+
+const ARTISTS_SEED: ArtistEntry[] = [
+  { id: "1", name: "Coldplay", genre: ["Rock", "Pop"], imageUrl: null },
+  { id: "2", name: "Djavan", genre: ["MPB"], imageUrl: null },
+  { id: "3", name: "Marisa Monte", genre: ["MPB"], imageUrl: null },
+  { id: "4", name: "Victor & Leo", genre: ["Sertanejo"], imageUrl: null },
+  { id: "5", name: "Diante do Trono", genre: ["Worship"], imageUrl: null },
+  { id: "6", name: "Jorge & Mateus", genre: ["Sertanejo"], imageUrl: null },
+  { id: "7", name: "Anavitória", genre: ["Pop", "MPB"], imageUrl: null },
+  { id: "8", name: "Thiaguinho", genre: ["Pagode", "Samba"], imageUrl: null },
+  { id: "9", name: "Fernandinho", genre: ["Worship"], imageUrl: null },
+  { id: "10", name: "Foo Fighters", genre: ["Rock"], imageUrl: null },
+  { id: "11", name: "Péricles", genre: ["Pagode", "Samba"], imageUrl: null },
+  { id: "12", name: "Hillsong", genre: ["Worship"], imageUrl: null },
+  { id: "13", name: "Gusttavo Lima", genre: ["Sertanejo"], imageUrl: null },
+  { id: "14", name: "Gilberto Gil", genre: ["MPB", "Samba"], imageUrl: null },
+  { id: "15", name: "U2", genre: ["Rock"], imageUrl: null },
+  { id: "16", name: "Anitta", genre: ["Pop"], imageUrl: null },
+  { id: "17", name: "Zeca Pagodinho", genre: ["Pagode", "Samba"], imageUrl: null },
+  { id: "18", name: "Norah Jones", genre: ["Jazz"], imageUrl: null },
+  { id: "19", name: "Imagine Dragons", genre: ["Rock", "Pop"], imageUrl: null },
+  { id: "20", name: "Luan Santana", genre: ["Sertanejo"], imageUrl: null },
 ];
 
 const STORAGE_KEY = "smartcifra_preferences";
@@ -35,7 +43,7 @@ export function usePersonalizationWizard() {
   const parsed = prefs ? JSON.parse(prefs) : null;
   return {
     shouldShow: !parsed,
-    preferences: parsed as { styles: string[]; artists: typeof ARTISTS; skipped?: boolean } | null,
+    preferences: parsed as { styles: string[]; artists: ArtistEntry[]; skipped?: boolean } | null,
   };
 }
 
@@ -54,11 +62,40 @@ export default function PersonalizationWizard({ onComplete }: Props) {
   const [direction, setDirection] = useState(1);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedArtists, setSelectedArtists] = useState<string[]>([]);
+  const [artists, setArtists] = useState<ArtistEntry[]>(ARTISTS_SEED);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   const goTo = useCallback((s: number) => {
     setDirection(s > step ? 1 : -1);
     setStep(s);
   }, [step]);
+
+  // Fetch Deezer photos when entering step 3
+  useEffect(() => {
+    if (step !== 3) return;
+
+    const filtered = ARTISTS_SEED.filter((a) => a.genre.some((g) => selectedStyles.includes(g)));
+    if (filtered.length === 0) return;
+
+    const names = filtered.map((a) => a.name);
+    setLoadingPhotos(true);
+
+    supabase.functions
+      .invoke("deezer-charts", { body: { action: "search-artists", artists: names } })
+      .then(({ data }) => {
+        if (data?.data) {
+          const photoMap = new Map<string, string>();
+          for (const r of data.data) {
+            if (r.picture) photoMap.set(r.name, r.picture);
+          }
+          setArtists((prev) =>
+            prev.map((a) => (photoMap.has(a.name) ? { ...a, imageUrl: photoMap.get(a.name)! } : a))
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingPhotos(false));
+  }, [step, selectedStyles]);
 
   const handleSkip = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ skipped: true, styles: [], artists: [] }));
@@ -66,7 +103,7 @@ export default function PersonalizationWizard({ onComplete }: Props) {
   };
 
   const handleFinish = () => {
-    const chosen = ARTISTS.filter((a) => selectedArtists.includes(a.id));
+    const chosen = artists.filter((a) => selectedArtists.includes(a.id));
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ styles: selectedStyles, artists: chosen }));
     onComplete();
   };
@@ -85,7 +122,7 @@ export default function PersonalizationWizard({ onComplete }: Props) {
     });
   };
 
-  const filteredArtists = ARTISTS.filter((a) => a.genre.some((g) => selectedStyles.includes(g)));
+  const filteredArtists = artists.filter((a) => a.genre.some((g) => selectedStyles.includes(g)));
 
   return (
     <motion.div
@@ -241,51 +278,67 @@ export default function PersonalizationWizard({ onComplete }: Props) {
                 </p>
               </div>
 
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 max-h-[340px] overflow-y-auto pr-1 scrollbar-thin">
-                {filteredArtists.map((artist) => {
-                  const active = selectedArtists.includes(artist.id);
-                  return (
-                    <button
-                      key={artist.id}
-                      onClick={() => toggleArtist(artist.id)}
-                      className="flex flex-col items-center gap-2 group"
-                    >
-                      <div
-                        className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 transition-all duration-200 ${
-                          active
-                            ? "border-[hsl(310,80%,55%)] shadow-[0_0_16px_hsl(310_80%_55%/0.4)]"
-                            : "border-border group-hover:border-muted-foreground/50"
-                        }`}
+              {loadingPhotos ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-sm text-muted-foreground">Buscando artistas…</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 max-h-[340px] overflow-y-auto pr-1 scrollbar-thin">
+                  {filteredArtists.map((artist) => {
+                    const active = selectedArtists.includes(artist.id);
+                    return (
+                      <button
+                        key={artist.id}
+                        onClick={() => toggleArtist(artist.id)}
+                        className="flex flex-col items-center gap-2 group"
                       >
-                        <div className="h-full w-full bg-gradient-to-br from-secondary to-muted flex items-center justify-center text-lg font-bold text-muted-foreground">
-                          {artist.name.charAt(0)}
+                        <div
+                          className={`relative h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden border-2 transition-all duration-200 ${
+                            active
+                              ? "border-[hsl(310,80%,55%)] shadow-[0_0_16px_hsl(310_80%_55%/0.4)]"
+                              : "border-border group-hover:border-muted-foreground/50"
+                          }`}
+                        >
+                          {artist.imageUrl ? (
+                            <img
+                              src={artist.imageUrl}
+                              alt={artist.name}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="h-full w-full bg-gradient-to-br from-secondary to-muted flex items-center justify-center text-lg font-bold text-muted-foreground">
+                              {artist.name.charAt(0)}
+                            </div>
+                          )}
+                          {active && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              className="absolute inset-0 flex items-center justify-center bg-[hsl(310,80%,55%)]/40"
+                            >
+                              <Check className="h-6 w-6 text-primary-foreground drop-shadow" />
+                            </motion.div>
+                          )}
                         </div>
-                        {active && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="absolute inset-0 flex items-center justify-center bg-[hsl(310,80%,55%)]/40"
-                          >
-                            <Check className="h-6 w-6 text-primary-foreground drop-shadow" />
-                          </motion.div>
-                        )}
-                      </div>
-                      <span
-                        className={`text-xs font-medium text-center leading-tight transition ${
-                          active ? "text-foreground" : "text-muted-foreground"
-                        }`}
-                      >
-                        {artist.name}
-                      </span>
-                    </button>
-                  );
-                })}
-                {filteredArtists.length === 0 && (
-                  <p className="col-span-full text-center text-sm text-muted-foreground py-8">
-                    Nenhum artista encontrado para os estilos selecionados.
-                  </p>
-                )}
-              </div>
+                        <span
+                          className={`text-xs font-medium text-center leading-tight transition ${
+                            active ? "text-foreground" : "text-muted-foreground"
+                          }`}
+                        >
+                          {artist.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {filteredArtists.length === 0 && (
+                    <p className="col-span-full text-center text-sm text-muted-foreground py-8">
+                      Nenhum artista encontrado para os estilos selecionados.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex justify-between pt-2">
                 <button

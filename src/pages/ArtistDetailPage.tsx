@@ -54,6 +54,17 @@ export default function ArtistDetailPage() {
     onError: () => toast.error("Erro ao enviar foto"),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (songId: string) => removeFromUserLibrary(songId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
+      toast.success("Música removida do repertório!");
+      setDeleteTarget(null);
+    },
+    onError: () => toast.error("Erro ao remover música"),
+  });
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {

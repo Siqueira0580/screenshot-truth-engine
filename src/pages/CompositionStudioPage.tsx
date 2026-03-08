@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Share2, Mic, Square, PlayCircle, Music, Sparkles, Search, GripVertical, Loader2, Trash2, FileOutput } from "lucide-react";
 import { useAudioRecorder } from "@/hooks/useAudioRecorder";
+import { createSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,62 @@ export default function CompositionStudioPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
   const audioBlobRef = useRef<Blob | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  /** Export composition as a song to Studio (creates song + audio_tracks) */
+  const handleExportToStudio = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Faça login para exportar."); return; }
+    if (!title && !editorText) { toast.error("Adicione um título ou conteúdo antes de exportar."); return; }
+
+    setIsExporting(true);
+    try {
+      // 1) Create song
+      const song = await createSong({
+        title: title || "Sem título",
+        body_text: editorText || null,
+        musical_key: selectedKey || null,
+        bpm: parseInt(bpm) || null,
+        style: style || null,
+        composer: composers || null,
+      });
+
+      // 2) If there's audio, upload to audio-stems and create audio_tracks
+      let fileFullUrl: string | null = null;
+
+      if (savedAudioUrl) {
+        // Download from compositions_audio and re-upload to audio-stems
+        const res = await fetch(savedAudioUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const ext = savedAudioUrl.includes(".webm") ? "webm" : savedAudioUrl.includes(".ogg") ? "ogg" : "mp3";
+          const path = `${song.id}/full.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("audio-stems")
+            .upload(path, blob, { upsert: true, contentType: blob.type || "audio/mpeg" });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
+            fileFullUrl = urlData.publicUrl;
+          }
+        }
+      }
+
+      // 3) Create audio_tracks record
+      await supabase.from("audio_tracks").insert({
+        song_id: song.id,
+        file_full: fileFullUrl,
+        user_id: user.id,
+      });
+
+      toast.success("Composição exportada para o Estúdio!");
+      navigate(`/studio/${song.id}`);
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("Erro ao exportar para o Estúdio.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [title, editorText, selectedKey, bpm, style, composers, savedAudioUrl, navigate]);
 
   // Load existing composition if ID in URL
   useEffect(() => {
@@ -407,6 +464,10 @@ export default function CompositionStudioPage() {
             <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSave} disabled={isSaving}>
               {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               {isSaving ? "Salvando no servidor..." : compositionId ? "Atualizar" : "Salvar Composição"}
+            </Button>
+            <Button size="sm" className="gap-1.5" variant="secondary" onClick={handleExportToStudio} disabled={isExporting}>
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileOutput className="h-4 w-4" />}
+              {isExporting ? "Exportando..." : "Enviar ao Estúdio"}
             </Button>
             <Button size="sm" className="gap-1.5">
               <Share2 className="h-4 w-4" /> Partilhar

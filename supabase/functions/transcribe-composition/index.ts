@@ -35,10 +35,14 @@ Sua tarefa é:
 1. Transcrever EXATAMENTE o que foi dito/cantado no áudio, em português brasileiro.
 2. Se possível, identificar as notas/acordes que estão sendo cantados e adicioná-los no formato ChordPro (ex: [G]palavra [Am]outra).
 3. Se não conseguir identificar acordes com certeza, retorne apenas o texto transcrito SEM colchetes.
-4. Retorne APENAS o texto transcrito (com ou sem acordes). SEM explicações, comentários ou metadados.
-5. Mantenha quebras de linha naturais para versos.
-6. Se o áudio estiver vazio ou inaudível, retorne uma string vazia.
-${style ? `7. O estilo musical é: ${style}. Use isso como contexto para harmonização.` : ""}`;
+4. Mantenha quebras de linha naturais para versos.
+5. Se o áudio estiver vazio ou inaudível, retorne uma string vazia.
+${style ? `6. O estilo musical é: ${style}. Use isso como contexto para harmonização.` : ""}
+
+FORMATO DE RESPOSTA OBRIGATÓRIO — responda APENAS com um JSON válido, sem markdown, sem explicações:
+{"transcription": "texto transcrito aqui com [Acordes] se detectados", "detected_key": "tom detectado ou null"}
+
+Para detected_key: analise a progressão de acordes que você inseriu e deduza o tom real (ex: se usou [G], [Em], [C], [D] → detected_key: "G"). Se não inseriu acordes, retorne null.`;
 
     // Build the user message with inline audio data for Gemini
     const userContent: any[] = [

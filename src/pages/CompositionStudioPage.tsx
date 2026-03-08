@@ -542,9 +542,15 @@ export default function CompositionStudioPage() {
               <PopoverTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-1.5 h-9 px-3">
                   <Music className="h-4 w-4 text-primary" />
-                  <span className="font-mono font-bold">{selectedKey}</span>
-                  {originalKey && originalKey !== selectedKey && (
-                    <span className="text-[10px] text-muted-foreground ml-0.5">(orig: {originalKey})</span>
+                  {selectedKey ? (
+                    <>
+                      <span className="font-mono font-bold">{selectedKey}</span>
+                      {originalKey && originalKey !== selectedKey && (
+                        <span className="text-[10px] text-muted-foreground ml-0.5">(orig: {originalKey})</span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">Definir Tom</span>
                   )}
                 </Button>
               </PopoverTrigger>

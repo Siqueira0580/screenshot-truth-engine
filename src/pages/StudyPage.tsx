@@ -234,19 +234,26 @@ export default function StudyPage() {
   // Auto-scroll
   useEffect(() => {
     if (!isScrolling || !lyricsRef.current) return;
+    let prevTimestamp: number | null = null;
     const step = (timestamp: number) => {
-      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
-      const delta = timestamp - lastTimeRef.current;
-      lastTimeRef.current = timestamp;
+      if (prevTimestamp === null) {
+        prevTimestamp = timestamp;
+        scrollAnimRef.current = requestAnimationFrame(step);
+        return;
+      }
+      const delta = timestamp - prevTimestamp;
+      prevTimestamp = timestamp;
       if (lyricsRef.current) {
         const pxPerMs = scrollSpeed * 0.03;
         lyricsRef.current.scrollTop += pxPerMs * delta;
         const el = lyricsRef.current;
-        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) setIsScrolling(false);
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+          setIsScrolling(false);
+          return;
+        }
       }
       scrollAnimRef.current = requestAnimationFrame(step);
     };
-    lastTimeRef.current = 0;
     scrollAnimRef.current = requestAnimationFrame(step);
     return () => { if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current); };
   }, [isScrolling, scrollSpeed]);

@@ -180,8 +180,8 @@ export default function SongsPage() {
 
       <Tabs defaultValue="explore" className="w-full">
         <TabsList className="w-full grid grid-cols-2">
-          <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
           <TabsTrigger value="explore">🔍 Explorar</TabsTrigger>
+          <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="library" className="space-y-4 mt-4">

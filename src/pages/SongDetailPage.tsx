@@ -172,13 +172,13 @@ export default function SongDetailPage() {
   const displayKey = transposeKey(song.musical_key, transpose);
   const displayBody = song.body_text ? transposeText(song.body_text, transpose) : null;
 
+  const navigate = useNavigate();
+
   return (
     <div className="max-w-4xl space-y-6 animate-fade-in">
-      <Button variant="ghost" asChild className="gap-2">
-        <Link to="/songs">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Link>
+      <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
       </Button>
 
       <div className="space-y-2">

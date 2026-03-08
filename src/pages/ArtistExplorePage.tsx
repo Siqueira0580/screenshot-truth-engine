@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Music, Download, Loader2, Play, Compass } from "lucide-react";
+import { ArrowLeft, Music, Download, Loader2, Play, Compass, Disc3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -103,171 +103,197 @@ export default function ArtistExplorePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ── Cinematic Hero ── */}
-      <div className="relative h-[320px] md:h-[400px] overflow-hidden">
-        {/* Blurred photo layer */}
+      {/* ── Full-Bleed Immersive Hero ── */}
+      <div className="relative w-full h-[340px] md:h-[420px] overflow-hidden">
+        {/* Background: artist photo full-bleed */}
         {artistPhoto ? (
           <img
             src={artistPhoto}
             alt=""
-            className="absolute inset-0 w-full h-full object-cover scale-[1.4]"
-            style={{ filter: "blur(60px) saturate(1.5)" }}
+            className="absolute inset-0 w-full h-full object-cover"
           />
         ) : (
-          <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(0,255,255,0.08), hsl(var(--background)), rgba(168,85,247,0.06))" }} />
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(135deg, hsl(var(--primary) / 0.15) 0%, hsl(var(--background)) 50%, hsl(270 60% 50% / 0.1) 100%)",
+            }}
+          />
         )}
 
-        {/* Dark cinematic overlay */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.85) 40%, hsl(var(--background) / 0.4) 100%)" }} />
+        {/* Cinematic gradient overlay — fuses into bg-background */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: [
+              "linear-gradient(to top, hsl(var(--background)) 0%, hsl(var(--background) / 0.92) 30%, hsl(var(--background) / 0.6) 60%, hsl(var(--background) / 0.3) 100%)",
+            ].join(","),
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+          }}
+        />
 
-        {/* Neon scan lines */}
-        <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: "linear-gradient(90deg, rgba(0,255,255,0.6), transparent 40%, transparent 60%, rgba(168,85,247,0.5))" }} />
-        <div className="absolute bottom-0 left-0 w-full h-px" style={{ background: "linear-gradient(90deg, rgba(0,255,255,0.2), transparent 50%, rgba(168,85,247,0.2))" }} />
+        {/* Top neon accent line */}
+        <div
+          className="absolute top-0 left-0 w-full h-[2px] z-20"
+          style={{
+            background:
+              "linear-gradient(90deg, hsl(var(--primary) / 0.7), transparent 35%, transparent 65%, hsl(270 70% 65% / 0.5))",
+          }}
+        />
 
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-end h-full pb-10 px-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="absolute top-4 left-4 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5 mr-1" /> Voltar
-          </Button>
+        {/* Back button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 z-30 text-muted-foreground hover:text-foreground backdrop-blur-sm bg-background/20 rounded-full"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+        </Button>
 
-          {/* Polygonal avatar with neon pulse */}
+        {/* Centered profile identity */}
+        <div className="relative z-10 flex flex-col items-center justify-end h-full pb-8 px-4">
+          {/* Avatar with neon glow ring */}
           <motion.div
-            initial={{ scale: 0.7, opacity: 0 }}
+            initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
             className="relative mb-5"
           >
-            {/* Outer glow ring */}
+            {/* Pulsating outer glow */}
             <div
-              className="absolute -inset-1.5 rounded-full animate-pulse"
+              className="absolute -inset-2 rounded-full animate-pulse"
               style={{
-                background: "conic-gradient(from 0deg, rgba(0,255,255,0.4), rgba(168,85,247,0.4), rgba(0,255,255,0.4))",
-                filter: "blur(8px)",
-                opacity: 0.6,
+                background:
+                  "conic-gradient(from 180deg, hsl(var(--primary) / 0.5), hsl(270 70% 60% / 0.4), hsl(var(--primary) / 0.5))",
+                filter: "blur(10px)",
+                opacity: 0.7,
               }}
             />
+
+            {/* Avatar container */}
             <div
-              className="relative w-32 h-32 md:w-40 md:h-40 overflow-hidden"
+              className="relative w-32 h-32 md:w-36 md:h-36 rounded-full overflow-hidden"
               style={{
-                clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
-                border: "none",
+                border: "3px solid hsl(var(--primary) / 0.6)",
+                boxShadow:
+                  "0 0 30px hsl(var(--primary) / 0.3), 0 0 60px hsl(var(--primary) / 0.1), inset 0 0 20px hsl(var(--primary) / 0.05)",
               }}
             >
               {artistPhoto ? (
-                <img src={artistPhoto} alt={decodedName} className="w-full h-full object-cover" />
+                <img
+                  src={artistPhoto}
+                  alt={decodedName}
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-3xl font-black text-primary" style={{ background: "hsl(var(--card))" }}>
+                <div className="w-full h-full flex items-center justify-center text-3xl font-black text-primary bg-card">
                   {initials}
                 </div>
               )}
             </div>
-            {/* Inner polygon border overlay */}
-            <div
-              className="absolute inset-0 w-32 h-32 md:w-40 md:h-40"
-              style={{
-                clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
-                border: "2px solid rgba(0,255,255,0.4)",
-                pointerEvents: "none",
-              }}
-            />
           </motion.div>
 
+          {/* Artist name */}
           <motion.h1
-            initial={{ y: 16, opacity: 0 }}
+            initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-3xl md:text-5xl font-black text-center"
-            style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)), #e879f9, hsl(var(--primary)))",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
+            transition={{ delay: 0.15, duration: 0.5 }}
+            className="text-4xl md:text-5xl font-black text-center tracking-tight text-foreground"
           >
             {decodedName}
           </motion.h1>
 
-          {songs.length > 0 && !isLoading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
+          {/* Repertoire badge */}
+          {!isLoading && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+            >
               <Badge
                 variant="outline"
-                className="mt-3 text-xs font-semibold"
-                style={{
-                  borderColor: "rgba(0,255,255,0.25)",
-                  color: "hsl(var(--primary))",
-                  background: "rgba(0,255,255,0.06)",
-                }}
+                className="mt-3 text-xs font-semibold border-primary/25 text-primary bg-primary/5"
               >
                 <Music className="h-3 w-3 mr-1" />
-                {songs.length} música{songs.length !== 1 ? "s" : ""} no repertório
+                {songs.length} música{songs.length !== 1 ? "s" : ""} no
+                repertório
               </Badge>
             </motion.div>
           )}
         </div>
       </div>
 
-      {/* ── Body ── */}
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-        {/* Glassmorphism Import Panel */}
-        {!isLoading && (
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="rounded-2xl p-5"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "1px solid rgba(0,255,255,0.12)",
-              boxShadow: "0 0 30px rgba(0,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.05)",
-            }}
-          >
-            <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3 font-bold flex items-center gap-1.5">
-              <Download className="h-3 w-3" />
-              Importar cifra
-            </p>
-            <div className="flex gap-2">
-              <Input
-                value={importUrl}
-                onChange={(e) => setImportUrl(e.target.value)}
-                placeholder="Cole o link da cifra aqui (ex: Cifra Club, Letras)..."
-                className="flex-1 bg-background/50 border-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/40"
-                disabled={isImporting}
-                onKeyDown={(e) => e.key === "Enter" && handleImport()}
-              />
-              <Button
-                onClick={handleImport}
-                disabled={isImporting}
-                className="font-bold shrink-0 text-primary-foreground"
-                style={{
-                  background: "linear-gradient(135deg, hsl(var(--primary)), #a855f7)",
-                  boxShadow: "0 0 20px hsla(var(--primary), 0.3)",
-                }}
-              >
-                {isImporting ? (
-                  <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> A extrair...</>
-                ) : (
-                  <><Download className="h-4 w-4 mr-1.5" /> Importar</>
-                )}
-              </Button>
-            </div>
-          </motion.div>
-        )}
+      {/* ── Floating Import Panel (glassmorphism, negative margin) ── */}
+      {!isLoading && (
+        <motion.div
+          initial={{ y: 24, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.25 }}
+          className="-mt-6 relative z-20 mx-4 md:mx-auto max-w-2xl rounded-2xl p-5"
+          style={{
+            background: "hsl(var(--card) / 0.6)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "1px solid hsl(var(--primary) / 0.12)",
+            boxShadow:
+              "0 8px 40px hsl(var(--background) / 0.5), 0 0 1px hsl(var(--primary) / 0.2), inset 0 1px 0 hsl(var(--foreground) / 0.04)",
+          }}
+        >
+          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3 font-bold flex items-center gap-1.5">
+            <Download className="h-3 w-3" />
+            Importar cifra
+          </p>
+          <div className="flex gap-2">
+            <Input
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+              placeholder="Cole o link da cifra aqui (ex: Cifra Club, Letras)..."
+              className="flex-1 bg-background/50 border-primary/20 focus:border-primary/50 placeholder:text-muted-foreground/40"
+              disabled={isImporting}
+              onKeyDown={(e) => e.key === "Enter" && handleImport()}
+            />
+            <Button
+              onClick={handleImport}
+              disabled={isImporting}
+              className="font-bold shrink-0 text-primary-foreground"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(var(--primary)), hsl(270 70% 60%))",
+                boxShadow: "0 0 20px hsl(var(--primary) / 0.3)",
+              }}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> A
+                  extrair...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-1.5" /> Importar
+                </>
+              )}
+            </Button>
+          </div>
+        </motion.div>
+      )}
 
-        {/* Song List / Empty State */}
+      {/* ── Song List / Empty State ── */}
+      <div className="max-w-2xl mx-auto px-4 py-8">
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : songs.length > 0 ? (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-3"
+          >
             <p className="text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-4">
-              No seu repertório ({songs.length})
+              Repertório ({songs.length})
             </p>
             {songs.map((song, i) => (
               <motion.button
@@ -276,38 +302,35 @@ export default function ArtistExplorePage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
                 onClick={() => navigate(`/songs/${song.id}`)}
-                className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group text-left"
+                className="w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-200 group text-left bg-card/40 border border-border/50 hover:border-primary/30 hover:bg-card/60"
                 style={{
-                  background: "linear-gradient(135deg, rgba(0,255,255,0.03), rgba(255,255,255,0.02))",
-                  border: "1px solid rgba(0,255,255,0.08)",
-                  clipPath: "polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px))",
+                  boxShadow: "none",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(0,255,255,0.3)";
-                  e.currentTarget.style.boxShadow = "0 0 25px rgba(0,255,255,0.06), inset 0 0 20px rgba(0,255,255,0.02)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 25px hsl(var(--primary) / 0.06), inset 0 0 20px hsl(var(--primary) / 0.02)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(0,255,255,0.08)";
                   e.currentTarget.style.boxShadow = "none";
                 }}
               >
-                <div
-                  className="shrink-0 w-10 h-10 flex items-center justify-center transition-colors"
-                  style={{
-                    clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
-                    background: "rgba(0,255,255,0.08)",
-                  }}
-                >
-                  <Play className="h-4 w-4 text-primary group-hover:text-primary/80" />
+                <div className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10 group-hover:bg-primary/15 transition-colors">
+                  <Play className="h-4 w-4 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-sm text-foreground truncate">{song.title}</p>
+                  <p className="font-bold text-sm text-foreground truncate">
+                    {song.title}
+                  </p>
                   <div className="flex items-center gap-2 mt-0.5">
                     {song.musical_key && (
-                      <span className="text-[11px] text-muted-foreground">Tom: {song.musical_key}</span>
+                      <span className="text-[11px] text-muted-foreground">
+                        Tom: {song.musical_key}
+                      </span>
                     )}
                     {song.style && (
-                      <span className="text-[11px] text-muted-foreground/50">• {song.style}</span>
+                      <span className="text-[11px] text-muted-foreground/50">
+                        • {song.style}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -320,24 +343,28 @@ export default function ArtistExplorePage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="flex flex-col items-center text-center py-14 space-y-5"
+            className="flex flex-col items-center text-center py-16 space-y-5"
           >
             <div
-              className="w-20 h-20 flex items-center justify-center"
+              className="w-20 h-20 rounded-full flex items-center justify-center bg-primary/5"
               style={{
-                clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)",
-                background: "rgba(0,255,255,0.06)",
-                boxShadow: "0 0 40px rgba(0,255,255,0.06)",
+                boxShadow:
+                  "0 0 40px hsl(var(--primary) / 0.08), inset 0 0 20px hsl(var(--primary) / 0.03)",
+                border: "1px solid hsl(var(--primary) / 0.1)",
               }}
             >
-              <Music className="h-8 w-8 text-primary/50" />
+              <Disc3 className="h-9 w-9 text-primary/40" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground mb-1">
-                Você ainda não tem músicas de {decodedName}
+                Repertório em branco
               </h3>
-              <p className="text-sm text-muted-foreground">
-                Cole o link de uma cifra acima para importar automaticamente.
+              <p className="text-sm text-muted-foreground max-w-xs">
+                Importe a primeira cifra de{" "}
+                <span className="text-primary font-semibold">
+                  {decodedName}
+                </span>{" "}
+                usando o painel acima.
               </p>
             </div>
           </motion.div>

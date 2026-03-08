@@ -47,6 +47,62 @@ export default function CompositionStudioPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedAudioUrl, setSavedAudioUrl] = useState<string | null>(null);
   const audioBlobRef = useRef<Blob | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  /** Export composition as a song to Studio (creates song + audio_tracks) */
+  const handleExportToStudio = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Faça login para exportar."); return; }
+    if (!title && !editorText) { toast.error("Adicione um título ou conteúdo antes de exportar."); return; }
+
+    setIsExporting(true);
+    try {
+      // 1) Create song
+      const song = await createSong({
+        title: title || "Sem título",
+        body_text: editorText || null,
+        musical_key: selectedKey || null,
+        bpm: parseInt(bpm) || null,
+        style: style || null,
+        composer: composers || null,
+      });
+
+      // 2) If there's audio, upload to audio-stems and create audio_tracks
+      let fileFullUrl: string | null = null;
+
+      if (savedAudioUrl) {
+        // Download from compositions_audio and re-upload to audio-stems
+        const res = await fetch(savedAudioUrl);
+        if (res.ok) {
+          const blob = await res.blob();
+          const ext = savedAudioUrl.includes(".webm") ? "webm" : savedAudioUrl.includes(".ogg") ? "ogg" : "mp3";
+          const path = `${song.id}/full.${ext}`;
+          const { error: upErr } = await supabase.storage
+            .from("audio-stems")
+            .upload(path, blob, { upsert: true, contentType: blob.type || "audio/mpeg" });
+          if (!upErr) {
+            const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
+            fileFullUrl = urlData.publicUrl;
+          }
+        }
+      }
+
+      // 3) Create audio_tracks record
+      await supabase.from("audio_tracks").insert({
+        song_id: song.id,
+        file_full: fileFullUrl,
+        user_id: user.id,
+      });
+
+      toast.success("Composição exportada para o Estúdio!");
+      navigate(`/studio/${song.id}`);
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("Erro ao exportar para o Estúdio.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [title, editorText, selectedKey, bpm, style, composers, savedAudioUrl, navigate]);
 
   // Load existing composition if ID in URL
   useEffect(() => {

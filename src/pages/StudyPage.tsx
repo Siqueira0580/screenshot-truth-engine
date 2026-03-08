@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Play, Pause, Square, Music2, Mic2, Drum, Piano,
+  Play, Pause, Square, Music2, Mic2, Drum, Piano, Guitar,
   Volume2, ChevronUp, ChevronDown, Loader2,
   ArrowLeft, Minus, Plus, BookOpen, Edit3,
 } from "lucide-react";
@@ -31,13 +31,14 @@ interface AudioTrack {
   file_vocals: string | null;
   file_percussion: string | null;
   file_harmony: string | null;
+  file_guitar: string | null;
 }
 
 const STEM_DISPLAY: { type: StemType; label: string; icon: typeof Music2; color: string }[] = [
-  { type: "full", label: "Mix", icon: Music2, color: "text-primary" },
   { type: "vocals", label: "Voz", icon: Mic2, color: "text-blue-400" },
   { type: "percussion", label: "Perc", icon: Drum, color: "text-orange-400" },
   { type: "harmony", label: "Harm", icon: Piano, color: "text-emerald-400" },
+  { type: "guitar", label: "Guit", icon: Guitar, color: "text-rose-400" },
 ];
 
 function formatTime(s: number) {
@@ -147,9 +148,9 @@ export default function StudyPage() {
   const [duration, setDuration] = useState(0);
   const [loading, setLoading] = useState(false);
   const [masterVol, setMasterVol] = useState(80);
-  const [stemVols, setStemVols] = useState<Record<StemType, number>>({ full: 100, vocals: 100, percussion: 100, harmony: 100 });
-  const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({ full: false, vocals: false, percussion: false, harmony: false });
-  const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({ full: false, vocals: false, percussion: false, harmony: false });
+  const [stemVols, setStemVols] = useState<Record<StemType, number>>({ vocals: 100, percussion: 100, harmony: 100, guitar: 100 });
+  const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({ vocals: false, percussion: false, harmony: false, guitar: false });
+  const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({ vocals: false, percussion: false, harmony: false, guitar: false });
   const [transpose, setTranspose] = useState(0);
   const [scrollSpeed, setScrollSpeed] = useState(2);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -181,7 +182,7 @@ export default function StudyPage() {
     ? artists.find(a => a.name.toLowerCase() === song.artist!.toLowerCase())?.photo_url
     : null;
 
-  const hasAnyStem = audioTrack && (audioTrack.file_full || audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony);
+  const hasAnyStem = audioTrack && (audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony || audioTrack.file_guitar);
 
   // Initialize audio engine
   useEffect(() => {
@@ -202,8 +203,9 @@ export default function StudyPage() {
     engine.stop();
     const loadStems = async () => {
       const stemMap: Record<StemType, string | null> = {
-        full: audioTrack.file_full, vocals: audioTrack.file_vocals,
+        vocals: audioTrack.file_vocals,
         percussion: audioTrack.file_percussion, harmony: audioTrack.file_harmony,
+        guitar: audioTrack.file_guitar,
       };
       for (const [type, url] of Object.entries(stemMap)) {
         if (url) {
@@ -472,14 +474,14 @@ export default function StudyPage() {
                 <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Mixer</h3>
                 {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
                   <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5" onClick={() => {
-                    setMutedStems({ full: false, vocals: false, percussion: false, harmony: false });
-                    setSoloStems({ full: false, vocals: false, percussion: false, harmony: false });
+                    setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                    setSoloStems({ vocals: false, percussion: false, harmony: false, guitar: false });
                   }}>Reset</Button>
                 )}
               </div>
               {STEM_DISPLAY.map(({ type, label, icon: Icon, color }) => {
                 const colMap: Record<StemType, keyof AudioTrack> = {
-                  full: "file_full", vocals: "file_vocals", percussion: "file_percussion", harmony: "file_harmony",
+                  vocals: "file_vocals", percussion: "file_percussion", harmony: "file_harmony", guitar: "file_guitar",
                 };
                 const hasFile = audioTrack && audioTrack[colMap[type]];
                 if (!hasFile) return null;

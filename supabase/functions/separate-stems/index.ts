@@ -119,6 +119,7 @@ serve(async (req) => {
           vocals: "file_vocals",
           drums: "file_percussion",
           other: "file_harmony",
+          bass: "file_guitar",
         };
 
         const updates: Record<string, string> = {};

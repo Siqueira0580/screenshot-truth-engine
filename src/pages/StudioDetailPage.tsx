@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano,
+  Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano, Guitar,
   Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch, BookOpen,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -22,13 +22,14 @@ interface AudioTrack {
   file_vocals: string | null;
   file_percussion: string | null;
   file_harmony: string | null;
+  file_guitar: string | null;
 }
 
 const STEM_DISPLAY: { type: StemType; label: string; icon: typeof Music2; color: string }[] = [
-  { type: "full", label: "Mix Completo", icon: Music2, color: "text-primary" },
   { type: "vocals", label: "Voz", icon: Mic2, color: "text-blue-400" },
   { type: "percussion", label: "Percussão", icon: Drum, color: "text-orange-400" },
   { type: "harmony", label: "Harmonia", icon: Piano, color: "text-emerald-400" },
+  { type: "guitar", label: "Guitarra", icon: Guitar, color: "text-rose-400" },
 ];
 
 function formatTime(s: number) {
@@ -50,13 +51,13 @@ export default function StudioDetailPage() {
   const [pitch, setPitch] = useState(0);
   const [masterVol, setMasterVol] = useState(80);
   const [stemVols, setStemVols] = useState<Record<StemType, number>>({
-    full: 100, vocals: 100, percussion: 100, harmony: 100,
+    vocals: 100, percussion: 100, harmony: 100, guitar: 100,
   });
   const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({
-    full: false, vocals: false, percussion: false, harmony: false,
+    vocals: false, percussion: false, harmony: false, guitar: false,
   });
   const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({
-    full: false, vocals: false, percussion: false, harmony: false,
+    vocals: false, percussion: false, harmony: false, guitar: false,
   });
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);
@@ -105,10 +106,10 @@ export default function StudioDetailPage() {
     engine.stop();
     const loadStems = async () => {
       const stemMap: Record<StemType, string | null> = {
-        full: audioTrack.file_full,
         vocals: audioTrack.file_vocals,
         percussion: audioTrack.file_percussion,
         harmony: audioTrack.file_harmony,
+        guitar: audioTrack.file_guitar,
       };
 
       for (const [type, url] of Object.entries(stemMap)) {
@@ -228,12 +229,12 @@ export default function StudioDetailPage() {
     : null;
 
   const hasAnyStem = audioTrack && (
-    audioTrack.file_full || audioTrack.file_vocals ||
-    audioTrack.file_percussion || audioTrack.file_harmony
+    audioTrack.file_vocals || audioTrack.file_percussion ||
+    audioTrack.file_harmony || audioTrack.file_guitar
   );
 
   const hasSeparatedStems = audioTrack && (
-    audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony
+    audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony || audioTrack.file_guitar
   );
 
   // Parse original key for transposition display
@@ -472,8 +473,8 @@ export default function StudioDetailPage() {
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mixer — Stems</h3>
             {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
               <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
-                setMutedStems({ full: false, vocals: false, percussion: false, harmony: false });
-                setSoloStems({ full: false, vocals: false, percussion: false, harmony: false });
+                setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                setSoloStems({ vocals: false, percussion: false, harmony: false, guitar: false });
               }}>
                 Reset
               </Button>
@@ -482,8 +483,8 @@ export default function StudioDetailPage() {
           <div className={cn("grid gap-4", hasSeparatedStems ? "grid-cols-2 md:grid-cols-4" : "grid-cols-1 max-w-xs")}>
             {STEM_DISPLAY.map(({ type, label, icon: Icon, color }) => {
               const colMap: Record<StemType, keyof AudioTrack> = {
-                full: "file_full", vocals: "file_vocals",
-                percussion: "file_percussion", harmony: "file_harmony",
+                vocals: "file_vocals", percussion: "file_percussion",
+                harmony: "file_harmony", guitar: "file_guitar",
               };
               const hasFile = audioTrack && audioTrack[colMap[type]];
               if (!hasFile) return null;

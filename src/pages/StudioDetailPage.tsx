@@ -22,6 +22,7 @@ interface AudioTrack {
   file_vocals: string | null;
   file_percussion: string | null;
   file_harmony: string | null;
+  file_guitar: string | null;
 }
 
 const STEM_DISPLAY: { type: StemType; label: string; icon: typeof Music2; color: string }[] = [

@@ -67,6 +67,14 @@ export function useScreenShare({ sessionId }: UseScreenShareOptions) {
     if (!sessionId) return;
     setError(null);
 
+    // Check if getDisplayMedia is available (not available in iframes/sandboxed contexts)
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+      // Still allow "sharing mode" so the invite panel is visible
+      setIsSharing(true);
+      setError("Partilha de ecrã não suportada neste contexto (iframe). Abra a app diretamente no browser para transmitir vídeo. O link de convite já está disponível.");
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         video: { frameRate: { ideal: 30 } },

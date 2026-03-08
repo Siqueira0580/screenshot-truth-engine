@@ -11,7 +11,7 @@ import SongDetailPage from "@/pages/SongDetailPage";
 import SetlistsPage from "@/pages/SetlistsPage";
 import SetlistDetailPage from "@/pages/SetlistDetailPage";
 import ArtistsPage from "@/pages/ArtistsPage";
-import ArtistDetailPage from "@/pages/ArtistDetailPage";
+
 import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudyPage from "@/pages/StudyPage";
@@ -77,7 +77,6 @@ const App = () => (
                 <Route path="/setlists" element={<SetlistsPage />} />
                 <Route path="/setlists/:id" element={<SetlistDetailPage />} />
                 <Route path="/artists" element={<ArtistsPage />} />
-                <Route path="/artists/:id" element={<ArtistDetailPage />} />
                 <Route path="/studio" element={<StudioPage />} />
                 <Route path="/studio/:songId" element={<StudioDetailPage />} />
                 <Route path="/compositions" element={<CompositionsHomePage />} />

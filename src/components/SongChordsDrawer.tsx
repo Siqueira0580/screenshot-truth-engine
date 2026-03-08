@@ -40,7 +40,7 @@ function ChordCard({ chord, visible }: { chord: string; visible: boolean }) {
   return (
     <div className="group flex flex-col items-center gap-0.5 rounded-lg border border-border/50 bg-card/80 p-1.5 transition-all duration-200 hover:border-primary/40 hover:bg-card active:scale-[0.97]">
       <span className="font-sans text-[11px] font-semibold tracking-wide text-primary">{chord}</span>
-      <canvas ref={canvasRef} width={100} height={120} className="rounded block" />
+      <canvas ref={canvasRef} width={100} height={105} className="rounded block" />
     </div>
   );
 }

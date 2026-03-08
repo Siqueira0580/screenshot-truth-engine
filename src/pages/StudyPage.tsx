@@ -31,13 +31,14 @@ interface AudioTrack {
   file_vocals: string | null;
   file_percussion: string | null;
   file_harmony: string | null;
+  file_guitar: string | null;
 }
 
 const STEM_DISPLAY: { type: StemType; label: string; icon: typeof Music2; color: string }[] = [
-  { type: "full", label: "Mix", icon: Music2, color: "text-primary" },
   { type: "vocals", label: "Voz", icon: Mic2, color: "text-blue-400" },
   { type: "percussion", label: "Perc", icon: Drum, color: "text-orange-400" },
   { type: "harmony", label: "Harm", icon: Piano, color: "text-emerald-400" },
+  { type: "guitar", label: "Guit", icon: Guitar, color: "text-rose-400" },
 ];
 
 function formatTime(s: number) {

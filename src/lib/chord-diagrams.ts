@@ -508,10 +508,10 @@ export function drawChordDiagram(
 
   const isFirstPosition = !voicing?.baseFret || voicing.baseFret <= 1;
 
-  // Premium layout constants
-  const indicatorAreaH = Math.round(h * 0.1);   // top X/O area
-  const titleAreaH = Math.round(h * 0.14);       // chord name
-  const nutH = isFirstPosition ? 3 : 0;
+  // Premium layout constants — no title area (rendered externally)
+  const indicatorAreaH = Math.round(h * 0.12);   // top X/O area
+  const titleAreaH = 0;                           // title drawn by parent component
+  const nutH = isFirstPosition ? 4 : 0;
   const bottomPad = Math.round(h * 0.06);
   const sidePad = Math.round(w * 0.16);
 

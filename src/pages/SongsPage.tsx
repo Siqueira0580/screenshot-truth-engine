@@ -27,6 +27,8 @@ export default function SongsPage() {
   const [importLinkOpen, setImportLinkOpen] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
+  const [tourVisible, setTourVisible] = useState(showTour);
 
   const { data: songs = [], isLoading } = useQuery({
     queryKey: ["songs"],

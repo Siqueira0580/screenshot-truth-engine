@@ -459,7 +459,7 @@ export default function CompositionStudioPage() {
   useEffect(() => {
     if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current);
     if (!rhymeSearch.trim()) { setRhymeResults([]); return; }
-    rhymeTimerRef.current = setTimeout(() => fetchRhymes(rhymeSearch), 500);
+    rhymeTimerRef.current = setTimeout(() => fetchRhymes(rhymeSearch), 800);
     return () => { if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current); };
   }, [rhymeSearch, fetchRhymes]);
 

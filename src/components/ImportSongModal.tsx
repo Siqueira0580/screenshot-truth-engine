@@ -38,6 +38,7 @@ interface PreviewData {
   time_signature?: string | null;
   source_url?: string | null;
   artist_image_url?: string | null;
+  youtube_url?: string | null;
 }
 
 export default function ImportSongModal({

@@ -471,8 +471,9 @@ function assignFingers(frets: (number | -1)[], barres?: { fret: number; from: nu
 }
 
 /**
- * Draw a chord diagram on a canvas.
- * Accepts an optional pre-resolved voicing (from AI/cache) to bypass the local dictionary.
+ * Draw a chord diagram on a canvas — Cifra Club style frame
+ * with app theme colors. X/O indicators at bottom, bright grid,
+ * white dots with dark numbers, thick nut, rectangular barre.
  */
 export function drawChordDiagram(
   canvas: HTMLCanvasElement,
@@ -500,103 +501,77 @@ export function drawChordDiagram(
     voicing = resolved.voicing;
     simplified = resolved.simplified;
   }
+
   const numStrings = getStringsForInstrument(instrument);
-  const numFrets = 4;
+  const numFrets = 5;
   const w = canvas.width;
   const h = canvas.height;
-  const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
 
   const isFirstPosition = !voicing?.baseFret || voicing.baseFret <= 1;
 
-  // Premium layout constants — no title area (rendered externally)
-  const indicatorAreaH = Math.round(h * 0.12);   // top X/O area
-  const titleAreaH = 0;                           // title drawn by parent component
-  const nutH = isFirstPosition ? 4 : 0;
-  const bottomPad = Math.round(h * 0.06);
-  const sidePad = Math.round(w * 0.16);
+  // ── Layout constants (Cifra Club style: grid takes most space, indicators at bottom) ──
+  const nutH = isFirstPosition ? Math.max(4, Math.round(h * 0.025)) : 0;
+  const topPad = Math.round(h * 0.04);
+  const bottomIndicatorH = Math.round(h * 0.1);
+  const sidePad = Math.round(w * 0.14);
+  const baseFretLabelW = !isFirstPosition && voicing?.baseFret ? Math.round(w * 0.1) : 0;
+  const effectiveSidePadLeft = sidePad + baseFretLabelW;
 
-  const gridTop = titleAreaH + indicatorAreaH + nutH;
-  const gridH = h - gridTop - bottomPad;
-  const gridW = w - sidePad * 2;
+  const gridTop = topPad + nutH;
+  const gridH = h - gridTop - bottomIndicatorH;
+  const gridW = w - effectiveSidePadLeft - sidePad;
   const stringSpacing = gridW / (numStrings - 1);
   const fretSpacing = gridH / numFrets;
-  const dotRadius = Math.min(stringSpacing, fretSpacing) * 0.3;
+  const dotRadius = Math.min(stringSpacing, fretSpacing) * 0.32;
 
-  // Theme colors
-  const accentHSL = "hsl(217, 91%, 60%)";       // primary blue
-  const accentFillHSL = "hsl(217, 91%, 60%, 0.18)";
-  const gridColor = "hsl(220, 13%, 28%)";
-  const gridColorLight = "hsl(220, 13%, 22%)";
-  const textMuted = "hsl(220, 10%, 50%)";
-  const textBright = "hsl(220, 15%, 85%)";
-  const dotFill = accentHSL;
-  const dotStroke = accentHSL;
-  const fingerTextColor = "#fff";
-  const barreColor = "hsl(217, 70%, 50%)";
+  // ── Cifra Club colors adapted to app theme ──
+  const gridLineColor = "hsl(220, 10%, 48%)";       // visible gray lines
+  const stringLineColor = "hsl(220, 10%, 45%)";     // slightly lighter strings
+  const nutColor = "hsl(220, 10%, 75%)";             // bright nut bar
+  const dotColor = "hsl(220, 15%, 88%)";             // white-ish dots (like Cifra Club)
+  const dotTextColor = "hsl(220, 20%, 10%)";         // dark numbers on dots
+  const barreColor = "hsl(220, 15%, 88%)";           // white barre bar
+  const indicatorColor = "hsl(220, 15%, 85%)";       // X/O at bottom
+  const mutedColor = "hsl(220, 10%, 55%)";           // X marks slightly dimmer
+  const baseFretColor = "hsl(220, 10%, 55%)";
+  const unavailableColor = "hsl(220, 10%, 40%)";
 
   // Clear
   ctx.clearRect(0, 0, w, h);
 
-  // ── Top indicators: X (muted) and O (open) ──
-  if (voicing) {
-    const indY = titleAreaH + indicatorAreaH * 0.5;
-    const indR = Math.max(3, dotRadius * 0.45);
-    for (let s = 0; s < voicing.frets.length; s++) {
-      const fret = voicing.frets[s];
-      const x = sidePad + s * stringSpacing;
-      if (fret === -1) {
-        // X mark
-        ctx.strokeStyle = textMuted;
-        ctx.lineWidth = 1.2;
-        const sz = indR * 0.8;
-        ctx.beginPath();
-        ctx.moveTo(x - sz, indY - sz);
-        ctx.lineTo(x + sz, indY + sz);
-        ctx.moveTo(x + sz, indY - sz);
-        ctx.lineTo(x - sz, indY + sz);
-        ctx.stroke();
-      } else if (fret === 0) {
-        // O mark
-        ctx.strokeStyle = accentHSL;
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();
-        ctx.arc(x, indY, indR, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-    }
-  }
-
-  // ── Nut (thick bar for first position) ──
+  // ── Nut (thick bar for first position — Cifra Club style) ──
   if (isFirstPosition) {
-    ctx.fillStyle = "hsl(220, 15%, 80%)";
-    ctx.fillRect(sidePad - 0.5, gridTop - nutH, gridW + 1, nutH);
+    ctx.fillStyle = nutColor;
+    const nutY = topPad;
+    ctx.fillRect(effectiveSidePadLeft - 1, nutY, gridW + 2, nutH);
   }
 
-  // ── Base fret indicator ──
+  // ── Base fret indicator (e.g. "2fr") ──
   if (!isFirstPosition && voicing?.baseFret) {
-    ctx.fillStyle = textMuted;
-    ctx.font = `500 ${Math.round(fretSpacing * 0.32)}px system-ui, -apple-system, sans-serif`;
+    ctx.fillStyle = baseFretColor;
+    ctx.font = `600 ${Math.round(fretSpacing * 0.3)}px system-ui, -apple-system, sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${voicing.baseFret}fr`, sidePad - 5, gridTop + fretSpacing * 0.5);
+    ctx.fillText(`${voicing.baseFret}ª`, effectiveSidePadLeft - 4, gridTop + fretSpacing * 0.5);
   }
 
-  // ── Grid: frets (visible horizontal lines) ──
-  ctx.strokeStyle = "hsl(220, 13%, 42%)";
-  ctx.lineWidth = 1.2;
+  // ── Grid: horizontal fret lines ──
   for (let f = 0; f <= numFrets; f++) {
     const y = gridTop + f * fretSpacing;
+    ctx.strokeStyle = gridLineColor;
+    ctx.lineWidth = f === 0 && !isFirstPosition ? 1.5 : 1;
     ctx.beginPath();
-    ctx.moveTo(sidePad, y);
-    ctx.lineTo(sidePad + gridW, y);
+    ctx.moveTo(effectiveSidePadLeft, y);
+    ctx.lineTo(effectiveSidePadLeft + gridW, y);
     ctx.stroke();
   }
 
-  // ── Grid: strings (visible vertical lines) ──
-  ctx.strokeStyle = "hsl(220, 13%, 38%)";
-  ctx.lineWidth = 1;
+  // ── Grid: vertical string lines ──
   for (let s = 0; s < numStrings; s++) {
-    const x = sidePad + s * stringSpacing;
+    const x = effectiveSidePadLeft + s * stringSpacing;
+    ctx.strokeStyle = stringLineColor;
+    // Outer strings slightly thicker (like real guitar)
+    ctx.lineWidth = (s === 0 || s === numStrings - 1) ? 1.2 : 0.8;
     ctx.beginPath();
     ctx.moveTo(x, gridTop);
     ctx.lineTo(x, gridTop + gridH);
@@ -604,8 +579,8 @@ export function drawChordDiagram(
   }
 
   if (!voicing) {
-    ctx.fillStyle = textMuted;
-    ctx.font = `400 ${Math.round(w * 0.07)}px system-ui, sans-serif`;
+    ctx.fillStyle = unavailableColor;
+    ctx.font = `400 ${Math.round(w * 0.065)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Indisponível", w / 2, gridTop + gridH / 2);
@@ -614,42 +589,30 @@ export function drawChordDiagram(
 
   const fingers = assignFingers(voicing.frets, voicing.barres);
 
-  // ── Barres (rounded, semi-transparent) ──
+  // ── Barres (Cifra Club style: thick white rectangular bar) ──
   if (voicing.barres) {
     for (const barre of voicing.barres) {
       const relativeFret = voicing.baseFret && voicing.baseFret > 1
         ? barre.fret - voicing.baseFret + 1
         : barre.fret;
       const y = gridTop + (relativeFret - 0.5) * fretSpacing;
-      const x1 = sidePad + barre.from * stringSpacing;
-      const x2 = sidePad + barre.to * stringSpacing;
-      const barreR = dotRadius * 0.85;
+      const x1 = effectiveSidePadLeft + barre.from * stringSpacing;
+      const x2 = effectiveSidePadLeft + barre.to * stringSpacing;
+      const barreH = dotRadius * 1.1;
 
+      // Rectangular barre bar
       ctx.fillStyle = barreColor;
-      ctx.globalAlpha = 0.85;
+      const rx = 3; // slight rounding
       ctx.beginPath();
-      ctx.moveTo(x1, y - barreR);
-      ctx.lineTo(x2, y - barreR);
-      ctx.arc(x2, y, barreR, -Math.PI / 2, Math.PI / 2);
-      ctx.lineTo(x1, y + barreR);
-      ctx.arc(x1, y, barreR, Math.PI / 2, -Math.PI / 2);
-      ctx.closePath();
+      ctx.roundRect(x1 - dotRadius * 0.3, y - barreH / 2, (x2 - x1) + dotRadius * 0.6, barreH, rx);
       ctx.fill();
-      ctx.globalAlpha = 1;
-
-      // Finger "1" label
-      ctx.fillStyle = fingerTextColor;
-      ctx.font = `600 ${Math.round(barreR * 1.2)}px system-ui, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("1", x1, y + 0.5);
     }
   }
 
-  // ── Fret dots (colored rings with subtle fill) ──
+  // ── Fret dots (Cifra Club: white filled circles with dark finger numbers) ──
   for (let s = 0; s < voicing.frets.length; s++) {
     const fret = voicing.frets[s];
-    const x = sidePad + s * stringSpacing;
+    const x = effectiveSidePadLeft + s * stringSpacing;
 
     if (fret > 0) {
       const isCoveredByBarre = voicing.barres?.some(
@@ -662,16 +625,16 @@ export function drawChordDiagram(
         : fret;
       const y = gridTop + (relativeFret - 0.5) * fretSpacing;
 
-      // Solid fill dot
-      ctx.fillStyle = accentHSL;
+      // White filled circle
+      ctx.fillStyle = dotColor;
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Finger number (white on blue)
+      // Dark finger number
       if (fingers[s] > 0) {
-        ctx.fillStyle = fingerTextColor;
-        ctx.font = `700 ${Math.round(dotRadius * 1.15)}px system-ui, sans-serif`;
+        ctx.fillStyle = dotTextColor;
+        ctx.font = `700 ${Math.round(dotRadius * 1.1)}px system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(String(fingers[s]), x, y + 0.5);
@@ -679,10 +642,38 @@ export function drawChordDiagram(
     }
   }
 
+  // ── Bottom indicators: X (muted) and O (open) — Cifra Club style ──
+  if (voicing) {
+    const indY = gridTop + gridH + bottomIndicatorH * 0.55;
+    const indR = Math.max(3.5, dotRadius * 0.5);
+    for (let s = 0; s < voicing.frets.length; s++) {
+      const fret = voicing.frets[s];
+      const x = effectiveSidePadLeft + s * stringSpacing;
+      if (fret === -1) {
+        // X mark
+        ctx.strokeStyle = mutedColor;
+        ctx.lineWidth = 1.6;
+        const sz = indR * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(x - sz, indY - sz);
+        ctx.lineTo(x + sz, indY + sz);
+        ctx.moveTo(x + sz, indY - sz);
+        ctx.lineTo(x - sz, indY + sz);
+        ctx.stroke();
+      } else if (fret === 0) {
+        // O mark (open string) — filled dot
+        ctx.fillStyle = indicatorColor;
+        ctx.beginPath();
+        ctx.arc(x, indY, indR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
   // ── Simplified indicator ──
   if (simplified) {
-    ctx.fillStyle = textMuted;
-    ctx.font = `400 ${Math.round(w * 0.055)}px system-ui, sans-serif`;
+    ctx.fillStyle = unavailableColor;
+    ctx.font = `400 ${Math.round(w * 0.05)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.fillText("* simplificado", w / 2, h - 1);

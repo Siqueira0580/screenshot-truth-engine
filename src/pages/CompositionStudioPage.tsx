@@ -229,7 +229,7 @@ export default function CompositionStudioPage() {
   // Exit button — saves FIRST, then navigates
   const handleExit = useCallback(async () => {
     await persistComposition({ silent: true, uploadAudio: true });
-    navigate("/compositions");
+    navigate(-1);
   }, [persistComposition, navigate]);
 
   // Auto-save refs (effect placed after useAudioRecorder below)

@@ -125,7 +125,7 @@ export default function CompositionStudioPage() {
       if (error || !data) return;
       setTitle(data.title || "");
       setEditorText(data.body_text || "");
-      setSelectedKey(data.musical_key || "Am");
+      setSelectedKey(data.musical_key || "");
       setOriginalKey(data.musical_key || "");
       setBpm(String(data.bpm || 120));
       setStyle(data.style || "Bossa Nova");

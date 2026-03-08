@@ -475,23 +475,25 @@ export default function CompositionStudioPage() {
       {/* ─── Header ─── */}
       <header className="shrink-0 border-b border-border bg-card px-4 py-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          {/* Left: exit + title */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <Button variant="outline" size="icon" onClick={handleExit} title="Salvar e sair">
-              <X className="h-5 w-5" />
+          {/* Left: exit + title column */}
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <Button variant="ghost" size="icon" onClick={handleExit} className="shrink-0 mt-0.5 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Nome da Composição..."
-              className="bg-transparent text-xl font-bold placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-foreground"
-            />
-            <input
-              value={composers}
-              onChange={(e) => setComposers(e.target.value)}
-              placeholder="Compositores..."
-              className="bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-muted-foreground"
-            />
+            <div className="flex flex-col flex-1 min-w-0">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Nome da Composição..."
+                className="bg-transparent text-xl font-bold placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-foreground"
+              />
+              <input
+                value={composers}
+                onChange={(e) => setComposers(e.target.value)}
+                placeholder="Compositores..."
+                className="bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none w-full min-w-0 text-muted-foreground mt-0.5"
+              />
+            </div>
           </div>
 
           {/* Center: filters — SINGLE tone button + BPM + style */}

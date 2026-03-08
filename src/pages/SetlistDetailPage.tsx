@@ -416,7 +416,11 @@ export default function SetlistDetailPage() {
 
   // Mutations
   const addMutation = useMutation({
-    mutationFn: (songId: string) => addSongToSetlist(id!, songId, items.length + 1),
+    mutationFn: (songId: string) => {
+      const song = allSongs.find((s) => s.id === songId);
+      const autoSpeed = calculateOptimalScrollSpeed(song?.body_text, song?.bpm);
+      return addSongToSetlist(id!, songId, items.length + 1, autoSpeed);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
       toast.success("Música adicionada!");

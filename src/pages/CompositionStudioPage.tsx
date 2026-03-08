@@ -128,6 +128,8 @@ export default function CompositionStudioPage() {
     }
   }, [title, editorText, selectedKey, bpm, style, composers, savedAudioUrl, navigate]);
 
+  const isOwner = !compositionId || compositionOwnerId === user?.id;
+
   // Load existing composition if ID in URL
   useEffect(() => {
     if (!compositionId) return;
@@ -146,6 +148,8 @@ export default function CompositionStudioPage() {
       setStyle(data.style || "Bossa Nova");
       setComposers((data as any).composers || "");
       if (data.audio_url) setSavedAudioUrl(data.audio_url);
+      setCompositionOwnerId(data.user_id);
+      setSharedWithEmails((data as any).shared_with_emails || []);
     };
     load();
   }, [compositionId]);

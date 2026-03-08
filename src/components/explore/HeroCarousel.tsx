@@ -22,7 +22,7 @@ export default function HeroCarousel({ tracks }: HeroCarouselProps) {
 
   if (!mainTrack) return null;
 
-
+  return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400">
         🔥 Destaques

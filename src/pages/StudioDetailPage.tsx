@@ -106,10 +106,10 @@ export default function StudioDetailPage() {
     engine.stop();
     const loadStems = async () => {
       const stemMap: Record<StemType, string | null> = {
-        full: audioTrack.file_full,
         vocals: audioTrack.file_vocals,
         percussion: audioTrack.file_percussion,
         harmony: audioTrack.file_harmony,
+        guitar: audioTrack.file_guitar,
       };
 
       for (const [type, url] of Object.entries(stemMap)) {

@@ -494,24 +494,24 @@ export default function StudyPage() {
 
                 return (
                   <div key={type} className={cn(
-                    "rounded-lg border p-2.5 sm:p-2.5 space-y-2 transition-all",
+                    "rounded-lg border p-3 space-y-2 transition-all w-full",
                     isEffectivelyMuted ? "border-border bg-muted/30 opacity-50" : "border-border bg-secondary/30",
                     isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
                   )}>
-                    <div className="flex items-center gap-2">
-                      <Icon className={cn("h-4 w-4 sm:h-3.5 sm:w-3.5", color)} />
-                      <span className="text-sm sm:text-xs font-medium flex-1">{label}</span>
-                      <div className="flex gap-1.5 sm:gap-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Icon className={cn("h-4 w-4 shrink-0", color)} />
+                      <span className="text-sm font-medium flex-1 min-w-0 truncate">{label}</span>
+                      <div className="flex gap-1.5 shrink-0">
                         <button
                           className={cn(
-                            "h-7 w-7 sm:h-5 sm:w-5 rounded text-xs sm:text-[9px] font-black flex items-center justify-center transition-colors",
+                            "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
                             isMutedStem ? "bg-destructive text-destructive-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
                           )}
                           onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
                         >M</button>
                         <button
                           className={cn(
-                            "h-7 w-7 sm:h-5 sm:w-5 rounded text-xs sm:text-[9px] font-black flex items-center justify-center transition-colors",
+                            "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
                             isSoloed ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
                           )}
                           onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
@@ -522,7 +522,7 @@ export default function StudyPage() {
                       value={[stemVols[type]]} max={100} step={1}
                       onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
                       disabled={isEffectivelyMuted}
-                      className="py-1"
+                      className="py-1 w-full"
                     />
                   </div>
                 );

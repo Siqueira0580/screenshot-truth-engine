@@ -12,7 +12,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, Loader2, Music2, Check, X, ArrowLeft, Mic } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { createSong, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
+import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
+import { supabase as sb } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 

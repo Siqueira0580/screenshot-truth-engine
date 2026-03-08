@@ -33,6 +33,7 @@ import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import ShowButton from "@/components/ShowButton";
+import ScreenSharePanel from "@/components/ScreenSharePanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -594,6 +595,9 @@ export default function SetlistDetailPage() {
           <span><strong className="text-destructive">Transmissão Mestre</strong> — {stageSync.connectedCount - 1} conectado(s)</span>
         </div>
       )}
+
+      {/* Screen Share Panel */}
+      {items.length > 0 && <ScreenSharePanel setlistId={id!} />}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">

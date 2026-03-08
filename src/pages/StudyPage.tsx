@@ -361,15 +361,38 @@ export default function StudyPage() {
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setScrollSpeed(s => Math.max(s - 0.2, 0.5))}><Minus className="h-3 w-3" /></Button>
             <span className="font-mono w-8 text-center">{scrollSpeed.toFixed(1)}x</span>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setScrollSpeed(s => Math.min(s + 0.2, 5))}><Plus className="h-3 w-3" /></Button>
-            <div className="w-px h-4 bg-border mx-1" />
-            <span className="text-muted-foreground font-medium">Fonte:</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.max(s - 2, 14))}><Minus className="h-3 w-3" /></Button>
-            <span className="font-mono w-6 text-center">{fontSize}</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.min(s + 2, 40))}><Plus className="h-3 w-3" /></Button>
+            {!song?.pdf_url && (
+              <>
+                <div className="w-px h-4 bg-border mx-1" />
+                <span className="text-muted-foreground font-medium">Fonte:</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.max(s - 2, 14))}><Minus className="h-3 w-3" /></Button>
+                <span className="font-mono w-6 text-center">{fontSize}</span>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setFontSize(s => Math.min(s + 2, 40))}><Plus className="h-3 w-3" /></Button>
+              </>
+            )}
+            <div className="flex-1" />
+            <Button
+              variant={isScrolling ? "default" : "outline"}
+              size="sm"
+              className="h-6 text-xs gap-1"
+              onClick={() => { if (isScrolling) { setIsScrolling(false); } else { setIsScrolling(true); } }}
+            >
+              {isScrolling ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+              {isScrolling ? "Parar" : "Rolar"}
+            </Button>
           </div>
 
           <div ref={lyricsRef} className="flex-1 overflow-y-auto px-4 sm:px-6 py-6">
-            {displayBody ? (
+            {song?.pdf_url ? (
+              <div style={{ height: "300vh" }}>
+                <iframe
+                  src={song.pdf_url}
+                  className="w-full border-0 rounded-lg"
+                  style={{ height: "300vh", pointerEvents: isScrolling ? "none" : "auto" }}
+                  title={`${song.title} - PDF`}
+                />
+              </div>
+            ) : displayBody ? (
               <ChordHighlightedText text={displayBody} fontSize={fontSize} onChordClick={handleChordClick} />
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">

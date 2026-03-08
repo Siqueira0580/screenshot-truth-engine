@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Monitor, MonitorOff, Copy, Check, MessageCircle, Users } from "lucide-react";
+import { Satellite, MonitorOff, Copy, Check, MessageCircle, Users, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";

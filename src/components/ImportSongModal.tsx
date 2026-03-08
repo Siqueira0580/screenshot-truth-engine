@@ -38,6 +38,7 @@ interface PreviewData {
   time_signature?: string | null;
   source_url?: string | null;
   artist_image_url?: string | null;
+  youtube_url?: string | null;
 }
 
 export default function ImportSongModal({
@@ -126,6 +127,7 @@ export default function ImportSongModal({
         bpm: previewData.bpm || null,
         composer: previewData.composer || null,
         time_signature: previewData.time_signature || null,
+        youtube_url: previewData.youtube_url || null,
       });
 
       if (setlistId && newSong?.id) {
@@ -234,6 +236,11 @@ export default function ImportSongModal({
                 {previewData.bpm && (
                   <span className="inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
                     {previewData.bpm} BPM
+                  </span>
+                )}
+                {previewData.composer && (
+                  <span className="inline-flex items-center rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
+                    ✍ {previewData.composer}
                   </span>
                 )}
                 </div>

@@ -44,6 +44,42 @@ serve(async (req) => {
 
     const html = await pageResp.text();
 
+    // Step A.1: Pre-extract structured metadata from HTML before stripping
+    // YouTube embed URL
+    let youtubeUrl: string | null = null;
+    const ytMatch = html.match(/iframe[^>]+src=["']([^"']*youtube\.com\/embed\/[^"']+)["']/i);
+    if (ytMatch) {
+      const embedUrl = ytMatch[1];
+      const videoIdMatch = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/);
+      youtubeUrl = videoIdMatch ? `https://www.youtube.com/watch?v=${videoIdMatch[1]}` : embedUrl;
+      console.log("YouTube URL found:", youtubeUrl);
+    }
+
+    // Musical key from common selectors (Cifra Club pattern: #cifra_tom, .cifra-tom)
+    let htmlMusicalKey: string | null = null;
+    const keyPatterns = [
+      /<a[^>]*id=["']?cifra_tom["']?[^>]*>([^<]+)<\/a>/i,
+      /<[^>]*class=["'][^"']*cifra[_-]?tom[^"']*["'][^>]*>([^<]+)/i,
+      /Tom:\s*<[^>]*>([A-G][#b]?m?\s*)/i,
+      /Tom:\s*([A-G][#b]?m?)\b/i,
+    ];
+    for (const pat of keyPatterns) {
+      const m = html.match(pat);
+      if (m) { htmlMusicalKey = m[1].trim(); break; }
+    }
+
+    // Composer from common selectors
+    let htmlComposer: string | null = null;
+    const composerPatterns = [
+      /<[^>]*class=["'][^"']*compositor[^"']*["'][^>]*>([^<]+)/i,
+      /Composi[çc][ãa]o:\s*([^<\n]+)/i,
+      /Compositor(?:es)?:\s*([^<\n]+)/i,
+    ];
+    for (const pat of composerPatterns) {
+      const m = html.match(pat);
+      if (m) { htmlComposer = m[1].trim(); break; }
+    }
+
     // Strip scripts, styles, and HTML tags to get raw text
     const stripped = html
       .replace(/<script[\s\S]*?<\/script>/gi, "")
@@ -75,17 +111,22 @@ serve(async (req) => {
             role: "system",
             content: `Você é um formatador de texto especializado no padrão ChordPro. Eu vou fornecer-lhe o texto bruto extraído de uma página da web de cifras.
 A sua ÚNICA tarefa é encontrar a letra e os acordes DENTRO DESTE TEXTO FORNECIDO e formatá-los para ChordPro (ex: [Am]Sílaba).
-Extraia também o Título, Artista e classifique o Gênero Musical (ex: Samba, Rock, MPB, Pop, Gospel, Forró, Sertanejo, Bossa Nova).
+
+Extraia também:
+- Título da música
+- Nome do Artista
+- Gênero Musical (ex: Samba, Rock, MPB, Pop, Gospel, Forró, Sertanejo, Bossa Nova)
+- Tom (Key) da música (ex: "G", "Am", "C#m") — procure por indicações como "Tom:", "Key:", ou o tom mencionado no texto
+- Compositor(es) — procure por "Composição:", "Compositor:", "Songwriters:" no texto
+- BPM se mencionado
 
 REGRA ABSOLUTA: NÃO invente acordes. NÃO adicione trechos de música que não estejam no texto bruto fornecido. Use APENAS os dados presentes no texto.
-Se o texto bruto não contiver uma cifra musical válida (ex: página de erro, notícias, ou conteúdo sem acordes), retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}
-
-Retorne ESTRITAMENTE um JSON válido com as chaves: "title", "artist", "genre", "content" (a cifra formatada em ChordPro).
-Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
+Se um campo não for encontrado no texto, retorne null para ele.
+Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}`,
           },
           {
             role: "user",
-            content: `Extraia a cifra deste texto de site:\n\n${truncated}`,
+            content: `Extraia a cifra e metadados deste texto de site:\n\n${truncated}`,
           },
         ],
         tools: [
@@ -93,17 +134,19 @@ Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
             type: "function",
             function: {
               name: "extract_song",
-              description: "Extract song data from scraped text into structured ChordPro format",
+              description: "Extract song data from scraped text into structured ChordPro format with full metadata",
               parameters: {
                 type: "object",
                 properties: {
                   title: { type: "string", description: "Song title" },
                   artist: { type: "string", description: "Artist name" },
-                  genre: { type: "string", description: "Musical genre" },
+                  genre: { type: "string", description: "Musical genre (e.g. Rock, MPB, Sertanejo)" },
+                  musical_key: { type: ["string", "null"], description: "Musical key/tom (e.g. G, Am, C#m)" },
+                  composer: { type: ["string", "null"], description: "Composer(s) name(s)" },
+                  bpm: { type: ["number", "null"], description: "BPM if found" },
                   content: { type: "string", description: "Full song in ChordPro format" },
                 },
                 required: ["title", "artist", "genre", "content"],
-                additionalProperties: false,
               },
             },
           },
@@ -133,7 +176,7 @@ Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
     const aiData = await aiResp.json();
 
     // Extract from tool call response
-    let result: { title: string; artist: string; genre: string; content: string };
+    let result: { title: string; artist: string; genre: string; content: string; musical_key?: string | null; composer?: string | null; bpm?: number | null };
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       result = JSON.parse(toolCall.function.arguments);
@@ -147,7 +190,12 @@ Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
       result = JSON.parse(jsonMatch[0]);
     }
 
-    console.log("Extracted:", result.title, "-", result.artist);
+    // Merge HTML-extracted metadata (prefer HTML-parsed values as they're more reliable, fallback to AI)
+    const finalMusicalKey = htmlMusicalKey || result.musical_key || null;
+    const finalComposer = htmlComposer || result.composer || null;
+    const finalYoutubeUrl = youtubeUrl || null;
+
+    console.log("Extracted:", result.title, "-", result.artist, "| Key:", finalMusicalKey, "| Composer:", finalComposer, "| YouTube:", finalYoutubeUrl);
 
     // Step C: Fetch artist image from Deezer
     let artist_image_url: string | null = null;
@@ -173,7 +221,14 @@ Não inclua nenhum texto fora do JSON. Não use markdown code blocks.`,
       }
     }
 
-    return new Response(JSON.stringify({ ...result, artist_image_url }), {
+    return new Response(JSON.stringify({
+      ...result,
+      musical_key: finalMusicalKey,
+      composer: finalComposer,
+      youtube_url: finalYoutubeUrl,
+      bpm: result.bpm || null,
+      artist_image_url,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

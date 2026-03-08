@@ -294,7 +294,7 @@ export default function StudyPage() {
   if (!songId) return null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] w-full max-w-[100vw] overflow-x-hidden px-4">
+    <div className="flex flex-col h-[calc(100vh-4rem-3rem-4rem)] lg:h-[calc(100vh-4rem-3rem)] w-full max-w-[100vw] overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2 py-3 border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-3 w-full min-w-0">
@@ -369,9 +369,9 @@ export default function StudyPage() {
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 min-h-0 flex-col md:flex-row">
+      <div className="flex flex-1 min-h-0 flex-col md:flex-row overflow-hidden">
         {/* Lyrics panel */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
           <div className="flex flex-wrap items-center gap-2 px-4 py-1.5 bg-muted/30 border-b border-border text-xs">
             <span className="text-muted-foreground font-medium">Rolagem:</span>
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setScrollSpeed(s => Math.max(s - 0.2, 0.5))}><Minus className="h-3 w-3" /></Button>
@@ -398,7 +398,7 @@ export default function StudyPage() {
             </Button>
           </div>
 
-          <div ref={lyricsRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 py-6 w-full">
+          <div ref={lyricsRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 py-6 w-full min-h-0 scrollbar-hide">
             {song?.pdf_url ? (
               <div style={{ height: "300vh" }}>
                 <iframe

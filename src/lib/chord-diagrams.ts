@@ -508,10 +508,10 @@ export function drawChordDiagram(
 
   const isFirstPosition = !voicing?.baseFret || voicing.baseFret <= 1;
 
-  // Premium layout constants
-  const indicatorAreaH = Math.round(h * 0.1);   // top X/O area
-  const titleAreaH = Math.round(h * 0.14);       // chord name
-  const nutH = isFirstPosition ? 3 : 0;
+  // Premium layout constants — no title area (rendered externally)
+  const indicatorAreaH = Math.round(h * 0.12);   // top X/O area
+  const titleAreaH = 0;                           // title drawn by parent component
+  const nutH = isFirstPosition ? 4 : 0;
   const bottomPad = Math.round(h * 0.06);
   const sidePad = Math.round(w * 0.16);
 
@@ -536,14 +536,6 @@ export function drawChordDiagram(
 
   // Clear
   ctx.clearRect(0, 0, w, h);
-
-  // ── Title ──
-  ctx.fillStyle = textBright;
-  ctx.font = `600 ${Math.round(w * 0.11)}px system-ui, -apple-system, 'Segoe UI', sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const title = simplified ? `${chord} *` : chord;
-  ctx.fillText(title, w / 2, titleAreaH * 0.5);
 
   // ── Top indicators: X (muted) and O (open) ──
   if (voicing) {
@@ -574,9 +566,9 @@ export function drawChordDiagram(
     }
   }
 
-  // ── Nut (thin elegant bar) ──
+  // ── Nut (thick bar for first position) ──
   if (isFirstPosition) {
-    ctx.fillStyle = textBright;
+    ctx.fillStyle = "hsl(220, 15%, 80%)";
     ctx.fillRect(sidePad - 0.5, gridTop - nutH, gridW + 1, nutH);
   }
 
@@ -589,9 +581,9 @@ export function drawChordDiagram(
     ctx.fillText(`${voicing.baseFret}fr`, sidePad - 5, gridTop + fretSpacing * 0.5);
   }
 
-  // ── Grid: frets (thin horizontal lines) ──
-  ctx.strokeStyle = gridColor;
-  ctx.lineWidth = 0.7;
+  // ── Grid: frets (visible horizontal lines) ──
+  ctx.strokeStyle = "hsl(220, 13%, 42%)";
+  ctx.lineWidth = 1.2;
   for (let f = 0; f <= numFrets; f++) {
     const y = gridTop + f * fretSpacing;
     ctx.beginPath();
@@ -600,9 +592,9 @@ export function drawChordDiagram(
     ctx.stroke();
   }
 
-  // ── Grid: strings (thin vertical lines) ──
-  ctx.strokeStyle = gridColorLight;
-  ctx.lineWidth = 0.6;
+  // ── Grid: strings (visible vertical lines) ──
+  ctx.strokeStyle = "hsl(220, 13%, 38%)";
+  ctx.lineWidth = 1;
   for (let s = 0; s < numStrings; s++) {
     const x = sidePad + s * stringSpacing;
     ctx.beginPath();
@@ -670,23 +662,16 @@ export function drawChordDiagram(
         : fret;
       const y = gridTop + (relativeFret - 0.5) * fretSpacing;
 
-      // Subtle fill
-      ctx.fillStyle = accentFillHSL;
+      // Solid fill dot
+      ctx.fillStyle = accentHSL;
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Ring border
-      ctx.strokeStyle = dotStroke;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // Finger number
+      // Finger number (white on blue)
       if (fingers[s] > 0) {
-        ctx.fillStyle = accentHSL;
-        ctx.font = `600 ${Math.round(dotRadius * 1.1)}px system-ui, sans-serif`;
+        ctx.fillStyle = fingerTextColor;
+        ctx.font = `700 ${Math.round(dotRadius * 1.15)}px system-ui, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(String(fingers[s]), x, y + 0.5);

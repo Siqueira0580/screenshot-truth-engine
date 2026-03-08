@@ -60,7 +60,7 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
           </div>
           <div className="flex justify-center">
             {loading ? (
-              <div className="flex flex-col items-center justify-center w-[140px] h-[170px] gap-2">
+              <div className="flex flex-col items-center justify-center w-[140px] h-[150px] gap-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary border-t-transparent" />
                 <span className="text-[10px] text-muted-foreground">Carregando...</span>
               </div>
@@ -69,7 +69,7 @@ const ChordModal = forwardRef<HTMLDivElement, ChordModalProps>(({ chord, open, o
                 <canvas
                   ref={canvasRef}
                   width={140}
-                  height={170}
+                  height={150}
                   className="rounded-lg"
                   style={{ display: 'block' }}
                 />

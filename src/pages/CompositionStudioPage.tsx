@@ -363,7 +363,56 @@ export default function CompositionStudioPage() {
 
   const displayText = editorText + (isRecording && liveChordPro ? (editorText ? "\n" : "") + liveChordPro : "");
 
-  const chords = CHORD_MAP[selectedKey] || CHORD_MAP["Am"];
+  const chords = HARMONIC_FIELDS[selectedKey] || HARMONIC_FIELDS["Am"] || [];
+  const progressions = getProgressions(selectedKey);
+  const isMinor = selectedKey.endsWith("m");
+
+  // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───
+  const fetchRhymes = useCallback(async (word: string) => {
+    if (!word.trim()) { setRhymeResults([]); return; }
+    setIsLoadingRhymes(true);
+    try {
+      const res = await fetch(`https://rhymebrain.com/talk?function=getRhymes&word=${encodeURIComponent(word.trim())}&lang=pt`);
+      const data = await res.json();
+      const filtered = (data as { word: string; score: number }[])
+        .filter((r) => r.score > 250)
+        .slice(0, 30);
+      setRhymeResults(filtered);
+    } catch (err) {
+      console.error("Rhyme fetch error:", err);
+      toast.error("Erro ao buscar rimas.");
+      setRhymeResults([]);
+    } finally {
+      setIsLoadingRhymes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current);
+    if (!rhymeSearch.trim()) { setRhymeResults([]); return; }
+    rhymeTimerRef.current = setTimeout(() => fetchRhymes(rhymeSearch), 500);
+    return () => { if (rhymeTimerRef.current) clearTimeout(rhymeTimerRef.current); };
+  }, [rhymeSearch, fetchRhymes]);
+
+  const handleCopyRhyme = useCallback((word: string) => {
+    navigator.clipboard.writeText(word).then(() => {
+      toast.success(`"${word}" copiada!`);
+    }).catch(() => toast.error("Erro ao copiar."));
+  }, []);
+
+  // ─── Clear page handler ───
+  const handleClearPage = useCallback(() => {
+    setEditorText("");
+    setSelectedKey("Am");
+    setOriginalKey("");
+    setTitle("");
+    setComposers("");
+    setBpm("120");
+    setSavedAudioUrl(null);
+    audioBlobRef.current = null;
+    setShowClearModal(false);
+    toast.success("Composição limpa!");
+  }, []);
 
   // Parse displayText into renderable ChordPro tokens
   const parsedLines = displayText

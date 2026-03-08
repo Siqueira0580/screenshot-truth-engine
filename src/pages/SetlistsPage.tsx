@@ -86,23 +86,24 @@ export default function SetlistsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Repertórios</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Repertórios</h1>
+          <p className="text-muted-foreground text-sm mt-1">
             {filteredAndSorted.length} repertório{filteredAndSorted.length !== 1 ? "s" : ""}
             {dateFilter !== "all" && ` (filtrado de ${setlists.length})`}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setAutoGenOpen(true)} className="gap-1">
+          <Button variant="outline" size="sm" onClick={() => setAutoGenOpen(true)} className="gap-1 text-xs sm:text-sm">
             <Sparkles className="h-4 w-4" />
-            Sugerir Repertório
+            <span className="hidden sm:inline">Sugerir Repertório</span>
+            <span className="sm:hidden">Sugerir</span>
           </Button>
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="text-xs sm:text-sm">
             <Plus className="h-4 w-4 mr-1" />
-            Novo Repertório
+            Novo
           </Button>
         </div>
       </div>

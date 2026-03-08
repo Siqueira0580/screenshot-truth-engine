@@ -1012,7 +1012,7 @@ export default function CompositionStudioPage() {
                 {isLoadingRhymes && (
                   <div className="flex items-center justify-center py-6">
                     <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    <span className="ml-2 text-xs text-muted-foreground">Buscando rimas...</span>
+                    <span className="ml-2 text-xs text-muted-foreground">Gerando rimas com IA...</span>
                   </div>
                 )}
 

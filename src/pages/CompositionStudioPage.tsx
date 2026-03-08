@@ -430,24 +430,31 @@ export default function CompositionStudioPage() {
 
   const displayText = editorText;
 
-  const chords = (selectedKey && HARMONIC_FIELDS[selectedKey]) || [];
-  const progressions = selectedKey ? getProgressions(selectedKey) : [];
-  const isMinor = selectedKey.endsWith("m");
+  // Harmony tab uses its own independent key
+  const [harmonyKey, setHarmonyKey] = useState("C");
+  const harmonyChords = HARMONIC_FIELDS[harmonyKey] || [];
+  const harmonyProgressions = getProgressions(harmonyKey);
+  const isHarmonyMinor = harmonyKey.endsWith("m");
 
   // ─── Rhyme fetch (RhymeBrain API, debounced 500ms) ───
   const fetchRhymes = useCallback(async (word: string) => {
     if (!word.trim()) { setRhymeResults([]); return; }
     setIsLoadingRhymes(true);
     try {
-      const res = await fetch(`https://rhymebrain.com/talk?function=getRhymes&word=${encodeURIComponent(word.trim())}&lang=pt`);
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/rhyme-proxy?word=${encodeURIComponent(word.trim())}&lang=pt`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` } }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const filtered = (data as { word: string; score: number }[])
-        .filter((r) => r.score > 250)
-        .slice(0, 30);
+        .filter((r) => r.score >= 100)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 40);
       setRhymeResults(filtered);
     } catch (err) {
       console.error("Rhyme fetch error:", err);
-      toast.error("Erro ao buscar rimas.");
+      toast.error("Erro ao buscar rimas. Verifique sua conexão.");
       setRhymeResults([]);
     } finally {
       setIsLoadingRhymes(false);
@@ -923,14 +930,32 @@ export default function CompositionStudioPage() {
               </TabsList>
 
               <TabsContent value="harmony" className="space-y-4 mt-4">
-                {/* AI Progressions — dynamic based on current key */}
-                {progressions.length > 0 && (
+                {/* Independent key selector for harmony exploration */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Explorar progressões em:</label>
+                  <Select value={harmonyKey} onValueChange={setHarmonyKey}>
+                    <SelectTrigger className="w-full h-9 bg-secondary border-border text-sm font-mono font-bold">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"].map((k) => (
+                        <SelectItem key={k} value={k}>{k} Maior</SelectItem>
+                      ))}
+                      {["Cm", "C#m", "Dm", "Ebm", "Em", "Fm", "F#m", "Gm", "G#m", "Am", "Bbm", "Bm"].map((k) => (
+                        <SelectItem key={k} value={k}>{k}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* AI Progressions — dynamic based on harmonyKey */}
+                {harmonyProgressions.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-1">
                       <Sparkles className="h-4 w-4 text-primary shrink-0" />
-                      <p className="text-xs font-semibold text-primary">Sugestões de Progressão em {selectedKey}</p>
+                      <p className="text-xs font-semibold text-primary">Sugestões de Progressão em {harmonyKey}</p>
                     </div>
-                    {progressions.map((prog, idx) => (
+                    {harmonyProgressions.map((prog, idx) => (
                       <button
                         key={idx}
                         onClick={() => {
@@ -952,10 +977,10 @@ export default function CompositionStudioPage() {
 
                 <div>
                   <p className="text-xs text-muted-foreground mb-2 font-medium">
-                    Campo Harmônico de {selectedKey}
+                    Campo Harmônico de {harmonyKey}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    {chords.map((chord, idx) => (
+                    {harmonyChords.map((chord, idx) => (
                       <button
                         key={chord}
                         onClick={() => {
@@ -969,7 +994,7 @@ export default function CompositionStudioPage() {
                         )}
                       >
                         <span className="text-[9px] text-muted-foreground font-normal mb-0.5">
-                          {getRomanNumeral(idx, isMinor)}
+                          {getRomanNumeral(idx, isHarmonyMinor)}
                         </span>
                         {chord}
                       </button>

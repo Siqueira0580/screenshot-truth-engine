@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -172,13 +172,13 @@ export default function SongDetailPage() {
   const displayKey = transposeKey(song.musical_key, transpose);
   const displayBody = song.body_text ? transposeText(song.body_text, transpose) : null;
 
+  const navigate = useNavigate();
+
   return (
     <div className="max-w-4xl space-y-6 animate-fade-in">
-      <Button variant="ghost" asChild className="gap-2">
-        <Link to="/songs">
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Link>
+      <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+        <ArrowLeft className="h-4 w-4" />
+        Voltar
       </Button>
 
       <div className="space-y-2">

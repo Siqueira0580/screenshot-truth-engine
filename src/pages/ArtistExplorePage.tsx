@@ -23,6 +23,8 @@ export default function ArtistExplorePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [importUrl, setImportUrl] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [uploadingSheetPdf, setUploadingSheetPdf] = useState(false);
+  const sheetPdfInputRef = useRef<HTMLInputElement>(null);
 
   const fetchSongs = useCallback(() => {
     if (!decodedName) return;

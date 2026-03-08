@@ -826,18 +826,14 @@ export default function CompositionStudioPage() {
             </div>
           </TooltipProvider>
 
-          {/* Audio playback after recording */}
-          {(recorderAudioUrl || savedAudioUrl) && !isActiveRecording && (
-            <div className="mb-6 flex flex-col items-center gap-2">
-              <audio controls src={recorderAudioUrl || savedAudioUrl || undefined} className="w-full max-w-md rounded-lg" />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
-                onClick={() => setShowDeleteAudioModal(true)}
-              >
-                <Trash2 className="h-3.5 w-3.5" /> Excluir áudio
-              </Button>
+          {/* ─── Audio Takes List (Gaveta de Ideias) ─── */}
+          {audioTakes.length > 0 && !isActiveRecording && (
+            <div className="mb-6">
+              <AudioTakesList
+                takes={audioTakes}
+                onRename={handleRenameTake}
+                onDelete={handleDeleteTake}
+              />
             </div>
           )}
 

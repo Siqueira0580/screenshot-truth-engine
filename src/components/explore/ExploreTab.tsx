@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import CategoryPills from "./CategoryPills";
 import HeroCarousel from "./HeroCarousel";
 import TopChartsList from "./TopChartsList";
+import FeaturedArtists from "./FeaturedArtists";
 import { createSong, findOrCreateArtist } from "@/lib/supabase-queries";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -26,7 +27,6 @@ export default function ExploreTab() {
             });
             queryClient.invalidateQueries({ queryKey: ["songs"] });
             toast.success(`"${track.title}" adicionada à biblioteca!`);
-            // TODO: buscar cifra automaticamente
             console.log("TODO: buscar cifra para", track.title, track.artist.name);
           } catch (err) {
             toast.error("Erro ao adicionar música");
@@ -39,24 +39,25 @@ export default function ExploreTab() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
       </div>
     );
   }
 
   if (isError || tracks.length === 0) {
     return (
-      <div className="text-center py-20 text-muted-foreground">
+      <div className="text-center py-20 text-slate-500">
         <p>Não foi possível carregar os destaques. Tente novamente mais tarde.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <CategoryPills selected={category} onSelect={setCategory} />
       <HeroCarousel tracks={tracks} onAddSong={handleAddSong} />
       <TopChartsList tracks={tracks} onAddSong={handleAddSong} />
+      <FeaturedArtists tracks={tracks} />
     </div>
   );
 }

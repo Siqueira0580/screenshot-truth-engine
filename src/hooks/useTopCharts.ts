@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface DeezerTrack {
   id: number;
@@ -16,18 +17,19 @@ export interface DeezerTrack {
 }
 
 async function fetchTopCharts(): Promise<DeezerTrack[]> {
-  // Use a CORS proxy since Deezer API doesn't allow browser requests
-  const res = await fetch("https://corsproxy.io/?https://api.deezer.com/chart/0/tracks?limit=20");
-  if (!res.ok) throw new Error("Falha ao carregar top charts");
-  const json = await res.json();
-  return json.data ?? [];
+  const { data, error } = await supabase.functions.invoke("deezer-charts", {
+    body: null,
+    method: "GET",
+  });
+  if (error) throw error;
+  return data?.data ?? [];
 }
 
 export function useTopCharts() {
   return useQuery({
     queryKey: ["deezer-top-charts"],
     queryFn: fetchTopCharts,
-    staleTime: 1000 * 60 * 30, // 30 min
+    staleTime: 1000 * 60 * 30,
     retry: 1,
   });
 }

@@ -354,10 +354,56 @@ export default function CompositionStudioPage() {
       if (result) {
         audioBlobRef.current = result.audioBlob;
         transcribeAudio(result.audioBlob);
+
+        // Save audio take to storage + DB
+        (async () => {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) return;
+
+          // Ensure composition is persisted first
+          let compId = compositionId;
+          if (!compId) {
+            const id = await persistComposition({ silent: true });
+            if (!id) return;
+            compId = id;
+          }
+
+          const ext = result.audioBlob.type.includes("webm") ? "webm" : "ogg";
+          const fileName = `${user.id}/${Date.now()}.${ext}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("compositions_audio")
+            .upload(fileName, result.audioBlob, { contentType: result.audioBlob.type });
+          if (uploadErr) { console.error("Upload error:", uploadErr); return; }
+
+          const { data: urlData } = supabase.storage.from("compositions_audio").getPublicUrl(fileName);
+          const now = new Date();
+          const autoTitle = `Ideia - ${now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+
+          const { data: inserted, error: dbErr } = await supabase
+            .from("composition_audios" as any)
+            .insert({
+              composition_id: compId,
+              user_id: user.id,
+              title: autoTitle,
+              audio_url: urlData.publicUrl,
+            })
+            .select()
+            .single();
+
+          if (!dbErr && inserted) {
+            const row = inserted as any;
+            setAudioTakes((prev) => [{
+              id: row.id,
+              url: row.audio_url,
+              title: row.title,
+              createdAt: row.created_at,
+            }, ...prev]);
+          }
+        })();
       }
     }
     prevRecordingState.current = recordingState;
-  }, [recordingState, getResult, transcribeAudio]);
+  }, [recordingState, getResult, transcribeAudio, compositionId, persistComposition]);
 
   // Master button handler
   const handleMasterButton = useCallback(() => {

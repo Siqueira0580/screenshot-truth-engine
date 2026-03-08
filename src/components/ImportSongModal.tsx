@@ -13,6 +13,7 @@ import { Sparkles, Loader2, Music2, Check, X, ArrowLeft, Mic } from "lucide-reac
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
+import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 

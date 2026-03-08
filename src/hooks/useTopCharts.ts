@@ -17,10 +17,7 @@ export interface DeezerTrack {
 }
 
 async function fetchTopCharts(): Promise<DeezerTrack[]> {
-  const { data, error } = await supabase.functions.invoke("deezer-charts", {
-    body: null,
-    method: "GET",
-  });
+  const { data, error } = await supabase.functions.invoke("deezer-charts");
   if (error) throw error;
   return data?.data ?? [];
 }

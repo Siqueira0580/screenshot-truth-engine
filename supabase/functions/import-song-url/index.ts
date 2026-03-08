@@ -176,7 +176,7 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
     const aiData = await aiResp.json();
 
     // Extract from tool call response
-    let result: { title: string; artist: string; genre: string; content: string };
+    let result: { title: string; artist: string; genre: string; content: string; musical_key?: string | null; composer?: string | null; bpm?: number | null };
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       result = JSON.parse(toolCall.function.arguments);
@@ -190,7 +190,12 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
       result = JSON.parse(jsonMatch[0]);
     }
 
-    console.log("Extracted:", result.title, "-", result.artist);
+    // Merge HTML-extracted metadata (prefer HTML-parsed values as they're more reliable, fallback to AI)
+    const finalMusicalKey = htmlMusicalKey || result.musical_key || null;
+    const finalComposer = htmlComposer || result.composer || null;
+    const finalYoutubeUrl = youtubeUrl || null;
+
+    console.log("Extracted:", result.title, "-", result.artist, "| Key:", finalMusicalKey, "| Composer:", finalComposer, "| YouTube:", finalYoutubeUrl);
 
     // Step C: Fetch artist image from Deezer
     let artist_image_url: string | null = null;

@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Guitar, Piano } from "lucide-react";
 import type { Instrument } from "@/lib/chord-diagrams";
 import { toast } from "sonner";
+import MetadataScanner from "@/components/MetadataScanner";
 
 const INSTRUMENTS: { value: Instrument; label: string; description: string; icon: typeof Guitar }[] = [
   { value: "guitar", label: "Violão", description: "6 cordas · Acordes em braço", icon: Guitar },
@@ -73,6 +74,8 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <MetadataScanner />
     </div>
   );
 }

@@ -474,10 +474,13 @@ export default function StudioDetailPage() {
         <div className="p-4 rounded-xl bg-card border border-border">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mixer — Stems</h3>
-            {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean)) && (
+            {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean) || Object.values(gateStems).some(Boolean)) && (
               <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
                 setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
                 setSoloStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                setGateStems({ vocals: false, percussion: false, harmony: false, guitar: false });
+                // Disable all gates on engine
+                (["vocals", "percussion", "harmony", "guitar"] as StemType[]).forEach(t => engineRef.current?.setGateEnabled(t, false));
               }}>
                 Reset
               </Button>

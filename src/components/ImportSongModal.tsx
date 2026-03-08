@@ -137,7 +137,8 @@ export default function ImportSongModal({
         // Song already exists globally — just add to user's library
         await addToUserLibrary(songId);
         if (setlistId) {
-          await addSongToSetlist(setlistId, songId, setlistPosition ?? 999);
+          const speed = calculateOptimalScrollSpeed(null, previewData.bpm || null);
+          await addSongToSetlist(setlistId, songId, setlistPosition ?? 999, speed);
           queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
         }
         toast.success(`"${title}" já existia — adicionada à sua biblioteca!`);

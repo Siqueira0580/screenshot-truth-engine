@@ -448,6 +448,24 @@ export default function ArtistExplorePage() {
           </motion.div>
         )}
       </div>
+
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          try {
+            await removeFromUserLibrary(deleteTarget.id);
+            setSongs((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+            toast.success("Música removida do repertório!");
+          } catch {
+            toast.error("Erro ao remover música");
+          }
+          setDeleteTarget(null);
+        }}
+        title="Remover música"
+        description={`Tem certeza que deseja remover "${deleteTarget?.title}" do seu repertório?`}
+      />
     </div>
   );
 }

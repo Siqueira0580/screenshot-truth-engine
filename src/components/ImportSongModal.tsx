@@ -126,6 +126,7 @@ export default function ImportSongModal({
         bpm: previewData.bpm || null,
         composer: previewData.composer || null,
         time_signature: previewData.time_signature || null,
+        youtube_url: previewData.youtube_url || null,
       });
 
       if (setlistId && newSong?.id) {

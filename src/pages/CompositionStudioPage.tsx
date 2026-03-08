@@ -751,36 +751,54 @@ export default function CompositionStudioPage() {
               </TabsList>
 
               <TabsContent value="harmony" className="space-y-4 mt-4">
-                <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-primary mb-1">Sugestão da IA</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        Tente uma cadência II-V-I para o refrão:{" "}
-                        <span className="text-primary font-mono font-bold">Dm7</span> →{" "}
-                        <span className="text-primary font-mono font-bold">G7</span> →{" "}
-                        <span className="text-primary font-mono font-bold">C7M</span>
-                      </p>
+                {/* AI Progressions — dynamic based on current key */}
+                {progressions.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                      <p className="text-xs font-semibold text-primary">Sugestões de Progressão em {selectedKey}</p>
                     </div>
+                    {progressions.map((prog, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          const chordLine = prog.chords.map(c => `[${c}]`).join(" ");
+                          setEditorText(prev => prev ? prev + "\n" + chordLine : chordLine);
+                          toast.success(`Progressão "${prog.name}" inserida!`);
+                        }}
+                        className="w-full rounded-lg bg-primary/10 border border-primary/20 p-3 text-left hover:bg-primary/20 transition-colors"
+                      >
+                        <p className="text-[11px] font-semibold text-primary">{prog.name}</p>
+                        <p className="text-[10px] text-muted-foreground mb-1">{prog.numerals}</p>
+                        <p className="text-xs font-mono font-bold text-foreground">
+                          {prog.chords.join(" → ")}
+                        </p>
+                      </button>
+                    ))}
                   </div>
-                </div>
+                )}
 
                 <div>
                   <p className="text-xs text-muted-foreground mb-2 font-medium">
-                    Acordes em {selectedKey} • {style}
+                    Campo Harmônico de {selectedKey}
                   </p>
                   <div className="grid grid-cols-3 gap-2">
-                    {chords.map((chord) => (
+                    {chords.map((chord, idx) => (
                       <button
                         key={chord}
+                        onClick={() => {
+                          setEditorText(prev => prev ? prev + `[${chord}]` : `[${chord}]`);
+                          toast.success(`${chord} inserido!`);
+                        }}
                         className={cn(
-                          "flex items-center justify-center gap-1 rounded-lg border border-border bg-secondary px-2 py-2.5",
-                          "text-xs font-mono font-bold text-foreground cursor-grab",
+                          "flex flex-col items-center justify-center rounded-lg border border-border bg-secondary px-2 py-2.5",
+                          "text-xs font-mono font-bold text-foreground",
                           "hover:border-primary/50 hover:bg-primary/10 hover:text-primary transition-colors"
                         )}
                       >
-                        <GripVertical className="h-3 w-3 text-muted-foreground opacity-50" />
+                        <span className="text-[9px] text-muted-foreground font-normal mb-0.5">
+                          {getRomanNumeral(idx, isMinor)}
+                        </span>
                         {chord}
                       </button>
                     ))}
@@ -794,14 +812,48 @@ export default function CompositionStudioPage() {
                   <Input
                     value={rhymeSearch}
                     onChange={(e) => setRhymeSearch(e.target.value)}
-                    placeholder="Procurar rima para..."
+                    placeholder="Digite uma palavra para rimar..."
                     className="pl-9 h-9 bg-secondary border-border text-sm"
                   />
                 </div>
 
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  Digite uma palavra acima para buscar rimas.
-                </p>
+                {isLoadingRhymes && (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <span className="ml-2 text-xs text-muted-foreground">Buscando rimas...</span>
+                  </div>
+                )}
+
+                {!isLoadingRhymes && rhymeResults.length > 0 && (
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {rhymeResults.map((r) => (
+                      <button
+                        key={r.word}
+                        onClick={() => handleCopyRhyme(r.word)}
+                        className={cn(
+                          "rounded-full px-3 py-1.5 text-xs font-medium border border-border bg-secondary text-foreground",
+                          "hover:bg-primary/10 hover:border-primary/50 hover:text-primary transition-colors",
+                          "active:scale-95"
+                        )}
+                        title="Clique para copiar"
+                      >
+                        {r.word}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!isLoadingRhymes && rhymeResults.length === 0 && rhymeSearch.trim() && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Nenhuma rima encontrada para "{rhymeSearch}".
+                  </p>
+                )}
+
+                {!rhymeSearch.trim() && (
+                  <p className="text-xs text-muted-foreground text-center py-4">
+                    Digite uma palavra acima para buscar rimas. Clique numa rima para copiá-la.
+                  </p>
+                )}
               </TabsContent>
             </Tabs>
           </div>

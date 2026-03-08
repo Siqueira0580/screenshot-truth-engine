@@ -658,58 +658,101 @@ export default function CompositionStudioPage() {
           {/* ─── Horizontal Toolbar above editor ─── */}
           <TooltipProvider delayDuration={200}>
             <div className="flex items-center justify-between mb-4">
-              {/* ─── Circular Record Control ─── */}
-              <div className="flex items-center gap-3">
+              {/* ─── 3-Button Recording Control: [ Play ] — [ Rec/Pause ] — [ Stop ] ─── */}
+              <div className="flex items-center gap-6">
+                {/* LEFT: Play/Listen — only when recorded */}
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
-                      onClick={handleRecordToggle}
-                      disabled={isProcessing || isTranscribing}
+                      onClick={() => {
+                        const src = recorderAudioUrl || savedAudioUrl;
+                        if (!src) return;
+                        if (!playbackRef.current) {
+                          playbackRef.current = new Audio(src);
+                        } else {
+                          playbackRef.current.src = src;
+                        }
+                        playbackRef.current.play();
+                      }}
+                      disabled={!recorderAudioUrl && !savedAudioUrl}
                       className={cn(
-                        "relative flex items-center justify-center w-14 h-14 rounded-full transition-all duration-300 focus:outline-none",
-                        isRecording
-                          ? "bg-destructive/20 border-2 border-destructive shadow-[0_0_20px_hsl(var(--destructive)/0.4)] animate-pulse"
-                          : isTranscribing || isProcessing
-                            ? "bg-muted border-2 border-border cursor-not-allowed"
-                            : "bg-primary/10 border-2 border-primary/50 shadow-[0_0_16px_hsl(var(--primary)/0.25)] hover:shadow-[0_0_24px_hsl(var(--primary)/0.45)] hover:scale-105 active:scale-95"
+                        "flex items-center justify-center w-10 h-10 rounded-full border transition-all",
+                        (recorderAudioUrl || savedAudioUrl)
+                          ? "border-primary/50 text-primary bg-primary/10 hover:bg-primary/20 hover:scale-105"
+                          : "border-border text-muted-foreground/40 bg-muted/30 cursor-not-allowed"
                       )}
                     >
-                      {isRecording ? (
-                        <Pause className="h-6 w-6 text-destructive" />
-                      ) : isTranscribing || isProcessing ? (
-                        <Loader2 className="h-6 w-6 text-muted-foreground animate-spin" />
-                      ) : (
-                        <Mic className="h-6 w-6 text-primary" />
-                      )}
+                      <Volume2 className="h-4 w-4" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    <p>{isRecording ? "Pausar gravação" : isTranscribing ? "A transcrever..." : "Gravar ideia"}</p>
-                  </TooltipContent>
+                  <TooltipContent side="bottom"><p>Ouvir gravação</p></TooltipContent>
                 </Tooltip>
 
-                {isRecording && (
+                {/* CENTER: Master Record/Pause button */}
+                <div className="flex flex-col items-center gap-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={handleRecordToggle}
-                        className="flex items-center justify-center w-10 h-10 rounded-full bg-destructive/10 border border-destructive/40 text-destructive hover:bg-destructive/20 transition-all"
+                        onClick={handleMasterButton}
+                        disabled={isTranscribing}
+                        className={cn(
+                          "relative flex items-center justify-center w-16 h-16 rounded-full transition-all duration-300 focus:outline-none",
+                          recordingState === "recording"
+                            ? "bg-destructive/20 border-2 border-destructive shadow-[0_0_20px_hsl(var(--destructive)/0.4)] animate-pulse"
+                            : recordingState === "paused"
+                              ? "bg-accent/20 border-2 border-accent"
+                              : isTranscribing
+                                ? "bg-muted border-2 border-border cursor-not-allowed"
+                                : "bg-primary/10 border-2 border-primary/50 shadow-[0_0_16px_hsl(var(--primary)/0.25)] hover:shadow-[0_0_24px_hsl(var(--primary)/0.45)] hover:scale-105 active:scale-95"
+                        )}
                       >
-                        <Square className="h-4 w-4" />
+                        {recordingState === "recording" ? (
+                          <Pause className="h-7 w-7 text-destructive" />
+                        ) : isTranscribing ? (
+                          <Loader2 className="h-7 w-7 text-muted-foreground animate-spin" />
+                        ) : (
+                          <Mic className="h-7 w-7 text-primary" />
+                        )}
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom"><p>Parar gravação</p></TooltipContent>
+                    <TooltipContent side="bottom">
+                      <p>
+                        {recordingState === "recording" ? "Pausar" : recordingState === "paused" ? "Continuar" : isTranscribing ? "A transcrever..." : "Gravar"}
+                      </p>
+                    </TooltipContent>
                   </Tooltip>
-                )}
+                  {recordingState === "recording" && (
+                    <span className="text-xs font-medium text-destructive animate-pulse">Compondo...</span>
+                  )}
+                  {recordingState === "paused" && (
+                    <span className="text-xs font-medium text-muted-foreground">Pausado — Clique para continuar</span>
+                  )}
+                  {isTranscribing && (
+                    <span className="text-xs font-medium text-muted-foreground">IA a transcrever...</span>
+                  )}
+                </div>
 
-                {isRecording && (
-                  <span className="text-sm font-medium text-destructive animate-pulse">Compondo...</span>
-                )}
-                {isTranscribing && (
-                  <span className="text-sm font-medium text-muted-foreground">IA a transcrever...</span>
-                )}
+                {/* RIGHT: Stop button — only during recording/paused */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={stopRecording}
+                      disabled={!isActiveRecording}
+                      className={cn(
+                        "flex items-center justify-center w-10 h-10 rounded-full border transition-all",
+                        isActiveRecording
+                          ? "border-destructive/50 text-destructive bg-destructive/10 hover:bg-destructive/20 hover:scale-105"
+                          : "border-border text-muted-foreground/40 bg-muted/30 cursor-not-allowed"
+                      )}
+                    >
+                      <Square className="h-4 w-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom"><p>Parar gravação</p></TooltipContent>
+                </Tooltip>
 
-                {isRecording && currentNote && (
+                {/* Current note indicator */}
+                {isActiveRecording && currentNote && (
                   <div className="flex items-center gap-1.5 ml-2 animate-pulse">
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Nota:</span>
                     <span className="text-lg font-mono font-black text-primary">{currentNote}</span>

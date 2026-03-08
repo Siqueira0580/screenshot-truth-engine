@@ -238,6 +238,22 @@ export default function ImportSongModal({
                   </span>
                 )}
                 </div>
+                {previewData.composer && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Composição: {previewData.composer}
+                  </p>
+                )}
+                {previewData.youtube_url && (
+                  <a
+                    href={previewData.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-red-500 hover:underline mt-1"
+                  >
+                    <Youtube className="h-3 w-3" />
+                    Ver no YouTube
+                  </a>
+                )}
               </div>
             </div>
 

@@ -922,6 +922,16 @@ export default function CompositionStudioPage() {
         title="Limpar Página"
         description="Tem certeza que deseja apagar toda a composição? O texto, acordes e tom serão resetados. Esta ação não pode ser desfeita."
       />
+
+      {compositionId && (
+        <InviteCollaboratorModal
+          open={showInviteModal}
+          onOpenChange={setShowInviteModal}
+          compositionId={compositionId}
+          currentEmails={sharedWithEmails}
+          onUpdated={setSharedWithEmails}
+        />
+      )}
     </div>
   );
 }

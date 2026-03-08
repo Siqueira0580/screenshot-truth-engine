@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAutoEnrichment } from "@/hooks/useAutoEnrichment";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ExploreTab from "@/components/explore/ExploreTab";
+import OnboardingTour, { useOnboardingTour } from "@/components/OnboardingTour";
 
 export default function SongsPage() {
   const { user } = useAuth();
@@ -26,6 +27,8 @@ export default function SongsPage() {
   const [importLinkOpen, setImportLinkOpen] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
+  const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
+  const [tourVisible, setTourVisible] = useState(showTour);
 
   const { data: songs = [], isLoading } = useQuery({
     queryKey: ["songs"],
@@ -221,6 +224,10 @@ export default function SongsPage() {
         onConfirm={() => { if (deleteTarget) { deleteM.mutate(deleteTarget); setDeleteTarget(null); } }}
         description="Tem a certeza de que deseja excluir esta música? Esta ação não pode ser desfeita."
       />
+
+      {tourVisible && (
+        <OnboardingTour onComplete={() => { dismissTour(); setTourVisible(false); }} />
+      )}
     </div>
   );
 }

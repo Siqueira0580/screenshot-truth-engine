@@ -5,7 +5,7 @@ import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp, Link2, FileTe
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchSongs, deleteSong, createSong, findOrCreateArtist } from "@/lib/supabase-queries";
+import { fetchUserLibrary, removeFromUserLibrary, createSongAndAddToLibrary, findOrCreateArtist, addToUserLibrary } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
@@ -17,13 +17,14 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ExploreTab from "@/components/explore/ExploreTab";
 import OnboardingTour, { useOnboardingTour } from "@/components/OnboardingTour";
 import PersonalizationWizard from "@/components/PersonalizationWizard";
+import LibrarySetupWizard from "@/components/LibrarySetupWizard";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 type SortMode = "recent" | "oldest" | "az" | "za";
 
 export default function SongsPage() {
   const { user } = useAuth();
-  const { wizardCompleted, loading: prefsLoading } = useUserPreferences();
+  const { wizardCompleted, librarySetupCompleted, markLibrarySetupDone, loading: prefsLoading } = useUserPreferences();
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [formOpen, setFormOpen] = useState(false);
@@ -39,21 +40,26 @@ export default function SongsPage() {
   const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
   const [tourVisible, setTourVisible] = useState(showTour);
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [librarySetupDismissed, setLibrarySetupDismissed] = useState(false);
 
   const showWizard = !prefsLoading && !wizardCompleted && !wizardDismissed;
+  const showLibrarySetup = !prefsLoading && wizardCompleted && !librarySetupCompleted && !librarySetupDismissed && !showWizard;
 
+  // Fetch user's personal library instead of all global songs
   const { data: songs = [], isLoading } = useQuery({
-    queryKey: ["songs"],
-    queryFn: fetchSongs,
+    queryKey: ["user-library"],
+    queryFn: fetchUserLibrary,
+    enabled: !!user,
   });
 
   useAutoEnrichment(songs);
 
-  const deleteM = useMutation({
-    mutationFn: deleteSong,
+  // "Delete" = remove from personal library (NOT global delete)
+  const removeM = useMutation({
+    mutationFn: removeFromUserLibrary,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
-      toast.success("Música excluída");
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
+      toast.success("Música removida da sua biblioteca");
     },
   });
 
@@ -76,7 +82,7 @@ export default function SongsPage() {
         if (data && (data.title || data.body_text)) {
           let artistName = data.artist || null;
           if (artistName) { try { await findOrCreateArtist(artistName); } catch {} }
-          const newSong = await createSong({
+          await createSongAndAddToLibrary({
             title: data.title || file.name.replace(/\.pdf$/i, ""),
             artist: artistName,
             composer: data.composer || null,
@@ -86,19 +92,12 @@ export default function SongsPage() {
             time_signature: data.time_signature || "4/4",
             body_text: data.body_text || data.text || null,
           });
-          if (data.chordpro_text && newSong?.id) {
-            await supabase.from("audio_tracks").insert({
-              song_id: newSong.id,
-              ai_chordpro_text: data.chordpro_text,
-              user_id: user?.id || null,
-            });
-          }
           successCount++;
         } else { errorCount++; }
       } catch { errorCount++; }
       setPdfProgress({ done: i + 1, total: pdfFiles.length });
     }
-    queryClient.invalidateQueries({ queryKey: ["songs"] });
+    queryClient.invalidateQueries({ queryKey: ["user-library"] });
     if (successCount > 0) toast.success(`${successCount} música${successCount > 1 ? "s" : ""} importada${successCount > 1 ? "s" : ""} com sucesso!`);
     if (errorCount > 0) toast.warning(`${errorCount} PDF${errorCount > 1 ? "s" : ""} não pôde${errorCount > 1 ? "ram" : ""} ser processado${errorCount > 1 ? "s" : ""}`);
     setImportingPdfs(false);
@@ -123,7 +122,7 @@ export default function SongsPage() {
       const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
       const title = file.name.replace(/\.pdf$/i, "").trim();
 
-      await createSong({
+      await createSongAndAddToLibrary({
         title,
         artist: null,
         composer: null,
@@ -135,7 +134,7 @@ export default function SongsPage() {
         pdf_url: urlData.publicUrl,
       } as any);
 
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
       toast.success("PDF de partitura enviado com sucesso!");
     } catch (err: any) {
       toast.error("Erro ao enviar PDF: " + (err.message || "Tente novamente"));
@@ -154,7 +153,7 @@ export default function SongsPage() {
 
     switch (sortMode) {
       case "oldest":
-        list = [...list].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        list = [...list].sort((a, b) => new Date(a.added_at || a.created_at).getTime() - new Date(b.added_at || b.created_at).getTime());
         break;
       case "az":
         list = [...list].sort((a, b) => a.title.localeCompare(b.title, "pt"));
@@ -164,7 +163,7 @@ export default function SongsPage() {
         break;
       case "recent":
       default:
-        list = [...list].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        list = [...list].sort((a, b) => new Date(b.added_at || b.created_at).getTime() - new Date(a.added_at || a.created_at).getTime());
         break;
     }
     return list;
@@ -175,7 +174,7 @@ export default function SongsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Músicas</h1>
-          <p className="text-muted-foreground mt-1">{songs.length} música{songs.length !== 1 ? "s" : ""} no repertório</p>
+          <p className="text-muted-foreground mt-1">{songs.length} música{songs.length !== 1 ? "s" : ""} na biblioteca</p>
         </div>
       </div>
 
@@ -228,6 +227,7 @@ export default function SongsPage() {
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <Music2 className="h-12 w-12 mb-4 opacity-40" />
               <p className="text-lg">Nenhuma música encontrada</p>
+              <p className="text-sm mt-1">Importe ou adicione músicas à sua biblioteca pessoal.</p>
             </div>
           ) : (
             <div className="grid gap-2">
@@ -271,8 +271,14 @@ export default function SongsPage() {
       <ConfirmDeleteModal
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
-        onConfirm={() => { if (deleteTarget) { deleteM.mutate(deleteTarget); setDeleteTarget(null); } }}
-        description="Tem a certeza de que deseja excluir esta música? Esta ação não pode ser desfeita."
+        onConfirm={() => {
+          if (deleteTarget) {
+            removeM.mutate(deleteTarget);
+            setDeleteTarget(null);
+          }
+        }}
+        title="Remover da Biblioteca"
+        description="Deseja remover esta música da sua biblioteca pessoal? A música permanece disponível no catálogo global."
       />
 
       {tourVisible && (
@@ -281,6 +287,10 @@ export default function SongsPage() {
 
       {showWizard && !tourVisible && (
         <PersonalizationWizard onComplete={() => setWizardDismissed(true)} />
+      )}
+
+      {showLibrarySetup && !tourVisible && (
+        <LibrarySetupWizard onComplete={() => { setLibrarySetupDismissed(true); markLibrarySetupDone(); queryClient.invalidateQueries({ queryKey: ["user-library"] }); }} />
       )}
     </div>
   );

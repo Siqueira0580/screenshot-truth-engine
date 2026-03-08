@@ -14,9 +14,11 @@ interface UserPreferences {
   preferredInstrument: Instrument;
   setPreferredInstrument: (instrument: Instrument) => Promise<void>;
   wizardCompleted: boolean;
+  librarySetupCompleted: boolean;
   favoriteStyles: string[];
   favoriteArtists: ArtistPref[];
   saveWizardPreferences: (styles: string[], artists: ArtistPref[], skipped?: boolean) => Promise<void>;
+  markLibrarySetupDone: () => void;
   loading: boolean;
 }
 
@@ -24,9 +26,11 @@ const UserPreferencesContext = createContext<UserPreferences>({
   preferredInstrument: "guitar",
   setPreferredInstrument: async () => {},
   wizardCompleted: false,
+  librarySetupCompleted: false,
   favoriteStyles: [],
   favoriteArtists: [],
   saveWizardPreferences: async () => {},
+  markLibrarySetupDone: () => {},
   loading: true,
 });
 
@@ -36,6 +40,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [preferredInstrument, setInstrumentState] = useState<Instrument>("guitar");
   const [wizardCompleted, setWizardCompleted] = useState(false);
+  const [librarySetupCompleted, setLibrarySetupCompleted] = useState(false);
   const [favoriteStyles, setFavoriteStyles] = useState<string[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<ArtistPref[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,13 +55,14 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
     supabase
       .from("profiles")
-      .select("preferred_instrument, wizard_completed, favorite_styles, favorite_artists")
+      .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")
       .eq("id", user.id)
       .single()
       .then(({ data }) => {
         if (data) {
           if (data.preferred_instrument) setInstrumentState(data.preferred_instrument as Instrument);
           setWizardCompleted(!!(data as any).wizard_completed);
+          setLibrarySetupCompleted(!!(data as any).library_setup_completed);
           setFavoriteStyles(((data as any).favorite_styles as string[]) || []);
           const artists = (data as any).favorite_artists;
           setFavoriteArtists(Array.isArray(artists) ? artists : []);
@@ -85,7 +91,6 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       setFavoriteStyles(skipped ? [] : styles);
       setFavoriteArtists(skipped ? [] : artists);
 
-      // Keep localStorage as fallback
       localStorage.setItem(
         "smartcifra_preferences",
         JSON.stringify({ styles: skipped ? [] : styles, artists: skipped ? [] : artists, skipped })
@@ -105,15 +110,21 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
+  const markLibrarySetupDone = useCallback(() => {
+    setLibrarySetupCompleted(true);
+  }, []);
+
   return (
     <UserPreferencesContext.Provider
       value={{
         preferredInstrument,
         setPreferredInstrument,
         wizardCompleted,
+        librarySetupCompleted,
         favoriteStyles,
         favoriteArtists,
         saveWizardPreferences,
+        markLibrarySetupDone,
         loading,
       }}
     >

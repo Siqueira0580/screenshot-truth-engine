@@ -388,7 +388,7 @@ export default function CompositionStudioPage() {
     setTonePopoverOpen(false);
   }, [editorText, selectedKey, transposeChordProText]);
 
-  const displayText = editorText + (isRecording && liveChordPro ? (editorText ? "\n" : "") + liveChordPro : "");
+  const displayText = editorText;
 
   const chords = HARMONIC_FIELDS[selectedKey] || HARMONIC_FIELDS["Am"] || [];
   const progressions = getProgressions(selectedKey);

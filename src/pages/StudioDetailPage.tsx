@@ -252,9 +252,9 @@ export default function StudioDetailPage() {
   if (!songId) return null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 w-full max-w-[100vw] overflow-x-hidden">
       {/* Back button + title */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button type="button" variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -288,7 +288,7 @@ export default function StudioDetailPage() {
         {/* Key + BPM + actions row */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {(originalKey || song?.bpm) ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {originalKey && (
                 <div className="text-center">
                   <span className="inline-block rounded-lg bg-primary/10 px-3 py-1.5 text-sm font-mono font-bold text-primary">
@@ -420,7 +420,7 @@ export default function StudioDetailPage() {
       {/* Transport controls */}
       {hasAnyStem && (
         <div className="p-4 rounded-xl bg-card border border-border space-y-3">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button variant="outline" size="icon" onClick={handleStop}>
               <Square className="h-4 w-4" />
             </Button>
@@ -451,7 +451,7 @@ export default function StudioDetailPage() {
                   </span>
                 )}
               </label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => setPitch(p => p - 1)}>
                   <ChevronDown className="h-3.5 w-3.5" />
                 </Button>
@@ -503,41 +503,46 @@ export default function StudioDetailPage() {
 
               return (
                 <div key={type} className={cn(
-                  "rounded-lg border p-3 space-y-3 transition-all",
+                  "rounded-lg border p-3 space-y-3 transition-all w-full",
                   isEffectivelyMuted ? "border-border bg-muted/30 opacity-50" : "border-border bg-secondary/30",
                   isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
                 )}>
-                  <div className="flex items-center gap-2">
-                    <Icon className={cn("h-4 w-4", color)} />
-                    <span className="text-xs font-medium flex-1">{label}</span>
+                  <div className="flex flex-col sm:flex-row w-full gap-3 sm:items-center">
+                    <div className="flex flex-wrap items-center gap-2 sm:w-40 sm:shrink-0">
+                      <Icon className={cn("h-4 w-4", color)} />
+                      <span className="text-xs font-medium">{label}</span>
+                      <div className="ml-auto flex flex-wrap gap-1.5">
+                        <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
+                          onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}>
+                          <VolumeX className="h-3 w-3 mr-1" /> M
+                        </Button>
+                        <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
+                          onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
+                          <Star className="h-3 w-3 mr-1" /> S
+                        </Button>
+                        <Button
+                          variant={gateStems[type] ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 px-2 text-[10px] font-bold"
+                          title="Limpar Ruído (Noise Gate)"
+                          onClick={() => {
+                            const next = !gateStems[type];
+                            setGateStems(prev => ({ ...prev, [type]: next }));
+                            engineRef.current?.setGateEnabled(type, next);
+                          }}
+                        >
+                          <AudioLines className="h-3 w-3 mr-1" /> G
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <Slider value={[stemVols[type]]} max={100} step={1}
+                        onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
+                        disabled={isEffectivelyMuted}
+                        className="w-full" />
+                      <p className="text-[10px] text-muted-foreground text-center font-mono mt-1">{stemVols[type]}%</p>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
-                      onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}>
-                      <VolumeX className="h-3 w-3 mr-1" /> M
-                    </Button>
-                    <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
-                      onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
-                      <Star className="h-3 w-3 mr-1" /> S
-                    </Button>
-                    <Button
-                      variant={gateStems[type] ? "default" : "outline"}
-                      size="sm"
-                      className="h-7 px-2 text-[10px] font-bold"
-                      title="Limpar Ruído (Noise Gate)"
-                      onClick={() => {
-                        const next = !gateStems[type];
-                        setGateStems(prev => ({ ...prev, [type]: next }));
-                        engineRef.current?.setGateEnabled(type, next);
-                      }}
-                    >
-                      <AudioLines className="h-3 w-3 mr-1" /> G
-                    </Button>
-                  </div>
-                  <Slider value={[stemVols[type]]} max={100} step={1}
-                    onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
-                    disabled={isEffectivelyMuted} />
-                  <p className="text-[10px] text-muted-foreground text-center font-mono">{stemVols[type]}%</p>
                 </div>
               );
             })}

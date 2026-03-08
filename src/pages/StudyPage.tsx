@@ -260,6 +260,10 @@ export default function StudyPage() {
     return () => { if (scrollAnimRef.current) cancelAnimationFrame(scrollAnimRef.current); };
   }, [isScrolling, scrollSpeed]);
 
+  useEffect(() => {
+    setIsScrolling(isPlaying);
+  }, [isPlaying]);
+
   const handlePlay = () => { engineRef.current?.play(); setIsScrolling(true); };
   const handlePause = () => { engineRef.current?.pause(); setIsScrolling(false); };
   const handleStop = () => { engineRef.current?.stop(); setIsScrolling(false); if (lyricsRef.current) lyricsRef.current.scrollTop = 0; };
@@ -290,10 +294,10 @@ export default function StudyPage() {
   if (!songId) return null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] w-full max-w-[100vw] overflow-x-hidden">
+    <div className="flex flex-col h-[calc(100vh-4rem)] w-full max-w-[100vw] overflow-x-hidden px-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 py-3 border-b border-border bg-card shrink-0">
-        <div className="flex items-center gap-3 w-full sm:w-auto sm:flex-1 min-w-0">
+      <div className="flex flex-wrap items-center gap-2 py-3 border-b border-border bg-card shrink-0">
+        <div className="flex items-center gap-3 w-full min-w-0">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -312,7 +316,7 @@ export default function StudyPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto pl-11 sm:pl-0">
+        <div className="flex flex-wrap items-center gap-2 w-full">
           <Button variant="ghost" size="icon" onClick={() => setEditFormOpen(true)} className="shrink-0 h-8 w-8" title="Editar Música">
             <Edit3 className="h-4 w-4" />
           </Button>
@@ -420,7 +424,7 @@ export default function StudyPage() {
           <div className={cn(
             "border-border bg-card flex flex-col shrink-0",
             isMobile
-              ? "fixed inset-x-0 bottom-0 z-50 max-h-[70vh] overflow-y-auto border-t rounded-t-2xl shadow-2xl"
+              ? "fixed inset-x-0 bottom-16 z-50 max-h-[calc(100vh-8rem)] w-full overflow-y-auto border-t rounded-t-2xl shadow-2xl"
               : "w-72 border-l"
           )}>
             {/* Mobile close handle */}
@@ -498,32 +502,34 @@ export default function StudyPage() {
                     isEffectivelyMuted ? "border-border bg-muted/30 opacity-50" : "border-border bg-secondary/30",
                     isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
                   )}>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Icon className={cn("h-4 w-4 shrink-0", color)} />
-                      <span className="text-sm font-medium flex-1 min-w-0 truncate">{label}</span>
-                      <div className="flex gap-1.5 shrink-0">
-                        <button
-                          className={cn(
-                            "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
-                            isMutedStem ? "bg-destructive text-destructive-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                          )}
-                          onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
-                        >M</button>
-                        <button
-                          className={cn(
-                            "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
-                            isSoloed ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
-                          )}
-                          onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
-                        >S</button>
+                    <div className="flex flex-col sm:flex-row w-full gap-3 sm:items-center">
+                      <div className="flex flex-wrap items-center gap-2 sm:w-32 sm:shrink-0">
+                        <Icon className={cn("h-4 w-4 shrink-0", color)} />
+                        <span className="text-sm font-medium">{label}</span>
+                        <div className="ml-auto flex gap-1.5">
+                          <button
+                            className={cn(
+                              "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
+                              isMutedStem ? "bg-destructive text-destructive-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                            )}
+                            onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}
+                          >M</button>
+                          <button
+                            className={cn(
+                              "h-7 w-7 rounded text-xs font-black flex items-center justify-center transition-colors",
+                              isSoloed ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80 text-muted-foreground"
+                            )}
+                            onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}
+                          >S</button>
+                        </div>
                       </div>
+                      <Slider
+                        value={[stemVols[type]]} max={100} step={1}
+                        onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
+                        disabled={isEffectivelyMuted}
+                        className="py-1 w-full"
+                      />
                     </div>
-                    <Slider
-                      value={[stemVols[type]]} max={100} step={1}
-                      onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
-                      disabled={isEffectivelyMuted}
-                      className="py-1 w-full"
-                    />
                   </div>
                 );
               })}

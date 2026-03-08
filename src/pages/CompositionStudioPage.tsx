@@ -470,7 +470,7 @@ export default function CompositionStudioPage() {
   // ─── Clear page handler ───
   const handleClearPage = useCallback(() => {
     setEditorText("");
-    setSelectedKey("Am");
+    setSelectedKey("");
     setOriginalKey("");
     setTitle("");
     setComposers("");

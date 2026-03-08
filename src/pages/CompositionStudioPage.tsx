@@ -71,19 +71,45 @@ export default function CompositionStudioPage() {
       let fileFullUrl: string | null = null;
 
       if (savedAudioUrl) {
-        // Download from compositions_audio and re-upload to audio-stems
-        const res = await fetch(savedAudioUrl);
-        if (res.ok) {
-          const blob = await res.blob();
-          const ext = savedAudioUrl.includes(".webm") ? "webm" : savedAudioUrl.includes(".ogg") ? "ogg" : "mp3";
-          const path = `${song.id}/full.${ext}`;
-          const { error: upErr } = await supabase.storage
-            .from("audio-stems")
-            .upload(path, blob, { upsert: true, contentType: blob.type || "audio/mpeg" });
-          if (!upErr) {
-            const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
-            fileFullUrl = urlData.publicUrl;
+        try {
+          // Extract the storage path from the public URL
+          const pathMatch = savedAudioUrl.split("/compositions_audio/");
+          let blob: Blob | null = null;
+
+          if (pathMatch.length === 2) {
+            // Use Supabase SDK download to avoid CORS issues
+            const storagePath = decodeURIComponent(pathMatch[1]);
+            const { data: dlData, error: dlErr } = await supabase.storage
+              .from("compositions_audio")
+              .download(storagePath);
+            if (!dlErr && dlData) {
+              blob = dlData;
+            }
           }
+
+          // Fallback: try direct fetch
+          if (!blob) {
+            const res = await fetch(savedAudioUrl);
+            if (res.ok) blob = await res.blob();
+          }
+
+          if (blob) {
+            const ext = savedAudioUrl.includes(".webm") ? "webm" : savedAudioUrl.includes(".ogg") ? "ogg" : "mp3";
+            const path = `${song.id}/full.${ext}`;
+            const { error: upErr } = await supabase.storage
+              .from("audio-stems")
+              .upload(path, blob, { upsert: true, contentType: blob.type || "audio/mpeg" });
+            if (!upErr) {
+              const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
+              fileFullUrl = urlData.publicUrl;
+            } else {
+              console.error("Upload to audio-stems failed:", upErr);
+            }
+          } else {
+            console.error("Could not download audio from compositions_audio");
+          }
+        } catch (audioErr) {
+          console.error("Audio export error:", audioErr);
         }
       }
 

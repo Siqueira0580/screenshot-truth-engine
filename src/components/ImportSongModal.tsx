@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Sparkles, Loader2, Music2, Check, X, ArrowLeft, Mic } from "lucide-react";
+import { Sparkles, Loader2, Music2, Check, ArrowLeft, Mic, Youtube } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { createSong, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
@@ -38,6 +38,7 @@ interface PreviewData {
   time_signature?: string | null;
   source_url?: string | null;
   artist_image_url?: string | null;
+  youtube_url?: string | null;
 }
 
 export default function ImportSongModal({
@@ -126,6 +127,7 @@ export default function ImportSongModal({
         bpm: previewData.bpm || null,
         composer: previewData.composer || null,
         time_signature: previewData.time_signature || null,
+        youtube_url: previewData.youtube_url || null,
       });
 
       if (setlistId && newSong?.id) {
@@ -237,6 +239,22 @@ export default function ImportSongModal({
                   </span>
                 )}
                 </div>
+                {previewData.composer && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Composição: {previewData.composer}
+                  </p>
+                )}
+                {previewData.youtube_url && (
+                  <a
+                    href={previewData.youtube_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-destructive hover:underline mt-1"
+                  >
+                    <Youtube className="h-3 w-3" />
+                    Ver no YouTube
+                  </a>
+                )}
               </div>
             </div>
 

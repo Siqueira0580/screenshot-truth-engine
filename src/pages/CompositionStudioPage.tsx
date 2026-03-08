@@ -900,6 +900,14 @@ export default function CompositionStudioPage() {
         title="Excluir Áudio"
         description="Tem certeza que deseja excluir o áudio gravado? Esta ação não pode ser desfeita."
       />
+
+      <ConfirmDeleteModal
+        open={showClearModal}
+        onOpenChange={setShowClearModal}
+        onConfirm={handleClearPage}
+        title="Limpar Página"
+        description="Tem certeza que deseja apagar toda a composição? O texto, acordes e tom serão resetados. Esta ação não pode ser desfeita."
+      />
     </div>
   );
 }

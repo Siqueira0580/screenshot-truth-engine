@@ -296,8 +296,8 @@ export default function StudyPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] w-full max-w-[100vw] overflow-x-hidden px-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 py-3 border-b border-border bg-card shrink-0">
-        <div className="flex items-center gap-3 w-full sm:w-auto sm:flex-1 min-w-0">
+      <div className="flex flex-wrap items-center gap-2 py-3 border-b border-border bg-card shrink-0">
+        <div className="flex items-center gap-3 w-full min-w-0">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
             <ArrowLeft className="h-5 w-5" />
           </Button>

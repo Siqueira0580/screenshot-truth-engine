@@ -215,11 +215,12 @@ export async function updateSetlist(id: string, data: Record<string, any>) {
   return updated;
 }
 
-export async function addSongToSetlist(setlistId: string, songId: string, position: number) {
+export async function addSongToSetlist(setlistId: string, songId: string, position: number, speed?: number | null) {
   const { error } = await supabase.from("setlist_items").insert({
     setlist_id: setlistId,
     song_id: songId,
     position,
+    ...(speed != null ? { speed } : {}),
   });
   if (error) throw error;
 }

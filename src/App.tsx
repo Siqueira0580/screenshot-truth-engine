@@ -11,7 +11,7 @@ import SongDetailPage from "@/pages/SongDetailPage";
 import SetlistsPage from "@/pages/SetlistsPage";
 import SetlistDetailPage from "@/pages/SetlistDetailPage";
 import ArtistsPage from "@/pages/ArtistsPage";
-import ArtistDetailPage from "@/pages/ArtistDetailPage";
+
 import StudioPage from "@/pages/StudioPage";
 import StudioDetailPage from "@/pages/StudioDetailPage";
 import StudyPage from "@/pages/StudyPage";

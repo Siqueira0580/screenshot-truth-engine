@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Monitor, MonitorOff, Copy, Check, MessageCircle, Users } from "lucide-react";
+import { Satellite, MonitorOff, Copy, Check, MessageCircle, Users, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -38,16 +38,14 @@ export default function ScreenSharePanel({ setlistId: _setlistId }: ScreenShareP
 
   if (!isSharing) {
     return (
-      <Button
-        variant="outline"
-        size="sm"
+      <button
         onClick={startScreenShare}
-        className="gap-2"
+        className="flex flex-col items-center gap-1 rounded-lg border border-border bg-card px-4 py-3 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
         title="Transmitir ecrã para os músicos"
       >
-        <Monitor className="h-4 w-4" />
-        📺 Transmitir Tela (Gerar Link)
-      </Button>
+        <Satellite className="h-6 w-6" />
+        <span className="text-[10px] font-medium leading-tight">Transmitir Tela</span>
+      </button>
     );
   }
 

@@ -294,7 +294,7 @@ export default function StudyPage() {
   if (!songId) return null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] w-full max-w-[100vw] overflow-x-hidden px-4">
+    <div className="flex flex-col h-[calc(100vh-4rem-3rem-4rem)] lg:h-[calc(100vh-4rem-3rem)] w-full max-w-[100vw] overflow-x-hidden">
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2 py-3 border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-3 w-full min-w-0">

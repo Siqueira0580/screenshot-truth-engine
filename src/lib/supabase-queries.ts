@@ -182,11 +182,21 @@ export async function updateArtistPhoto(artistId: string, file: File) {
   return data as Artist;
 }
 
+/** Normalize artist name: trim whitespace and title-case */
+function normalizeArtistName(raw: string): string {
+  return raw
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+
 export async function findOrCreateArtist(name: string, photoUrl?: string): Promise<Artist> {
+  const normalized = normalizeArtistName(name);
+
   const { data: existing } = await supabase
     .from("artists")
     .select("*")
-    .ilike("name", name.trim())
+    .ilike("name", normalized)
     .limit(1);
 
   if (existing && existing.length > 0) {
@@ -203,7 +213,7 @@ export async function findOrCreateArtist(name: string, photoUrl?: string): Promi
 
   const { data, error } = await supabase
     .from("artists")
-    .insert({ name: name.trim(), photo_url: photoUrl || null })
+    .insert({ name: normalized, photo_url: photoUrl || null })
     .select()
     .single();
   if (error) throw error;

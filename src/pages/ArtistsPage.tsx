@@ -111,12 +111,12 @@ export default function ArtistsPage() {
       : "grid gap-4 grid-cols-2 lg:grid-cols-3";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1
-            className="text-3xl font-black tracking-tight"
+            className="text-2xl sm:text-3xl font-black tracking-tight"
             style={{
               background: "linear-gradient(135deg, hsl(var(--primary)), #e879f9)",
               WebkitBackgroundClip: "text",
@@ -125,20 +125,22 @@ export default function ArtistsPage() {
           >
             Artistas
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="text-muted-foreground text-sm">
             {artists.length} artista{artists.length !== 1 ? "s" : ""} no seu repertório
           </p>
         </div>
         <Button
           onClick={() => setFormOpen(true)}
-          className="font-semibold"
+          size="sm"
+          className="font-semibold self-start sm:self-auto"
           style={{
             background: "linear-gradient(135deg, hsl(var(--primary)), #a855f7)",
             boxShadow: "0 0 20px hsla(var(--primary), 0.3)",
           }}
         >
           <Plus className="h-4 w-4" />
-          Novo Artista
+          <span className="hidden sm:inline">Novo Artista</span>
+          <span className="sm:hidden">Novo</span>
         </Button>
       </div>
 

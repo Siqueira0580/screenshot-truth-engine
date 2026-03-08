@@ -398,7 +398,7 @@ export default function StudyPage() {
             </Button>
           </div>
 
-          <div ref={lyricsRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 py-6 w-full">
+          <div ref={lyricsRef} className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 py-6 w-full min-h-0 scrollbar-hide">
             {song?.pdf_url ? (
               <div style={{ height: "300vh" }}>
                 <iframe

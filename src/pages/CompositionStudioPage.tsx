@@ -23,8 +23,12 @@ const STYLES = ["Pop", "Rock", "Bossa Nova", "Sertanejo", "Worship", "Samba", "P
 
 export default function CompositionStudioPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [compositionId, setCompositionId] = useState<string | null>(searchParams.get("id"));
+  const [compositionOwnerId, setCompositionOwnerId] = useState<string | null>(null);
+  const [sharedWithEmails, setSharedWithEmails] = useState<string[]>([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const [title, setTitle] = useState("");
   const [selectedKey, setSelectedKey] = useState("Am");
   const [originalKey, setOriginalKey] = useState(""); // tom original da composição — vazio até ser definido

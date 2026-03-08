@@ -229,12 +229,12 @@ export default function StudioDetailPage() {
     : null;
 
   const hasAnyStem = audioTrack && (
-    audioTrack.file_full || audioTrack.file_vocals ||
-    audioTrack.file_percussion || audioTrack.file_harmony
+    audioTrack.file_vocals || audioTrack.file_percussion ||
+    audioTrack.file_harmony || audioTrack.file_guitar
   );
 
   const hasSeparatedStems = audioTrack && (
-    audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony
+    audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony || audioTrack.file_guitar
   );
 
   // Parse original key for transposition display

@@ -58,6 +58,37 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const [nearEnd, setNearEnd] = useState(false);
   const [songProgress, setSongProgress] = useState(0);
   const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);
+  const [isLandscape, setIsLandscape] = useState(false);
+
+  // Screen rotation toggle for mobile
+  const toggleRotation = useCallback(async () => {
+    const orientation = screen?.orientation;
+    if (orientation?.lock) {
+      try {
+        if (isLandscape) {
+          await orientation.lock("portrait");
+          setIsLandscape(false);
+        } else {
+          await orientation.lock("landscape");
+          setIsLandscape(true);
+        }
+      } catch {
+        // Fallback: just toggle CSS rotation if API not supported
+        setIsLandscape(prev => !prev);
+      }
+    } else {
+      setIsLandscape(prev => !prev);
+    }
+  }, [isLandscape]);
+
+  // Cleanup orientation lock on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        screen?.orientation?.unlock?.();
+      } catch {}
+    };
+  }, []);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number | null>(null);

@@ -50,7 +50,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
     const initial = songs[initialIndex]?.speed;
     return initial ? initial / 100 : 2;
   });
-  const [fontSize, setFontSize] = useState(() => typeof window !== "undefined" && window.innerWidth < 640 ? 20 : 28);
+  const [fontSize, setFontSize] = useState(() => typeof window !== "undefined" && window.innerWidth < 640 ? 24 : 30);
   const [showControls, setShowControls] = useState(true);
   const [transpose, setTranspose] = useState(0);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
@@ -645,9 +645,9 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   );
                 }
 
-                // Standardized chord font size relative to body font
-                const chordFontSize = Math.max(fontSize * 0.55, 12);
+                // Chords with Cifra Club-like prominence (same size class as lyric)
                 const bodyFontSize = fontSize;
+                const chordFontSize = Math.max(bodyFontSize, 18);
 
                 // Auto-detect ChordPro in body_text
                 if (isChordProFormat(body)) {
@@ -669,7 +669,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                               <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
                                 <span
                                   className="text-primary font-bold select-none leading-tight"
-                                  style={{ fontSize: `${chordFontSize}px` }}
+                                  style={{
+                                    fontSize: `${chordFontSize}px`,
+                                    fontFamily: "var(--font-display)",
+                                  }}
                                 >
                                   {token.chord ? (
                                     <span

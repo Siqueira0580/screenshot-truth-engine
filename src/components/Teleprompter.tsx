@@ -50,7 +50,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
     const initial = songs[initialIndex]?.speed;
     return initial ? initial / 100 : 2;
   });
-  const [fontSize, setFontSize] = useState(28);
+  const [fontSize, setFontSize] = useState(() => typeof window !== "undefined" && window.innerWidth < 640 ? 20 : 28);
   const [showControls, setShowControls] = useState(true);
   const [transpose, setTranspose] = useState(0);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
@@ -583,7 +583,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       {/* Continuous scroll area with all songs */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-12"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 md:px-16 lg:px-24 py-6 sm:py-12"
         style={{ scrollBehavior: "auto" }}
         onClick={handleBodyClick}
       >
@@ -596,9 +596,9 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             >
               {/* Song divider (not for first song) */}
               {idx > 0 && (
-                <div className="flex items-center gap-4 my-12">
+                <div className="flex items-center gap-4 my-8 sm:my-12">
                   <div className="h-px flex-1 bg-primary/30" />
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
                     <span className="text-xs font-mono text-primary font-semibold uppercase tracking-wider">
                       {idx + 1}/{songs.length}
                     </span>
@@ -608,17 +608,17 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               )}
 
               {/* Song header */}
-              <div className="mb-6">
-                <div className="flex items-center gap-3">
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <h3
-                    className="text-2xl font-bold text-foreground font-display"
-                    style={{ fontSize: `${Math.max(fontSize + 4, 20)}px` }}
+                    className="text-xl sm:text-2xl font-bold text-foreground font-display leading-tight"
+                    style={{ fontSize: `${Math.max(fontSize * 0.85, 18)}px` }}
                   >
                     {s.title}
                   </h3>
                   {(loopsRemaining[idx] || 0) > 0 && (
                     <span className={cn(
-                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold font-mono border",
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold font-mono border shrink-0",
                       idx === currentIndex && nearEnd
                         ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert"
                         : "bg-primary/10 border-primary/40 text-primary"
@@ -627,7 +627,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   {s.artist}
                   {sKey && ` · Tom: ${sKey}`}
                   {s.bpm && ` · ${s.bpm} BPM`}
@@ -639,19 +639,23 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 const body = displayBodies[idx];
                 if (!body) {
                   return (
-                    <p className="text-center text-muted-foreground text-xl my-12">
+                    <p className="text-center text-muted-foreground text-lg sm:text-xl my-8 sm:my-12">
                       Nenhuma cifra disponível
                     </p>
                   );
                 }
 
-                // Auto-detect ChordPro in body_text (e.g. after "Save as Default")
+                // Standardized chord font size relative to body font
+                const chordFontSize = Math.max(fontSize * 0.55, 12);
+                const bodyFontSize = fontSize;
+
+                // Auto-detect ChordPro in body_text
                 if (isChordProFormat(body)) {
                   const parsedLines = parseChordPro(body);
                   return (
                     <div
-                      className="mx-auto max-w-4xl"
-                      style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
+                      className="mx-auto max-w-4xl w-full"
+                      style={{ fontSize: `${bodyFontSize}px`, lineHeight: 1.8 }}
                       onClick={handleBodyClick}
                     >
                       {parsedLines.map((line, lineIdx) => {
@@ -665,7 +669,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                               <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
                                 <span
                                   className="text-primary font-bold select-none leading-tight"
-                                  style={{ fontSize: `${Math.max(fontSize * 0.55, 12)}px` }}
+                                  style={{ fontSize: `${chordFontSize}px` }}
                                 >
                                   {token.chord ? (
                                     <span
@@ -692,10 +696,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
 
                 return (
                   <pre
-                    className="chord-text whitespace-pre-wrap leading-relaxed text-foreground mx-auto max-w-4xl"
+                    className="chord-text whitespace-pre-wrap break-words leading-relaxed text-foreground mx-auto max-w-4xl w-full"
                     style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: `${fontSize}px`,
+                      fontSize: `${bodyFontSize}px`,
                       lineHeight: 1.8,
                     }}
                     dangerouslySetInnerHTML={{ __html: makeChordClickable(body) }}
@@ -712,7 +716,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       {/* Bottom controls */}
       <div
         className={cn(
-          "flex flex-wrap items-center justify-center gap-4 px-6 py-4 transition-opacity duration-300",
+          "flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-4 transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         style={{ background: "hsl(220 20% 4% / 0.9)" }}
@@ -720,40 +724,40 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         {/* Nav buttons */}
         {songs.length > 1 && (
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" disabled={currentIndex === 0} onClick={() => navigateTo(currentIndex - 1)} className="text-foreground">
+            <Button variant="ghost" size="icon" disabled={currentIndex === 0} onClick={() => navigateTo(currentIndex - 1)} className="text-foreground h-8 w-8">
               <SkipBack className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" disabled={currentIndex === songs.length - 1} onClick={() => navigateTo(currentIndex + 1)} className="text-foreground">
+            <Button variant="ghost" size="icon" disabled={currentIndex === songs.length - 1} onClick={() => navigateTo(currentIndex + 1)} className="text-foreground h-8 w-8">
               <SkipForward className="h-4 w-4" />
             </Button>
           </div>
         )}
 
         {/* Play/Pause */}
-        <Button variant="default" size="icon" onClick={() => setIsPlaying((p) => !p)} className="h-12 w-12 rounded-full">
-          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+        <Button variant="default" size="icon" onClick={() => setIsPlaying((p) => !p)} className="h-10 w-10 sm:h-12 sm:w-12 rounded-full">
+          {isPlaying ? <Pause className="h-4 w-4 sm:h-5 sm:w-5" /> : <Play className="h-4 w-4 sm:h-5 sm:w-5 ml-0.5" />}
         </Button>
 
         {/* Speed */}
-        <div className="flex items-center gap-2 min-w-[180px]">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Vel</span>
-          <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={0.5} max={5} step={0.1} className="w-28" />
-          <span className="text-xs text-foreground font-mono w-10">{speed.toFixed(1)}x</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Vel</span>
+          <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={0.5} max={5} step={0.1} className="w-16 sm:w-28" />
+          <span className="text-[10px] sm:text-xs text-foreground font-mono w-8 sm:w-10">{speed.toFixed(1)}x</span>
         </div>
 
         {/* Metronome */}
         <MetronomePulse bpm={song.bpm ?? 0} isPlaying={isPlaying} />
 
         {/* Transpose */}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t - 1)} className="text-foreground h-8 w-8">
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t - 1)} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <ChevronDown className="h-3 w-3" />
           </Button>
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-bold font-mono border transition-colors",
+                  "px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold font-mono border transition-colors",
                   transpose !== 0
                     ? "bg-primary/20 border-primary text-primary"
                     : "bg-muted/30 border-border text-foreground"
@@ -773,7 +777,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               </p>
               <div className="grid grid-cols-4 gap-1">
                 {ALL_KEYS.map((key) => {
-                  // Calculate semitones needed to reach this key from original
                   const originalKey = song?.musical_key;
                   if (!originalKey) return null;
                   const origMatch = originalKey.match(/^([A-G][#b]?)(.*)/);
@@ -810,18 +813,18 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               )}
             </PopoverContent>
           </Popover>
-          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t + 1)} className="text-foreground h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t + 1)} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <ChevronUp className="h-3 w-3" />
           </Button>
         </div>
 
         {/* Font size */}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.max(s - 2, 14))} className="text-foreground h-8 w-8">
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.max(s - 2, 14))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <Minus className="h-3 w-3" />
           </Button>
-          <span className="text-xs text-foreground font-mono w-8 text-center">{fontSize}</span>
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.min(s + 2, 60))} className="text-foreground h-8 w-8">
+          <span className="text-[10px] sm:text-xs text-foreground font-mono w-6 sm:w-8 text-center">{fontSize}</span>
+          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.min(s + 2, 60))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <Plus className="h-3 w-3" />
           </Button>
         </div>

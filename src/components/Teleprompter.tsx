@@ -583,7 +583,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       {/* Continuous scroll area with all songs */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-6 md:px-16 lg:px-24 py-12"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 md:px-16 lg:px-24 py-6 sm:py-12"
         style={{ scrollBehavior: "auto" }}
         onClick={handleBodyClick}
       >
@@ -596,9 +596,9 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             >
               {/* Song divider (not for first song) */}
               {idx > 0 && (
-                <div className="flex items-center gap-4 my-12">
+                <div className="flex items-center gap-4 my-8 sm:my-12">
                   <div className="h-px flex-1 bg-primary/30" />
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30">
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/30">
                     <span className="text-xs font-mono text-primary font-semibold uppercase tracking-wider">
                       {idx + 1}/{songs.length}
                     </span>
@@ -608,17 +608,17 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               )}
 
               {/* Song header */}
-              <div className="mb-6">
-                <div className="flex items-center gap-3">
+              <div className="mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
                   <h3
-                    className="text-2xl font-bold text-foreground font-display"
-                    style={{ fontSize: `${Math.max(fontSize + 4, 20)}px` }}
+                    className="text-xl sm:text-2xl font-bold text-foreground font-display leading-tight"
+                    style={{ fontSize: `${Math.max(fontSize * 0.85, 18)}px` }}
                   >
                     {s.title}
                   </h3>
                   {(loopsRemaining[idx] || 0) > 0 && (
                     <span className={cn(
-                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold font-mono border",
+                      "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold font-mono border shrink-0",
                       idx === currentIndex && nearEnd
                         ? "bg-amber-500/20 border-amber-400 text-amber-300 animate-pulse-alert"
                         : "bg-primary/10 border-primary/40 text-primary"
@@ -627,7 +627,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                     </span>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   {s.artist}
                   {sKey && ` · Tom: ${sKey}`}
                   {s.bpm && ` · ${s.bpm} BPM`}
@@ -639,19 +639,23 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 const body = displayBodies[idx];
                 if (!body) {
                   return (
-                    <p className="text-center text-muted-foreground text-xl my-12">
+                    <p className="text-center text-muted-foreground text-lg sm:text-xl my-8 sm:my-12">
                       Nenhuma cifra disponível
                     </p>
                   );
                 }
 
-                // Auto-detect ChordPro in body_text (e.g. after "Save as Default")
+                // Standardized chord font size relative to body font
+                const chordFontSize = Math.max(fontSize * 0.55, 12);
+                const bodyFontSize = fontSize;
+
+                // Auto-detect ChordPro in body_text
                 if (isChordProFormat(body)) {
                   const parsedLines = parseChordPro(body);
                   return (
                     <div
-                      className="mx-auto max-w-4xl"
-                      style={{ fontSize: `${fontSize}px`, lineHeight: 1.8 }}
+                      className="mx-auto max-w-4xl w-full"
+                      style={{ fontSize: `${bodyFontSize}px`, lineHeight: 1.8 }}
                       onClick={handleBodyClick}
                     >
                       {parsedLines.map((line, lineIdx) => {
@@ -665,7 +669,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                               <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
                                 <span
                                   className="text-primary font-bold select-none leading-tight"
-                                  style={{ fontSize: `${Math.max(fontSize * 0.55, 12)}px` }}
+                                  style={{ fontSize: `${chordFontSize}px` }}
                                 >
                                   {token.chord ? (
                                     <span
@@ -692,10 +696,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
 
                 return (
                   <pre
-                    className="chord-text whitespace-pre-wrap leading-relaxed text-foreground mx-auto max-w-4xl"
+                    className="chord-text whitespace-pre-wrap break-words leading-relaxed text-foreground mx-auto max-w-4xl w-full"
                     style={{
                       fontFamily: "var(--font-mono)",
-                      fontSize: `${fontSize}px`,
+                      fontSize: `${bodyFontSize}px`,
                       lineHeight: 1.8,
                     }}
                     dangerouslySetInnerHTML={{ __html: makeChordClickable(body) }}

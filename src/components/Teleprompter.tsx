@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, RotateCw } from "lucide-react";
+import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -58,37 +58,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const [nearEnd, setNearEnd] = useState(false);
   const [songProgress, setSongProgress] = useState(0);
   const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);
-  const [isLandscape, setIsLandscape] = useState(false);
-
-  // Screen rotation toggle for mobile
-  const toggleRotation = useCallback(async () => {
-    const orientation = screen?.orientation;
-    if (orientation?.lock) {
-      try {
-        if (isLandscape) {
-          await orientation.lock("portrait");
-          setIsLandscape(false);
-        } else {
-          await orientation.lock("landscape");
-          setIsLandscape(true);
-        }
-      } catch {
-        // Fallback: just toggle CSS rotation if API not supported
-        setIsLandscape(prev => !prev);
-      }
-    } else {
-      setIsLandscape(prev => !prev);
-    }
-  }, [isLandscape]);
-
-  // Cleanup orientation lock on unmount
-  useEffect(() => {
-    return () => {
-      try {
-        screen?.orientation?.unlock?.();
-      } catch {}
-    };
-  }, []);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number | null>(null);
@@ -862,20 +831,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             <Plus className="h-3 w-3" />
           </Button>
         </div>
-
-        {/* Rotate screen (mobile) */}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleRotation}
-          className={cn(
-            "h-7 w-7 sm:h-8 sm:w-8 sm:hidden",
-            isLandscape ? "text-primary" : "text-foreground"
-          )}
-          title="Rotacionar tela"
-        >
-          <RotateCw className="h-3.5 w-3.5" />
-        </Button>
       </div>
 
       {/* Chord modal */}

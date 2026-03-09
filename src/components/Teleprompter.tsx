@@ -645,9 +645,9 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   );
                 }
 
-                // Standardized chord font size relative to body font
-                const chordFontSize = Math.max(fontSize * 0.55, 12);
+                // Chords with Cifra Club-like prominence (same size class as lyric)
                 const bodyFontSize = fontSize;
+                const chordFontSize = Math.max(bodyFontSize, 18);
 
                 // Auto-detect ChordPro in body_text
                 if (isChordProFormat(body)) {

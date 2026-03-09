@@ -50,7 +50,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
     const initial = songs[initialIndex]?.speed;
     return initial ? initial / 100 : 2;
   });
-  const [fontSize, setFontSize] = useState(() => typeof window !== "undefined" && window.innerWidth < 640 ? 24 : 30);
+  const [fontSize, setFontSize] = useState(18);
   const [showControls, setShowControls] = useState(true);
   const [transpose, setTranspose] = useState(0);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);

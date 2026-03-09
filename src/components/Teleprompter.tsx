@@ -716,7 +716,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       {/* Bottom controls */}
       <div
         className={cn(
-          "flex flex-wrap items-center justify-center gap-4 px-6 py-4 transition-opacity duration-300",
+          "flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-4 transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         style={{ background: "hsl(220 20% 4% / 0.9)" }}
@@ -724,40 +724,40 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         {/* Nav buttons */}
         {songs.length > 1 && (
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" disabled={currentIndex === 0} onClick={() => navigateTo(currentIndex - 1)} className="text-foreground">
+            <Button variant="ghost" size="icon" disabled={currentIndex === 0} onClick={() => navigateTo(currentIndex - 1)} className="text-foreground h-8 w-8">
               <SkipBack className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" disabled={currentIndex === songs.length - 1} onClick={() => navigateTo(currentIndex + 1)} className="text-foreground">
+            <Button variant="ghost" size="icon" disabled={currentIndex === songs.length - 1} onClick={() => navigateTo(currentIndex + 1)} className="text-foreground h-8 w-8">
               <SkipForward className="h-4 w-4" />
             </Button>
           </div>
         )}
 
         {/* Play/Pause */}
-        <Button variant="default" size="icon" onClick={() => setIsPlaying((p) => !p)} className="h-12 w-12 rounded-full">
-          {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
+        <Button variant="default" size="icon" onClick={() => setIsPlaying((p) => !p)} className="h-10 w-10 sm:h-12 sm:w-12 rounded-full">
+          {isPlaying ? <Pause className="h-4 w-4 sm:h-5 sm:w-5" /> : <Play className="h-4 w-4 sm:h-5 sm:w-5 ml-0.5" />}
         </Button>
 
         {/* Speed */}
-        <div className="flex items-center gap-2 min-w-[180px]">
-          <span className="text-xs text-muted-foreground whitespace-nowrap">Vel</span>
-          <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={0.5} max={5} step={0.1} className="w-28" />
-          <span className="text-xs text-foreground font-mono w-10">{speed.toFixed(1)}x</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">Vel</span>
+          <Slider value={[speed]} onValueChange={([v]) => setSpeed(v)} min={0.5} max={5} step={0.1} className="w-16 sm:w-28" />
+          <span className="text-[10px] sm:text-xs text-foreground font-mono w-8 sm:w-10">{speed.toFixed(1)}x</span>
         </div>
 
         {/* Metronome */}
         <MetronomePulse bpm={song.bpm ?? 0} isPlaying={isPlaying} />
 
         {/* Transpose */}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t - 1)} className="text-foreground h-8 w-8">
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t - 1)} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <ChevronDown className="h-3 w-3" />
           </Button>
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-bold font-mono border transition-colors",
+                  "px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-xs font-bold font-mono border transition-colors",
                   transpose !== 0
                     ? "bg-primary/20 border-primary text-primary"
                     : "bg-muted/30 border-border text-foreground"
@@ -777,7 +777,6 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               </p>
               <div className="grid grid-cols-4 gap-1">
                 {ALL_KEYS.map((key) => {
-                  // Calculate semitones needed to reach this key from original
                   const originalKey = song?.musical_key;
                   if (!originalKey) return null;
                   const origMatch = originalKey.match(/^([A-G][#b]?)(.*)/);
@@ -814,18 +813,18 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
               )}
             </PopoverContent>
           </Popover>
-          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t + 1)} className="text-foreground h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t + 1)} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <ChevronUp className="h-3 w-3" />
           </Button>
         </div>
 
         {/* Font size */}
-        <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.max(s - 2, 14))} className="text-foreground h-8 w-8">
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.max(s - 2, 14))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <Minus className="h-3 w-3" />
           </Button>
-          <span className="text-xs text-foreground font-mono w-8 text-center">{fontSize}</span>
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.min(s + 2, 60))} className="text-foreground h-8 w-8">
+          <span className="text-[10px] sm:text-xs text-foreground font-mono w-6 sm:w-8 text-center">{fontSize}</span>
+          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.min(s + 2, 60))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <Plus className="h-3 w-3" />
           </Button>
         </div>

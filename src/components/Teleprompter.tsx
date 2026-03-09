@@ -862,6 +862,20 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             <Plus className="h-3 w-3" />
           </Button>
         </div>
+
+        {/* Rotate screen (mobile) */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleRotation}
+          className={cn(
+            "h-7 w-7 sm:h-8 sm:w-8 sm:hidden",
+            isLandscape ? "text-primary" : "text-foreground"
+          )}
+          title="Rotacionar tela"
+        >
+          <RotateCw className="h-3.5 w-3.5" />
+        </Button>
       </div>
 
       {/* Chord modal */}

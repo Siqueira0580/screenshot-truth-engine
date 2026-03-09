@@ -669,7 +669,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                               <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
                                 <span
                                   className="text-primary font-bold select-none leading-tight"
-                                  style={{ fontSize: `${chordFontSize}px` }}
+                                  style={{
+                                    fontSize: `${chordFontSize}px`,
+                                    fontFamily: "var(--font-display)",
+                                  }}
                                 >
                                   {token.chord ? (
                                     <span

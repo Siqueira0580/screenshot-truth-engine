@@ -249,10 +249,10 @@ export default function SongsPage() {
                       {song.bpm && <span className="hidden sm:inline">{song.bpm} BPM</span>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link to={`/songs/${song.id}`}><Eye className="h-4 w-4" /></Link></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:inline-flex" onClick={() => { setEditingSong(song.id); setFormOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(song.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" asChild><Link to={`/songs/${song.id}`}><Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Link></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => { setEditingSong(song.id); setFormOpen(true); }}><Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => setDeleteTarget(song.id)}><Trash2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" /></Button>
                   </div>
                 </div>
               ))}

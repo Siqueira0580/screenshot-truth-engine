@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp, Link2, FileText } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -232,27 +232,54 @@ export default function SongsPage() {
           ) : (
             <div className="grid gap-2">
               {filtered.map((song, i) => (
-                <div key={song.id} className="group flex items-center gap-3 rounded-lg border border-border bg-card p-3 sm:p-4 transition-colors hover:border-primary/30 animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
-                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-xs sm:text-sm font-bold">{i + 1}</div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <p className="font-semibold text-sm sm:text-base truncate">{song.title}</p>
-                      {(song as any).pdf_url && (
-                        <span className="shrink-0 text-red-500" title="Partitura PDF">
-                          <FileText className="h-3.5 w-3.5" />
-                        </span>
-                      )}
+                <div
+                  key={song.id}
+                  className="group flex items-center gap-4 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30 animate-fade-in"
+                  style={{ animationDelay: `${i * 30}ms` }}
+                >
+                  <Link to={`/songs/${song.id}`} className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
+                      {i + 1}
                     </div>
-                    <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
-                      {song.artist && <span className="truncate max-w-[120px] sm:max-w-none">{song.artist}</span>}
-                      {song.musical_key && <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-mono font-medium text-secondary-foreground">{song.musical_key}</span>}
-                      {song.bpm && <span className="hidden sm:inline">{song.bpm} BPM</span>}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold truncate">{song.title}</p>
+                        {(song as any).pdf_url && (
+                          <span className="shrink-0 text-red-500" title="Partitura PDF">
+                            <FileText className="h-3.5 w-3.5" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        {song.artist && <span className="truncate max-w-[120px] sm:max-w-none">{song.artist}</span>}
+                        {song.musical_key && (
+                          <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
+                            {song.musical_key}
+                          </span>
+                        )}
+                        {song.bpm && <span>{song.bpm} BPM</span>}
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild><Link to={`/songs/${song.id}`}><Eye className="h-4 w-4" /></Link></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 hidden sm:inline-flex" onClick={() => { setEditingSong(song.id); setFormOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setDeleteTarget(song.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </Link>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => { setEditingSong(song.id); setFormOpen(true); }}
+                      title="Editar"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteTarget(song.id)}
+                      title="Remover"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               ))}

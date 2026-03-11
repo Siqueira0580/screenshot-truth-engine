@@ -230,28 +230,28 @@ export default function SongsPage() {
               <p className="text-sm mt-1">Importe ou adicione músicas à sua biblioteca pessoal.</p>
             </div>
           ) : (
-            <div className="grid gap-2 w-full max-w-full">
+            <div className="grid gap-2">
               {filtered.map((song, i) => (
                 <div
                   key={song.id}
-                  className="group flex items-center justify-between w-full max-w-full gap-3 p-3 rounded-lg border border-border bg-card transition-colors hover:border-primary/30 animate-fade-in"
+                  className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30 animate-fade-in"
                   style={{ animationDelay: `${i * 30}ms` }}
                 >
-                  <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
+                  <Link to={`/songs/${song.id}`} className="flex items-center gap-4 min-w-0 flex-1">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
                       {i + 1}
                     </div>
-                    <div className="min-w-0 flex-1 flex flex-col">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <p className="font-semibold truncate">{song.title}</p>
                         {(song as any).pdf_url && (
-                          <span className="shrink-0 text-red-500" title="Partitura PDF">
+                          <span className="shrink-0 text-destructive" title="Partitura PDF">
                             <FileText className="h-3.5 w-3.5" />
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
-                        {song.artist && <span className="truncate">{song.artist}</span>}
+                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                        {song.artist && <span className="truncate max-w-[120px]">{song.artist}</span>}
                         {song.musical_key && (
                           <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
                             {song.musical_key}
@@ -265,7 +265,7 @@ export default function SongsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
                       onClick={() => { setEditingSong(song.id); setFormOpen(true); }}
                       title="Editar"
                     >
@@ -274,7 +274,7 @@ export default function SongsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
                       onClick={() => setDeleteTarget(song.id)}
                       title="Remover"
                     >

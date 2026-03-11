@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Eye, Loader2, FileUp, Link2, FileText } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

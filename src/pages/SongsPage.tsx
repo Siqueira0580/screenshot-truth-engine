@@ -170,7 +170,7 @@ export default function SongsPage() {
   }, [songs, search, sortMode]);
 
   return (
-    <div className="space-y-4 w-full overflow-x-hidden">
+    <div className="space-y-4 w-full max-w-full overflow-x-hidden px-0">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Músicas</h1>

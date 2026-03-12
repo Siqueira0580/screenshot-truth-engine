@@ -207,10 +207,12 @@ export default function StudyPage() {
         percussion: audioTrack.file_percussion, harmony: audioTrack.file_harmony,
         guitar: audioTrack.file_guitar,
       };
-      for (const [type, url] of Object.entries(stemMap)) {
-        if (url) {
-          try { await engine.loadStem(type as StemType, url); }
-          catch (e) { console.error(`Failed to load ${type}:`, e); }
+      for (const [type, ref] of Object.entries(stemMap)) {
+        if (ref) {
+          try {
+            const url = await resolveAudioUrl(ref);
+            if (url) await engine.loadStem(type as StemType, url);
+          } catch (e) { console.error(`Failed to load ${type}:`, e); }
         }
       }
     };

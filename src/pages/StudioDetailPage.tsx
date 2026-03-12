@@ -115,10 +115,11 @@ export default function StudioDetailPage() {
         guitar: audioTrack.file_guitar,
       };
 
-      for (const [type, url] of Object.entries(stemMap)) {
-        if (url) {
+      for (const [type, ref] of Object.entries(stemMap)) {
+        if (ref) {
           try {
-            await engine.loadStem(type as StemType, url);
+            const url = await resolveAudioUrl(ref);
+            if (url) await engine.loadStem(type as StemType, url);
           } catch (e) {
             console.error(`Failed to load ${type}:`, e);
           }

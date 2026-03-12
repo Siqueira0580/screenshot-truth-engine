@@ -14,6 +14,7 @@ import { MultitrackEngine, StemType } from "@/lib/audio-engine";
 import { analyzeAudio, getTransposedKey } from "@/lib/key-detection";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { resolveAudioUrl } from "@/lib/audio-url";
 
 interface AudioTrack {
   id: string;
@@ -115,10 +116,11 @@ export default function StudioDetailPage() {
         guitar: audioTrack.file_guitar,
       };
 
-      for (const [type, url] of Object.entries(stemMap)) {
-        if (url) {
+      for (const [type, ref] of Object.entries(stemMap)) {
+        if (ref) {
           try {
-            await engine.loadStem(type as StemType, url);
+            const url = await resolveAudioUrl(ref);
+            if (url) await engine.loadStem(type as StemType, url);
           } catch (e) {
             console.error(`Failed to load ${type}:`, e);
           }
@@ -154,7 +156,9 @@ export default function StudioDetailPage() {
     if (!audioTrack?.file_full || !songId) return;
     setDetectingKey(true);
     try {
-      const result = await analyzeAudio(audioTrack.file_full);
+      const url = await resolveAudioUrl(audioTrack.file_full);
+      if (!url) throw new Error("Não foi possível acessar o áudio");
+      const result = await analyzeAudio(url);
       const keyValue = `${result.key.key}${result.key.mode === "Minor" ? "m" : ""}`;
       await updateSong(songId, { musical_key: keyValue, bpm: result.bpm });
       refetchSong();
@@ -177,8 +181,10 @@ export default function StudioDetailPage() {
     const toastId = toast.loading("Iniciando separação de stems...");
 
     try {
+      const audioUrl = await resolveAudioUrl(audioTrack.file_full);
+      if (!audioUrl) throw new Error("Não foi possível acessar o áudio");
       const { data: startData, error: startError } = await supabase.functions.invoke("separate-stems", {
-        body: { action: "start", audio_url: audioTrack.file_full, song_id: songId },
+        body: { action: "start", audio_url: audioUrl, song_id: songId },
       });
 
       if (startError) throw startError;
@@ -385,16 +391,15 @@ export default function StudioDetailPage() {
                   .from("audio-stems")
                   .upload(path, f, { upsert: true, contentType: f.type || "audio/mpeg" });
                 if (upErr) throw upErr;
-                const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
                 const { data: { user } } = await supabase.auth.getUser();
 
                 if (audioTrack) {
-                  const { error: dbErr } = await supabase.from("audio_tracks").update({ file_full: urlData.publicUrl }).eq("id", audioTrack.id);
+                  const { error: dbErr } = await supabase.from("audio_tracks").update({ file_full: path }).eq("id", audioTrack.id);
                   if (dbErr) throw dbErr;
                 } else {
                   const { error: dbErr } = await supabase.from("audio_tracks").insert({
                     song_id: songId,
-                    file_full: urlData.publicUrl,
+                    file_full: path,
                     user_id: user?.id || null,
                   });
                   if (dbErr) throw dbErr;

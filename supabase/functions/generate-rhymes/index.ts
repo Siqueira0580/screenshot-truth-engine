@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,31 @@ serve(async (req) => {
   }
 
   try {
+    // --- Auth Guard ---
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    // --- End Auth Guard ---
+
     const { word } = await req.json();
     if (!word || typeof word !== "string") {
       return new Response(JSON.stringify({ error: "Missing 'word'" }), {
@@ -64,7 +90,6 @@ serve(async (req) => {
     const data = await response.json();
     let content = data.choices?.[0]?.message?.content?.trim() || "[]";
 
-    // Clean markdown fences if present
     content = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
     let rhymes: string[] = [];

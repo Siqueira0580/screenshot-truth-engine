@@ -235,8 +235,7 @@ export default function SongsPage() {
                 <div
                   key={song.id}
                   className="group flex items-center justify-between w-full max-w-full gap-3 p-3 rounded-lg border border-transparent bg-card transition-all hover:shadow-[var(--shadow-glow)] animate-fade-in"
-                  style={{ boxShadow: "var(--shadow-card)" }}
-                  style={{ animationDelay: `${i * 30}ms` }}
+                  style={{ boxShadow: "var(--shadow-card)", animationDelay: `${i * 30}ms` }}
                 >
                   <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">

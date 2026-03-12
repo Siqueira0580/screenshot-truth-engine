@@ -8,6 +8,7 @@ import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
   { to: "/songs", icon: Music, label: "Músicas" },

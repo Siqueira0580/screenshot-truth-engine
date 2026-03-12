@@ -720,7 +720,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           "flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-4 transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
-        style={{ background: "hsl(220 20% 4% / 0.9)" }}
+        style={{ background: "hsl(var(--background) / 0.9)" }}
       >
         {/* Nav buttons */}
         {songs.length > 1 && (

@@ -482,12 +482,18 @@ export default function SetlistDetailPage() {
   };
 
   const existingIds = new Set(items.map((i: any) => i.song_id));
+  const toggleGenre = (genre: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+    );
+  };
+
   const availableSongs = useMemo(() => allSongs.filter(
     (s) => !existingIds.has(s.id) &&
-      (selectedGenre === "Todos" || (s.style && s.style.toLowerCase() === selectedGenre.toLowerCase())) &&
+      (selectedGenres.length === 0 || (s.style && selectedGenres.some((g) => g.toLowerCase() === s.style!.toLowerCase()))) &&
       (s.title.toLowerCase().includes(search.toLowerCase()) ||
         (s.artist && s.artist.toLowerCase().includes(search.toLowerCase())))
-  ), [allSongs, existingIds, search, selectedGenre]);
+  ), [allSongs, existingIds, search, selectedGenres]);
 
   // WhatsApp share
   const handleShareWhatsApp = useCallback(() => {

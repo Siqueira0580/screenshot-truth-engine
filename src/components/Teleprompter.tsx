@@ -316,8 +316,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col"
-      style={{ background: "hsl(220 20% 4%)" }}
+      className="fixed inset-0 z-[100] flex flex-col bg-background text-foreground"
       onMouseMove={showControlsTemporarily}
       onTouchStart={showControlsTemporarily}
     >
@@ -328,8 +327,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         return (
           <>
           <div
-            className="flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center px-2 sm:px-3 py-2 gap-1 md:gap-2"
-            style={{ background: "hsl(220 20% 4% / 0.9)" }}
+            className="flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] items-center px-2 sm:px-3 py-2 gap-1 md:gap-2 bg-background/95 backdrop-blur-sm"
           >
             {/* Left: close + prev (prev hidden on mobile) */}
             <div className="flex items-center gap-2 min-w-0 w-full md:w-auto">
@@ -534,7 +532,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   ? "bg-primary/15"
                   : "bg-muted/5"
               )}
-              style={{ background: nearEnd && loopsRemaining[currentIndex] <= 0 ? undefined : "hsl(220 20% 6% / 0.8)" }}
+              style={{ background: nearEnd && loopsRemaining[currentIndex] <= 0 ? undefined : "hsl(var(--background) / 0.8)" }}
             >
               <div className="flex items-center gap-2 min-w-0">
                 <SkipForward className={cn(
@@ -722,7 +720,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           "flex flex-wrap items-center justify-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-4 transition-opacity duration-300",
           showControls ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
-        style={{ background: "hsl(220 20% 4% / 0.9)" }}
+        style={{ background: "hsl(var(--background) / 0.9)" }}
       >
         {/* Nav buttons */}
         {songs.length > 1 && (

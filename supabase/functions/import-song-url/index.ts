@@ -289,7 +289,7 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
   } catch (e) {
     console.error("import-song-url error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }),
+      JSON.stringify({ error: "Failed to process song URL. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

@@ -152,9 +152,8 @@ Regras estritas:
     );
   } catch (error) {
     console.error("transcribe-audio error:", error);
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "Transcription service unavailable. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

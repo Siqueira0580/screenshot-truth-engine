@@ -196,7 +196,7 @@ export default function SetlistDetailPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("Todos");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [localOverrides, setLocalOverrides] = useState<
     Record<string, { loop_count: number | null; speed: number | null; bpm: number | null; transposed_key: string | null }>
   >({});

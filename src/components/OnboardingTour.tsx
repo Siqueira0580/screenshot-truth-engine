@@ -126,7 +126,7 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
               <Button
                 variant="outline"
                 onClick={() => setStep((s) => s - 1)}
-                className="flex-1 border-slate-700 text-slate-300 hover:bg-slate-800"
+                className="flex-1 border-border text-muted-foreground hover:bg-secondary"
               >
                 <ChevronLeft className="w-4 h-4 mr-1" /> Anterior
               </Button>
@@ -135,7 +135,7 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
               <Button
                 variant="ghost"
                 onClick={finish}
-                className="flex-1 text-slate-500 hover:text-slate-300"
+                className="flex-1 text-muted-foreground hover:text-foreground"
               >
                 Pular Tour
               </Button>

@@ -94,7 +94,7 @@ export default function AuthFeatureShowcase() {
         <div className="flex items-center justify-center gap-4">
           <button
             onClick={() => setCurrent((p) => (p - 1 + FEATURES.length) % FEATURES.length)}
-            className="w-8 h-8 rounded-full border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-cyan-500 transition-colors"
+            className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -106,8 +106,8 @@ export default function AuthFeatureShowcase() {
                 onClick={() => setCurrent(i)}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   i === current
-                    ? "w-8 bg-gradient-to-r from-cyan-400 to-fuchsia-500"
-                    : "w-2 bg-slate-700 hover:bg-slate-500"
+                    ? "w-8 bg-gradient-to-r from-primary to-accent"
+                    : "w-2 bg-muted hover:bg-muted-foreground"
                 }`}
               />
             ))}
@@ -115,7 +115,7 @@ export default function AuthFeatureShowcase() {
 
           <button
             onClick={() => setCurrent((p) => (p + 1) % FEATURES.length)}
-            className="w-8 h-8 rounded-full border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:border-cyan-500 transition-colors"
+            className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

@@ -64,6 +64,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ThemeProvider>
           <UserPreferencesProvider>
             <Routes>
               <Route path="/" element={<LandingPage />} />

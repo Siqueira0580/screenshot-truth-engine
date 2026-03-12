@@ -14,6 +14,34 @@ serve(async (req) => {
   }
 
   try {
+    // ── Authenticate the caller ─────────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const userSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const userId = claimsData.claims.sub;
+
     const { song_id, artist, title, current_style, current_bpm, current_musical_key, current_composer } = await req.json();
 
     if (!song_id) {
@@ -23,9 +51,22 @@ serve(async (req) => {
       });
     }
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ── Verify the caller owns this song via user_library ───────
+    const { data: libraryEntry } = await supabase
+      .from("user_library")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("song_id", song_id)
+      .maybeSingle();
+
+    if (!libraryEntry) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: you do not own this song" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
     const updates: Record<string, string | number | null> = {};
     let artistImageUrl: string | null = null;
@@ -166,7 +207,7 @@ serve(async (req) => {
     );
   } catch (e) {
     console.error("enrich-song error:", e);
-    return new Response(JSON.stringify({ error: e.message }), {
+    return new Response(JSON.stringify({ error: "An unexpected error occurred" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

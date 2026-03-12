@@ -181,8 +181,10 @@ export default function StudioDetailPage() {
     const toastId = toast.loading("Iniciando separação de stems...");
 
     try {
+      const audioUrl = await resolveAudioUrl(audioTrack.file_full);
+      if (!audioUrl) throw new Error("Não foi possível acessar o áudio");
       const { data: startData, error: startError } = await supabase.functions.invoke("separate-stems", {
-        body: { action: "start", audio_url: audioTrack.file_full, song_id: songId },
+        body: { action: "start", audio_url: audioUrl, song_id: songId },
       });
 
       if (startError) throw startError;

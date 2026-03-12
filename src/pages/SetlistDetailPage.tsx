@@ -482,11 +482,12 @@ export default function SetlistDetailPage() {
   };
 
   const existingIds = new Set(items.map((i: any) => i.song_id));
-  const availableSongs = allSongs.filter(
+  const availableSongs = useMemo(() => allSongs.filter(
     (s) => !existingIds.has(s.id) &&
+      (selectedGenre === "Todos" || (s.style && s.style.toLowerCase() === selectedGenre.toLowerCase())) &&
       (s.title.toLowerCase().includes(search.toLowerCase()) ||
         (s.artist && s.artist.toLowerCase().includes(search.toLowerCase())))
-  );
+  ), [allSongs, existingIds, search, selectedGenre]);
 
   // WhatsApp share
   const handleShareWhatsApp = useCallback(() => {

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,33 @@ serve(async (req) => {
   }
 
   try {
+    // ── Auth guard ──────────────────────────────────────────────
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const userId = claimsData.claims.sub as string;
+    // ── End auth guard ──────────────────────────────────────────
+
     const body = await req.json();
     const action = body.action || "start";
 
@@ -33,7 +61,22 @@ serve(async (req) => {
         );
       }
 
-      console.log("Starting stem separation for song:", song_id);
+      // Verify the caller owns the audio track for this song
+      const { data: track } = await userSupabase
+        .from("audio_tracks")
+        .select("id")
+        .eq("song_id", song_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!track) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: you do not own this audio track" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      console.log("Starting stem separation for song:", song_id, "user:", userId);
 
       const createRes = await fetch("https://api.replicate.com/v1/predictions", {
         method: "POST",
@@ -51,7 +94,7 @@ serve(async (req) => {
         const errBody = await createRes.text();
         console.error("Replicate create error:", createRes.status, errBody);
         return new Response(
-          JSON.stringify({ error: `Replicate API error: ${createRes.status}`, details: errBody }),
+          JSON.stringify({ error: "Stem separation service error" }),
           { status: createRes.status === 402 ? 402 : 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -75,7 +118,22 @@ serve(async (req) => {
         );
       }
 
-      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction_id}`, {
+      // Verify ownership on poll too
+      const { data: track } = await userSupabase
+        .from("audio_tracks")
+        .select("id")
+        .eq("song_id", song_id)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (!track) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: you do not own this audio track" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${encodeURIComponent(prediction_id)}`, {
         headers: { Authorization: `Bearer ${REPLICATE_API_KEY}` },
       });
       const result = await pollRes.json();
@@ -90,7 +148,7 @@ serve(async (req) => {
 
       if (result.status === "failed" || result.status === "canceled") {
         return new Response(
-          JSON.stringify({ status: result.status, error: result.error }),
+          JSON.stringify({ status: result.status, error: "Stem separation failed" }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -109,11 +167,8 @@ serve(async (req) => {
 
         console.log("Parsed stems:", Object.keys(stems));
 
-        const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
         const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const adminSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
         const stemMapping: Record<string, string> = {
           vocals: "file_vocals",
@@ -138,7 +193,7 @@ serve(async (req) => {
           const storagePath = `${song_id}/${stemName}.${ext}`;
           const contentType = ext === "wav" ? "audio/wav" : "audio/mpeg";
 
-          const { error: uploadError } = await supabase.storage
+          const { error: uploadError } = await adminSupabase.storage
             .from("audio-stems")
             .upload(storagePath, stemUint8, {
               contentType,
@@ -150,22 +205,23 @@ serve(async (req) => {
             continue;
           }
 
-          const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(storagePath);
+          const { data: urlData } = adminSupabase.storage.from("audio-stems").getPublicUrl(storagePath);
           updates[dbColumn] = urlData.publicUrl;
-          console.log(`Uploaded ${stemName} -> ${urlData.publicUrl}`);
+          console.log(`Uploaded ${stemName}`);
         }
 
-        // Update DB
+        // Update DB — scoped to the user's audio track
         if (Object.keys(updates).length > 0) {
-          const { error: updateError } = await supabase
+          const { error: updateError } = await adminSupabase
             .from("audio_tracks")
             .update(updates)
-            .eq("song_id", song_id);
+            .eq("song_id", song_id)
+            .eq("user_id", userId);
 
           if (updateError) {
             console.error("DB update error:", updateError);
             return new Response(
-              JSON.stringify({ status: "failed", error: "DB update failed" }),
+              JSON.stringify({ status: "failed", error: "Failed to save stems" }),
               { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
             );
           }
@@ -188,9 +244,9 @@ serve(async (req) => {
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
-    console.error("Error:", e);
+    console.error("separate-stems error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "An unexpected error occurred" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

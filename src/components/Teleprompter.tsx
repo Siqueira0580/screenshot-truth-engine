@@ -346,10 +346,14 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   </Avatar>
                 )}
                 <div className="min-w-0 flex-1 flex flex-col justify-center">
-                  <h2 className="text-lg font-bold leading-tight text-foreground truncate">{song.title}</h2>
-                  <p className="text-sm text-muted-foreground truncate">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-extrabold leading-tight text-foreground truncate">{song.title}</h2>
+                    {displayKey && (
+                      <span className="shrink-0 text-lg font-black text-primary font-mono">{displayKey}</span>
+                    )}
+                  </div>
+                  <p className="text-base text-muted-foreground truncate">
                     {song.artist}
-                    {displayKey && ` · ${displayKey}`}
                     {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                   </p>
                 </div>
@@ -536,21 +540,21 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             >
               <div className="flex items-center gap-2 min-w-0">
                 <SkipForward className={cn(
-                  "h-3 w-3 shrink-0",
+                  "h-3.5 w-3.5 shrink-0",
                   nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-muted-foreground"
                 )} />
                 <span className={cn(
-                  "text-[10px] uppercase tracking-wider font-semibold shrink-0",
+                  "text-xs uppercase tracking-wider font-semibold shrink-0",
                   nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-muted-foreground"
                 )}>Próxima:</span>
                 <span className={cn(
-                  "text-xs font-bold truncate",
+                  "text-sm font-bold truncate",
                   nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary" : "text-foreground"
                 )}>{next.title}</span>
               </div>
               {next.musical_key && (
                 <span className={cn(
-                  "text-xs font-mono font-black shrink-0 ml-2",
+                  "text-xl font-mono font-black shrink-0 ml-2",
                   nearEnd && loopsRemaining[currentIndex] <= 0 ? "text-primary animate-key-blink" : "text-primary"
                 )}>
                   {transposeKey(next.musical_key, transpose)}

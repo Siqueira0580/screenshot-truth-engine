@@ -33,9 +33,7 @@ export default function SongsPage() {
   const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 0 });
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [importLinkOpen, setImportLinkOpen] = useState(false);
-  const [uploadingSheetPdf, setUploadingSheetPdf] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
-  const sheetPdfInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
   const [tourVisible, setTourVisible] = useState(showTour);
@@ -105,44 +103,6 @@ export default function SongsPage() {
     if (pdfInputRef.current) pdfInputRef.current.value = "";
   };
 
-  const handleSheetPdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || file.type !== "application/pdf") {
-      toast.error("Selecione um arquivo PDF válido");
-      return;
-    }
-    setUploadingSheetPdf(true);
-    try {
-      const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const { error: uploadError } = await supabase.storage
-        .from("sheet_music")
-        .upload(fileName, file, { contentType: "application/pdf" });
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
-      const title = file.name.replace(/\.pdf$/i, "").trim();
-
-      await createSongAndAddToLibrary({
-        title,
-        artist: null,
-        composer: null,
-        musical_key: null,
-        style: null,
-        bpm: null,
-        time_signature: "4/4",
-        body_text: null,
-        pdf_url: urlData.publicUrl,
-      } as any);
-
-      queryClient.invalidateQueries({ queryKey: ["user-library"] });
-      toast.success("PDF de partitura enviado com sucesso!");
-    } catch (err: any) {
-      toast.error("Erro ao enviar PDF: " + (err.message || "Tente novamente"));
-    } finally {
-      setUploadingSheetPdf(false);
-      if (sheetPdfInputRef.current) sheetPdfInputRef.current.value = "";
-    }
-  };
 
   const filtered = useMemo(() => {
     let list = songs.filter(
@@ -187,10 +147,6 @@ export default function SongsPage() {
         <TabsContent value="library" className="space-y-3 mt-3">
           <div className="flex items-center gap-1.5 justify-end flex-wrap">
             <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
-            <input ref={sheetPdfInputRef} type="file" accept=".pdf" className="hidden" onChange={handleSheetPdfUpload} />
-            <Button variant="outline" onClick={() => sheetPdfInputRef.current?.click()} disabled={uploadingSheetPdf} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
-              {uploadingSheetPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="h-4 w-4" /><span className="hidden md:inline text-xs">Upload PDF</span></>}
-            </Button>
             <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
               {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline text-xs">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline text-xs">Importar PDFs</span></>)}
             </Button>

@@ -6,6 +6,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+/** HTML-encode a string to prevent injection */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -47,10 +57,34 @@ Deno.serve(async (req) => {
       throw new Error("No invites provided");
     }
 
+    // Sanitize text inputs
+    const safeSender = escapeHtml((senderName || "Um músico").slice(0, 100));
+    const safeSetlist = escapeHtml((setlistName || "").slice(0, 200));
+
+    // Determine allowed origin for invite links
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+    const projectRef = SUPABASE_URL.replace("https://", "").split(".")[0];
+
     const results: { email: string; success: boolean; error?: string }[] = [];
 
     for (const invite of invites) {
       try {
+        // Validate invite link — must be our app domain
+        let validatedLink: string;
+        try {
+          const parsed = new URL(invite.link);
+          const isLovablePreview = parsed.hostname.endsWith(".lovable.app");
+          const isLovablePublished = parsed.hostname.endsWith(".lovable.app");
+          const isLocalhost = parsed.hostname === "localhost";
+          if (!isLovablePreview && !isLovablePublished && !isLocalhost) {
+            throw new Error("Invalid invite link domain");
+          }
+          validatedLink = parsed.toString();
+        } catch {
+          results.push({ email: invite.email, success: false, error: "Invalid invite link" });
+          continue;
+        }
+
         const res = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: {
@@ -60,20 +94,20 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from: "Smart Cifra <onboarding@resend.dev>",
             to: [invite.email],
-            subject: `🎵 Convite para sincronizar: ${setlistName}`,
+            subject: `🎵 Convite para sincronizar: ${safeSetlist}`,
             html: `
               <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #ffffff;">
                 <h2 style="color: #1a1a2e; margin-bottom: 8px;">🎶 Smart Cifra — Modo Palco</h2>
                 <p style="color: #444; font-size: 15px; line-height: 1.6;">
-                  Olá! <strong>${senderName || "Um músico"}</strong> convidou você para sincronizar o repertório 
-                  <strong>"${setlistName}"</strong> em tempo real.
+                  Olá! <strong>${safeSender}</strong> convidou você para sincronizar o repertório 
+                  <strong>"${safeSetlist}"</strong> em tempo real.
                 </p>
                 <p style="color: #444; font-size: 15px; line-height: 1.6;">
                   Com o Modo Palco, todos os músicos veem a mesma música ao mesmo tempo — 
                   o mestre controla a navegação e vocês acompanham automaticamente.
                 </p>
                 <div style="text-align: center; margin: 28px 0;">
-                  <a href="${invite.link}" 
+                  <a href="${validatedLink}" 
                      style="display: inline-block; padding: 14px 32px; background: #6366f1; color: #fff; 
                             text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
                     Aceitar Convite
@@ -81,7 +115,7 @@ Deno.serve(async (req) => {
                 </div>
                 <p style="color: #888; font-size: 12px; line-height: 1.5;">
                   Se o botão não funcionar, copie e cole este link no navegador:<br/>
-                  <a href="${invite.link}" style="color: #6366f1; word-break: break-all;">${invite.link}</a>
+                  <a href="${validatedLink}" style="color: #6366f1; word-break: break-all;">${escapeHtml(validatedLink)}</a>
                 </p>
                 <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
                 <p style="color: #aaa; font-size: 11px; text-align: center;">
@@ -94,7 +128,7 @@ Deno.serve(async (req) => {
 
         const data = await res.json();
         if (!res.ok) {
-          results.push({ email: invite.email, success: false, error: data.message || "Resend error" });
+          results.push({ email: invite.email, success: false, error: data.message || "Email delivery error" });
         } else {
           results.push({ email: invite.email, success: true });
         }
@@ -109,9 +143,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    console.error("send-invite-email error:", msg);
-    return new Response(JSON.stringify({ error: msg }), {
+    console.error("send-invite-email error:", error);
+    return new Response(JSON.stringify({ error: "Erro ao enviar convites. Tente novamente." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

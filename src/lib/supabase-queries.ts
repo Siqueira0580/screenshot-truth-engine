@@ -125,12 +125,14 @@ export async function fetchSong(id: string) {
 }
 
 export async function createSong(song: SongInsert) {
+  const { data: { user } } = await supabase.auth.getUser();
   const sanitized = {
     ...song,
     title: song.title?.trim() || "",
     artist: song.artist?.trim().replace(/\s+/g, " ") || null,
+    ...(user ? { created_by: user.id } : {}),
   };
-  const { data, error } = await supabase.from("songs").insert(sanitized).select().single();
+  const { data, error } = await supabase.from("songs").insert(sanitized as any).select().single();
   if (error) throw error;
   return data as Song;
 }

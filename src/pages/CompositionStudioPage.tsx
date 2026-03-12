@@ -137,12 +137,20 @@ export default function CompositionStudioPage() {
         .eq("composition_id", compositionId)
         .order("created_at", { ascending: false });
       if (takesData && (takesData as any[]).length > 0) {
-        setAudioTakes((takesData as any[]).map((t: any) => ({
-          id: t.id,
-          url: t.audio_url,
-          title: t.title || "",
-          createdAt: t.created_at,
-        })));
+        // Generate fresh signed URLs for private bucket
+        const takes = await Promise.all((takesData as any[]).map(async (t: any) => {
+          let url = t.audio_url || "";
+          // If we have a stored path, create a fresh signed URL
+          const pathMatch = url.match(/compositions_audio\/(.+)/);
+          if (pathMatch) {
+            const { data: signed } = await supabase.storage
+              .from("compositions_audio")
+              .createSignedUrl(decodeURIComponent(pathMatch[1]), 3600);
+            if (signed?.signedUrl) url = signed.signedUrl;
+          }
+          return { id: t.id, url, title: t.title || "", createdAt: t.created_at };
+        }));
+        setAudioTakes(takes);
       }
       setCompositionOwnerId(data.user_id);
       setSharedWithEmails((data as any).shared_with_emails || []);
@@ -179,10 +187,10 @@ export default function CompositionStudioPage() {
         if (uploadErr) {
           console.error("Audio upload error:", uploadErr);
         } else {
-          const { data: urlData } = supabase.storage
+          const { data: urlData } = await supabase.storage
             .from("compositions_audio")
-            .getPublicUrl(fileName);
-          audioUrl = urlData.publicUrl;
+            .createSignedUrl(fileName, 3600);
+          audioUrl = urlData?.signedUrl || null;
         }
       }
 
@@ -375,7 +383,8 @@ export default function CompositionStudioPage() {
             .upload(fileName, result.audioBlob, { contentType: result.audioBlob.type });
           if (uploadErr) { console.error("Upload error:", uploadErr); return; }
 
-          const { data: urlData } = supabase.storage.from("compositions_audio").getPublicUrl(fileName);
+          const { data: urlData } = await supabase.storage.from("compositions_audio").createSignedUrl(fileName, 3600);
+          if (!urlData?.signedUrl) { console.error("Failed to create signed URL"); return; }
           const now = new Date();
           const autoTitle = `Ideia - ${now.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })} às ${now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
 
@@ -385,7 +394,7 @@ export default function CompositionStudioPage() {
               composition_id: compId,
               user_id: user.id,
               title: autoTitle,
-              audio_url: urlData.publicUrl,
+              audio_url: urlData.signedUrl,
             })
             .select()
             .single();

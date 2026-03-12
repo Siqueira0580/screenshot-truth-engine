@@ -147,10 +147,6 @@ export default function SongsPage() {
         <TabsContent value="library" className="space-y-3 mt-3">
           <div className="flex items-center gap-1.5 justify-end flex-wrap">
             <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
-            <input ref={sheetPdfInputRef} type="file" accept=".pdf" className="hidden" onChange={handleSheetPdfUpload} />
-            <Button variant="outline" onClick={() => sheetPdfInputRef.current?.click()} disabled={uploadingSheetPdf} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
-              {uploadingSheetPdf ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileText className="h-4 w-4" /><span className="hidden md:inline text-xs">Upload PDF</span></>}
-            </Button>
             <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
               {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline text-xs">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline text-xs">Importar PDFs</span></>)}
             </Button>

@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";

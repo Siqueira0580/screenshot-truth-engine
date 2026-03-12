@@ -14,6 +14,7 @@ import { MultitrackEngine, StemType } from "@/lib/audio-engine";
 import { analyzeAudio, getTransposedKey } from "@/lib/key-detection";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { resolveAudioUrl } from "@/lib/audio-url";
 
 interface AudioTrack {
   id: string;

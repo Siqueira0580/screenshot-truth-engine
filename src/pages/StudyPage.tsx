@@ -14,6 +14,7 @@ import { fetchSong, fetchArtists } from "@/lib/supabase-queries";
 import { MultitrackEngine, StemType } from "@/lib/audio-engine";
 import { transposeText, transposeKey } from "@/lib/transpose";
 import { cn } from "@/lib/utils";
+import { resolveAudioUrl } from "@/lib/audio-url";
 import { parseChordsInText } from "@/lib/chord-parser";
 import { isChordProFormat } from "@/lib/chordpro-parser";
 import { useChordProParser } from "@/hooks/useChordProParser";

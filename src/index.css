@@ -39,8 +39,8 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
+    --border: 220 15% 12%;
+    --input: 220 15% 15%;
     --ring: 195 100% 50%;
 
     --sidebar-background: 220 18% 10%;
@@ -49,12 +49,13 @@
     --sidebar-primary-foreground: 220 20% 98%;
     --sidebar-accent: 220 15% 15%;
     --sidebar-accent-foreground: 220 15% 90%;
-    --sidebar-border: 220 15% 18%;
+    --sidebar-border: 220 15% 12%;
     --sidebar-ring: 195 100% 50%;
 
     --gradient-warm: linear-gradient(135deg, hsl(195 100% 50%), hsl(210 100% 45%));
     --gradient-card: linear-gradient(180deg, hsl(220 18% 12%), hsl(220 18% 9%));
     --shadow-glow: 0 0 20px hsl(195 100% 50% / 0.15);
+    --shadow-card: none;
   }
 
   /* Light mode */

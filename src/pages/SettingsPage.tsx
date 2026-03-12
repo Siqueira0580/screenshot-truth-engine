@@ -1,9 +1,11 @@
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Guitar, Piano } from "lucide-react";
+import { Guitar, Piano, Mic } from "lucide-react";
 import type { Instrument } from "@/lib/chord-diagrams";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import MetadataScanner from "@/components/MetadataScanner";
 
 const INSTRUMENTS: { value: Instrument; label: string; description: string; icon: typeof Guitar }[] = [
@@ -15,6 +17,7 @@ const INSTRUMENTS: { value: Instrument; label: string; description: string; icon
 
 export default function SettingsPage() {
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
+  const navigate = useNavigate();
 
   const handleSelect = async (instrument: Instrument) => {
     await setPreferredInstrument(instrument);
@@ -72,6 +75,24 @@ export default function SettingsPage() {
               );
             })}
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Ferramentas */}
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="text-lg">Ferramentas</CardTitle>
+          <CardDescription>Utilitários para músicos</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            className="gap-2 w-full sm:w-auto"
+            onClick={() => navigate("/tuner")}
+          >
+            <Mic className="h-4 w-4" />
+            Afinador Digital
+          </Button>
         </CardContent>
       </Card>
 

@@ -532,7 +532,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   ? "bg-primary/15"
                   : "bg-muted/5"
               )}
-              style={{ background: nearEnd && loopsRemaining[currentIndex] <= 0 ? undefined : "hsl(220 20% 6% / 0.8)" }}
+              style={{ background: nearEnd && loopsRemaining[currentIndex] <= 0 ? undefined : "hsl(var(--background) / 0.8)" }}
             >
               <div className="flex items-center gap-2 min-w-0">
                 <SkipForward className={cn(

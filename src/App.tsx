@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
 import AppLayout from "@/components/AppLayout";
 import SongsPage from "@/pages/SongsPage";
@@ -63,6 +64,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ThemeProvider>
           <UserPreferencesProvider>
             <Routes>
               <Route path="/" element={<LandingPage />} />
@@ -89,6 +91,7 @@ const App = () => (
               <Route path="*" element={<NotFound />} />
             </Routes>
           </UserPreferencesProvider>
+          </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

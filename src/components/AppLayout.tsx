@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const navItems = [
   { to: "/songs", icon: Music, label: "Músicas" },
@@ -20,6 +21,7 @@ const navItems = [
 export default function AppLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
 
@@ -73,6 +75,15 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
             <Button
               variant="ghost"
               size="icon"

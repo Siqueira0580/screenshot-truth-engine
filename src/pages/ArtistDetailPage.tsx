@@ -205,8 +205,13 @@ export default function ArtistDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  type="button"
                   className="h-8 w-8 text-muted-foreground hover:text-primary"
-                  onClick={() => navigate(`/songs/${song.id}`)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    navigate(`/songs/${song.id}`);
+                  }}
                   title="Editar"
                 >
                   <Pencil className="h-4 w-4" />
@@ -214,8 +219,13 @@ export default function ArtistDetailPage() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  type="button"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => setDeleteTarget({ id: song.id, title: song.title })}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    setDeleteTarget({ id: song.id, title: song.title });
+                  }}
                   title="Remover"
                 >
                   <Trash2 className="h-4 w-4" />

@@ -77,17 +77,17 @@ export default function RegisterPage() {
           <AuthBranding subtitle="Crie sua conta" />
 
           {/* Mobile-only feature banner */}
-          <div className="lg:hidden rounded-xl border border-slate-800 bg-slate-900/50 p-4 space-y-3">
-            <p className="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Novidades</p>
+          <div className="lg:hidden rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wider">Novidades</p>
             <div className="space-y-2">
-              <p className="text-xs text-slate-400">
-                <span className="mr-1">✍️</span> <span className="text-slate-200 font-medium">Composição IA</span> — Cante e a IA escreve a cifra
+              <p className="text-xs text-muted-foreground">
+                <span className="mr-1">✍️</span> <span className="text-foreground font-medium">Composição IA</span> — Cante e a IA escreve a cifra
               </p>
-              <p className="text-xs text-slate-400">
-                <span className="mr-1">🎧</span> <span className="text-slate-200 font-medium">Estúdio Pró</span> — Isole instrumentos e pratique
+              <p className="text-xs text-muted-foreground">
+                <span className="mr-1">🎧</span> <span className="text-foreground font-medium">Estúdio Pró</span> — Isole instrumentos e pratique
               </p>
-              <p className="text-xs text-slate-400">
-                <span className="mr-1">🎸</span> <span className="text-slate-200 font-medium">Palco</span> — Repertório inteligente com Loop
+              <p className="text-xs text-muted-foreground">
+                <span className="mr-1">🎸</span> <span className="text-foreground font-medium">Palco</span> — Repertório inteligente com Loop
               </p>
             </div>
           </div>

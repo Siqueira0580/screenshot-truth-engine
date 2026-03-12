@@ -9,7 +9,6 @@ interface FeaturedArtistsProps {
 
 export default function FeaturedArtists({ tracks, title = "🎤 Artistas em Destaque" }: FeaturedArtistsProps) {
   const navigate = useNavigate();
-  // Deduplicate artists
   const seen = new Set<number>();
   const artists = tracks
     .filter((t) => {
@@ -21,7 +20,7 @@ export default function FeaturedArtists({ tracks, title = "🎤 Artistas em Dest
 
   return (
     <div>
-      <h2 className="text-lg font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 mb-4">
+      <h2 className="text-lg font-bold uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent mb-4">
         {title}
       </h2>
       <ScrollArea className="w-full whitespace-nowrap">
@@ -32,7 +31,6 @@ export default function FeaturedArtists({ tracks, title = "🎤 Artistas em Dest
               className="shrink-0 w-[130px] md:w-[150px] group cursor-pointer"
               onClick={() => navigate(`/artist/${encodeURIComponent(track.artist.name)}`, { state: { photoUrl: track.artist.picture_xl || track.artist.picture_medium } })}
             >
-              {/* Semi-circular / polygonal panel */}
               <div
                 className="relative w-full aspect-[3/4] overflow-hidden mb-2"
                 style={{
@@ -45,18 +43,17 @@ export default function FeaturedArtists({ tracks, title = "🎤 Artistas em Dest
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
 
-                {/* Neon border glow */}
                 <div
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                   style={{
                     clipPath: "polygon(15% 0, 85% 0, 100% 10%, 100% 80%, 85% 100%, 15% 100%, 0 80%, 0 10%)",
-                    boxShadow: "inset 0 0 20px rgba(0,255,255,0.3), inset 0 0 20px rgba(255,0,255,0.2)",
+                    boxShadow: "inset 0 0 20px hsl(var(--primary) / 0.3), inset 0 0 20px hsl(var(--accent) / 0.2)",
                   }}
                 />
               </div>
-              <p className="text-center text-sm font-semibold text-white truncate px-1 group-hover:text-cyan-300 transition-colors">
+              <p className="text-center text-sm font-semibold text-foreground truncate px-1 group-hover:text-primary transition-colors">
                 {track.artist.name}
               </p>
             </div>

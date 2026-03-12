@@ -316,8 +316,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col"
-      style={{ background: "hsl(220 20% 4%)" }}
+      className="fixed inset-0 z-[100] flex flex-col bg-background text-foreground"
       onMouseMove={showControlsTemporarily}
       onTouchStart={showControlsTemporarily}
     >

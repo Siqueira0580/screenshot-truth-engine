@@ -15,7 +15,7 @@ export default function TunerPage() {
   const isFlat = cents < -IN_TUNE_THRESHOLD;
   const isSharp = cents > IN_TUNE_THRESHOLD;
 
-  // Normalized position for the indicator: -1 (flat) to +1 (sharp)
+  // Normalized position: -1 (flat) to +1 (sharp)
   const indicatorPos = Math.max(-1, Math.min(1, cents / CENTS_RANGE));
 
   return (
@@ -31,7 +31,7 @@ export default function TunerPage() {
 
       <Card className="border-border bg-card overflow-hidden">
         <CardContent className="p-6 sm:p-8 flex flex-col items-center gap-6">
-          {/* Toggle Button */}
+          {/* Toggle */}
           <Button
             onClick={toggle}
             size="lg"
@@ -39,35 +39,31 @@ export default function TunerPage() {
             className="gap-2 text-base"
           >
             {isActive ? (
-              <>
-                <MicOff className="h-5 w-5" />
-                Desligar Afinador
-              </>
+              <><MicOff className="h-5 w-5" /> Desligar Afinador</>
             ) : (
-              <>
-                <Mic className="h-5 w-5" />
-                Ligar Afinador
-              </>
+              <><Mic className="h-5 w-5" /> Ligar Afinador</>
             )}
           </Button>
 
-          {/* Main display area */}
-          <div className="w-full flex flex-col items-center gap-4 min-h-[260px] justify-center">
+          {/* Main display */}
+          <div className="w-full flex flex-col items-center gap-4 min-h-[320px] justify-center">
             {isActive && tunerData ? (
               <>
-                {/* Frequency */}
-                <p className="text-sm font-mono text-muted-foreground">
-                  {tunerData.frequency.toFixed(1)} Hz
-                </p>
+                {/* Emoji feedback */}
+                <div className={cn(
+                  "text-5xl transition-transform duration-200",
+                  isInTune && "animate-pulse"
+                )}>
+                  {isInTune ? "👍🏿" : "👎🏿"}
+                </div>
 
-                {/* Note Display */}
+                {/* Note */}
                 <div className="flex items-baseline gap-1">
                   <span
                     className={cn(
-                      "text-8xl sm:text-9xl font-black tracking-tighter transition-colors duration-200 font-[var(--font-display)]",
+                      "text-7xl sm:text-8xl font-black tracking-tighter transition-colors duration-200",
                       isInTune && "text-green-500",
-                      isFlat && "text-amber-500",
-                      isSharp && "text-amber-500"
+                      (isFlat || isSharp) && "text-amber-500"
                     )}
                   >
                     {tunerData.note}
@@ -77,30 +73,30 @@ export default function TunerPage() {
                   </span>
                 </div>
 
-                {/* Cents */}
-                <p
-                  className={cn(
-                    "text-lg font-mono font-bold transition-colors duration-200",
+                {/* Technical data */}
+                <div className="flex items-center gap-4 text-sm font-mono text-muted-foreground">
+                  <span>{tunerData.frequency.toFixed(1)} Hz</span>
+                  <span className="text-border">|</span>
+                  <span className={cn(
+                    "font-bold transition-colors duration-200",
                     isInTune && "text-green-500",
-                    isFlat && "text-amber-500",
-                    isSharp && "text-amber-500"
-                  )}
-                >
-                  {cents > 0 ? `+${cents}` : cents} cents
-                </p>
+                    (isFlat || isSharp) && "text-amber-500"
+                  )}>
+                    {cents > 0 ? `+${cents}` : cents} cents
+                  </span>
+                </div>
 
-                {/* Visual Indicator Bar */}
+                {/* Gauge */}
                 <div className="w-full max-w-xs space-y-2">
-                  {/* Labels */}
                   <div className="flex justify-between text-xs text-muted-foreground font-mono">
-                    <span>♭ Flat</span>
+                    <span>♭ Grave</span>
                     <span>Afinado</span>
-                    <span>Sharp ♯</span>
+                    <span>Agudo ♯</span>
                   </div>
 
-                  {/* Bar Track */}
-                  <div className="relative h-4 rounded-full bg-secondary overflow-hidden">
-                    {/* Center marker */}
+                  {/* Bar */}
+                  <div className="relative h-5 rounded-full bg-secondary overflow-hidden">
+                    {/* Center mark */}
                     <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-muted-foreground/40 -translate-x-1/2 z-10" />
 
                     {/* In-tune zone */}
@@ -112,21 +108,19 @@ export default function TunerPage() {
                       }}
                     />
 
-                    {/* Moving indicator */}
+                    {/* Pointer */}
                     <div
                       className={cn(
-                        "absolute top-0.5 bottom-0.5 w-3 rounded-full transition-all duration-100 -translate-x-1/2 z-20",
-                        isInTune && "bg-green-500 shadow-[0_0_12px_hsl(142_71%_45%/0.6)]",
-                        (isFlat || isSharp) && "bg-amber-500 shadow-[0_0_8px_hsl(38_92%_50%/0.4)]"
+                        "absolute top-0.5 bottom-0.5 w-3.5 rounded-full transition-all duration-100 -translate-x-1/2 z-20",
+                        isInTune && "bg-green-500 shadow-[0_0_14px_hsl(142_71%_45%/0.6)]",
+                        (isFlat || isSharp) && "bg-amber-500 shadow-[0_0_10px_hsl(38_92%_50%/0.4)]"
                       )}
-                      style={{
-                        left: `${50 + indicatorPos * 50}%`,
-                      }}
+                      style={{ left: `${50 + indicatorPos * 50}%` }}
                     />
                   </div>
 
-                  {/* Arrows / direction hint */}
-                  <div className="flex justify-center">
+                  {/* Direction hint */}
+                  <div className="flex justify-center h-5">
                     {isFlat && (
                       <span className="text-sm text-amber-500 font-medium animate-pulse">
                         ↑ Aperte a corda

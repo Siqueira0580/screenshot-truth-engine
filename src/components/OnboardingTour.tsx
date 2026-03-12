@@ -94,10 +94,10 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
                 <Icon className="w-8 h-8 text-white" />
               </div>
 
-              <h3 className="text-xl font-bold text-white font-[var(--font-display)]">
+              <h3 className="text-xl font-bold text-foreground font-[var(--font-display)]">
                 {current.title}
               </h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {current.description}
               </p>
             </motion.div>
@@ -110,15 +110,15 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
                 key={i}
                 className={`h-2 rounded-full transition-all duration-300 ${
                   i === step
-                    ? "w-8 bg-gradient-to-r from-cyan-400 to-fuchsia-500"
-                    : "w-2 bg-slate-700"
+                    ? "w-8 bg-gradient-to-r from-primary to-accent"
+                    : "w-2 bg-muted"
                 }`}
               />
             ))}
           </div>
 
           {/* Step counter */}
-          <p className="text-xs text-slate-600">{step + 1} de {STEPS.length}</p>
+          <p className="text-xs text-muted-foreground">{step + 1} de {STEPS.length}</p>
 
           {/* Buttons */}
           <div className="flex w-full gap-3">

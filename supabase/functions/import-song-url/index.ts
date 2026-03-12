@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,18 +7,80 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const ALLOWED_HOSTS = [
+  "cifraclub.com.br",
+  "www.cifraclub.com.br",
+  "letras.mus.br",
+  "www.letras.mus.br",
+  "ultimate-guitar.com",
+  "www.ultimate-guitar.com",
+  "tabs.ultimate-guitar.com",
+  "cifras.com.br",
+  "www.cifras.com.br",
+];
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // ── Authenticate the caller ─────────────────────────────────
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const userSupabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const { url } = await req.json();
     if (!url || typeof url !== "string") {
       return new Response(JSON.stringify({ error: "URL é obrigatória" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ── Validate URL: only HTTPS and allowed hosts ──────────────
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url);
+    } catch {
+      return new Response(JSON.stringify({ error: "URL inválida" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (parsedUrl.protocol !== "https:") {
+      return new Response(JSON.stringify({ error: "Apenas URLs HTTPS são permitidas" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!ALLOWED_HOSTS.some((h) => parsedUrl.hostname === h || parsedUrl.hostname.endsWith("." + h))) {
+      return new Response(
+        JSON.stringify({ error: "Domínio não permitido. Use links do CifraClub, Letras, Ultimate Guitar ou Cifras." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -45,7 +108,6 @@ serve(async (req) => {
     const html = await pageResp.text();
 
     // Step A.1: Pre-extract structured metadata from HTML before stripping
-    // YouTube embed URL
     let youtubeUrl: string | null = null;
     const ytMatch = html.match(/iframe[^>]+src=["']([^"']*youtube\.com\/embed\/[^"']+)["']/i);
     if (ytMatch) {
@@ -55,7 +117,6 @@ serve(async (req) => {
       console.log("YouTube URL found:", youtubeUrl);
     }
 
-    // Musical key from common selectors (Cifra Club pattern: #cifra_tom, .cifra-tom)
     let htmlMusicalKey: string | null = null;
     const keyPatterns = [
       /<a[^>]*id=["']?cifra_tom["']?[^>]*>([^<]+)<\/a>/i,
@@ -68,7 +129,6 @@ serve(async (req) => {
       if (m) { htmlMusicalKey = m[1].trim(); break; }
     }
 
-    // Composer from common selectors
     let htmlComposer: string | null = null;
     const composerPatterns = [
       /<[^>]*class=["'][^"']*compositor[^"']*["'][^>]*>([^<]+)/i,
@@ -80,7 +140,6 @@ serve(async (req) => {
       if (m) { htmlComposer = m[1].trim(); break; }
     }
 
-    // Strip scripts, styles, and HTML tags to get raw text
     const stripped = html
       .replace(/<script[\s\S]*?<\/script>/gi, "")
       .replace(/<style[\s\S]*?<\/style>/gi, "")
@@ -93,7 +152,6 @@ serve(async (req) => {
       .replace(/\n{3,}/g, "\n\n")
       .trim();
 
-    // Limit to ~8000 chars to stay within token limits
     const truncated = stripped.slice(0, 8000);
 
     // Step B: AI Processing
@@ -175,13 +233,11 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
 
     const aiData = await aiResp.json();
 
-    // Extract from tool call response
     let result: { title: string; artist: string; genre: string; content: string; musical_key?: string | null; composer?: string | null; bpm?: number | null };
     const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
     if (toolCall?.function?.arguments) {
       result = JSON.parse(toolCall.function.arguments);
     } else {
-      // Fallback: try parsing content directly
       const raw = aiData.choices?.[0]?.message?.content || "";
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
@@ -190,7 +246,6 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
       result = JSON.parse(jsonMatch[0]);
     }
 
-    // Merge HTML-extracted metadata (prefer HTML-parsed values as they're more reliable, fallback to AI)
     const finalMusicalKey = htmlMusicalKey || result.musical_key || null;
     const finalComposer = htmlComposer || result.composer || null;
     const finalYoutubeUrl = youtubeUrl || null;

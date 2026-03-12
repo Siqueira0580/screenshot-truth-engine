@@ -86,8 +86,7 @@ export default function CompositionStudioPage() {
               .from("audio-stems")
               .upload(path, blob, { upsert: true, contentType: blob.type || "audio/mpeg" });
             if (!upErr) {
-              const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
-              fileFullUrl = urlData.publicUrl;
+              fileFullUrl = path;
             }
           }
         } catch (audioErr) {

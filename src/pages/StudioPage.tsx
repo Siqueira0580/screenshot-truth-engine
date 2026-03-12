@@ -41,11 +41,11 @@ export default function StudioPage() {
         .upload(path, file, { upsert: true, contentType: file.type || "audio/mpeg" });
       if (upErr) throw upErr;
 
-      const { data: urlData } = supabase.storage.from("audio-stems").getPublicUrl(path);
       const { data: { user } } = await supabase.auth.getUser();
+      // Create audio_tracks record first so RLS policy can validate ownership
       const { error: dbErr } = await supabase.from("audio_tracks").insert({
         song_id: song.id,
-        file_full: urlData.publicUrl,
+        file_full: path,
         user_id: user?.id || null,
       });
       if (dbErr) throw dbErr;

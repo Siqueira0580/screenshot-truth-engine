@@ -205,8 +205,12 @@ serve(async (req) => {
             continue;
           }
 
-          const { data: urlData } = adminSupabase.storage.from("audio-stems").getPublicUrl(storagePath);
-          updates[dbColumn] = urlData.publicUrl;
+          const { data: signedData, error: signedErr } = await adminSupabase.storage.from("audio-stems").createSignedUrl(storagePath, 60 * 60 * 24 * 365);
+          if (signedErr || !signedData?.signedUrl) {
+            console.error(`Failed to create signed URL for ${stemName}:`, signedErr);
+            continue;
+          }
+          updates[dbColumn] = signedData.signedUrl;
           console.log(`Uploaded ${stemName}`);
         }
 

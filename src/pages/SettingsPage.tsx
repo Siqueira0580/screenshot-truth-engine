@@ -1,9 +1,11 @@
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Guitar, Piano } from "lucide-react";
+import { Guitar, Piano, Mic } from "lucide-react";
 import type { Instrument } from "@/lib/chord-diagrams";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import MetadataScanner from "@/components/MetadataScanner";
 
 const INSTRUMENTS: { value: Instrument; label: string; description: string; icon: typeof Guitar }[] = [

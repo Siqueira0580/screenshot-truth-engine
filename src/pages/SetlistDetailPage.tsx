@@ -672,20 +672,20 @@ export default function SetlistDetailPage() {
       />
 
       {/* Add song dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenre("Todos"); } }}>
+      <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenres([]); } }}>
         <DialogContent className="max-h-[80vh] flex flex-col">
           <DialogHeader><DialogTitle>Adicionar Música</DialogTitle></DialogHeader>
           <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <div className="flex overflow-x-auto gap-2 pb-2 w-full scrollbar-hide -mx-1 px-1">
-            {["Todos", "Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
+          <div className="flex flex-wrap gap-2 w-full mt-3 mb-4">
+            {["Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
               <button
                 key={genre}
-                onClick={() => setSelectedGenre(genre)}
+                onClick={() => toggleGenre(genre)}
                 className={cn(
-                  "shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap",
-                  selectedGenre === genre
+                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                  selectedGenres.includes(genre)
                     ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/50 text-secondary-foreground hover:bg-secondary"
+                    : "bg-secondary/50 text-secondary-foreground border border-border hover:bg-secondary"
                 )}
               >
                 {genre}

@@ -78,6 +78,15 @@ export default function AppLayout() {
             <Button
               variant="ghost"
               size="icon"
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => navigate("/settings")}
               title="Configurações"
               className="text-muted-foreground hover:text-foreground"

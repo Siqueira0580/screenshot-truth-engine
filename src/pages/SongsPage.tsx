@@ -33,9 +33,7 @@ export default function SongsPage() {
   const [pdfProgress, setPdfProgress] = useState({ done: 0, total: 0 });
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [importLinkOpen, setImportLinkOpen] = useState(false);
-  const [uploadingSheetPdf, setUploadingSheetPdf] = useState(false);
   const pdfInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
   const queryClient = useQueryClient();
   const { shouldShow: showTour, dismiss: dismissTour } = useOnboardingTour();
   const [tourVisible, setTourVisible] = useState(showTour);

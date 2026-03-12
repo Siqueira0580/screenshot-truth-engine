@@ -40,7 +40,7 @@ export default function AppLayout() {
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden pb-16 lg:pb-0">
       {/* Desktop Header */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-border/50 dark:border-border/30 bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center gap-6">
           <button type="button" onClick={() => navigate("/songs")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img src={smartCifraLogo} alt="Smart Cifra" className="h-12 w-12 rounded-lg" />

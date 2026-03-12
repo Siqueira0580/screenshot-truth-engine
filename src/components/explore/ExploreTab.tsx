@@ -64,10 +64,10 @@ export default function ExploreTab() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : isError || tracks.length === 0 ? (
-        <div className="text-center py-20 text-slate-500">
+        <div className="text-center py-20 text-muted-foreground">
           <p>Não foi possível carregar os destaques. Tente novamente mais tarde.</p>
         </div>
       ) : (

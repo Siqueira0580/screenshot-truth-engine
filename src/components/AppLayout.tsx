@@ -101,24 +101,45 @@ export default function AppLayout() {
             >
               <Settings className="h-4 w-4" />
             </Button>
-            <button
-              onClick={() => navigate("/profile")}
-              className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-secondary transition-colors"
-              title="Meu Perfil"
-            >
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={avatarUrl || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground hidden lg:block">
-                {user?.email}
-              </span>
-            </button>
-            <Button variant="ghost" size="icon" onClick={signOut} title="Sair" className="hidden lg:inline-flex">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-secondary transition-colors"
+                  title="Meu Perfil"
+                >
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={avatarUrl || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm text-muted-foreground hidden lg:block">
+                    {user?.email}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 cursor-pointer">
+                  <User className="h-4 w-4" />
+                  Meu Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/settings")} className="gap-2 cursor-pointer">
+                  <Settings className="h-4 w-4" />
+                  Configurações
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await signOut();
+                    toast.success("Sessão terminada com sucesso");
+                  }}
+                  className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>

@@ -156,7 +156,9 @@ export default function StudioDetailPage() {
     if (!audioTrack?.file_full || !songId) return;
     setDetectingKey(true);
     try {
-      const result = await analyzeAudio(audioTrack.file_full);
+      const url = await resolveAudioUrl(audioTrack.file_full);
+      if (!url) throw new Error("Não foi possível acessar o áudio");
+      const result = await analyzeAudio(url);
       const keyValue = `${result.key.key}${result.key.mode === "Minor" ? "m" : ""}`;
       await updateSong(songId, { musical_key: keyValue, bpm: result.bpm });
       refetchSong();

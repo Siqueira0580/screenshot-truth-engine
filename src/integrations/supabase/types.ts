@@ -42,6 +42,7 @@ export type Database = {
         Row: {
           about: string | null
           created_at: string
+          created_by: string | null
           id: string
           name: string
           photo_url: string | null
@@ -49,6 +50,7 @@ export type Database = {
         Insert: {
           about?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           name: string
           photo_url?: string | null
@@ -56,6 +58,7 @@ export type Database = {
         Update: {
           about?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           name?: string
           photo_url?: string | null
@@ -419,6 +422,7 @@ export type Database = {
           bpm: number | null
           composer: string | null
           created_at: string
+          created_by: string | null
           default_speed: number | null
           enrichment_status: string | null
           id: string
@@ -439,6 +443,7 @@ export type Database = {
           bpm?: number | null
           composer?: string | null
           created_at?: string
+          created_by?: string | null
           default_speed?: number | null
           enrichment_status?: string | null
           id?: string
@@ -459,6 +464,7 @@ export type Database = {
           bpm?: number | null
           composer?: string | null
           created_at?: string
+          created_by?: string | null
           default_speed?: number | null
           enrichment_status?: string | null
           id?: string

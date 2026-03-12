@@ -179,10 +179,10 @@ export default function CompositionStudioPage() {
         if (uploadErr) {
           console.error("Audio upload error:", uploadErr);
         } else {
-          const { data: urlData } = supabase.storage
+          const { data: urlData } = await supabase.storage
             .from("compositions_audio")
-            .getPublicUrl(fileName);
-          audioUrl = urlData.publicUrl;
+            .createSignedUrl(fileName, 3600);
+          audioUrl = urlData?.signedUrl || null;
         }
       }
 

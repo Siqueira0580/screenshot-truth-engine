@@ -339,17 +339,17 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
 
               {/* Current song info - visible on mobile in this row */}
               <div className="flex items-center gap-2 min-w-0 flex-1 md:hidden">
-                {song.artist_photo_url && (
-                  <Avatar className="h-8 w-8 shrink-0 border-2 border-primary/40">
+              {song.artist_photo_url && (
+                  <Avatar className="h-10 w-10 shrink-0 border-2 border-primary/40">
                     <AvatarImage src={song.artist_photo_url} alt={song.artist || ""} className="object-cover" />
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs">
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
                       {(song.artist || "?")[0]}
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-sm font-bold text-foreground truncate">{song.title}</h2>
-                  <p className="text-[10px] text-muted-foreground truncate">
+                <div className="min-w-0 flex-1 flex flex-col justify-center">
+                  <h2 className="text-lg font-bold leading-tight text-foreground truncate">{song.title}</h2>
+                  <p className="text-sm text-muted-foreground truncate">
                     {song.artist}
                     {displayKey && ` · ${displayKey}`}
                     {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}

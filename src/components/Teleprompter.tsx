@@ -346,10 +346,14 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                   </Avatar>
                 )}
                 <div className="min-w-0 flex-1 flex flex-col justify-center">
-                  <h2 className="text-lg font-bold leading-tight text-foreground truncate">{song.title}</h2>
-                  <p className="text-sm text-muted-foreground truncate">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-extrabold leading-tight text-foreground truncate">{song.title}</h2>
+                    {displayKey && (
+                      <span className="shrink-0 text-lg font-black text-primary font-mono">{displayKey}</span>
+                    )}
+                  </div>
+                  <p className="text-base text-muted-foreground truncate">
                     {song.artist}
-                    {displayKey && ` · ${displayKey}`}
                     {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                   </p>
                 </div>

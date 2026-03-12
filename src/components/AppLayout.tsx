@@ -1,14 +1,22 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { toast } from "sonner";
 
 const navItems = [
   { to: "/songs", icon: Music, label: "Músicas" },

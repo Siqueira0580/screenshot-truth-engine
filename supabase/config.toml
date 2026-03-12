@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.transcribe-composition]
 verify_jwt = false
+
+[functions.import-sqlite]
+verify_jwt = false

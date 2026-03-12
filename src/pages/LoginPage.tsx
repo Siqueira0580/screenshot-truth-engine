@@ -71,7 +71,7 @@ export default function LoginPage() {
           <AuthBranding subtitle="Entre na sua conta" />
 
           {/* Mobile-only feature banner */}
-          <div className="lg:hidden rounded-xl border border-border bg-card p-4 space-y-3 shadow-sm">
+          <div className="lg:hidden rounded-xl border border-transparent bg-card p-4 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
             <p className="text-xs font-semibold text-primary uppercase tracking-wider">Novidades</p>
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">

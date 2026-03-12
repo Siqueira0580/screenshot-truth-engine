@@ -17,6 +17,7 @@ const INSTRUMENTS: { value: Instrument; label: string; description: string; icon
 
 export default function SettingsPage() {
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
+  const navigate = useNavigate();
 
   const handleSelect = async (instrument: Instrument) => {
     await setPreferredInstrument(instrument);

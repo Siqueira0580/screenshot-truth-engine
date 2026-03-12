@@ -234,7 +234,8 @@ export default function SongsPage() {
               {filtered.map((song, i) => (
                 <div
                   key={song.id}
-                  className="group flex items-center justify-between w-full max-w-full gap-3 p-3 rounded-lg border border-border bg-card transition-colors hover:border-primary/30 animate-fade-in"
+                  className="group flex items-center justify-between w-full max-w-full gap-3 p-3 rounded-lg border border-transparent bg-card transition-all hover:shadow-[var(--shadow-glow)] animate-fade-in"
+                  style={{ boxShadow: "var(--shadow-card)" }}
                   style={{ animationDelay: `${i * 30}ms` }}
                 >
                   <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">

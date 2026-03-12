@@ -86,6 +86,7 @@ const App = () => (
                 <Route path="/study/:songId" element={<StudyPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/tuner" element={<TunerPage />} />
                 <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
               </Route>
               <Route path="/live/:sessionId" element={<LiveViewerPage />} />

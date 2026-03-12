@@ -78,6 +78,24 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Ferramentas */}
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="text-lg">Ferramentas</CardTitle>
+          <CardDescription>Utilitários para músicos</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            variant="outline"
+            className="gap-2 w-full sm:w-auto"
+            onClick={() => navigate("/tuner")}
+          >
+            <Mic className="h-4 w-4" />
+            Afinador Digital
+          </Button>
+        </CardContent>
+      </Card>
+
       <MetadataScanner />
     </div>
   );

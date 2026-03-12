@@ -196,6 +196,7 @@ export default function SetlistDetailPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedGenre, setSelectedGenre] = useState("Todos");
   const [localOverrides, setLocalOverrides] = useState<
     Record<string, { loop_count: number | null; speed: number | null; bpm: number | null; transposed_key: string | null }>
   >({});
@@ -481,11 +482,12 @@ export default function SetlistDetailPage() {
   };
 
   const existingIds = new Set(items.map((i: any) => i.song_id));
-  const availableSongs = allSongs.filter(
+  const availableSongs = useMemo(() => allSongs.filter(
     (s) => !existingIds.has(s.id) &&
+      (selectedGenre === "Todos" || (s.style && s.style.toLowerCase() === selectedGenre.toLowerCase())) &&
       (s.title.toLowerCase().includes(search.toLowerCase()) ||
         (s.artist && s.artist.toLowerCase().includes(search.toLowerCase())))
-  );
+  ), [allSongs, existingIds, search, selectedGenre]);
 
   // WhatsApp share
   const handleShareWhatsApp = useCallback(() => {
@@ -664,20 +666,39 @@ export default function SetlistDetailPage() {
       />
 
       {/* Add song dialog */}
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="max-h-[80vh]">
+      <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenre("Todos"); } }}>
+        <DialogContent className="max-h-[80vh] flex flex-col">
           <DialogHeader><DialogTitle>Adicionar Música</DialogTitle></DialogHeader>
-          <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <div className="max-h-[50vh] overflow-y-auto space-y-1 mt-2">
+          <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <div className="flex overflow-x-auto gap-2 pb-2 w-full scrollbar-hide -mx-1 px-1">
+            {["Todos", "Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
+              <button
+                key={genre}
+                onClick={() => setSelectedGenre(genre)}
+                className={cn(
+                  "shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap",
+                  selectedGenre === genre
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary/50 text-secondary-foreground hover:bg-secondary"
+                )}
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
             {availableSongs.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">Nenhuma música disponível</p>
             ) : (
               availableSongs.map((song) => (
                 <button key={song.id} onClick={() => addMutation.mutate(song.id)} className="w-full flex items-center gap-3 rounded-lg p-3 text-left hover:bg-secondary transition-colors">
                   <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{song.title}</p>
-                    <p className="text-sm text-muted-foreground truncate">{song.artist} {song.musical_key && `· ${song.musical_key}`}</p>
+                    <p className="text-sm text-muted-foreground truncate">
+                      {song.artist} {song.musical_key && `· ${song.musical_key}`}
+                      {song.style && <span className="ml-1 text-xs opacity-60">• {song.style}</span>}
+                    </p>
                   </div>
                 </button>
               ))

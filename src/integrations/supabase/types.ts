@@ -379,6 +379,7 @@ export type Database = {
           interval_duration: number | null
           musicians: Json | null
           name: string
+          public_share_token: string | null
           show_date: string | null
           show_duration: number | null
           start_time: string | null
@@ -392,6 +393,7 @@ export type Database = {
           interval_duration?: number | null
           musicians?: Json | null
           name: string
+          public_share_token?: string | null
           show_date?: string | null
           show_duration?: number | null
           start_time?: string | null
@@ -405,6 +407,7 @@ export type Database = {
           interval_duration?: number | null
           musicians?: Json | null
           name?: string
+          public_share_token?: string | null
           show_date?: string | null
           show_duration?: number | null
           start_time?: string | null

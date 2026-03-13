@@ -186,7 +186,17 @@ export default function SongDetailPage() {
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">{song.title}</h1>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setYoutubeModalOpen(true)}
+              className="gap-1.5 text-xs sm:text-sm"
+            >
+              <Youtube className="h-4 w-4 text-red-500" />
+              <span className="hidden sm:inline">{song.youtube_url ? "Alterar YouTube" : "Vincular YouTube"}</span>
+              <span className="sm:hidden">YouTube</span>
+            </Button>
             {song.body_text && (
               <Button
                 variant="outline"

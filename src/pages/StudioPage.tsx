@@ -8,6 +8,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchSongs, fetchArtists, createSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+
+const STUDIO_TOUR_STEPS = [
+  {
+    target: "#tour-studio-title",
+    title: "Estúdio de Ensaio",
+    content: "Aqui você encontra o player multitrack para ensaiar suas músicas com mixer e transposição.",
+  },
+  {
+    target: "#tour-studio-search",
+    title: "Buscar Músicas",
+    content: "Pesquise rapidamente qualquer música do seu repertório por título ou artista.",
+  },
+  {
+    target: "#tour-studio-upload",
+    title: "Enviar Áudio",
+    content: "Faça upload de um arquivo de áudio (.mp3, .wav, etc.) para adicionar ao estúdio.",
+  },
+  {
+    target: "#tour-studio-list",
+    title: "Lista de Músicas",
+    content: "Clique numa música para abrir o mixer multitrack com controle de stems, volume e transposição.",
+  },
+];
 
 export default function StudioPage() {
   const navigate = useNavigate();
@@ -15,6 +40,11 @@ export default function StudioPage() {
   const [search, setSearch] = useState("");
   const [uploadingNew, setUploadingNew] = useState(false);
   const newAudioRef = useRef<HTMLInputElement>(null);
+  const { run: runTour, completeTour, replayTour } = useGuidedTour("studio_page");
+
+  useState(() => {
+    (window as any).__replayStudioTour = replayTour;
+  });
 
   const { data: songs = [] } = useQuery({ queryKey: ["songs"], queryFn: fetchSongs });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
@@ -62,7 +92,9 @@ export default function StudioPage() {
 
   return (
     <div className="space-y-4 overflow-x-hidden">
-      <div>
+      <GuidedTour steps={STUDIO_TOUR_STEPS} run={runTour} onFinish={completeTour} />
+
+      <div id="tour-studio-title">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Estúdio de Ensaio</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Player multitrack com mixer e transposição</p>
       </div>
@@ -70,6 +102,7 @@ export default function StudioPage() {
       {/* Search + Upload */}
       <div className="flex gap-2 w-full">
         <Input
+          id="tour-studio-search"
           placeholder="Buscar música..."
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -87,6 +120,7 @@ export default function StudioPage() {
           }}
         />
         <Button
+          id="tour-studio-upload"
           size="sm"
           className="h-9 gap-1.5 shrink-0"
           disabled={uploadingNew}
@@ -98,6 +132,7 @@ export default function StudioPage() {
       </div>
 
       {/* Song grid */}
+      <div id="tour-studio-list">
       {filteredSongs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
           <Upload className="h-12 w-12 mb-4 opacity-40" />
@@ -143,6 +178,7 @@ export default function StudioPage() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

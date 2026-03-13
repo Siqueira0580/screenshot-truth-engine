@@ -13,6 +13,31 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+
+const COMPOSITIONS_TOUR_STEPS = [
+  {
+    target: "#tour-comp-header",
+    title: "Cofre Criativo",
+    content: "Este é o seu espaço privado para composições originais. Tudo aqui é seguro e só seu.",
+  },
+  {
+    target: "#tour-comp-new",
+    title: "Nova Composição",
+    content: "Clique aqui para abrir o estúdio de composição e começar a escrever letras e cifras.",
+  },
+  {
+    target: "#tour-comp-search",
+    title: "Busca e Filtros",
+    content: "Pesquise por nome e ordene suas composições por data ou ordem alfabética.",
+  },
+  {
+    target: "#tour-comp-list",
+    title: "Suas Composições",
+    content: "Aqui ficam suas obras. Clique numa para editar. Composições partilhadas aparecem com badge.",
+  },
+];
 
 interface Composition {
   id: string;
@@ -35,6 +60,11 @@ export default function CompositionsHomePage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const { run: runTour, completeTour, replayTour } = useGuidedTour("compositions_page");
+
+  useState(() => {
+    (window as any).__replayCompositionsTour = replayTour;
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -80,9 +110,11 @@ export default function CompositionsHomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 lg:p-8">
+      <GuidedTour steps={COMPOSITIONS_TOUR_STEPS} run={runTour} onFinish={completeTour} />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
+        <div id="tour-comp-header">
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-primary" />
             <h1 className="text-2xl font-bold text-foreground">Cofre Criativo</h1>
@@ -91,14 +123,14 @@ export default function CompositionsHomePage() {
             {compositions.length} composiç{compositions.length === 1 ? "ão" : "ões"} • Privado e seguro
           </p>
         </div>
-        <Button className="gap-2" onClick={() => navigate("/compose")}>
+        <Button id="tour-comp-new" className="gap-2" onClick={() => navigate("/compose")}>
           <Plus className="h-4 w-4" /> Nova Composição
         </Button>
       </div>
 
       {/* Search & Filter — only show if there are compositions */}
       {compositions.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div id="tour-comp-search" className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -146,7 +178,7 @@ export default function CompositionsHomePage() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="tour-comp-list" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((comp) => {
             const owned = isOwner(comp);
             return (

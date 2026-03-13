@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube } from "lucide-react";
+import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Plus, Users, Trash2, SortAsc, SortDesc, TrendingUp, Music, Search, List, Grid2x2, Maximize } from "lucide-react";

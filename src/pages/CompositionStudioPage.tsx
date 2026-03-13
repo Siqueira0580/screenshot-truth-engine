@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, Music, Sparkles, Search, Loader2, Trash2, ArrowLeft, UserPlus, Eraser, Headphones, Pause, Code, Eye } from "lucide-react";
+import { Save, Share2, Mic, Square, Music, Sparkles, Search, Loader2, Trash2, UserPlus, Eraser, Headphones, Pause, Code, Eye } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
 import AudioTakesList, { type AudioTake } from "@/components/AudioTakesList";
 import { useAuth } from "@/contexts/AuthContext";

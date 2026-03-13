@@ -182,14 +182,12 @@ export default function SongDetailPage() {
 
   return (
     <div className="max-w-4xl space-y-4 sm:space-y-6 animate-fade-in overflow-x-hidden">
-      <Button type="button" variant="ghost" size="sm" className="gap-1.5" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
-        <ArrowLeft className="h-4 w-4" />
-        Voltar
-      </Button>
-
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">{song.title}</h1>
+          <div className="flex items-center gap-2">
+            <BackButton />
+            <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">{song.title}</h1>
+          </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <Button
               variant="outline"

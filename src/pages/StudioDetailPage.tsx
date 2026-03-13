@@ -262,9 +262,7 @@ export default function StudioDetailPage() {
     <div className="space-y-5 w-full max-w-[100vw] overflow-x-hidden">
       {/* Back button + title */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <BackButton />
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{song?.title || "Carregando..."}</h1>
           {song?.artist && <p className="text-muted-foreground text-sm">{song.artist}</p>}

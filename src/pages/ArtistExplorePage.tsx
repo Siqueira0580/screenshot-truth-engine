@@ -210,15 +210,7 @@ export default function ArtistExplorePage() {
         />
 
         {/* Back button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-30 text-muted-foreground hover:text-foreground backdrop-blur-sm bg-background/20 rounded-full"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
+        <BackButton className="absolute top-4 left-4 z-30 backdrop-blur-sm bg-background/20 rounded-full" />
 
         {/* Centered profile identity */}
         <div className="relative z-10 flex flex-col items-center justify-end h-full pb-8 px-4">

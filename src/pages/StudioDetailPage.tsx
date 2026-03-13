@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano, Guitar,
-  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch, BookOpen, AudioLines,
+  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ScanSearch, BookOpen, AudioLines,
 } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";

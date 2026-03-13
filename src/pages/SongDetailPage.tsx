@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2 } from "lucide-react";
+import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
@@ -12,6 +12,7 @@ import ChordText from "@/components/ChordText";
 import ShowButton from "@/components/ShowButton";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import AutoCipherViewer from "@/components/AutoCipherViewer";
+import YouTubeSearchModal from "@/components/YouTubeSearchModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +40,7 @@ export default function SongDetailPage() {
   const [generating, setGenerating] = useState(false);
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);
   const [confirmSaveAsDefault, setConfirmSaveAsDefault] = useState(false);
+  const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
@@ -184,7 +186,17 @@ export default function SongDetailPage() {
       <div className="space-y-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">{song.title}</h1>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setYoutubeModalOpen(true)}
+              className="gap-1.5 text-xs sm:text-sm"
+            >
+              <Youtube className="h-4 w-4 text-red-500" />
+              <span className="hidden sm:inline">{song.youtube_url ? "Alterar YouTube" : "Vincular YouTube"}</span>
+              <span className="sm:hidden">YouTube</span>
+            </Button>
             {song.body_text && (
               <Button
                 variant="outline"
@@ -309,6 +321,13 @@ export default function SongDetailPage() {
         onClose={() => setTeleprompterOpen(false)}
       />
       <SongChordsFAB bodyText={displayBody} />
+      <YouTubeSearchModal
+        open={youtubeModalOpen}
+        onOpenChange={setYoutubeModalOpen}
+        songId={id!}
+        songTitle={song.title}
+        songArtist={song.artist}
+      />
     </div>
   );
 }

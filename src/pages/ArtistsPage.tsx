@@ -454,6 +454,12 @@ export default function ArtistsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <GuidedTour
+        steps={ARTISTS_TOUR_STEPS}
+        run={runArtistsTour}
+        onFinish={completeTour}
+      />
     </div>
   );
 }

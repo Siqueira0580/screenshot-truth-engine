@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { Plus, ListMusic, Trash2, Calendar, Clock, Users, ArrowUpDown, RefreshCw, Sparkles } from "lucide-react";
@@ -12,6 +12,37 @@ import { ptBR } from "date-fns/locale";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import AutoSetlistGeneratorModal from "@/components/AutoSetlistGeneratorModal";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+import type { Step } from "react-joyride";
+
+const SETLISTS_TOUR_STEPS: Step[] = [
+  {
+    target: "body",
+    content: "Aqui você organiza o seu show! Crie repertórios, defina a ordem das músicas e tenha tudo pronto para o palco.",
+    title: "🎤 Seus Repertórios",
+    placement: "center",
+    disableBeacon: true,
+  },
+  {
+    target: "#tour-setlist-actions",
+    content: "Crie um novo repertório manualmente ou use a IA para sugerir um repertório baseado no seu estilo e nas suas músicas!",
+    title: "✨ Criar Repertório",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-setlist-filters",
+    content: "Ordene por data ou nome e filtre por período para encontrar rapidamente o repertório que precisa.",
+    title: "🔍 Filtros Inteligentes",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-setlist-list",
+    content: "Clique em qualquer repertório para ver os detalhes, reorganizar as músicas e iniciar o teleprompter para o seu show!",
+    title: "📋 Lista de Repertórios",
+    placement: "top",
+  },
+];
 
 type SortOption = "newest" | "oldest" | "name_asc" | "name_desc";
 type DateFilter = "all" | "7days" | "30days" | "3months";

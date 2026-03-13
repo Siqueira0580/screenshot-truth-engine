@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Plus, Users, Trash2, SortAsc, SortDesc, TrendingUp, Music, Search, List, Grid2x2, Maximize } from "lucide-react";
@@ -12,6 +12,43 @@ import { Badge } from "@/components/ui/badge";
 import { fetchArtists, createArtist, deleteArtist, fetchSongs } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+import type { Step } from "react-joyride";
+
+const ARTISTS_TOUR_STEPS: Step[] = [
+  {
+    target: "body",
+    content: "Aqui estão todos os artistas do seu repertório, organizados automaticamente a partir das suas músicas salvas.",
+    title: "🎸 Seus Artistas",
+    placement: "center",
+    disableBeacon: true,
+  },
+  {
+    target: "#tour-artist-search",
+    content: "Pesquise rapidamente por qualquer artista do seu repertório pelo nome.",
+    title: "🔎 Busca de Artistas",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-artist-view-toggle",
+    content: "Alterne entre visualização em lista, cards médios ou cards grandes conforme a sua preferência.",
+    title: "👁️ Modos de Visualização",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-artist-sort",
+    content: "Ordene os artistas por nome (A-Z, Z-A) ou por popularidade baseada nos seus acessos.",
+    title: "📊 Ordenação",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-artist-grid",
+    content: "Clique num artista para ver o seu perfil completo com todas as músicas salvas na sua biblioteca!",
+    title: "🎶 Perfis dos Artistas",
+    placement: "top",
+  },
+];
 
 type SortMode = "alpha_asc" | "alpha_desc" | "most_accessed";
 type ViewMode = "list" | "medium" | "large";

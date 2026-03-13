@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
           break;
         }
       } catch (e) {
-        lastError = `${instance}: ${e.message}`;
+        _lastError = `${instance}: ${e.message}`;
         continue;
       }
     }

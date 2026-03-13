@@ -84,7 +84,7 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
-            {["/songs", "/setlists", "/artists"].some(p => location.pathname.startsWith(p)) && (
+            {["/songs", "/setlists", "/artists", "/compositions", "/studio"].some(p => location.pathname.startsWith(p)) && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -96,6 +96,10 @@ export default function AppLayout() {
                     (window as any).__replaySetlistsTour();
                   } else if (path.startsWith("/artists") && (window as any).__replayArtistsTour) {
                     (window as any).__replayArtistsTour();
+                  } else if (path.startsWith("/compositions") && (window as any).__replayCompositionsTour) {
+                    (window as any).__replayCompositionsTour();
+                  } else if (path === "/studio" && (window as any).__replayStudioTour) {
+                    (window as any).__replayStudioTour();
                   } else {
                     toast.info("Nenhum tour disponível para esta página.");
                   }

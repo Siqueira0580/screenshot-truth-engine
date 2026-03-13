@@ -178,6 +178,7 @@ export default function StudioPage() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

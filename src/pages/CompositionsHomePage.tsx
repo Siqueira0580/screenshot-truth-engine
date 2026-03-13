@@ -178,7 +178,7 @@ export default function CompositionsHomePage() {
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="tour-comp-list" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((comp) => {
             const owned = isOwner(comp);
             return (

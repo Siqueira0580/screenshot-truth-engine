@@ -99,10 +99,10 @@ export default function PublicSetlistPage() {
                 {index + 1}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm sm:text-base truncate">{item.songs?.title}</p>
+                <p className="font-medium text-sm sm:text-base truncate">{item.song_title}</p>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {item.songs?.artist}
-                  {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
+                  {item.song_artist}
+                  {item.song_musical_key && ` · ${item.song_musical_key}`}
                 </p>
               </div>
               <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />

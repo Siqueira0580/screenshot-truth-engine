@@ -295,6 +295,12 @@ export default function SetlistsPage() {
           navigate(`/setlists/${id}`);
         }}
       />
+
+      <GuidedTour
+        steps={SETLISTS_TOUR_STEPS}
+        run={runSetlistsTour}
+        onFinish={completeTour}
+      />
     </div>
   );
 }

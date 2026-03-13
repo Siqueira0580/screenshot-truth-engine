@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Music2, Mic2, Drum, Piano, Guitar,
   Volume2, ChevronUp, ChevronDown, Loader2,
-  ArrowLeft, Minus, Plus, BookOpen, Edit3,
+  Minus, Plus, BookOpen, Edit3,
 } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -301,9 +302,7 @@ export default function StudyPage() {
       {/* Header */}
       <div className="flex flex-wrap items-center gap-2 py-3 border-b border-border bg-card shrink-0">
         <div className="flex items-center gap-3 w-full min-w-0">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+          <BackButton />
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {artistPhoto ? (
               <img src={artistPhoto} alt="" className="h-10 w-10 rounded-lg object-cover shrink-0" />

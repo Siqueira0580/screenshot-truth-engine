@@ -1,8 +1,9 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Music, Download, Loader2, Play, Compass, Disc3, FileText, Pencil, Trash2 } from "lucide-react";
+import { Music, Download, Loader2, Play, Compass, Disc3, FileText, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -209,15 +210,7 @@ export default function ArtistExplorePage() {
         />
 
         {/* Back button */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-30 text-muted-foreground hover:text-foreground backdrop-blur-sm bg-background/20 rounded-full"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
+        <BackButton className="absolute top-4 left-4 z-30 backdrop-blur-sm bg-background/20 rounded-full" />
 
         {/* Centered profile identity */}
         <div className="relative z-10 flex flex-col items-center justify-end h-full pb-8 px-4">

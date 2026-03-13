@@ -3,8 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano, Guitar,
-  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ArrowLeft, ScanSearch, BookOpen, AudioLines,
+  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ScanSearch, BookOpen, AudioLines,
 } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -261,9 +262,7 @@ export default function StudioDetailPage() {
     <div className="space-y-5 w-full max-w-[100vw] overflow-x-hidden">
       {/* Back button + title */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button type="button" variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
+        <BackButton />
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{song?.title || "Carregando..."}</h1>
           {song?.artist && <p className="text-muted-foreground text-sm">{song.artist}</p>}

@@ -2,8 +2,9 @@ import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -522,9 +523,10 @@ export default function SetlistDetailPage() {
 
   return (
     <div className={`max-w-3xl space-y-6 animate-fade-in ${(selectedSongs.size > 0 || globalSelectedSongs.size > 0) ? "pb-36 sm:pb-28" : ""}`}>
-      <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
-        <ArrowLeft className="h-4 w-4" /> Voltar
-      </Button>
+      <div className="flex items-center gap-2">
+        <BackButton />
+        <h2 className="text-lg font-semibold">{setlist?.name || "Repertório"}</h2>
+      </div>
 
       <SetlistHeader
         name={setlist?.name || ""}

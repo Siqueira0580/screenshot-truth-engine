@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MetadataScanner from "@/components/MetadataScanner";
+import BackButton from "@/components/ui/BackButton";
 
 const INSTRUMENTS: { value: Instrument; label: string; description: string; icon: typeof Guitar }[] = [
   { value: "guitar", label: "Violão", description: "6 cordas · Acordes em braço", icon: Guitar },
@@ -26,9 +27,12 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
-        <p className="text-muted-foreground mt-1">Personalize a sua experiência</p>
+      <div className="flex items-center gap-2">
+        <BackButton />
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
+          <p className="text-muted-foreground mt-1">Personalize a sua experiência</p>
+        </div>
       </div>
 
       <Card className="border-border bg-card">

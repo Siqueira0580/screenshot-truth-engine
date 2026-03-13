@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { fetchArtists, fetchSongsByArtist, updateArtistPhoto, removeFromUserLibrary } from "@/lib/supabase-queries";
 import { toast } from "sonner";
@@ -79,9 +80,7 @@ export default function ArtistDetailPage() {
   if (!artist) {
     return (
       <div className="space-y-4">
-        <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" /> Voltar
-        </Button>
+        <BackButton />
         <p className="text-muted-foreground">Artista não encontrado.</p>
       </div>
     );
@@ -89,13 +88,9 @@ export default function ArtistDetailPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
-        <ArrowLeft className="h-4 w-4" />
-        Voltar
-      </Button>
-
       {/* Header */}
       <div className="flex items-start gap-4">
+        <BackButton className="mt-1" />
         {/* Avatar with upload */}
         <div className="relative group">
           <Avatar className="h-20 w-20 text-2xl">

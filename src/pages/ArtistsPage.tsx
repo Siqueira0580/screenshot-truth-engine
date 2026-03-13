@@ -222,7 +222,7 @@ export default function ArtistsPage() {
       </div>
 
       {/* Sort Controls */}
-      <div className="flex items-center gap-3">
+      <div id="tour-artist-sort" className="flex items-center gap-3">
         <ToggleGroup
           type="single"
           value={sort}

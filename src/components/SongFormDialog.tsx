@@ -275,7 +275,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           className="space-y-4"
         >
           {/* AI Search + PDF Import */}
-          <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+          <div id="tour-studio-search" className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
             {/* AI Search */}
             <div className="flex items-center gap-2">
               <Input

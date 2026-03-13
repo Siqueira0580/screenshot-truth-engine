@@ -125,6 +125,15 @@ export default function ArtistExplorePage() {
       const { data: urlData } = supabase.storage.from("sheet_music").getPublicUrl(fileName);
       const title = file.name.replace(/\.pdf$/i, "").trim();
 
+      // Anti-duplicate check
+      const { checkDuplicateSong } = await import("@/lib/supabase-queries");
+      const duplicateId = await checkDuplicateSong(title, decodedName);
+      if (duplicateId) {
+        toast.error("Música já cadastrada! Você já possui uma música com este título e artista no seu repertório.");
+        setUploadingSheetPdf(false);
+        return;
+      }
+
       await createSongAndAddToLibrary({
         title,
         artist: decodedName,

@@ -127,18 +127,28 @@ export default function SongsPage() {
         if (error) throw error;
         if (data && (data.title || data.body_text)) {
           let artistName = data.artist || null;
-          if (artistName) { try { await findOrCreateArtist(artistName); } catch {} }
-          await createSongAndAddToLibrary({
-            title: data.title || file.name.replace(/\.pdf$/i, ""),
-            artist: artistName,
-            composer: data.composer || null,
-            musical_key: data.musical_key || null,
-            style: data.style || null,
-            bpm: data.bpm ? parseInt(data.bpm) : null,
-            time_signature: data.time_signature || "4/4",
-            body_text: data.body_text || data.text || null,
-          });
-          successCount++;
+          const songTitle = data.title || file.name.replace(/\.pdf$/i, "");
+
+          // Anti-duplicate check
+          const { checkDuplicateSong } = await import("@/lib/supabase-queries");
+          const duplicateId = await checkDuplicateSong(songTitle, artistName);
+          if (duplicateId) {
+            toast.warning(`"${songTitle}" já existe no seu repertório — ignorada.`);
+            errorCount++;
+          } else {
+            if (artistName) { try { await findOrCreateArtist(artistName); } catch {} }
+            await createSongAndAddToLibrary({
+              title: songTitle,
+              artist: artistName,
+              composer: data.composer || null,
+              musical_key: data.musical_key || null,
+              style: data.style || null,
+              bpm: data.bpm ? parseInt(data.bpm) : null,
+              time_signature: data.time_signature || "4/4",
+              body_text: data.body_text || data.text || null,
+            });
+            successCount++;
+          }
         } else { errorCount++; }
       } catch { errorCount++; }
       setPdfProgress({ done: i + 1, total: pdfFiles.length });

@@ -43,6 +43,12 @@ export default function ExploreTab() {
         label: "Adicionar",
         onClick: async () => {
           try {
+            const { checkDuplicateSong } = await import("@/lib/supabase-queries");
+            const duplicateId = await checkDuplicateSong(track.title, track.artist.name);
+            if (duplicateId) {
+              toast.error("Música já cadastrada! Você já possui uma música com este título e artista no seu repertório.");
+              return;
+            }
             await findOrCreateArtist(track.artist.name);
             await createSong({
               title: track.title,

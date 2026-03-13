@@ -113,6 +113,22 @@ export default function ImportSongModal({
       const style = previewData.genre || previewData.style || null;
       const bodyText = previewData.content || previewData.body_text || null;
 
+      // Anti-duplicate check (user's own songs)
+      const duplicateId = await checkDuplicateSong(title, artist);
+      if (duplicateId) {
+        // Song already exists for this user — just add to library
+        await addToUserLibrary(duplicateId);
+        if (setlistId) {
+          const speed = calculateOptimalScrollSpeed(null, previewData.bpm || null);
+          await addSongToSetlist(setlistId, duplicateId, setlistPosition ?? 999, speed);
+          queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
+        }
+        toast.info("Música já cadastrada! Adicionada à sua biblioteca.");
+        queryClient.invalidateQueries({ queryKey: ["user-library"] });
+        handleClose();
+        return;
+      }
+
       if (artist) {
         try {
           await findOrCreateArtist(artist, previewData.artist_image_url || undefined);

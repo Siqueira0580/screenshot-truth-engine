@@ -62,6 +62,15 @@ export default function CompositionStudioPage() {
 
     setIsExporting(true);
     try {
+      // Anti-duplicate check
+      const { checkDuplicateSong } = await import("@/lib/supabase-queries");
+      const duplicateId = await checkDuplicateSong(title || "Sem título", null);
+      if (duplicateId) {
+        toast.error("Música já cadastrada! Você já possui uma música com este título no seu repertório.");
+        setIsExporting(false);
+        return;
+      }
+
       const song = await createSong({
         title: title || "Sem título",
         body_text: editorText || null,

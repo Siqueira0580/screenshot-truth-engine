@@ -1,9 +1,10 @@
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Guitar, Piano, Mic } from "lucide-react";
+import { Guitar, Piano, Mic, ShieldCheck, ChevronRight } from "lucide-react";
 import type { Instrument } from "@/lib/chord-diagrams";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MetadataScanner from "@/components/MetadataScanner";

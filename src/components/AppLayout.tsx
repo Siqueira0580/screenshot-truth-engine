@@ -1,5 +1,5 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User } from "lucide-react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ const navItems = [
 export default function AppLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
@@ -83,6 +84,21 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
+            {location.pathname === "/songs" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if ((window as any).__replaySongsTour) {
+                    (window as any).__replaySongsTour();
+                  }
+                }}
+                title="Tour de Ajuda"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"

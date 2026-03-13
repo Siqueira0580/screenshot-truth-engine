@@ -82,6 +82,26 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Guided tour for the studio form
+  const { run: runStudioTour, completeTour: completeStudioTour, replayTour: replayStudioTour } = useGuidedTour("studio_form");
+  const [tourReady, setTourReady] = useState(false);
+
+  // Start tour after dialog animation settles (only for new songs, first time)
+  useEffect(() => {
+    if (open && !isEditing && runStudioTour) {
+      const timer = setTimeout(() => setTourReady(true), 600);
+      return () => clearTimeout(timer);
+    } else {
+      setTourReady(false);
+    }
+  }, [open, isEditing, runStudioTour]);
+
+  // Expose replay function globally for the help button
+  useEffect(() => {
+    (window as any).__replayStudioTour = replayStudioTour;
+    return () => { delete (window as any).__replayStudioTour; };
+  }, [replayStudioTour]);
+
   const [form, setForm] = useState({
     title: "",
     artist: "",

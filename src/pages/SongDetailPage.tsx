@@ -233,7 +233,7 @@ export default function SongDetailPage() {
             )}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm text-muted-foreground landscape:hidden sm:landscape:flex">
           {song.artist && (
             <span className="flex items-center gap-1">
               <Music2 className="h-3.5 w-3.5" />

@@ -214,7 +214,7 @@ export default function RegisterPage() {
               {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading || hasErrors}>
+            <Button type="submit" className="w-full landscape:col-span-2" disabled={loading || hasErrors}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Cadastrar
             </Button>

@@ -194,12 +194,12 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="container py-6 animate-fade-in flex-1 min-h-0 overflow-y-auto overflow-x-hidden max-w-full">
+      <main className="container py-6 landscape:py-3 animate-fade-in flex-1 min-h-0 overflow-y-auto overflow-x-hidden max-w-full">
         <Outlet />
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden">
+      {/* Mobile Bottom Navigation — hidden in landscape */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden landscape:hidden">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => (
             <NavLink
@@ -225,6 +225,7 @@ export default function AppLayout() {
           ))}
         </div>
       </nav>
+      </div>{/* close flex-1 wrapper */}
     </div>
   );
 }

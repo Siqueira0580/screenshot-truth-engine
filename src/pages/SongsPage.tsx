@@ -244,7 +244,7 @@ export default function SongsPage() {
               <p className="text-sm mt-1">Importe ou adicione músicas à sua biblioteca pessoal.</p>
             </div>
           ) : (
-            <div className="grid gap-2 w-full max-w-full">
+            <div className="grid gap-2 w-full max-w-full landscape:grid-cols-2 lg:grid-cols-1">
               {filtered.map((song, i) => (
                 <div
                   key={song.id}

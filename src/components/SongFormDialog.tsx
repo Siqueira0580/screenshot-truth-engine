@@ -28,41 +28,34 @@ import { createSong, updateSong, fetchSong, findOrCreateArtist } from "@/lib/sup
 import { toast } from "sonner";
 import { FileUp, Loader2, Settings2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import GuidedTour from "@/components/GuidedTour";
+import DialogTour, { type DialogTourStep } from "@/components/DialogTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
-import type { Step } from "react-joyride";
 
-const STUDIO_TOUR_STEPS: Step[] = [
+const STUDIO_TOUR_STEPS: DialogTourStep[] = [
   {
-    target: "body",
-    content: "É aqui que a mágica acontece. Crie novas cifras ou edite as existentes com ferramentas profissionais.",
+    target: "center",
     title: "🎸 Bem-vindo ao Estúdio!",
-    placement: "center",
-    disableBeacon: true,
+    content: "É aqui que a mágica acontece. Crie novas cifras ou edite as existentes com ferramentas profissionais.",
   },
   {
     target: "#tour-studio-title",
-    content: "Você pode digitar o nome e o artista manualmente, mas temos um truque na manga...",
     title: "📝 Dados da Música",
-    placement: "bottom",
+    content: "Você pode digitar o nome e o artista manualmente, mas temos um truque na manga...",
   },
   {
     target: "#tour-studio-search",
-    content: "Dica de Ouro: Pesquise a cifra por nome aqui. Nós preenchemos o título, o artista e a cifra automaticamente para você!",
     title: "🔍 Automação de Dados",
-    placement: "bottom",
+    content: "Dica de Ouro: Pesquise a cifra por nome aqui. Nós preenchemos o título, o artista e a cifra automaticamente para você!",
   },
   {
     target: "#tour-studio-cifra",
-    content: "Cole ou digite a sua letra com os acordes aqui. O nosso sistema vai reconhecer os tons e formatar tudo lindamente para a leitura no palco.",
     title: "🎶 Sua Cifra",
-    placement: "top",
+    content: "Cole ou digite a sua letra com os acordes aqui. O nosso sistema vai reconhecer os tons e formatar tudo lindamente para a leitura no palco.",
   },
   {
     target: "#tour-studio-save",
-    content: "Quando terminar, salve a música e ela já estará disponível na sua biblioteca e nos seus repertórios!",
     title: "✅ Tudo Pronto",
-    placement: "top",
+    content: "Quando terminar, salve a música e ela já estará disponível na sua biblioteca e nos seus repertórios!",
   },
 ];
 

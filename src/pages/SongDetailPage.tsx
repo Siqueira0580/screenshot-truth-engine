@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube } from "lucide-react";
+import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
@@ -13,6 +13,7 @@ import ShowButton from "@/components/ShowButton";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import AutoCipherViewer from "@/components/AutoCipherViewer";
 import YouTubeSearchModal from "@/components/YouTubeSearchModal";
+import YouTubeMiniPlayer from "@/components/YouTubeMiniPlayer";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +42,7 @@ export default function SongDetailPage() {
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);
   const [confirmSaveAsDefault, setConfirmSaveAsDefault] = useState(false);
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
+  const [playerVisible, setPlayerVisible] = useState(false);
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
@@ -197,6 +199,18 @@ export default function SongDetailPage() {
               <span className="hidden sm:inline">{song.youtube_url ? "Alterar YouTube" : "Vincular YouTube"}</span>
               <span className="sm:hidden">YouTube</span>
             </Button>
+            {ytId && !playerVisible && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPlayerVisible(true)}
+                className="gap-1.5 text-xs sm:text-sm"
+              >
+                <Play className="h-4 w-4 text-primary" />
+                <span className="hidden sm:inline">Ouvir Referência</span>
+                <span className="sm:hidden">▶ Ouvir</span>
+              </Button>
+            )}
             {song.body_text && (
               <Button
                 variant="outline"
@@ -257,16 +271,13 @@ export default function SongDetailPage() {
         </div>
       )}
 
-      {ytId && (
-        <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">
-          <iframe
-            className="h-full w-full"
-            src={`https://www.youtube.com/embed/${ytId}`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={song.title}
-          />
-        </div>
+      {/* Floating Mini Player */}
+      {ytId && playerVisible && (
+        <YouTubeMiniPlayer
+          videoId={ytId}
+          title={song.title}
+          onClose={() => setPlayerVisible(false)}
+        />
       )}
 
       {/* AI Cipher (priority) */}
@@ -327,6 +338,7 @@ export default function SongDetailPage() {
         songId={id!}
         songTitle={song.title}
         songArtist={song.artist}
+        onVideoLinked={() => setPlayerVisible(true)}
       />
     </div>
   );

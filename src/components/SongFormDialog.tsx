@@ -457,12 +457,11 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           </div>
         </form>
 
-        {/* Studio Guided Tour */}
-        <GuidedTour
+        {/* Studio Dialog Tour */}
+        <DialogTour
           steps={STUDIO_TOUR_STEPS}
           run={tourReady}
           onFinish={completeStudioTour}
-          disableOverlay
         />
       </DialogContent>
     </Dialog>

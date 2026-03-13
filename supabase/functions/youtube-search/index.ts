@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         });
 
         if (!resp.ok) {
-          lastError = `${instance}: ${resp.status}`;
+          _lastError = `${instance}: ${resp.status}`;
           continue;
         }
 

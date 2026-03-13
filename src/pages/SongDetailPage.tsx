@@ -271,16 +271,13 @@ export default function SongDetailPage() {
         </div>
       )}
 
-      {ytId && (
-        <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">
-          <iframe
-            className="h-full w-full"
-            src={`https://www.youtube.com/embed/${ytId}`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={song.title}
-          />
-        </div>
+      {/* Floating Mini Player */}
+      {ytId && playerVisible && (
+        <YouTubeMiniPlayer
+          videoId={ytId}
+          title={song.title}
+          onClose={() => setPlayerVisible(false)}
+        />
       )}
 
       {/* AI Cipher (priority) */}

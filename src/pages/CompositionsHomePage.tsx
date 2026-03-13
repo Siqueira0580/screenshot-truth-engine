@@ -110,9 +110,11 @@ export default function CompositionsHomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 lg:p-8">
+      <GuidedTour steps={COMPOSITIONS_TOUR_STEPS} run={runTour} onFinish={completeTour} />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
+        <div id="tour-comp-header">
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5 text-primary" />
             <h1 className="text-2xl font-bold text-foreground">Cofre Criativo</h1>
@@ -121,7 +123,7 @@ export default function CompositionsHomePage() {
             {compositions.length} composiç{compositions.length === 1 ? "ão" : "ões"} • Privado e seguro
           </p>
         </div>
-        <Button className="gap-2" onClick={() => navigate("/compose")}>
+        <Button id="tour-comp-new" className="gap-2" onClick={() => navigate("/compose")}>
           <Plus className="h-4 w-4" /> Nova Composição
         </Button>
       </div>

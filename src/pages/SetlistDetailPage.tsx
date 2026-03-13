@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -595,13 +596,25 @@ export default function SetlistDetailPage() {
               size="sm"
               className="gap-2"
               title="Copiar Link Público"
-              onClick={() => {
-                const publicUrl = `${window.location.origin}/share/setlist/${id}`;
-                navigator.clipboard.writeText(publicUrl).then(() => {
+              onClick={async () => {
+                try {
+                  const sl = setlist as any;
+                  let token = sl?.public_share_token;
+                  if (!token) {
+                    token = crypto.randomUUID();
+                    const { error } = await supabase
+                      .from("setlists")
+                      .update({ public_share_token: token } as any)
+                      .eq("id", id!);
+                    if (error) throw error;
+                    queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+                  }
+                  const publicUrl = `${window.location.origin}/share/setlist/${token}`;
+                  await navigator.clipboard.writeText(publicUrl);
                   toast.success("Link público copiado!");
-                }).catch(() => {
-                  toast.error("Erro ao copiar link");
-                });
+                } catch {
+                  toast.error("Erro ao gerar link público");
+                }
               }}
             >
               <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Link Público</span>

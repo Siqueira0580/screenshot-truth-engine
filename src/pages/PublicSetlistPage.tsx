@@ -8,34 +8,34 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 export default function PublicSetlistPage() {
-  const { id } = useParams();
+  const { token } = useParams();
 
   const { data: setlist, isLoading: loadingSetlist } = useQuery({
-    queryKey: ["public-setlist", id],
+    queryKey: ["public-setlist", token],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("setlists")
-        .select("*")
-        .eq("id", id!)
+        .select("id, name, show_date, start_time, end_time, musicians, interval_duration, show_duration")
+        .eq("public_share_token", token!)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!token,
   });
 
   const { data: items = [], isLoading: loadingItems } = useQuery({
-    queryKey: ["public-setlist-items", id],
+    queryKey: ["public-setlist-items", setlist?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("setlist_items")
-        .select("*, songs(*)")
-        .eq("setlist_id", id!)
+        .select("*, songs(id, title, artist, musical_key)")
+        .eq("setlist_id", setlist!.id)
         .order("position");
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!setlist?.id,
   });
 
   if (loadingSetlist || loadingItems) {

@@ -8,6 +8,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchSongs, fetchArtists, createSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+
+const STUDIO_TOUR_STEPS = [
+  {
+    target: "#tour-studio-title",
+    title: "Estúdio de Ensaio",
+    content: "Aqui você encontra o player multitrack para ensaiar suas músicas com mixer e transposição.",
+  },
+  {
+    target: "#tour-studio-search",
+    title: "Buscar Músicas",
+    content: "Pesquise rapidamente qualquer música do seu repertório por título ou artista.",
+  },
+  {
+    target: "#tour-studio-upload",
+    title: "Enviar Áudio",
+    content: "Faça upload de um arquivo de áudio (.mp3, .wav, etc.) para adicionar ao estúdio.",
+  },
+  {
+    target: "#tour-studio-list",
+    title: "Lista de Músicas",
+    content: "Clique numa música para abrir o mixer multitrack com controle de stems, volume e transposição.",
+  },
+];
 
 export default function StudioPage() {
   const navigate = useNavigate();
@@ -15,6 +40,11 @@ export default function StudioPage() {
   const [search, setSearch] = useState("");
   const [uploadingNew, setUploadingNew] = useState(false);
   const newAudioRef = useRef<HTMLInputElement>(null);
+  const { run: runTour, completeTour, replayTour } = useGuidedTour("studio_page");
+
+  useState(() => {
+    (window as any).__replayStudioTour = replayTour;
+  });
 
   const { data: songs = [] } = useQuery({ queryKey: ["songs"], queryFn: fetchSongs });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });

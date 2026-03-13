@@ -62,6 +62,12 @@ export default function ArtistsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
+  // Guided tour
+  const { run: runArtistsTour, completeTour, replayTour } = useGuidedTour("artists_page");
+  useState(() => {
+    (window as any).__replayArtistsTour = replayTour;
+  });
+
   const { data: artists = [], isLoading } = useQuery({
     queryKey: ["artists"],
     queryFn: fetchArtists,

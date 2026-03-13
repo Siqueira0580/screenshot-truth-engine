@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MetadataScanner from "@/components/MetadataScanner";
+import BackButton from "@/components/ui/BackButton";
 
 const INSTRUMENTS: { value: Instrument; label: string; description: string; icon: typeof Guitar }[] = [
   { value: "guitar", label: "Violão", description: "6 cordas · Acordes em braço", icon: Guitar },

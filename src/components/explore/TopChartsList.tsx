@@ -38,7 +38,7 @@ export default function TopChartsList({ tracks, title = "🏆 Top 10 Global" }: 
         {title}
       </h2>
 
-      <div className="absolute left-8 md:left-16 top-16 bottom-0 w-[2px] opacity-20 bg-gradient-to-b from-primary via-accent to-primary" />
+      <div className="absolute left-8 md:left-16 top-16 bottom-0 w-[2px] opacity-10 bg-gradient-to-b from-primary via-accent to-primary dark:opacity-20" />
 
       <div className="space-y-3 relative">
         {topTen.map((track, i) => {

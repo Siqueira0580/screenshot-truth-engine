@@ -143,7 +143,10 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
+      <div className="flex items-center gap-2">
+        <BackButton />
+        <h1 className="text-2xl font-bold text-foreground">Meu Perfil</h1>
+      </div>
 
       <Card className="border-border bg-card">
         <CardHeader className="items-center pb-2">

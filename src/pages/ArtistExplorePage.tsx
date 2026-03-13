@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { findOrCreateArtist, createSongAndAddToLibrary, removeFromUserLibrary } from "@/lib/supabase-queries";
+import { findOrCreateArtist, createSongAndAddToLibrary, removeFromUserLibrary, deleteSong, getCurrentUserId } from "@/lib/supabase-queries";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import type { Database } from "@/integrations/supabase/types";
 

@@ -92,7 +92,9 @@ export default function StudioPage() {
 
   return (
     <div className="space-y-4 overflow-x-hidden">
-      <div>
+      <GuidedTour steps={STUDIO_TOUR_STEPS} run={runTour} onFinish={completeTour} />
+
+      <div id="tour-studio-title">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Estúdio de Ensaio</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Player multitrack com mixer e transposição</p>
       </div>
@@ -100,6 +102,7 @@ export default function StudioPage() {
       {/* Search + Upload */}
       <div className="flex gap-2 w-full">
         <Input
+          id="tour-studio-search"
           placeholder="Buscar música..."
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -117,6 +120,7 @@ export default function StudioPage() {
           }}
         />
         <Button
+          id="tour-studio-upload"
           size="sm"
           className="h-9 gap-1.5 shrink-0"
           disabled={uploadingNew}

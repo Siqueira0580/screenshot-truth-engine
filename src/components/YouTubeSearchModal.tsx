@@ -36,6 +36,7 @@ export default function YouTubeSearchModal({
   songId,
   songTitle,
   songArtist,
+  onVideoLinked,
 }: YouTubeSearchModalProps) {
   const queryClient = useQueryClient();
   const defaultQuery = [songTitle, songArtist].filter(Boolean).join(" ");

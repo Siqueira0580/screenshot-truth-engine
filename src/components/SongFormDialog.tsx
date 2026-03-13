@@ -469,6 +469,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           steps={STUDIO_TOUR_STEPS}
           run={tourReady}
           onFinish={completeStudioTour}
+          disableOverlay
         />
       </DialogContent>
     </Dialog>

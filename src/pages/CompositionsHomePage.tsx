@@ -130,7 +130,7 @@ export default function CompositionsHomePage() {
 
       {/* Search & Filter — only show if there are compositions */}
       {compositions.length > 0 && (
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <div id="tour-comp-search" className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input

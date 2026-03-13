@@ -13,29 +13,25 @@ export default function PublicSetlistPage() {
   const { data: setlist, isLoading: loadingSetlist } = useQuery({
     queryKey: ["public-setlist", token],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("setlists")
-        .select("id, name, show_date, start_time, end_time, musicians, interval_duration, show_duration")
-        .eq("public_share_token", token!)
-        .single();
+      const { data, error } = await (supabase.rpc as any)("get_public_setlist", {
+        p_token: token!,
+      });
       if (error) throw error;
-      return data;
+      return data?.[0] ?? null;
     },
     enabled: !!token,
   });
 
   const { data: items = [], isLoading: loadingItems } = useQuery({
-    queryKey: ["public-setlist-items", setlist?.id],
+    queryKey: ["public-setlist-items", token],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("setlist_items")
-        .select("*, songs(id, title, artist, musical_key)")
-        .eq("setlist_id", setlist!.id)
-        .order("position");
+      const { data, error } = await supabase.rpc("get_public_setlist_items", {
+        p_token: token!,
+      });
       if (error) throw error;
-      return data;
+      return data ?? [];
     },
-    enabled: !!setlist?.id,
+    enabled: !!token && !!setlist,
   });
 
   if (loadingSetlist || loadingItems) {
@@ -103,10 +99,10 @@ export default function PublicSetlistPage() {
                 {index + 1}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm sm:text-base truncate">{item.songs?.title}</p>
+                <p className="font-medium text-sm sm:text-base truncate">{item.song_title}</p>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {item.songs?.artist}
-                  {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
+                  {item.song_artist}
+                  {item.song_musical_key && ` · ${item.song_musical_key}`}
                 </p>
               </div>
               <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />

@@ -557,7 +557,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_public_setlist_items: {
+        Args: { p_token: string }
+        Returns: {
+          bpm: number
+          id: string
+          loop_count: number
+          position: number
+          song_artist: string
+          song_id: string
+          song_musical_key: string
+          song_title: string
+          speed: number
+          transposed_key: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

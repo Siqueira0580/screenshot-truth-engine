@@ -193,7 +193,7 @@ export default function SetlistsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="tour-setlist-list" className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredAndSorted.map((sl: any, i) => (
             <Link
               key={sl.id}

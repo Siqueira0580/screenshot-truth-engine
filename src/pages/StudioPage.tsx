@@ -5,7 +5,7 @@ import { Music2, Upload, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchSongs, fetchArtists, createSong } from "@/lib/supabase-queries";
+import { fetchSongs, fetchArtists, createSong, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import GuidedTour from "@/components/GuidedTour";
@@ -61,6 +61,14 @@ export default function StudioPage() {
       const match = baseName.match(/^(.+?)\s*-\s*(.+)$/);
       const title = match ? match[2].trim() : baseName;
       const artist = match ? match[1].trim() : undefined;
+
+      // Anti-duplicate check
+      const duplicateId = await checkDuplicateSong(title, artist || null);
+      if (duplicateId) {
+        toast.error("Música já cadastrada! Você já possui uma música com este título e artista no seu repertório.");
+        setUploadingNew(false);
+        return;
+      }
 
       const song = await createSong({ title, artist: artist || null });
 

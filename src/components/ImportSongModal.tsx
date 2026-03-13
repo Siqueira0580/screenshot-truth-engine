@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sparkles, Loader2, Music2, Check, X, ArrowLeft, Mic } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist } from "@/lib/supabase-queries";
+import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist, checkDuplicateSong } from "@/lib/supabase-queries";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -112,6 +112,22 @@ export default function ImportSongModal({
       const artist = previewData.artist || null;
       const style = previewData.genre || previewData.style || null;
       const bodyText = previewData.content || previewData.body_text || null;
+
+      // Anti-duplicate check (user's own songs)
+      const duplicateId = await checkDuplicateSong(title, artist);
+      if (duplicateId) {
+        // Song already exists for this user — just add to library
+        await addToUserLibrary(duplicateId);
+        if (setlistId) {
+          const speed = calculateOptimalScrollSpeed(null, previewData.bpm || null);
+          await addSongToSetlist(setlistId, duplicateId, setlistPosition ?? 999, speed);
+          queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
+        }
+        toast.info("Música já cadastrada! Adicionada à sua biblioteca.");
+        queryClient.invalidateQueries({ queryKey: ["user-library"] });
+        handleClose();
+        return;
+      }
 
       if (artist) {
         try {

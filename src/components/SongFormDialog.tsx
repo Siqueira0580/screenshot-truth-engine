@@ -24,7 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { createSong, updateSong, fetchSong, findOrCreateArtist } from "@/lib/supabase-queries";
+import { createSong, updateSong, fetchSong, findOrCreateArtist, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { FileUp, Loader2, Settings2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -143,6 +143,16 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      // Anti-duplicate check
+      const duplicateId = await checkDuplicateSong(
+        form.title,
+        form.artist || null,
+        isEditing ? songId! : undefined
+      );
+      if (duplicateId) {
+        throw new Error("DUPLICATE");
+      }
+
       // Auto-deduplicate artist
       if (form.artist.trim()) {
         await findOrCreateArtist(form.artist.trim());
@@ -171,7 +181,13 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       toast.success(isEditing ? "Música atualizada!" : "Música criada!");
       onOpenChange(false);
     },
-    onError: () => toast.error("Erro ao salvar música"),
+    onError: (err: any) => {
+      if (err?.message === "DUPLICATE") {
+        toast.error("Música já cadastrada! Você já possui uma música com este título e artista no seu repertório.");
+      } else {
+        toast.error("Erro ao salvar música");
+      }
+    },
   });
 
   const handlePdfUpload = async (file: File) => {

@@ -103,6 +103,44 @@ export async function clearUserLibrary() {
   if (error) throw error;
 }
 
+// ─── DUPLICATE CHECK ───
+
+/** Check if a song with the same title+artist already exists for the current user.
+ *  Returns the existing song id if found, null otherwise.
+ *  For edits, pass excludeId to avoid matching the song being edited. */
+export async function checkDuplicateSong(
+  title: string,
+  artist: string | null,
+  excludeId?: string
+): Promise<string | null> {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) return null;
+
+  const userId = await getCurrentUserId();
+
+  // Build query: match title (case-insensitive) + created_by current user
+  let query = supabase
+    .from("songs")
+    .select("id")
+    .ilike("title", trimmedTitle)
+    .eq("created_by", userId);
+
+  // Match artist case-insensitive, or both null
+  if (artist && artist.trim()) {
+    query = query.ilike("artist", artist.trim());
+  } else {
+    query = query.is("artist", null);
+  }
+
+  // Exclude current song when editing
+  if (excludeId) {
+    query = query.neq("id", excludeId);
+  }
+
+  const { data } = await query.limit(1);
+  return data && data.length > 0 ? data[0].id : null;
+}
+
 // ─── GLOBAL SONGS ───
 
 export async function fetchSongs() {

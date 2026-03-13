@@ -1,8 +1,9 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Music, Download, Loader2, Play, Compass, Disc3, FileText, Pencil, Trash2 } from "lucide-react";
+import { Music, Download, Loader2, Play, Compass, Disc3, FileText, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";

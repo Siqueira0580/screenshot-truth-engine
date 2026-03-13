@@ -13,7 +13,7 @@ export default function PublicSetlistPage() {
   const { data: setlist, isLoading: loadingSetlist } = useQuery({
     queryKey: ["public-setlist", token],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_public_setlist", {
+      const { data, error } = await (supabase.rpc as any)("get_public_setlist", {
         p_token: token!,
       });
       if (error) throw error;

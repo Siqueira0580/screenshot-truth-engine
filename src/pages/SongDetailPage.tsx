@@ -12,6 +12,7 @@ import ChordText from "@/components/ChordText";
 import ShowButton from "@/components/ShowButton";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import AutoCipherViewer from "@/components/AutoCipherViewer";
+import YouTubeSearchModal from "@/components/YouTubeSearchModal";
 import {
   AlertDialog,
   AlertDialogAction,

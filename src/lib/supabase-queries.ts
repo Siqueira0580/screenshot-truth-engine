@@ -106,6 +106,7 @@ export async function clearUserLibrary() {
 // ─── DUPLICATE CHECK ───
 
 /** Check if a song with the same title+artist already exists for the current user.
+ *  Checks BOTH songs created by the user AND songs in the user's library.
  *  Returns the existing song id if found, null otherwise.
  *  For edits, pass excludeId to avoid matching the song being edited. */
 export async function checkDuplicateSong(
@@ -118,27 +119,55 @@ export async function checkDuplicateSong(
 
   const userId = await getCurrentUserId();
 
-  // Build query: match title (case-insensitive) + created_by current user
-  let query = supabase
+  // 1) Check songs created by the user
+  let ownQuery = supabase
     .from("songs")
     .select("id")
     .ilike("title", trimmedTitle)
     .eq("created_by", userId);
 
-  // Match artist case-insensitive, or both null
   if (artist && artist.trim()) {
-    query = query.ilike("artist", artist.trim());
+    ownQuery = ownQuery.ilike("artist", artist.trim());
   } else {
-    query = query.is("artist", null);
+    ownQuery = ownQuery.is("artist", null);
   }
 
-  // Exclude current song when editing
   if (excludeId) {
-    query = query.neq("id", excludeId);
+    ownQuery = ownQuery.neq("id", excludeId);
   }
 
-  const { data } = await query.limit(1);
-  return data && data.length > 0 ? data[0].id : null;
+  const { data: ownData } = await ownQuery.limit(1);
+  if (ownData && ownData.length > 0) return ownData[0].id;
+
+  // 2) Check songs in user's library (may have been created by others)
+  const { data: libraryData } = await supabase
+    .from("user_library")
+    .select("song_id, songs!inner(id, title, artist)")
+    .eq("user_id", userId);
+
+  if (libraryData) {
+    const normalizedTitle = trimmedTitle.toLowerCase();
+    const normalizedArtist = artist?.trim().toLowerCase() || null;
+
+    for (const entry of libraryData) {
+      const song = entry.songs as any;
+      if (!song) continue;
+      if (excludeId && song.id === excludeId) continue;
+
+      const songTitle = (song.title || "").toLowerCase();
+      const songArtist = (song.artist || "").toLowerCase() || null;
+
+      if (songTitle === normalizedTitle) {
+        if (normalizedArtist && songArtist) {
+          if (songArtist === normalizedArtist) return song.id;
+        } else if (!normalizedArtist && !songArtist) {
+          return song.id;
+        }
+      }
+    }
+  }
+
+  return null;
 }
 
 // ─── GLOBAL SONGS ───

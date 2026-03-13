@@ -91,7 +91,16 @@ export default function RegisterPage() {
         },
       });
       if (error) {
-        toast.error(error.message);
+        const msg = error.message.toLowerCase();
+        if (msg.includes("weak") || msg.includes("leaked") || msg.includes("pwned") || msg.includes("breach")) {
+          setErrors((prev) => ({
+            ...prev,
+            password: "Esta senha é muito fraca ou já foi exposta em vazamentos de dados na internet. Por favor, escolha uma senha mais forte e segura.",
+          }));
+          toast.error("Senha insegura detectada. Escolha outra senha.");
+        } else {
+          toast.error(error.message);
+        }
         return;
       }
       toast.success("Conta criada! Verifique seu e-mail para confirmar.");

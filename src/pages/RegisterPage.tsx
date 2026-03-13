@@ -9,6 +9,34 @@ import { Loader2 } from "lucide-react";
 import AuthBranding from "@/components/AuthBranding";
 import AuthFeatureShowcase from "@/components/AuthFeatureShowcase";
 import { toast } from "sonner";
+import { z } from "zod";
+
+// --- Phone Mask ---
+function applyPhoneMask(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : "";
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10)
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+// --- Zod Schema ---
+const registerSchema = z.object({
+  firstName: z.string().trim().min(1, "O nome é obrigatório").max(50),
+  lastName: z.string().trim().min(1, "O sobrenome é obrigatório").max(50),
+  email: z
+    .string()
+    .trim()
+    .min(1, "O e-mail é obrigatório")
+    .email("Por favor, insira um endereço de e-mail válido."),
+  phone: z.string().optional(),
+  password: z
+    .string()
+    .min(6, "A senha deve ter pelo menos 6 caracteres"),
+});
+
+type FormErrors = Partial<Record<keyof z.infer<typeof registerSchema>, string>>;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -19,22 +47,47 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const validate = (): z.infer<typeof registerSchema> | null => {
+    const result = registerSchema.safeParse({
+      firstName,
+      lastName,
+      email,
+      phone,
+      password,
+    });
+    if (!result.success) {
+      const fieldErrors: FormErrors = {};
+      result.error.errors.forEach((e) => {
+        const key = e.path[0] as keyof FormErrors;
+        if (!fieldErrors[key]) fieldErrors[key] = e.message;
+      });
+      setErrors(fieldErrors);
+      return null;
+    }
+    setErrors({});
+    return result.data;
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim() || !firstName.trim()) return;
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres");
-      return;
-    }
+    const data = validate();
+    if (!data) return;
+
     setLoading(true);
     try {
+      const cleanPhone = phone.replace(/\D/g, "");
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: data.email,
+        password: data.password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { first_name: firstName, last_name: lastName, phone },
+          data: {
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone: cleanPhone || undefined,
+          },
         },
       });
       if (error) {
@@ -63,6 +116,8 @@ export default function RegisterPage() {
       setGoogleLoading(false);
     }
   };
+
+  const hasErrors = Object.keys(errors).length > 0;
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
@@ -94,29 +149,72 @@ export default function RegisterPage() {
 
           <form onSubmit={handleRegister} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">Nome</Label>
-                <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="João" />
+              <div className="space-y-1.5">
+                <Label htmlFor="firstName">Nome *</Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => { setFirstName(e.target.value); if (errors.firstName) setErrors((p) => ({ ...p, firstName: undefined })); }}
+                  placeholder="João"
+                  className={errors.firstName ? "border-destructive focus-visible:ring-destructive" : ""}
+                />
+                {errors.firstName && <p className="text-xs text-destructive">{errors.firstName}</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Sobrenome</Label>
-                <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Silva" />
+              <div className="space-y-1.5">
+                <Label htmlFor="lastName">Sobrenome *</Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => { setLastName(e.target.value); if (errors.lastName) setErrors((p) => ({ ...p, lastName: undefined })); }}
+                  placeholder="Silva"
+                  className={errors.lastName ? "border-destructive focus-visible:ring-destructive" : ""}
+                />
+                {errors.lastName && <p className="text-xs text-destructive">{errors.lastName}</p>}
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+55 11 99999-9999" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" autoComplete="email" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" autoComplete="new-password" />
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
+            <div className="space-y-1.5">
+              <Label htmlFor="email">E-mail *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
+                placeholder="seu@email.com"
+                autoComplete="email"
+                className={errors.email ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {errors.email && <p className="text-xs text-destructive">{errors.email}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => { setPhone(applyPhoneMask(e.target.value)); if (errors.phone) setErrors((p) => ({ ...p, phone: undefined })); }}
+                placeholder="(11) 99999-9999"
+                inputMode="numeric"
+              />
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Senha *</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+                placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
+                className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
+              />
+              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading || hasErrors}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Cadastrar
             </Button>

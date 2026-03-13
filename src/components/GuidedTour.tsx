@@ -1,9 +1,12 @@
-import Joyride, { CallBackProps, STATUS, Step, Styles } from "react-joyride";
+import { useState } from "react";
+import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step, Styles } from "react-joyride";
 
 interface GuidedTourProps {
   steps: Step[];
   run: boolean;
   onFinish: () => void;
+  /** When true, disables the dark overlay (useful inside dialogs) */
+  disableOverlay?: boolean;
 }
 
 const joyrideStyles: Partial<Styles> = {

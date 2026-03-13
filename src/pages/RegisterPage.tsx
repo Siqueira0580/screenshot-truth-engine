@@ -147,8 +147,8 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleRegister} className="space-y-4 landscape:grid landscape:grid-cols-2 landscape:gap-x-4 landscape:gap-y-3 landscape:space-y-0">
+            <div className="grid grid-cols-2 gap-3 landscape:col-span-2">
               <div className="space-y-1.5">
                 <Label htmlFor="firstName">Nome *</Label>
                 <Input

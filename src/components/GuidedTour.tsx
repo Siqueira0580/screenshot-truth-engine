@@ -4,8 +4,6 @@ interface GuidedTourProps {
   steps: Step[];
   run: boolean;
   onFinish: () => void;
-  /** When true, disables the dark overlay (useful inside dialogs) */
-  disableOverlay?: boolean;
 }
 
 const joyrideStyles: Partial<Styles> = {
@@ -59,7 +57,7 @@ const joyrideStyles: Partial<Styles> = {
   },
 };
 
-export default function GuidedTour({ steps, run, onFinish, disableOverlay }: GuidedTourProps) {
+export default function GuidedTour({ steps, run, onFinish }: GuidedTourProps) {
   const handleCallback = (data: CallBackProps) => {
     const { status } = data;
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
@@ -75,7 +73,6 @@ export default function GuidedTour({ steps, run, onFinish, disableOverlay }: Gui
       showSkipButton
       showProgress
       disableOverlayClose
-      disableOverlay={disableOverlay}
       disableScrolling={false}
       scrollOffset={80}
       callback={handleCallback}

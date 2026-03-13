@@ -479,7 +479,9 @@ export default function ArtistExplorePage() {
         onConfirm={async () => {
           if (!deleteTarget) return;
           try {
+            // Remove from library first, then hard delete the song
             await removeFromUserLibrary(deleteTarget.id);
+            await deleteSong(deleteTarget.id);
             setSongs((prev) => prev.filter((s) => s.id !== deleteTarget.id));
             toast.success("Música removida do repertório!");
           } catch {

@@ -84,7 +84,7 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
-            {location.pathname === "/songs" && (
+            {(location.pathname === "/songs" || location.pathname === "/songs/") && (
               <Button
                 variant="ghost"
                 size="icon"

@@ -28,6 +28,43 @@ import { createSong, updateSong, fetchSong, findOrCreateArtist } from "@/lib/sup
 import { toast } from "sonner";
 import { FileUp, Loader2, Settings2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+import type { Step } from "react-joyride";
+
+const STUDIO_TOUR_STEPS: Step[] = [
+  {
+    target: "body",
+    content: "É aqui que a mágica acontece. Crie novas cifras ou edite as existentes com ferramentas profissionais.",
+    title: "🎸 Bem-vindo ao Estúdio!",
+    placement: "center",
+    disableBeacon: true,
+  },
+  {
+    target: "#tour-studio-title",
+    content: "Você pode digitar o nome e o artista manualmente, mas temos um truque na manga...",
+    title: "📝 Dados da Música",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-studio-search",
+    content: "Dica de Ouro: Pesquise a cifra por nome aqui. Nós preenchemos o título, o artista e a cifra automaticamente para você!",
+    title: "🔍 Automação de Dados",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-studio-cifra",
+    content: "Cole ou digite a sua letra com os acordes aqui. O nosso sistema vai reconhecer os tons e formatar tudo lindamente para a leitura no palco.",
+    title: "🎶 Sua Cifra",
+    placement: "top",
+  },
+  {
+    target: "#tour-studio-save",
+    content: "Quando terminar, salve a música e ela já estará disponível na sua biblioteca e nos seus repertórios!",
+    title: "✅ Tudo Pronto",
+    placement: "top",
+  },
+];
 
 interface Props {
   open: boolean;
@@ -44,6 +81,26 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
   const [isParsing, setIsParsing] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Guided tour for the studio form
+  const { run: runStudioTour, completeTour: completeStudioTour, replayTour: replayStudioTour } = useGuidedTour("studio_form");
+  const [tourReady, setTourReady] = useState(false);
+
+  // Start tour after dialog animation settles (only for new songs, first time)
+  useEffect(() => {
+    if (open && !isEditing && runStudioTour) {
+      const timer = setTimeout(() => setTourReady(true), 600);
+      return () => clearTimeout(timer);
+    } else {
+      setTourReady(false);
+    }
+  }, [open, isEditing, runStudioTour]);
+
+  // Expose replay function globally for the help button
+  useEffect(() => {
+    (window as any).__replayStudioTour = replayStudioTour;
+    return () => { delete (window as any).__replayStudioTour; };
+  }, [replayStudioTour]);
 
   const [form, setForm] = useState({
     title: "",
@@ -218,7 +275,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           className="space-y-4"
         >
           {/* AI Search + PDF Import */}
-          <div className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
+          <div id="tour-studio-search" className="space-y-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3">
             {/* AI Search */}
             <div className="flex items-center gap-2">
               <Input
@@ -293,7 +350,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           </div>
 
           {/* Metadados principais */}
-          <div className="grid grid-cols-2 gap-4">
+          <div id="tour-studio-title" className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Título *</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -387,7 +444,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           </Accordion>
 
           {/* Cifra / Letra */}
-          <div className="space-y-2">
+          <div id="tour-studio-cifra" className="space-y-2">
             <Label>Cifra / Letra</Label>
             <Textarea
               value={form.body_text}
@@ -397,7 +454,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div id="tour-studio-save" className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
@@ -406,6 +463,13 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
             </Button>
           </div>
         </form>
+
+        {/* Studio Guided Tour */}
+        <GuidedTour
+          steps={STUDIO_TOUR_STEPS}
+          run={tourReady}
+          onFinish={completeStudioTour}
+        />
       </DialogContent>
     </Dialog>
   );

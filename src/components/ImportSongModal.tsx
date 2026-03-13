@@ -118,7 +118,6 @@ export default function ImportSongModal({
       // Anti-duplicate check (user's own songs)
       const duplicateId = await checkDuplicateSong(title, artist);
       if (duplicateId) {
-        // Song already exists for this user — just add to library
         await addToUserLibrary(duplicateId);
         if (setlistId) {
           const speed = calculateOptimalScrollSpeed(null, previewData.bpm || null);
@@ -127,14 +126,19 @@ export default function ImportSongModal({
         }
         toast.info("Música já cadastrada! Adicionada à sua biblioteca.");
         queryClient.invalidateQueries({ queryKey: ["user-library"] });
+        queryClient.invalidateQueries({ queryKey: ["artists"] });
         handleClose();
+        navigate(`/songs/${duplicateId}`);
         return;
       }
 
+      // Ensure artist record exists (with created_by for RLS)
       if (artist) {
         try {
           await findOrCreateArtist(artist, previewData.artist_image_url || undefined);
-        } catch { /* non-critical */ }
+        } catch (artistErr) {
+          console.warn("Artist create/find failed:", artistErr);
+        }
       }
 
       // Check for duplicate: same title + artist already in global songs
@@ -151,8 +155,10 @@ export default function ImportSongModal({
         }
       }
 
+      let finalSongId: string;
+
       if (songId) {
-        // Song already exists globally — just add to user's library
+        finalSongId = songId;
         await addToUserLibrary(songId);
         if (setlistId) {
           const speed = calculateOptimalScrollSpeed(null, previewData.bpm || null);
@@ -161,7 +167,6 @@ export default function ImportSongModal({
         }
         toast.success(`"${title}" já existia — adicionada à sua biblioteca!`);
       } else {
-        // Create new song + add to library
         const newSong = await createSongAndAddToLibrary({
           title,
           artist,
@@ -173,6 +178,7 @@ export default function ImportSongModal({
           time_signature: previewData.time_signature || null,
           youtube_url: previewData.youtube_url || null,
         });
+        finalSongId = newSong.id;
 
         if (setlistId && newSong?.id) {
           const speed = calculateOptimalScrollSpeed(bodyText, previewData.bpm || null);
@@ -185,10 +191,12 @@ export default function ImportSongModal({
       queryClient.invalidateQueries({ queryKey: ["songs"] });
       queryClient.invalidateQueries({ queryKey: ["user-library"] });
       queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["artists"] });
       handleClose();
-    } catch (err) {
+      navigate(`/songs/${finalSongId}`);
+    } catch (err: any) {
       console.error("Save error:", err);
-      toast.error("Erro ao salvar a música. Tente novamente.");
+      toast.error("Erro ao salvar: " + (err?.message || "Tente novamente."));
     } finally {
       setIsSaving(false);
     }

@@ -5,17 +5,15 @@ import { Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CENTS_RANGE = 50;
-const IN_TUNE_THRESHOLD = 3;
 
 export default function TunerPage() {
   const { isActive, tunerData, toggle } = useTuner();
 
   const cents = tunerData?.cents ?? 0;
-  const isInTune = Math.abs(cents) <= IN_TUNE_THRESHOLD;
-  const isFlat = cents < -IN_TUNE_THRESHOLD;
-  const isSharp = cents > IN_TUNE_THRESHOLD;
+  const isInTune = tunerData?.isInTune ?? false;
+  const isFlat = !isInTune && cents < 0;
+  const isSharp = !isInTune && cents > 0;
 
-  // Normalized position: -1 (flat) to +1 (sharp)
   const indicatorPos = Math.max(-1, Math.min(1, cents / CENTS_RANGE));
 
   return (
@@ -31,7 +29,6 @@ export default function TunerPage() {
 
       <Card className="border-border bg-card overflow-hidden">
         <CardContent className="p-6 sm:p-8 flex flex-col items-center gap-6">
-          {/* Toggle */}
           <Button
             onClick={toggle}
             size="lg"
@@ -45,13 +42,12 @@ export default function TunerPage() {
             )}
           </Button>
 
-          {/* Main display */}
           <div className="w-full flex flex-col items-center gap-4 min-h-[320px] justify-center">
             {isActive && tunerData ? (
               <>
-                {/* Emoji feedback */}
+                {/* Emoji feedback — hysteresis-stabilized */}
                 <div className={cn(
-                  "text-5xl transition-transform duration-200",
+                  "text-5xl transition-opacity duration-300",
                   isInTune && "animate-pulse"
                 )}>
                   {isInTune ? "👍🏿" : "👎🏿"}
@@ -61,7 +57,7 @@ export default function TunerPage() {
                 <div className="flex items-baseline gap-1">
                   <span
                     className={cn(
-                      "text-7xl sm:text-8xl font-black tracking-tighter transition-colors duration-200",
+                      "text-7xl sm:text-8xl font-black tracking-tighter transition-colors duration-500",
                       isInTune && "text-green-500",
                       (isFlat || isSharp) && "text-amber-500"
                     )}
@@ -73,12 +69,12 @@ export default function TunerPage() {
                   </span>
                 </div>
 
-                {/* Technical data */}
+                {/* Technical data — smoothed values */}
                 <div className="flex items-center gap-4 text-sm font-mono text-muted-foreground">
                   <span>{tunerData.frequency.toFixed(1)} Hz</span>
                   <span className="text-border">|</span>
                   <span className={cn(
-                    "font-bold transition-colors duration-200",
+                    "font-bold transition-colors duration-500",
                     isInTune && "text-green-500",
                     (isFlat || isSharp) && "text-amber-500"
                   )}>
@@ -94,24 +90,22 @@ export default function TunerPage() {
                     <span>Agudo ♯</span>
                   </div>
 
-                  {/* Bar */}
                   <div className="relative h-5 rounded-full bg-secondary overflow-hidden">
-                    {/* Center mark */}
                     <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-muted-foreground/40 -translate-x-1/2 z-10" />
 
-                    {/* In-tune zone */}
                     <div
                       className="absolute top-0 bottom-0 bg-green-500/20 z-0"
                       style={{
-                        left: `${50 - (IN_TUNE_THRESHOLD / CENTS_RANGE) * 50}%`,
-                        width: `${(IN_TUNE_THRESHOLD / CENTS_RANGE) * 100}%`,
+                        left: `${50 - (3 / CENTS_RANGE) * 50}%`,
+                        width: `${(3 / CENTS_RANGE) * 100}%`,
                       }}
                     />
 
-                    {/* Pointer */}
+                    {/* Pointer — CSS transition for extra visual smoothing */}
                     <div
                       className={cn(
-                        "absolute top-0.5 bottom-0.5 w-3.5 rounded-full transition-all duration-100 -translate-x-1/2 z-20",
+                        "absolute top-0.5 bottom-0.5 w-3.5 rounded-full -translate-x-1/2 z-20",
+                        "transition-[left,background-color,box-shadow] duration-200 ease-out",
                         isInTune && "bg-green-500 shadow-[0_0_14px_hsl(142_71%_45%/0.6)]",
                         (isFlat || isSharp) && "bg-amber-500 shadow-[0_0_10px_hsl(38_92%_50%/0.4)]"
                       )}
@@ -119,7 +113,6 @@ export default function TunerPage() {
                     />
                   </div>
 
-                  {/* Direction hint */}
                   <div className="flex justify-center h-5">
                     {isFlat && (
                       <span className="text-sm text-amber-500 font-medium animate-pulse">

@@ -79,8 +79,8 @@ export default function ArtistDetailPage() {
   if (!artist) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" asChild className="gap-2">
-          <Link to="/artists"><ArrowLeft className="h-4 w-4" /> Voltar</Link>
+        <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-4 w-4" /> Voltar
         </Button>
         <p className="text-muted-foreground">Artista não encontrado.</p>
       </div>

@@ -280,7 +280,7 @@ export default function ArtistsPage() {
           </p>
         </motion.div>
       ) : (
-        <div className={gridClass}>
+        <div id="tour-artist-grid" className={gridClass}>
           {sortedArtists.map((artist, i) => {
             const songCount = artistSongCount[artist.name.toLowerCase()] || 0;
             const initials = artist.name

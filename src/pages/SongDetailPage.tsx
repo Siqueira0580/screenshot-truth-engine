@@ -181,7 +181,7 @@ export default function SongDetailPage() {
 
   return (
     <div className="max-w-4xl space-y-4 sm:space-y-6 animate-fade-in overflow-x-hidden">
-      <Button type="button" variant="ghost" size="sm" className="gap-1.5" onClick={() => navigate(-1)}>
+      <Button type="button" variant="ghost" size="sm" className="gap-1.5" onClick={() => window.history.length > 1 ? navigate(-1) : navigate("/")}>
         <ArrowLeft className="h-4 w-4" />
         Voltar
       </Button>

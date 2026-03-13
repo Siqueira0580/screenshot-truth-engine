@@ -148,10 +148,10 @@ export default function ArtistsPage() {
 
   const gridClass =
     viewMode === "list"
-      ? "grid gap-2 grid-cols-1"
+      ? "grid gap-2 grid-cols-1 landscape:grid-cols-2 lg:grid-cols-1"
       : viewMode === "large"
-      ? "grid gap-6 grid-cols-1 lg:grid-cols-2"
-      : "grid gap-4 grid-cols-2 lg:grid-cols-3";
+      ? "grid gap-6 grid-cols-1 landscape:grid-cols-2 lg:grid-cols-2"
+      : "grid gap-4 grid-cols-2 landscape:grid-cols-3 lg:grid-cols-3";
 
   return (
     <div className="space-y-4 overflow-x-hidden">

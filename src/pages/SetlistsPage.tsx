@@ -12,6 +12,37 @@ import { ptBR } from "date-fns/locale";
 import SetlistSettingsModal from "@/components/SetlistSettingsModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import AutoSetlistGeneratorModal from "@/components/AutoSetlistGeneratorModal";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+import type { Step } from "react-joyride";
+
+const SETLISTS_TOUR_STEPS: Step[] = [
+  {
+    target: "body",
+    content: "Aqui você organiza o seu show! Crie repertórios, defina a ordem das músicas e tenha tudo pronto para o palco.",
+    title: "🎤 Seus Repertórios",
+    placement: "center",
+    disableBeacon: true,
+  },
+  {
+    target: "#tour-setlist-actions",
+    content: "Crie um novo repertório manualmente ou use a IA para sugerir um repertório baseado no seu estilo e nas suas músicas!",
+    title: "✨ Criar Repertório",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-setlist-filters",
+    content: "Ordene por data ou nome e filtre por período para encontrar rapidamente o repertório que precisa.",
+    title: "🔍 Filtros Inteligentes",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-setlist-list",
+    content: "Clique em qualquer repertório para ver os detalhes, reorganizar as músicas e iniciar o teleprompter para o seu show!",
+    title: "📋 Lista de Repertórios",
+    placement: "top",
+  },
+];
 
 type SortOption = "newest" | "oldest" | "name_asc" | "name_desc";
 type DateFilter = "all" | "7days" | "30days" | "3months";
@@ -37,6 +68,14 @@ export default function SetlistsPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Guided tour
+  const { run: runSetlistsTour, completeTour, replayTour } = useGuidedTour("setlists_page");
+
+  // Expose replay globally for help button
+  useState(() => {
+    (window as any).__replaySetlistsTour = replayTour;
+  });
 
   const { data: setlists = [], isLoading } = useQuery({
     queryKey: ["setlists"],
@@ -95,7 +134,7 @@ export default function SetlistsPage() {
             {dateFilter !== "all" && ` (filtrado de ${setlists.length})`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div id="tour-setlist-actions" className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setAutoGenOpen(true)} className="gap-1 text-xs sm:text-sm">
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">Sugerir Repertório</span>
@@ -109,7 +148,7 @@ export default function SetlistsPage() {
       </div>
 
       {/* Filters Row */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div id="tour-setlist-filters" className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1.5">
           <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
@@ -154,7 +193,7 @@ export default function SetlistsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div id="tour-setlist-list" className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredAndSorted.map((sl: any, i) => (
             <Link
               key={sl.id}
@@ -255,6 +294,12 @@ export default function SetlistsPage() {
           queryClient.invalidateQueries({ queryKey: ["setlists"] });
           navigate(`/setlists/${id}`);
         }}
+      />
+
+      <GuidedTour
+        steps={SETLISTS_TOUR_STEPS}
+        run={runSetlistsTour}
+        onFinish={completeTour}
       />
     </div>
   );

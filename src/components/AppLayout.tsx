@@ -84,13 +84,20 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
-            {(location.pathname === "/songs" || location.pathname === "/songs/") && (
+            {["/songs", "/setlists", "/artists"].some(p => location.pathname.startsWith(p)) && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => {
-                  if ((window as any).__replaySongsTour) {
+                  const path = location.pathname;
+                  if (path.startsWith("/songs") && (window as any).__replaySongsTour) {
                     (window as any).__replaySongsTour();
+                  } else if (path.startsWith("/setlists") && (window as any).__replaySetlistsTour) {
+                    (window as any).__replaySetlistsTour();
+                  } else if (path.startsWith("/artists") && (window as any).__replayArtistsTour) {
+                    (window as any).__replayArtistsTour();
+                  } else {
+                    toast.info("Nenhum tour disponível para esta página.");
                   }
                 }}
                 title="Tour de Ajuda"

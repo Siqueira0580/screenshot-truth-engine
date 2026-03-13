@@ -12,6 +12,43 @@ import { Badge } from "@/components/ui/badge";
 import { fetchArtists, createArtist, deleteArtist, fetchSongs } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+import type { Step } from "react-joyride";
+
+const ARTISTS_TOUR_STEPS: Step[] = [
+  {
+    target: "body",
+    content: "Aqui estão todos os artistas do seu repertório, organizados automaticamente a partir das suas músicas salvas.",
+    title: "🎸 Seus Artistas",
+    placement: "center",
+    disableBeacon: true,
+  },
+  {
+    target: "#tour-artist-search",
+    content: "Pesquise rapidamente por qualquer artista do seu repertório pelo nome.",
+    title: "🔎 Busca de Artistas",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-artist-view-toggle",
+    content: "Alterne entre visualização em lista, cards médios ou cards grandes conforme a sua preferência.",
+    title: "👁️ Modos de Visualização",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-artist-sort",
+    content: "Ordene os artistas por nome (A-Z, Z-A) ou por popularidade baseada nos seus acessos.",
+    title: "📊 Ordenação",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-artist-grid",
+    content: "Clique num artista para ver o seu perfil completo com todas as músicas salvas na sua biblioteca!",
+    title: "🎶 Perfis dos Artistas",
+    placement: "top",
+  },
+];
 
 type SortMode = "alpha_asc" | "alpha_desc" | "most_accessed";
 type ViewMode = "list" | "medium" | "large";
@@ -24,6 +61,12 @@ export default function ArtistsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("medium");
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
+
+  // Guided tour
+  const { run: runArtistsTour, completeTour, replayTour } = useGuidedTour("artists_page");
+  useState(() => {
+    (window as any).__replayArtistsTour = replayTour;
+  });
 
   const { data: artists = [], isLoading } = useQuery({
     queryKey: ["artists"],
@@ -146,7 +189,7 @@ export default function ArtistsPage() {
 
       {/* Search + View Toggle */}
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[180px]">
+        <div id="tour-artist-search" className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar artista..."
@@ -156,6 +199,7 @@ export default function ArtistsPage() {
           />
         </div>
         <ToggleGroup
+          id="tour-artist-view-toggle"
           type="single"
           value={viewMode}
           onValueChange={(v) => v && setViewMode(v as ViewMode)}
@@ -178,7 +222,7 @@ export default function ArtistsPage() {
       </div>
 
       {/* Sort Controls */}
-      <div className="flex items-center gap-3">
+      <div id="tour-artist-sort" className="flex items-center gap-3">
         <ToggleGroup
           type="single"
           value={sort}
@@ -236,7 +280,7 @@ export default function ArtistsPage() {
           </p>
         </motion.div>
       ) : (
-        <div className={gridClass}>
+        <div id="tour-artist-grid" className={gridClass}>
           {sortedArtists.map((artist, i) => {
             const songCount = artistSongCount[artist.name.toLowerCase()] || 0;
             const initials = artist.name
@@ -410,6 +454,12 @@ export default function ArtistsPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <GuidedTour
+        steps={ARTISTS_TOUR_STEPS}
+        run={runArtistsTour}
+        onFinish={completeTour}
+      />
     </div>
   );
 }

@@ -21,7 +21,7 @@ interface YouTubeSearchModalProps {
   songId: string;
   songTitle: string;
   songArtist?: string | null;
-  onVideoLinked?: () => void;
+  onVideoLinked?: (videoId: string) => void;
 }
 
 function formatDuration(seconds: number): string {

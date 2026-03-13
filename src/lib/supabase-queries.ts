@@ -338,6 +338,7 @@ function normalizeArtistName(raw: string): string {
 
 export async function findOrCreateArtist(name: string, photoUrl?: string): Promise<Artist> {
   const normalized = normalizeArtistName(name);
+  const userId = await getCurrentUserId();
 
   const { data: existing } = await supabase
     .from("artists")
@@ -358,7 +359,7 @@ export async function findOrCreateArtist(name: string, photoUrl?: string): Promi
 
   const { data, error } = await supabase
     .from("artists")
-    .insert({ name: normalized, photo_url: photoUrl || null })
+    .insert({ name: normalized, photo_url: photoUrl || null, created_by: userId })
     .select()
     .single();
   if (error) throw error;

@@ -143,6 +143,16 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
 
   const mutation = useMutation({
     mutationFn: async () => {
+      // Anti-duplicate check
+      const duplicateId = await checkDuplicateSong(
+        form.title,
+        form.artist || null,
+        isEditing ? songId! : undefined
+      );
+      if (duplicateId) {
+        throw new Error("DUPLICATE");
+      }
+
       // Auto-deduplicate artist
       if (form.artist.trim()) {
         await findOrCreateArtist(form.artist.trim());

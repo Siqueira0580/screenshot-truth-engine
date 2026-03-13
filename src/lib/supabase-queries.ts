@@ -296,7 +296,8 @@ export async function fetchArtists() {
 }
 
 export async function createArtist(artist: { name: string; about?: string }) {
-  const { data, error } = await supabase.from("artists").insert(artist).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase.from("artists").insert({ ...artist, created_by: userId }).select().single();
   if (error) throw error;
   return data as Artist;
 }

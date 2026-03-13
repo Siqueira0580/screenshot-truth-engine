@@ -19,8 +19,45 @@ import OnboardingTour, { useOnboardingTour } from "@/components/OnboardingTour";
 import PersonalizationWizard from "@/components/PersonalizationWizard";
 import LibrarySetupWizard from "@/components/LibrarySetupWizard";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+import type { Step } from "react-joyride";
 
 type SortMode = "recent" | "oldest" | "az" | "za";
+
+const SONGS_TOUR_STEPS: Step[] = [
+  {
+    target: "body",
+    content: "Bem-vindo ao Smart Cifra! Vamos fazer um tour rápido pelas ferramentas da sua página de músicas.",
+    title: "🎵 Bem-vindo!",
+    placement: "center",
+    disableBeacon: true,
+  },
+  {
+    target: "#tour-tabs",
+    content: "Alterne entre 'Explorar' para descobrir novas músicas e 'Minhas Músicas' para gerir o seu repertório pessoal.",
+    title: "📑 Abas de Navegação",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-search",
+    content: "Encontre qualquer música ou artista num piscar de olhos. Basta digitar o nome!",
+    title: "🔎 Pesquisa Rápida",
+    placement: "bottom",
+  },
+  {
+    target: "#tour-add-buttons",
+    content: "Importe PDFs, adicione via link ou crie músicas manualmente. Tudo num só lugar!",
+    title: "➕ Adicionar Músicas",
+    placement: "bottom",
+  },
+  {
+    target: "nav.fixed",
+    content: "Navegue para o Estúdio para ensaiar com áudios, monte os seus Repertórios (Setlists) ou componha com a IA.",
+    title: "🧭 Menu de Navegação",
+    placement: "top",
+  },
+];
 
 export default function SongsPage() {
   const { user } = useAuth();
@@ -39,9 +76,20 @@ export default function SongsPage() {
   const [tourVisible, setTourVisible] = useState(showTour);
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [librarySetupDismissed, setLibrarySetupDismissed] = useState(false);
+  const [activeTab, setActiveTab] = useState("explore");
 
   const showWizard = !prefsLoading && !wizardCompleted && !wizardDismissed;
   const showLibrarySetup = !prefsLoading && wizardCompleted && !librarySetupCompleted && !librarySetupDismissed && !showWizard;
+
+  // Guided tour (react-joyride)
+  const { run: runGuidedTour, completeTour, replayTour } = useGuidedTour("songs_page");
+  // Only run guided tour after onboarding modal, wizard, and library setup are all done
+  const shouldRunGuidedTour = runGuidedTour && !tourVisible && !showWizard && !showLibrarySetup;
+
+  // Expose replay function globally for the help button in AppLayout
+  useState(() => {
+    (window as any).__replaySongsTour = replayTour;
+  });
 
   // Fetch user's personal library instead of all global songs
   const { data: songs = [], isLoading } = useQuery({
@@ -138,14 +186,14 @@ export default function SongsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="explore" className="w-full">
-        <TabsList className="w-full grid grid-cols-2">
+      <Tabs defaultValue="explore" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList id="tour-tabs" className="w-full grid grid-cols-2">
           <TabsTrigger value="explore">🔍 Explorar</TabsTrigger>
           <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="library" className="space-y-3 mt-3">
-          <div className="flex items-center gap-1.5 justify-end flex-wrap">
+          <div id="tour-add-buttons" className="flex items-center gap-1.5 justify-end flex-wrap">
             <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
             <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
               {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline text-xs">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline text-xs">Importar PDFs</span></>)}
@@ -159,7 +207,7 @@ export default function SongsPage() {
           </div>
 
           {/* Search + Sort */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div id="tour-search" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
@@ -274,6 +322,13 @@ export default function SongsPage() {
       {showLibrarySetup && !tourVisible && (
         <LibrarySetupWizard onComplete={() => { setLibrarySetupDismissed(true); markLibrarySetupDone(); queryClient.invalidateQueries({ queryKey: ["user-library"] }); }} />
       )}
+
+      {/* Guided Tour (react-joyride) - runs after all onboarding modals */}
+      <GuidedTour
+        steps={SONGS_TOUR_STEPS}
+        run={shouldRunGuidedTour}
+        onFinish={completeTour}
+      />
     </div>
   );
 }

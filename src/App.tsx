@@ -27,6 +27,9 @@ import LandingPage from "@/pages/LandingPage";
 import LiveViewerPage from "@/pages/LiveViewerPage";
 import ArtistExplorePage from "@/pages/ArtistExplorePage";
 import TunerPage from "@/pages/TunerPage";
+import PublicLayout from "@/components/PublicLayout";
+import PublicSetlistPage from "@/pages/PublicSetlistPage";
+import PublicSongPage from "@/pages/PublicSongPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
@@ -90,6 +93,10 @@ const App = () => (
                 <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
               </Route>
               <Route path="/live/:sessionId" element={<LiveViewerPage />} />
+              <Route element={<PublicLayout />}>
+                <Route path="/share/setlist/:id" element={<PublicSetlistPage />} />
+                <Route path="/share/song/:id" element={<PublicSongPage />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </UserPreferencesProvider>

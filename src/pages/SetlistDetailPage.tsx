@@ -590,6 +590,22 @@ export default function SetlistDetailPage() {
             <Button variant="outline" size="sm" onClick={handleShareWhatsApp} className="gap-2" title="Compartilhar via WhatsApp">
               <Share2 className="h-4 w-4" /><span className="hidden sm:inline">WhatsApp</span>
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              title="Copiar Link Público"
+              onClick={() => {
+                const publicUrl = `${window.location.origin}/share/setlist/${id}`;
+                navigator.clipboard.writeText(publicUrl).then(() => {
+                  toast.success("Link público copiado!");
+                }).catch(() => {
+                  toast.error("Erro ao copiar link");
+                });
+              }}
+            >
+              <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Link Público</span>
+            </Button>
             <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
           </>
         )}

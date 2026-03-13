@@ -181,7 +181,13 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       toast.success(isEditing ? "Música atualizada!" : "Música criada!");
       onOpenChange(false);
     },
-    onError: () => toast.error("Erro ao salvar música"),
+    onError: (err: any) => {
+      if (err?.message === "DUPLICATE") {
+        toast.error("Música já cadastrada! Você já possui uma música com este título e artista no seu repertório.");
+      } else {
+        toast.error("Erro ao salvar música");
+      }
+    },
   });
 
   const handlePdfUpload = async (file: File) => {

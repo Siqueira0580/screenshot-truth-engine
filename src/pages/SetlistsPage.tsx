@@ -69,6 +69,14 @@ export default function SetlistsPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
+  // Guided tour
+  const { run: runSetlistsTour, completeTour, replayTour } = useGuidedTour("setlists_page");
+
+  // Expose replay globally for help button
+  useState(() => {
+    (window as any).__replaySetlistsTour = replayTour;
+  });
+
   const { data: setlists = [], isLoading } = useQuery({
     queryKey: ["setlists"],
     queryFn: fetchSetlists,

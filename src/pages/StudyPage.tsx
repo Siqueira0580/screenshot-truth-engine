@@ -4,8 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Music2, Mic2, Drum, Piano, Guitar,
   Volume2, ChevronUp, ChevronDown, Loader2,
-  ArrowLeft, Minus, Plus, BookOpen, Edit3,
+  Minus, Plus, BookOpen, Edit3,
 } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

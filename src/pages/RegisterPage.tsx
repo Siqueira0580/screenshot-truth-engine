@@ -147,8 +147,8 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+          <form onSubmit={handleRegister} className="space-y-4 landscape:grid landscape:grid-cols-2 landscape:gap-x-4 landscape:gap-y-3 landscape:space-y-0">
+            <div className="grid grid-cols-2 gap-3 landscape:col-span-2">
               <div className="space-y-1.5">
                 <Label htmlFor="firstName">Nome *</Label>
                 <Input
@@ -214,7 +214,7 @@ export default function RegisterPage() {
               {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading || hasErrors}>
+            <Button type="submit" className="w-full landscape:col-span-2" disabled={loading || hasErrors}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Cadastrar
             </Button>

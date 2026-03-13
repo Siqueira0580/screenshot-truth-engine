@@ -47,10 +47,33 @@ export default function AppLayout() {
   }, [user]);
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden pb-16 lg:pb-0">
+    <div className="h-screen flex flex-col landscape:flex-row bg-background overflow-hidden pb-16 lg:pb-0 landscape:pb-0">
+      {/* Landscape Side Rail (mobile only, hidden on lg+) */}
+      <nav className="hidden landscape:flex landscape:lg:hidden flex-col items-center gap-1 py-2 px-1 w-14 shrink-0 border-r border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl z-50 overflow-y-auto">
+        <button type="button" onClick={() => navigate("/songs")} className="mb-2">
+          <img src={smartCifraLogo} alt="Smart Cifra" className="h-8 w-8 rounded-md" />
+        </button>
+        {navItems.map((item) => {
+          const isActive = location.pathname.startsWith(item.to);
+          return (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={cn(
+                "flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-[9px] font-medium transition-colors w-full",
+                isActive ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <item.icon className={cn("h-4 w-4", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+            </NavLink>
+          );
+        })}
+      </nav>
+
       {/* Desktop Header */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
       <header className="sticky top-0 z-50 border-b border-border/50 dark:border-border/30 bg-card/80 backdrop-blur-xl">
-        <div className="container flex h-16 items-center gap-6">
+        <div className="container flex h-16 landscape:h-12 items-center gap-6">
           <button type="button" onClick={() => navigate("/songs")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img src={smartCifraLogo} alt="Smart Cifra" className="h-12 w-12 rounded-lg" />
             <span className="text-sm font-bold tracking-tight text-foreground hidden sm:inline">
@@ -171,12 +194,12 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="container py-6 animate-fade-in flex-1 min-h-0 overflow-y-auto overflow-x-hidden max-w-full">
+      <main className="container py-6 landscape:py-3 animate-fade-in flex-1 min-h-0 overflow-y-auto overflow-x-hidden max-w-full">
         <Outlet />
       </main>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden">
+      {/* Mobile Bottom Navigation — hidden in landscape */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden landscape:hidden">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => (
             <NavLink
@@ -202,6 +225,7 @@ export default function AppLayout() {
           ))}
         </div>
       </nav>
+      </div>{/* close flex-1 wrapper */}
     </div>
   );
 }

@@ -84,13 +84,16 @@ export default function TunerPage() {
 
   return (
     <div className="max-w-lg mx-auto space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          Afinador
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Afine seu instrumento com precisão usando o microfone
-        </p>
+      <div className="flex items-center gap-2">
+        <BackButton />
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            Afinador
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Afine seu instrumento com precisão usando o microfone
+          </p>
+        </div>
       </div>
 
       <Card className="border-border bg-card overflow-hidden">

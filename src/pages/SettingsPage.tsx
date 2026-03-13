@@ -27,9 +27,12 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
-        <p className="text-muted-foreground mt-1">Personalize a sua experiência</p>
+      <div className="flex items-center gap-2">
+        <BackButton />
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Configurações</h1>
+          <p className="text-muted-foreground mt-1">Personalize a sua experiência</p>
+        </div>
       </div>
 
       <Card className="border-border bg-card">

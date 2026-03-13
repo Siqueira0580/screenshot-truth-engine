@@ -338,6 +338,7 @@ export default function SongDetailPage() {
         songId={id!}
         songTitle={song.title}
         songArtist={song.artist}
+        onVideoLinked={() => setPlayerVisible(true)}
       />
     </div>
   );

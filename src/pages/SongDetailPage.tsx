@@ -42,6 +42,7 @@ export default function SongDetailPage() {
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);
   const [confirmSaveAsDefault, setConfirmSaveAsDefault] = useState(false);
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
+  const [playerVisible, setPlayerVisible] = useState(false);
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],

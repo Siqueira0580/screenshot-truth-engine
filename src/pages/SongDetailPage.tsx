@@ -272,7 +272,7 @@ export default function SongDetailPage() {
         </div>
       )}
 
-      {/* Floating Mini Player */}
+      {/* Inline Mini Player (below header, above chords) */}
       {ytId && playerVisible && (
         <YouTubeMiniPlayer
           videoId={ytId}

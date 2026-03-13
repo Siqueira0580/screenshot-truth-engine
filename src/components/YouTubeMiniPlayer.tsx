@@ -13,8 +13,8 @@ export default function YouTubeMiniPlayer({ videoId, title, onClose }: YouTubeMi
 
   return (
     <div
-      className={`fixed z-50 bottom-4 right-4 rounded-xl shadow-2xl border border-border bg-card overflow-hidden transition-all duration-300 ${
-        expanded ? "w-[90vw] max-w-lg h-72" : "w-72 h-44 sm:w-80 sm:h-48"
+      className={`relative w-full rounded-xl shadow-md border border-border bg-card overflow-hidden transition-all duration-300 ${
+        expanded ? "max-w-lg aspect-video" : "max-w-sm aspect-video"
       }`}
     >
       <div className="absolute top-1 right-1 z-10 flex gap-1">

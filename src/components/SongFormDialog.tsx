@@ -444,7 +444,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           </Accordion>
 
           {/* Cifra / Letra */}
-          <div className="space-y-2">
+          <div id="tour-studio-cifra" className="space-y-2">
             <Label>Cifra / Letra</Label>
             <Textarea
               value={form.body_text}

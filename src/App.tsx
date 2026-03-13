@@ -97,6 +97,7 @@ const App = () => (
               <Route element={<PublicLayout />}>
                 <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />
                 <Route path="/share/song/:id" element={<PublicSongPage />} />
+                <Route path="/terms" element={<TermsOfUsePage />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

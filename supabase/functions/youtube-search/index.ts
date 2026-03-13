@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     ];
 
     let results: any[] = [];
-    let lastError = "";
+    let _lastError = "";
 
     for (const instance of pipedInstances) {
       try {

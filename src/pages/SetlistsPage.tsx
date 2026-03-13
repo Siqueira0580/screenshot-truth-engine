@@ -134,7 +134,7 @@ export default function SetlistsPage() {
             {dateFilter !== "all" && ` (filtrado de ${setlists.length})`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div id="tour-setlist-actions" className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setAutoGenOpen(true)} className="gap-1 text-xs sm:text-sm">
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">Sugerir Repertório</span>

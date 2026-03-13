@@ -522,8 +522,8 @@ export default function SetlistDetailPage() {
 
   return (
     <div className={`max-w-3xl space-y-6 animate-fade-in ${(selectedSongs.size > 0 || globalSelectedSongs.size > 0) ? "pb-36 sm:pb-28" : ""}`}>
-      <Button variant="ghost" asChild className="gap-2">
-        <Link to="/setlists"><ArrowLeft className="h-4 w-4" /> Voltar</Link>
+      <Button type="button" variant="ghost" className="gap-2" onClick={() => navigate(-1)}>
+        <ArrowLeft className="h-4 w-4" /> Voltar
       </Button>
 
       <SetlistHeader

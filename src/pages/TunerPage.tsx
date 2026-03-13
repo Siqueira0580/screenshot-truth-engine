@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import BackButton from "@/components/ui/BackButton";
 
 const CENTS_RANGE = 50;
 const TICK_COUNT = 21; // -50 to +50 in steps of 5

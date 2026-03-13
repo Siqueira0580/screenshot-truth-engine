@@ -350,7 +350,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           </div>
 
           {/* Metadados principais */}
-          <div className="grid grid-cols-2 gap-4">
+          <div id="tour-studio-title" className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Título *</Label>
               <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />

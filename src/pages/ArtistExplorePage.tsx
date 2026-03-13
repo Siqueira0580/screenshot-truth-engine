@@ -73,6 +73,16 @@ export default function ArtistExplorePage() {
       if (!title || !content) throw new Error("Não foi possível extrair a cifra deste link.");
 
       const finalArtist = (artist || decodedName).trim().replace(/\s+/g, " ");
+
+      // Anti-duplicate check
+      const { checkDuplicateSong } = await import("@/lib/supabase-queries");
+      const duplicateId = await checkDuplicateSong(title.trim(), finalArtist);
+      if (duplicateId) {
+        toast.error("Música já cadastrada! Você já possui uma música com este título e artista no seu repertório.");
+        setIsImporting(false);
+        return;
+      }
+
       const newSong = await createSongAndAddToLibrary({
         title: title.trim(),
         artist: finalArtist,

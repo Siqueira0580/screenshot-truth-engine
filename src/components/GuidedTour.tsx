@@ -65,6 +65,7 @@ export default function GuidedTour({ steps, run, onFinish, disableOverlay }: Gui
 
   const handleCallback = (data: CallBackProps) => {
     const { status, action, type, index } = data;
+    console.log("[GuidedTour] callback:", { status, action, type, index, stepIndex });
 
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
       setStepIndex(0);
@@ -75,12 +76,13 @@ export default function GuidedTour({ steps, run, onFinish, disableOverlay }: Gui
     // Manually manage step index for reliable advancement
     if (type === EVENTS.STEP_AFTER) {
       if (action === ACTIONS.NEXT) {
+        console.log("[GuidedTour] advancing to step:", index + 1);
         setStepIndex(index + 1);
       } else if (action === ACTIONS.PREV) {
         setStepIndex(index - 1);
       }
     } else if (type === EVENTS.TARGET_NOT_FOUND) {
-      // Skip missing targets
+      console.log("[GuidedTour] target not found, skipping to:", index + 1);
       setStepIndex(index + 1);
     }
   };

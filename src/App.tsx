@@ -27,6 +27,9 @@ import LandingPage from "@/pages/LandingPage";
 import LiveViewerPage from "@/pages/LiveViewerPage";
 import ArtistExplorePage from "@/pages/ArtistExplorePage";
 import TunerPage from "@/pages/TunerPage";
+import PublicLayout from "@/components/PublicLayout";
+import PublicSetlistPage from "@/pages/PublicSetlistPage";
+import PublicSongPage from "@/pages/PublicSongPage";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 

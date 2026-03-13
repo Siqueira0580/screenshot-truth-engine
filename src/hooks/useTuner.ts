@@ -145,12 +145,8 @@ export function useTuner() {
             });
           }
         } else {
-          // Silence / noise gate: hold last reading, then fade
-          const elapsed = now - lastSignalTimeRef.current;
-          if (elapsed > SILENCE_HOLD_MS) {
-            setTunerData(null);
-          }
-          // else: keep showing last stable reading (do nothing)
+          // Noise gate: freeze last reading indefinitely (studio behavior)
+          // Do nothing — keep showing last stable reading
         }
 
         rafRef.current = requestAnimationFrame(loop);

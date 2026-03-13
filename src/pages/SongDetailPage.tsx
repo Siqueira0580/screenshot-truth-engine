@@ -43,6 +43,7 @@ export default function SongDetailPage() {
   const [confirmSaveAsDefault, setConfirmSaveAsDefault] = useState(false);
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [playerVisible, setPlayerVisible] = useState(false);
+  const [linkedVideoId, setLinkedVideoId] = useState<string | null>(null);
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
@@ -173,7 +174,7 @@ export default function SongDetailPage() {
 
   if (!song) return <p className="text-muted-foreground">Música não encontrada.</p>;
 
-  const ytId = extractYoutubeId(song.youtube_url);
+  const ytId = linkedVideoId || extractYoutubeId(song.youtube_url);
   const displayKey = transposeKey(song.musical_key, transpose);
   const displayBody = song.body_text ? transposeText(song.body_text, transpose) : null;
 
@@ -338,7 +339,10 @@ export default function SongDetailPage() {
         songId={id!}
         songTitle={song.title}
         songArtist={song.artist}
-        onVideoLinked={() => setPlayerVisible(true)}
+        onVideoLinked={(videoId) => {
+          setLinkedVideoId(videoId);
+          setPlayerVisible(true);
+        }}
       />
     </div>
   );

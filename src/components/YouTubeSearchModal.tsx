@@ -21,7 +21,7 @@ interface YouTubeSearchModalProps {
   songId: string;
   songTitle: string;
   songArtist?: string | null;
-  onVideoLinked?: () => void;
+  onVideoLinked?: (videoId: string) => void;
 }
 
 function formatDuration(seconds: number): string {
@@ -91,8 +91,7 @@ export default function YouTubeSearchModal({
 
       queryClient.invalidateQueries({ queryKey: ["song", songId] });
       toast.success("Dados atualizados com sucesso!");
-      onVideoLinked?.();
-      onOpenChange(false);
+      onVideoLinked?.(result.videoId);
       onOpenChange(false);
     } catch (err: any) {
       toast.error(`Erro ao atualizar: ${err.message}`);

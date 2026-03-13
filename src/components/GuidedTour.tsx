@@ -60,23 +60,47 @@ const joyrideStyles: Partial<Styles> = {
   },
 };
 
-export default function GuidedTour({ steps, run, onFinish }: GuidedTourProps) {
+export default function GuidedTour({ steps, run, onFinish, disableOverlay }: GuidedTourProps) {
+  const [stepIndex, setStepIndex] = useState(0);
+
   const handleCallback = (data: CallBackProps) => {
-    const { status } = data;
+    const { status, action, type, index } = data;
+
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      setStepIndex(0);
       onFinish();
+      return;
+    }
+
+    // Manually manage step index for reliable advancement
+    if (type === EVENTS.STEP_AFTER) {
+      if (action === ACTIONS.NEXT) {
+        setStepIndex(index + 1);
+      } else if (action === ACTIONS.PREV) {
+        setStepIndex(index - 1);
+      }
+    } else if (type === EVENTS.TARGET_NOT_FOUND) {
+      // Skip missing targets
+      setStepIndex(index + 1);
     }
   };
+
+  // Reset step index when tour restarts
+  if (run && stepIndex >= steps.length) {
+    setStepIndex(0);
+  }
 
   return (
     <Joyride
       steps={steps}
       run={run}
+      stepIndex={stepIndex}
       continuous
       showSkipButton
       showProgress
       disableOverlayClose
-      disableScrolling={false}
+      disableOverlay={disableOverlay}
+      disableScrolling
       scrollOffset={80}
       callback={handleCallback}
       styles={joyrideStyles}

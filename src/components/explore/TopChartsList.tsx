@@ -57,7 +57,7 @@ export default function TopChartsList({ tracks, title = "🏆 Top 10 Global" }: 
                     ? "var(--gradient-warm)"
                     : i < 3
                       ? "linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)))"
-                      : "linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--muted)))",
+                      : "linear-gradient(135deg, hsl(var(--secondary) / 0.5), hsl(var(--muted) / 0.5))",
                 }}
               >
                 {i + 1}

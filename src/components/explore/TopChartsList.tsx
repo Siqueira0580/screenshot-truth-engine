@@ -67,7 +67,6 @@ export default function TopChartsList({ tracks, title = "🏆 Top 10 Global" }: 
                 className="flex items-center gap-3 py-2.5 px-4 pr-6 border-none ring-0 rounded-lg group-hover:shadow-[var(--shadow-glow)] transition-all duration-300"
                 style={{ clipPath: "polygon(0 0, 98% 0, 100% 40%, 97% 100%, 2% 100%, 0 70%)", background: "var(--gradient-card-list)", boxShadow: "var(--shadow-card)" }}
               >
-              >
                 <Avatar className="h-10 w-10 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all">
                   <AvatarImage src={track.artist.picture_medium} alt={track.artist.name} />
                   <AvatarFallback className="bg-secondary text-secondary-foreground">{track.artist.name.charAt(0)}</AvatarFallback>

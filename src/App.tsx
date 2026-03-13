@@ -93,6 +93,10 @@ const App = () => (
                 <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
               </Route>
               <Route path="/live/:sessionId" element={<LiveViewerPage />} />
+              <Route element={<PublicLayout />}>
+                <Route path="/share/setlist/:id" element={<PublicSetlistPage />} />
+                <Route path="/share/song/:id" element={<PublicSongPage />} />
+              </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
           </UserPreferencesProvider>

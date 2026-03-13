@@ -168,3 +168,12 @@
 .clip-polygon-pill {
   clip-path: polygon(8% 0, 92% 0, 100% 40%, 95% 100%, 5% 100%, 0 55%);
 }
+
+/* Dialog Tour highlight */
+.dialog-tour-highlight {
+  position: relative;
+  z-index: 9997 !important;
+  box-shadow: 0 0 0 4px hsl(var(--primary) / 0.4), 0 0 20px hsl(var(--primary) / 0.2);
+  border-radius: 8px;
+  transition: box-shadow 0.3s ease;
+}

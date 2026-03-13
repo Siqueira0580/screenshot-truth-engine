@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play } from "lucide-react";
+import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
 import { supabase } from "@/integrations/supabase/client";

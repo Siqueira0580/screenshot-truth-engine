@@ -6,6 +6,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -43,55 +53,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    const sanitizedQuery = query.trim().slice(0, 200);
-
-    // Use Piped API (public YouTube frontend, no API key needed)
-    const pipedInstances = [
-      "https://pipedapi.kavin.rocks",
-      "https://pipedapi.adminforge.de",
-      "https://api.piped.privacydev.net",
-    ];
-
-    let results: any[] = [];
-    let _lastError = "";
-
-    for (const instance of pipedInstances) {
-      try {
-        const url = `${instance}/search?q=${encodeURIComponent(sanitizedQuery)}&filter=videos`;
-        const resp = await fetch(url, {
-          headers: { "User-Agent": "SmartCifra/1.0" },
-          signal: AbortSignal.timeout(8000),
-        });
-
-        if (!resp.ok) {
-          _lastError = `${instance}: ${resp.status}`;
-          continue;
-        }
-
-        const data = await resp.json();
-        if (data?.items?.length > 0) {
-          results = data.items
-            .filter((item: any) => item.type === "stream")
-            .slice(0, 8)
-            .map((item: any) => ({
-              videoId: item.url?.replace("/watch?v=", "") || "",
-              title: item.title || "",
-              thumbnail: item.thumbnail || "",
-              channelName: item.uploaderName || "",
-              duration: item.duration || 0,
-            }));
-          break;
-        }
-      } catch (e) {
-        _lastError = `${instance}: ${e.message}`;
-        continue;
-      }
+    const apiKey = Deno.env.get("YOUTUBE_API_KEY");
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: "Erro de Configuração: Chave da API do YouTube não encontrada." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const sanitizedQuery = query.trim().slice(0, 200);
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=8&q=${encodeURIComponent(sanitizedQuery)}&type=video&key=${apiKey}`;
+
+    const resp = await fetch(url);
+
+    if (!resp.ok) {
+      const body = await resp.text();
+      console.error("YouTube API error:", resp.status, body);
+      if (resp.status === 403) {
+        return new Response(
+          JSON.stringify({ error: "Não foi possível conectar ao YouTube. Verifique a chave da API ou a quota." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(
+        JSON.stringify({ error: `YouTube API retornou status ${resp.status}` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const data = await resp.json();
+
+    const results = (data.items || []).map((item: any) => ({
+      videoId: item.id?.videoId || "",
+      title: decodeHtmlEntities(item.snippet?.title || ""),
+      thumbnail: item.snippet?.thumbnails?.medium?.url || item.snippet?.thumbnails?.default?.url || "",
+      channelName: decodeHtmlEntities(item.snippet?.channelTitle || ""),
+      duration: 0, // Search endpoint doesn't return duration
+    }));
 
     return new Response(JSON.stringify({ results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
+    console.error("youtube-search error:", err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

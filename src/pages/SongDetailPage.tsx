@@ -210,9 +210,7 @@ export default function SongDetailPage() {
                 <span className="hidden sm:inline">Ouvir Referência</span>
                 <span className="sm:hidden">▶ Ouvir</span>
               </Button>
-            )}
-              <span className="sm:hidden">YouTube</span>
-            </Button>
+            )
             {song.body_text && (
               <Button
                 variant="outline"

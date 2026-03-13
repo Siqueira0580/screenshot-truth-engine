@@ -321,6 +321,13 @@ export default function SongDetailPage() {
         onClose={() => setTeleprompterOpen(false)}
       />
       <SongChordsFAB bodyText={displayBody} />
+      <YouTubeSearchModal
+        open={youtubeModalOpen}
+        onOpenChange={setYoutubeModalOpen}
+        songId={id!}
+        songTitle={song.title}
+        songArtist={song.artist}
+      />
     </div>
   );
 }

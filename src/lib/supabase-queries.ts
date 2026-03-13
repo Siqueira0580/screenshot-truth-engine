@@ -9,7 +9,7 @@ type SetlistItem = Database["public"]["Tables"]["setlist_items"]["Row"];
 type Artist = Database["public"]["Tables"]["artists"]["Row"];
 
 // Helper to get current user id
-async function getCurrentUserId(): Promise<string> {
+export async function getCurrentUserId(): Promise<string> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Não autenticado");
   return user.id;

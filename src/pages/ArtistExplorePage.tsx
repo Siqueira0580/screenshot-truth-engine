@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { findOrCreateArtist, createSongAndAddToLibrary, removeFromUserLibrary } from "@/lib/supabase-queries";
+import { findOrCreateArtist, createSongAndAddToLibrary, removeFromUserLibrary, deleteSong, getCurrentUserId } from "@/lib/supabase-queries";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -29,18 +29,30 @@ export default function ArtistExplorePage() {
   const sheetPdfInputRef = useRef<HTMLInputElement>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
-  const fetchSongs = useCallback(() => {
+  const fetchSongs = useCallback(async () => {
     if (!decodedName) return;
     setIsLoading(true);
-    supabase
-      .from("songs")
-      .select("*")
-      .ilike("artist", decodedName)
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (!error && data) setSongs(data as Song[]);
-        setIsLoading(false);
-      });
+    try {
+      const userId = await getCurrentUserId();
+      // Fetch only songs in the user's library for this artist
+      const { data: libraryEntries } = await supabase
+        .from("user_library")
+        .select("song_id, songs!inner(id, title, artist, body_text, style, musical_key, bpm, composer, time_signature, youtube_url, pdf_url, created_at, updated_at, created_by, access_count, default_speed, loop_count, auto_next, enrichment_status)")
+        .eq("user_id", userId);
+
+      if (libraryEntries) {
+        const artistSongs = libraryEntries
+          .map((e) => e.songs as unknown as Song)
+          .filter((s) => s && s.artist?.toLowerCase() === decodedName.toLowerCase());
+        setSongs(artistSongs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
+      } else {
+        setSongs([]);
+      }
+    } catch {
+      setSongs([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [decodedName]);
 
   useEffect(() => {
@@ -467,7 +479,9 @@ export default function ArtistExplorePage() {
         onConfirm={async () => {
           if (!deleteTarget) return;
           try {
+            // Remove from library first, then hard delete the song
             await removeFromUserLibrary(deleteTarget.id);
+            await deleteSong(deleteTarget.id);
             setSongs((prev) => prev.filter((s) => s.id !== deleteTarget.id));
             toast.success("Música removida do repertório!");
           } catch {

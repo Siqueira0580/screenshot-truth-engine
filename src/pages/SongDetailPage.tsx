@@ -43,6 +43,7 @@ export default function SongDetailPage() {
   const [confirmSaveAsDefault, setConfirmSaveAsDefault] = useState(false);
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [playerVisible, setPlayerVisible] = useState(false);
+  const [linkedVideoId, setLinkedVideoId] = useState<string | null>(null);
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],

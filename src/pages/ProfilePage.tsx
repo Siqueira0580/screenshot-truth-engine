@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save } from "lucide-react";
+import { Camera, Loader2, Save, ShieldCheck, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import DangerZone from "@/components/DangerZone";
 import BackButton from "@/components/ui/BackButton";
@@ -224,6 +224,18 @@ export default function ProfilePage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Termos de Uso */}
+      <Link
+        to="/terms"
+        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:bg-secondary/50 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+          <span className="text-sm font-medium text-foreground">Termos de Uso e Privacidade</span>
+        </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
 
       {/* Danger Zone */}
       <DangerZone />

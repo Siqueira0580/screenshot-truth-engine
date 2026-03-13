@@ -49,6 +49,7 @@ export default function ImportSongModal({
   setlistId,
   setlistPosition,
 }: ImportSongModalProps) {
+  const navigate = useNavigate();
   const [input, setInput] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);

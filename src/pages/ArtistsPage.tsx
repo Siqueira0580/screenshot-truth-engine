@@ -199,6 +199,7 @@ export default function ArtistsPage() {
           />
         </div>
         <ToggleGroup
+          id="tour-artist-view-toggle"
           type="single"
           value={viewMode}
           onValueChange={(v) => v && setViewMode(v as ViewMode)}

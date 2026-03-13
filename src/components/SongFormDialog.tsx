@@ -24,7 +24,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { createSong, updateSong, fetchSong, findOrCreateArtist } from "@/lib/supabase-queries";
+import { createSong, updateSong, fetchSong, findOrCreateArtist, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { FileUp, Loader2, Settings2, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";

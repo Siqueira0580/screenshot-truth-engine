@@ -132,6 +132,7 @@ export default function StudioPage() {
       </div>
 
       {/* Song grid */}
+      <div id="tour-studio-list">
       {filteredSongs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
           <Upload className="h-12 w-12 mb-4 opacity-40" />

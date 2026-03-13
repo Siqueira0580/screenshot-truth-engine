@@ -454,7 +454,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div id="tour-studio-save" className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
@@ -463,6 +463,13 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
             </Button>
           </div>
         </form>
+
+        {/* Studio Guided Tour */}
+        <GuidedTour
+          steps={STUDIO_TOUR_STEPS}
+          run={tourReady}
+          onFinish={completeStudioTour}
+        />
       </DialogContent>
     </Dialog>
   );

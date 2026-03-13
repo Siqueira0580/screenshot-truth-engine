@@ -56,14 +56,21 @@ export default function ArtistDetailPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (songId: string) => removeFromUserLibrary(songId),
+    mutationFn: async (songId: string) => {
+      // Remove from user library first (ignore errors if not in library)
+      try { await removeFromUserLibrary(songId); } catch (_) {}
+      // Actually delete the song from the database
+      await deleteSong(songId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
       queryClient.invalidateQueries({ queryKey: ["user-library"] });
-      toast.success("Música removida do repertório!");
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      toast.success("Música excluída com sucesso!");
       setDeleteTarget(null);
     },
-    onError: () => toast.error("Erro ao remover música"),
+    onError: (err: any) => toast.error("Erro ao excluir: " + (err?.message || "Verifique suas permissões")),
   });
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {

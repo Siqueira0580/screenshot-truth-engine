@@ -199,6 +199,20 @@ export default function SongDetailPage() {
               <span className="hidden sm:inline">{song.youtube_url ? "Alterar YouTube" : "Vincular YouTube"}</span>
               <span className="sm:hidden">YouTube</span>
             </Button>
+            {ytId && !playerVisible && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPlayerVisible(true)}
+                className="gap-1.5 text-xs sm:text-sm"
+              >
+                <Play className="h-4 w-4 text-primary" />
+                <span className="hidden sm:inline">Ouvir Referência</span>
+                <span className="sm:hidden">▶ Ouvir</span>
+              </Button>
+            )}
+              <span className="sm:hidden">YouTube</span>
+            </Button>
             {song.body_text && (
               <Button
                 variant="outline"

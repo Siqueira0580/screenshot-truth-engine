@@ -5,7 +5,7 @@ import { Music2, Upload, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchSongs, fetchArtists, createSong } from "@/lib/supabase-queries";
+import { fetchSongs, fetchArtists, createSong, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import GuidedTour from "@/components/GuidedTour";

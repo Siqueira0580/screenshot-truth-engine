@@ -13,6 +13,31 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import GuidedTour from "@/components/GuidedTour";
+import { useGuidedTour } from "@/hooks/useGuidedTour";
+
+const COMPOSITIONS_TOUR_STEPS = [
+  {
+    target: "#tour-comp-header",
+    title: "Cofre Criativo",
+    content: "Este é o seu espaço privado para composições originais. Tudo aqui é seguro e só seu.",
+  },
+  {
+    target: "#tour-comp-new",
+    title: "Nova Composição",
+    content: "Clique aqui para abrir o estúdio de composição e começar a escrever letras e cifras.",
+  },
+  {
+    target: "#tour-comp-search",
+    title: "Busca e Filtros",
+    content: "Pesquise por nome e ordene suas composições por data ou ordem alfabética.",
+  },
+  {
+    target: "#tour-comp-list",
+    title: "Suas Composições",
+    content: "Aqui ficam suas obras. Clique numa para editar. Composições partilhadas aparecem com badge.",
+  },
+];
 
 interface Composition {
   id: string;

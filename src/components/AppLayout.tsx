@@ -235,27 +235,43 @@ export default function AppLayout() {
       {/* Mobile Bottom Navigation — hidden in landscape */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden landscape:hidden">
         <div className="flex items-center justify-around h-16">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px]",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+          {navItems.map((item) => {
+            if (item.proOnly && isFree) {
+              return (
+                <button
+                  key={item.to}
+                  type="button"
+                  onClick={() => setPaywallOpen(true)}
+                  className="flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px] text-muted-foreground opacity-60"
+                >
+                  <item.icon className="h-5 w-5" />
                   <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
+                </button>
+              );
+            }
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) =>
+                  cn(
+                    "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px]",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+                    <span>{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
           ))}
         </div>
       </nav>

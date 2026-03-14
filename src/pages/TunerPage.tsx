@@ -92,9 +92,11 @@ export default function TunerPage() {
     targetString,
     preset,
     isChromaticMode,
+    isPlayingRef,
     toggle,
     changeInstrument,
     setTargetIndex,
+    toggleReferenceTone,
   } = useTuner();
 
   const cents = tunerData?.cents ?? 0;

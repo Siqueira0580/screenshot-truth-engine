@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS terms_accepted boolean NOT NULL DEFAULT false;

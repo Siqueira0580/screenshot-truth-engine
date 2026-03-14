@@ -1,88 +1,140 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
-/* ─── Constants ─── */
-const NOTE_NAMES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "G#", "A", "Bb", "B"];
-const A4 = 440;
-const LERP_FACTOR = 0.12;          // smoothing speed (lower = heavier/smoother)
-const SILENCE_HOLD_MS = 800;       // hold last reading for this long after silence
-const HYSTERESIS_IN = 3;           // cents threshold to enter "in tune"
-const HYSTERESIS_OUT = 6;          // cents threshold to leave "in tune"
-
-export interface TunerResult {
+/* ─── Instrument Presets ─── */
+export interface StringPreset {
   note: string;
-  frequency: number;
-  cents: number;       // -50 to +50
-  octave: number;
-  isInTune: boolean;   // hysteresis-aware state
+  hz: number;
 }
 
-/* ─── Hz → Note + Cents ─── */
-function hzToNoteData(frequency: number) {
-  if (frequency < 20 || frequency > 5000) return null;
-  const semitonesFromA4 = 12 * Math.log2(frequency / A4);
-  const roundedSemitones = Math.round(semitonesFromA4);
-  const cents = (semitonesFromA4 - roundedSemitones) * 100;
-  const noteIndex = ((roundedSemitones % 12) + 12 + 9) % 12;
-  const octave = 4 + Math.floor((roundedSemitones + 9) / 12);
-  return { note: NOTE_NAMES[noteIndex], frequency, cents, octave };
+export interface InstrumentPreset {
+  label: string;
+  strings: StringPreset[];
+}
+
+export const INSTRUMENT_PRESETS: Record<string, InstrumentPreset> = {
+  guitar: {
+    label: "Violão",
+    strings: [
+      { note: "E2", hz: 82.41 },
+      { note: "A2", hz: 110.0 },
+      { note: "D3", hz: 146.83 },
+      { note: "G3", hz: 196.0 },
+      { note: "B3", hz: 246.94 },
+      { note: "E4", hz: 329.63 },
+    ],
+  },
+  cavaquinho: {
+    label: "Cavaquinho",
+    strings: [
+      { note: "D4", hz: 293.66 },
+      { note: "G4", hz: 392.0 },
+      { note: "B4", hz: 493.88 },
+      { note: "D5", hz: 587.33 },
+    ],
+  },
+  ukulele: {
+    label: "Ukulele",
+    strings: [
+      { note: "G4", hz: 392.0 },
+      { note: "C4", hz: 261.63 },
+      { note: "E4", hz: 329.63 },
+      { note: "A4", hz: 440.0 },
+    ],
+  },
+};
+
+/* ─── Constants ─── */
+const LERP_FACTOR = 0.15;
+const HYSTERESIS_IN = 3;
+const HYSTERESIS_OUT = 6;
+
+export interface TunerResult {
+  detectedHz: number;
+  cents: number;
+  isInTune: boolean;
+  targetString: StringPreset;
 }
 
 /* ─── Autocorrelation Pitch Detection ─── */
-function detectPitch(buffer: Float32Array, sampleRate: number): number | null {
-  const SIZE = buffer.length;
+function autoCorrelate(buf: Float32Array, sampleRate: number): number {
+  const SIZE = buf.length;
   const MAX_SAMPLES = Math.floor(SIZE / 2);
 
+  // RMS gate
   let rms = 0;
-  for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
+  for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.008) return null;
+  if (rms < 0.006) return -1;
 
-  let bestOffset = -1;
-  let bestCorrelation = 0;
-  let foundGoodCorrelation = false;
-  let lastCorrelation = 1;
-
-  for (let offset = 0; offset < MAX_SAMPLES; offset++) {
-    let correlation = 0;
-    for (let i = 0; i < MAX_SAMPLES; i++) {
-      correlation += Math.abs(buffer[i] - buffer[i + offset]);
-    }
-    correlation = 1 - correlation / MAX_SAMPLES;
-
-    if (correlation > 0.9 && correlation > lastCorrelation) {
-      foundGoodCorrelation = true;
-      if (correlation > bestCorrelation) {
-        bestCorrelation = correlation;
-        bestOffset = offset;
-      }
-    } else if (foundGoodCorrelation) {
-      break;
-    }
-    lastCorrelation = correlation;
+  // Trim silence from edges for better correlation
+  let r1 = 0;
+  let r2 = SIZE - 1;
+  const threshold = 0.2;
+  for (let i = 0; i < MAX_SAMPLES; i++) {
+    if (Math.abs(buf[i]) < threshold) r1 = i; else break;
+  }
+  for (let i = 1; i < MAX_SAMPLES; i++) {
+    if (Math.abs(buf[SIZE - i]) < threshold) r2 = SIZE - i; else break;
   }
 
-  if (bestCorrelation > 0.01 && bestOffset > 0) {
-    return sampleRate / bestOffset;
+  const trimmed = buf.slice(r1, r2);
+  const trimmedSize = trimmed.length;
+
+  // Autocorrelation
+  const c = new Float32Array(trimmedSize);
+  for (let i = 0; i < trimmedSize; i++) {
+    for (let j = 0; j < trimmedSize - i; j++) {
+      c[i] += trimmed[j] * trimmed[j + i];
+    }
   }
-  return null;
+
+  // Find first dip then first peak
+  let d = 0;
+  while (c[d] > c[d + 1] && d < trimmedSize) d++;
+
+  let maxVal = -1;
+  let maxPos = -1;
+  for (let i = d; i < trimmedSize; i++) {
+    if (c[i] > maxVal) {
+      maxVal = c[i];
+      maxPos = i;
+    }
+  }
+
+  if (maxPos <= 0) return -1;
+
+  // Parabolic interpolation for sub-sample accuracy
+  const y1 = c[maxPos - 1] ?? 0;
+  const y2 = c[maxPos];
+  const y3 = c[maxPos + 1] ?? 0;
+  const shift = (y3 - y1) / (2 * (2 * y2 - y1 - y3));
+  const refinedPos = maxPos + (Number.isFinite(shift) ? shift : 0);
+
+  return sampleRate / refinedPos;
+}
+
+/* ─── Hz → Cents relative to target ─── */
+function hzToCents(detected: number, target: number): number {
+  return 1200 * Math.log2(detected / target);
 }
 
 /* ─── Hook ─── */
 export function useTuner() {
   const [isActive, setIsActive] = useState(false);
+  const [instrument, setInstrument] = useState<string>("guitar");
+  const [targetIndex, setTargetIndex] = useState<number>(0);
   const [tunerData, setTunerData] = useState<TunerResult | null>(null);
 
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const rafRef = useRef<number>(0);
 
-  // Smoothing refs (mutable, not in React state to avoid re-renders per frame)
   const smoothCentsRef = useRef(0);
   const smoothHzRef = useRef(0);
   const isInTuneRef = useRef(false);
-  const lastSignalTimeRef = useRef(0);
-  const lastNoteRef = useRef<string>("A");
-  const lastOctaveRef = useRef<number>(4);
+
+  const preset = INSTRUMENT_PRESETS[instrument];
+  const targetString = preset.strings[targetIndex] ?? preset.strings[0];
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -114,40 +166,36 @@ export function useTuner() {
 
       const loop = () => {
         analyser.getFloatTimeDomainData(buffer);
-        const hz = detectPitch(buffer, audioCtx.sampleRate);
-        const now = performance.now();
+        const hz = autoCorrelate(buffer, audioCtx.sampleRate);
 
-        if (hz) {
-          const raw = hzToNoteData(hz);
-          if (raw) {
-            lastSignalTimeRef.current = now;
-            lastNoteRef.current = raw.note;
-            lastOctaveRef.current = raw.octave;
+        if (hz > 0) {
+          // Find closest target string for current instrument
+          const currentPreset = INSTRUMENT_PRESETS[instrument];
+          const target = currentPreset?.strings[targetIndex] ?? currentPreset?.strings[0];
+          if (!target) { rafRef.current = requestAnimationFrame(loop); return; }
 
-            // Lerp smoothing
-            smoothHzRef.current += (raw.frequency - smoothHzRef.current) * LERP_FACTOR;
-            smoothCentsRef.current += (raw.cents - smoothCentsRef.current) * LERP_FACTOR;
+          const rawCents = hzToCents(hz, target.hz);
 
-            // Hysteresis for in-tune state
-            const absCents = Math.abs(smoothCentsRef.current);
-            if (isInTuneRef.current) {
-              if (absCents > HYSTERESIS_OUT) isInTuneRef.current = false;
-            } else {
-              if (absCents <= HYSTERESIS_IN) isInTuneRef.current = true;
-            }
+          // Lerp smoothing
+          smoothHzRef.current += (hz - smoothHzRef.current) * LERP_FACTOR;
+          smoothCentsRef.current += (rawCents - smoothCentsRef.current) * LERP_FACTOR;
 
-            setTunerData({
-              note: raw.note,
-              frequency: Math.round(smoothHzRef.current * 10) / 10,
-              cents: Math.round(smoothCentsRef.current),
-              octave: raw.octave,
-              isInTune: isInTuneRef.current,
-            });
+          // Hysteresis
+          const absCents = Math.abs(smoothCentsRef.current);
+          if (isInTuneRef.current) {
+            if (absCents > HYSTERESIS_OUT) isInTuneRef.current = false;
+          } else {
+            if (absCents <= HYSTERESIS_IN) isInTuneRef.current = true;
           }
-        } else {
-          // Noise gate: freeze last reading indefinitely (studio behavior)
-          // Do nothing — keep showing last stable reading
+
+          setTunerData({
+            detectedHz: Math.round(smoothHzRef.current * 10) / 10,
+            cents: Math.round(smoothCentsRef.current),
+            isInTune: isInTuneRef.current,
+            targetString: target,
+          });
         }
+        // Silence: keep last reading (noise gate behavior)
 
         rafRef.current = requestAnimationFrame(loop);
       };
@@ -157,12 +205,22 @@ export function useTuner() {
     } catch {
       console.error("Mic access denied for tuner");
     }
-  }, []);
+  }, [instrument, targetIndex]);
 
   const toggle = useCallback(() => {
     if (isActive) stop();
     else start();
   }, [isActive, start, stop]);
+
+  // Reset target when instrument changes
+  const changeInstrument = useCallback((id: string) => {
+    setInstrument(id);
+    setTargetIndex(0);
+    smoothCentsRef.current = 0;
+    smoothHzRef.current = 0;
+    isInTuneRef.current = false;
+    setTunerData(null);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -172,5 +230,17 @@ export function useTuner() {
     };
   }, []);
 
-  return { isActive, tunerData, start, stop, toggle };
+  return {
+    isActive,
+    tunerData,
+    instrument,
+    targetIndex,
+    targetString,
+    preset,
+    start,
+    stop,
+    toggle,
+    changeInstrument,
+    setTargetIndex,
+  };
 }

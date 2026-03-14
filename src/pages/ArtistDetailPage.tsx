@@ -63,10 +63,9 @@ export default function ArtistDetailPage() {
       await deleteSong(songId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artist-songs"] });
       queryClient.invalidateQueries({ queryKey: ["user-library"] });
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
       toast.success("Música excluída com sucesso!");
       setDeleteTarget(null);
     },

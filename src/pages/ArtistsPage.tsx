@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
-import { fetchArtists, createArtist, deleteArtist, fetchUserLibrary, fetchUserLibraryArtists } from "@/lib/supabase-queries";
+import { createArtist, deleteArtist, fetchUserLibrary, fetchUserLibraryArtists } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import GuidedTour from "@/components/GuidedTour";

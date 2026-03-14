@@ -31,6 +31,7 @@ const navItems = [
 
 export default function AppLayout() {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();

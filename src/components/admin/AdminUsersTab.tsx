@@ -5,9 +5,13 @@ import { Button } from "@/components/ui/button";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { toast } from "@/components/ui/sonner";
-import { Trash2 } from "lucide-react";
+import { Users, Crown, Music, MoreVertical, Award, Ban } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -15,40 +19,86 @@ interface Profile {
   last_name: string | null;
   email: string | null;
   preferred_instrument: string;
+  subscription_plan: string;
+  pro_expires_at: string | null;
   created_at: string;
 }
 
 export default function AdminUsersTab() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState<Profile | null>(null);
+  const [suspendTarget, setSuspendTarget] = useState<Profile | null>(null);
 
-  const fetchProfiles = async () => {
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [proUsers, setProUsers] = useState(0);
+  const [totalSongs, setTotalSongs] = useState(0);
+
+  const fetchAll = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email, preferred_instrument, created_at")
-      .order("created_at", { ascending: false });
+    const [profilesRes, songsRes] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, first_name, last_name, email, preferred_instrument, subscription_plan, pro_expires_at, created_at")
+        .order("created_at", { ascending: false }),
+      supabase.from("songs").select("id", { count: "exact", head: true }),
+    ]);
 
-    if (error) toast.error("Erro ao carregar utilizadores.");
-    else setProfiles(data ?? []);
+    const data = profilesRes.data ?? [];
+    setProfiles(data);
+    setTotalUsers(data.length);
+    setProUsers(data.filter((p) => p.subscription_plan === "pro").length);
+    setTotalSongs(songsRes.count ?? 0);
     setLoading(false);
   };
 
-  useEffect(() => { fetchProfiles(); }, []);
+  useEffect(() => { fetchAll(); }, []);
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    const { error } = await supabase.from("profiles").delete().eq("id", deleteTarget.id);
-    if (error) toast.error("Erro ao excluir utilizador.");
-    else { toast.success("Utilizador excluído."); fetchProfiles(); }
-    setDeleteTarget(null);
+  const grantPro = async (profile: Profile) => {
+    const expiresAt = new Date();
+    expiresAt.setMonth(expiresAt.getMonth() + 1);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ subscription_plan: "pro", pro_expires_at: expiresAt.toISOString() })
+      .eq("id", profile.id);
+    if (error) toast.error("Erro ao conceder PRO.");
+    else { toast.success(`PRO concedido a ${profile.email}.`); fetchAll(); }
   };
+
+  const handleSuspend = async () => {
+    if (!suspendTarget) return;
+    const { error } = await supabase.from("profiles").delete().eq("id", suspendTarget.id);
+    if (error) toast.error("Erro ao suspender conta.");
+    else { toast.success("Conta suspensa com sucesso."); fetchAll(); }
+    setSuspendTarget(null);
+  };
+
+  const kpis = [
+    { label: "Total Utilizadores", value: totalUsers, icon: Users, color: "text-blue-500" },
+    { label: "Utilizadores PRO", value: proUsers, icon: Crown, color: "text-amber-500" },
+    { label: "Músicas no App", value: totalSongs, icon: Music, color: "text-emerald-500" },
+  ];
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-foreground">Gerir Utilizadores</h2>
-      <Card className="border-border bg-card">
+      {/* KPI Cards */}
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        {kpis.map((k) => (
+          <Card key={k.label} className="border-border">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{k.label}</CardTitle>
+              <k.icon className={`h-4 w-4 ${k.color}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {loading ? "—" : k.value.toLocaleString("pt-BR")}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Users Table */}
+      <Card className="border-border">
         <CardHeader>
           <CardTitle className="text-lg">Utilizadores ({profiles.length})</CardTitle>
         </CardHeader>
@@ -62,7 +112,7 @@ export default function AdminUsersTab() {
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>E-mail</TableHead>
-                    <TableHead>Instrumento</TableHead>
+                    <TableHead>Plano</TableHead>
                     <TableHead>Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -74,12 +124,26 @@ export default function AdminUsersTab() {
                         {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
                       </TableCell>
                       <TableCell>{p.email ?? "—"}</TableCell>
-                      <TableCell className="capitalize">{p.preferred_instrument}</TableCell>
+                      <TableCell>
+                        <Badge variant={p.subscription_plan === "pro" ? "default" : "secondary"} className="capitalize">
+                          {p.subscription_plan}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(p)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => grantPro(p)} className="gap-2 cursor-pointer">
+                              <Award className="h-4 w-4" /> Conceder PRO
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setSuspendTarget(p)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                              <Ban className="h-4 w-4" /> Suspender Conta
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -88,11 +152,11 @@ export default function AdminUsersTab() {
             </div>
           )}
           <ConfirmDeleteModal
-            open={!!deleteTarget}
-            onOpenChange={(open) => !open && setDeleteTarget(null)}
-            onConfirm={handleDelete}
-            title="Excluir utilizador"
-            description={`Tem a certeza de que deseja excluir o perfil de "${deleteTarget?.email ?? ""}"? Esta ação não pode ser desfeita.`}
+            open={!!suspendTarget}
+            onOpenChange={(open) => !open && setSuspendTarget(null)}
+            onConfirm={handleSuspend}
+            title="Suspender conta"
+            description={`Tem a certeza de que deseja suspender a conta de "${suspendTarget?.email ?? ""}"? Esta ação não pode ser desfeita.`}
           />
         </CardContent>
       </Card>

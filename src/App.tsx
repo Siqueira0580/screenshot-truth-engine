@@ -32,6 +32,8 @@ import PublicSetlistPage from "@/pages/PublicSetlistPage";
 import PublicSongPage from "@/pages/PublicSongPage";
 import TermsOfUsePage from "@/pages/TermsOfUsePage";
 import NotFound from "./pages/NotFound";
+import AdminDashboardPage from "@/pages/AdminDashboardPage";
+import AdminRoute from "@/components/AdminRoute";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();

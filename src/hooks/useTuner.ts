@@ -153,7 +153,7 @@ function hzToCents(detected: number, target: number): number {
 /* ─── Hook ─── */
 export function useTuner() {
   const [isActive, setIsActive] = useState(false);
-  const [instrument, setInstrument] = useState<string>("guitar");
+  const [instrument, setInstrument] = useState<string>("chromatic");
   const [targetIndex, setTargetIndex] = useState<number>(0);
   const [tunerData, setTunerData] = useState<TunerResult | null>(null);
   const [isPlayingRef, setIsPlayingRef] = useState(false);

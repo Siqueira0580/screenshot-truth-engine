@@ -17,13 +17,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 
 const navItems = [
-  { to: "/songs", icon: Music, label: "Músicas" },
-  { to: "/setlists", icon: ListMusic, label: "Setlists" },
-  { to: "/artists", icon: Users, label: "Artistas" },
-  { to: "/compositions", icon: PenTool, label: "Compor" },
-  { to: "/studio", icon: Headphones, label: "Estúdio" },
+  { to: "/songs", icon: Music, label: "Músicas", proOnly: false },
+  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false },
+  { to: "/artists", icon: Users, label: "Artistas", proOnly: false },
+  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true },
+  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true },
 ];
 
 export default function AppLayout() {

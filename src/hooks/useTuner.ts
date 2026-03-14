@@ -11,7 +11,39 @@ export interface InstrumentPreset {
   strings: StringPreset[];
 }
 
+/* ─── Chromatic Scale (C2–B5) ─── */
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+function buildChromaticScale(): StringPreset[] {
+  const notes: StringPreset[] = [];
+  for (let octave = 2; octave <= 5; octave++) {
+    for (let i = 0; i < 12; i++) {
+      const name = `${NOTE_NAMES[i]}${octave}`;
+      const midi = (octave + 1) * 12 + i; // C2 = midi 36
+      const hz = 440 * Math.pow(2, (midi - 69) / 12);
+      notes.push({ note: name, hz: Math.round(hz * 100) / 100 });
+    }
+  }
+  return notes;
+}
+
+export const CHROMATIC_SCALE = buildChromaticScale();
+
+export function findClosestNote(hz: number): StringPreset {
+  let closest = CHROMATIC_SCALE[0];
+  let minDist = Infinity;
+  for (const n of CHROMATIC_SCALE) {
+    const dist = Math.abs(1200 * Math.log2(hz / n.hz));
+    if (dist < minDist) { minDist = dist; closest = n; }
+  }
+  return closest;
+}
+
 export const INSTRUMENT_PRESETS: Record<string, InstrumentPreset> = {
+  chromatic: {
+    label: "Cromático",
+    strings: [], // empty = auto-detect mode
+  },
   guitar: {
     label: "Violão",
     strings: [
@@ -134,7 +166,8 @@ export function useTuner() {
   const isInTuneRef = useRef(false);
 
   const preset = INSTRUMENT_PRESETS[instrument];
-  const targetString = preset.strings[targetIndex] ?? preset.strings[0];
+  const isChromaticMode = preset.strings.length === 0;
+  const targetString = isChromaticMode ? null : (preset.strings[targetIndex] ?? preset.strings[0]);
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -169,9 +202,12 @@ export function useTuner() {
         const hz = autoCorrelate(buffer, audioCtx.sampleRate);
 
         if (hz > 0) {
-          // Find closest target string for current instrument
+          // Determine target: chromatic auto-detect or manual preset
           const currentPreset = INSTRUMENT_PRESETS[instrument];
-          const target = currentPreset?.strings[targetIndex] ?? currentPreset?.strings[0];
+          const isChromatic = currentPreset.strings.length === 0;
+          const target = isChromatic
+            ? findClosestNote(hz)
+            : (currentPreset.strings[targetIndex] ?? currentPreset.strings[0]);
           if (!target) { rafRef.current = requestAnimationFrame(loop); return; }
 
           const rawCents = hzToCents(hz, target.hz);
@@ -237,6 +273,7 @@ export function useTuner() {
     targetIndex,
     targetString,
     preset,
+    isChromaticMode,
     start,
     stop,
     toggle,

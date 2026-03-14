@@ -165,19 +165,36 @@ export default function TunerPage() {
             </p>
           ) : null}
 
-          {/* Mic toggle */}
-          <Button
-            onClick={toggle}
-            size="lg"
-            variant={isActive ? "destructive" : "default"}
-            className="gap-2 text-base"
-          >
-            {isActive ? (
-              <><MicOff className="h-5 w-5" /> Desligar</>
-            ) : (
-              <><Mic className="h-5 w-5" /> Ligar Afinador</>
+          {/* Mic toggle + Reference tone */}
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={toggle}
+              size="lg"
+              variant={isActive ? "destructive" : "default"}
+              className="gap-2 text-base"
+            >
+              {isActive ? (
+                <><MicOff className="h-5 w-5" /> Desligar</>
+              ) : (
+                <><Mic className="h-5 w-5" /> Ligar Afinador</>
+              )}
+            </Button>
+
+            {!isChromaticMode && (
+              <Button
+                onClick={toggleReferenceTone}
+                size="lg"
+                variant={isPlayingRef ? "secondary" : "outline"}
+                className={cn("gap-2 text-base transition-all", isPlayingRef && "ring-2 ring-primary/50")}
+              >
+                {isPlayingRef ? (
+                  <><VolumeX className="h-5 w-5" /> Parar Tom</>
+                ) : (
+                  <><Volume2 className="h-5 w-5" /> Tocar Nota</>
+                )}
+              </Button>
             )}
-          </Button>
+          </div>
 
           {/* Tuning Display */}
           <div className="w-full flex flex-col items-center gap-5 min-h-[260px] justify-center">

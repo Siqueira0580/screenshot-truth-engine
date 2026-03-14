@@ -445,6 +445,36 @@ export async function fetchSongsByArtist(artistName: string, sort: string = "alp
   return data as Song[];
 }
 
+/** Fetch songs by artist filtered to user's personal library only */
+export async function fetchUserLibrarySongsByArtist(artistName: string, sort: string = "alpha_asc") {
+  const userId = await getCurrentUserId();
+  const { data: libraryData, error } = await supabase
+    .from("user_library")
+    .select("songs!inner(*)")
+    .eq("user_id", userId);
+  if (error) throw error;
+
+  let songs = (libraryData || [])
+    .map((row: any) => row.songs as Song)
+    .filter((s) => s.artist && s.artist.toLowerCase() === artistName.toLowerCase());
+
+  switch (sort) {
+    case "alpha_desc":
+      songs.sort((a, b) => b.title.localeCompare(a.title));
+      break;
+    case "most_accessed":
+      songs.sort((a, b) => (b.access_count || 0) - (a.access_count || 0));
+      break;
+    case "recent":
+      songs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      break;
+    default:
+      songs.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  return songs;
+}
+
 export async function incrementAccessCount(id: string) {
   const { data } = await supabase.from("songs").select("access_count").eq("id", id).single();
   const current = (data as any)?.access_count || 0;

@@ -25,7 +25,8 @@ interface Profile {
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const _navigate = useNavigate();
+  const navigate = useNavigate();
+  const { isPro } = useSubscription();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

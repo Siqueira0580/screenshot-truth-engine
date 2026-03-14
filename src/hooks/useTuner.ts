@@ -260,13 +260,67 @@ export function useTuner() {
     smoothHzRef.current = 0;
     isInTuneRef.current = false;
     setTunerData(null);
+    if (refOscRef.current) {
+      refOscRef.current.stop();
+      refOscRef.current = null;
+      refCtxRef.current?.close().catch(() => {});
+      refCtxRef.current = null;
+      setIsPlayingRef(false);
+    }
   }, []);
+
+  /* ─── Reference Tone ─── */
+  const stopReferenceTone = useCallback(() => {
+    if (refOscRef.current) {
+      const ctx = refCtxRef.current;
+      const gain = refGainRef.current;
+      if (gain && ctx) gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.1);
+      setTimeout(() => {
+        refOscRef.current?.stop();
+        refOscRef.current = null;
+        refCtxRef.current?.close().catch(() => {});
+        refCtxRef.current = null;
+      }, 120);
+    }
+    setIsPlayingRef(false);
+  }, []);
+
+  const playReferenceTone = useCallback((hz: number) => {
+    if (refOscRef.current) {
+      refOscRef.current.stop();
+      refCtxRef.current?.close().catch(() => {});
+    }
+    const ctx = new AudioContext();
+    refCtxRef.current = ctx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = hz;
+    gain.gain.value = 0.0001;
+    gain.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.08);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    refOscRef.current = osc;
+    refGainRef.current = gain;
+    setIsPlayingRef(true);
+  }, []);
+
+  const toggleReferenceTone = useCallback(() => {
+    if (isPlayingRef) { stopReferenceTone(); return; }
+    const p = INSTRUMENT_PRESETS[instrument];
+    const target = p.strings.length === 0
+      ? (tunerData?.targetString ?? findClosestNote(440))
+      : (p.strings[targetIndex] ?? p.strings[0]);
+    if (target) playReferenceTone(target.hz);
+  }, [isPlayingRef, instrument, targetIndex, tunerData, stopReferenceTone, playReferenceTone]);
 
   useEffect(() => {
     return () => {
       cancelAnimationFrame(rafRef.current);
       audioCtxRef.current?.close().catch(() => {});
       streamRef.current?.getTracks().forEach((t) => t.stop());
+      refOscRef.current?.stop();
+      refCtxRef.current?.close().catch(() => {});
     };
   }, []);
 
@@ -278,10 +332,12 @@ export function useTuner() {
     targetString,
     preset,
     isChromaticMode,
+    isPlayingRef,
     start,
     stop,
     toggle,
     changeInstrument,
     setTargetIndex,
+    toggleReferenceTone,
   };
 }

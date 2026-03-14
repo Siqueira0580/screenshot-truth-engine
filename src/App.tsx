@@ -37,6 +37,7 @@ import AdminRoute from "@/components/AdminRoute";
 import PricingPage from "@/pages/PricingPage";
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
+import PwaInstallBanner from "@/components/PwaInstallBanner";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -108,6 +109,7 @@ const App = () => (
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <PwaInstallBanner />
           </UserPreferencesProvider>
           </ThemeProvider>
         </AuthProvider>

@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw } from "lucide-react";
+import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 import DangerZone from "@/components/DangerZone";
 import BackButton from "@/components/ui/BackButton";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
 
 interface Profile {
   id: string;
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isPro } = useSubscription();
+  const { canInstall, isInstalled, promptInstall } = usePwaInstall();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -278,6 +280,27 @@ export default function ProfilePage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Instalar App */}
+      {!isInstalled && (
+        <button
+          onClick={async () => {
+            if (canInstall) {
+              const accepted = await promptInstall();
+              if (accepted) toast.success("App instalado com sucesso!");
+            } else {
+              toast.info("Use o menu do navegador para adicionar à tela inicial.");
+            }
+          }}
+          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:bg-secondary/50 transition-colors group w-full"
+        >
+          <div className="flex items-center gap-3">
+            <Download className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
+            <span className="text-sm font-medium text-foreground">Adicionar app à Tela Inicial</span>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
 
       {/* Termos de Uso */}
       <Link

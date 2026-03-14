@@ -179,7 +179,10 @@ export default function CompositionsHomePage() {
               : "A sua prancheta está limpa. Comece a escrever o seu próximo sucesso. Tudo o que compor aqui é privado e seguro."}
           </p>
           {!search && (
-            <Button className="gap-2" size="lg" onClick={() => navigate("/compose")}>
+            <Button className="gap-2" size="lg" onClick={() => {
+              if (isFree) { setPaywallOpen(true); return; }
+              navigate("/compose");
+            }}>
               <Plus className="h-4 w-4" /> Nova Composição
             </Button>
           )}

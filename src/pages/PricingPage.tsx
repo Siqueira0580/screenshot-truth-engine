@@ -1,9 +1,15 @@
-import { Check, X, Crown, Music } from "lucide-react";
+import { useState } from "react";
+import { Check, X, Crown, Music, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import BackButton from "@/components/ui/BackButton";
+import { toast } from "sonner";
+import { useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 
 const plans = [
   {
@@ -41,6 +47,51 @@ const plans = [
 
 export default function PricingPage() {
   const { plan: currentPlan } = useSubscription();
+  const { user } = useAuth();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const status = searchParams.get("status");
+    if (status === "success") {
+      toast.success("Pagamento realizado! Seu plano Pro será ativado em instantes.");
+    } else if (status === "failure") {
+      toast.error("O pagamento não foi concluído. Tente novamente.");
+    } else if (status === "pending") {
+      toast.info("Pagamento pendente. Assim que for confirmado, seu plano será ativado.");
+    }
+  }, [searchParams]);
+
+  const handleSubscribe = async (planType: "monthly" | "annual" = "monthly") => {
+    if (!user) {
+      toast.error("Faça login para assinar.");
+      return;
+    }
+
+    setCheckoutLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-mp-checkout", {
+        body: { plan_type: planType },
+      });
+
+      if (error) {
+        console.error("Checkout error:", error);
+        toast.error("Erro ao iniciar checkout. Tente novamente.");
+        return;
+      }
+
+      if (data?.init_point) {
+        window.location.href = data.init_point;
+      } else {
+        toast.error("Erro ao gerar link de pagamento.");
+      }
+    } catch (err: any) {
+      console.error("Checkout exception:", err);
+      toast.error("Erro inesperado. Tente novamente.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background px-4 py-8 md:px-8 md:py-12">
@@ -111,8 +162,17 @@ export default function PricingPage() {
                       Plano atual
                     </Button>
                   ) : p.id === "pro" ? (
-                    <Button className="w-full gap-2 bg-gradient-to-r from-amber-500 to-primary hover:from-amber-600 hover:to-primary/90 text-primary-foreground">
-                      <Crown className="h-4 w-4" /> Assinar Pro
+                    <Button
+                      className="w-full gap-2 bg-gradient-to-r from-amber-500 to-primary hover:from-amber-600 hover:to-primary/90 text-primary-foreground"
+                      onClick={() => handleSubscribe("monthly")}
+                      disabled={checkoutLoading}
+                    >
+                      {checkoutLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Crown className="h-4 w-4" />
+                      )}
+                      {checkoutLoading ? "Redirecionando..." : "Assinar Pro"}
                     </Button>
                   ) : (
                     <Button variant="outline" className="w-full" disabled>

@@ -114,6 +114,16 @@ export default function SongsPage() {
     if (!files || files.length === 0) return;
     const pdfFiles = Array.from(files).filter(f => f.type === "application/pdf");
     if (pdfFiles.length === 0) { toast.error("Nenhum arquivo PDF selecionado"); return; }
+
+    // Validate size (5MB max per file)
+    const MAX_PDF_SIZE = 5 * 1024 * 1024;
+    const oversized = pdfFiles.filter(f => f.size > MAX_PDF_SIZE);
+    if (oversized.length > 0) {
+      toast.error(`${oversized.length} arquivo(s) excede(m) o limite de 5MB. Reduza o tamanho e tente novamente.`);
+      if (pdfInputRef.current) pdfInputRef.current.value = "";
+      return;
+    }
+
     setImportingPdfs(true);
     setPdfProgress({ done: 0, total: pdfFiles.length });
     let successCount = 0;
@@ -150,7 +160,10 @@ export default function SongsPage() {
             successCount++;
           }
         } else { errorCount++; }
-      } catch { errorCount++; }
+      } catch (err) {
+        console.error("PDF parse error:", err);
+        errorCount++;
+      }
       setPdfProgress({ done: i + 1, total: pdfFiles.length });
     }
     queryClient.invalidateQueries({ queryKey: ["user-library"] });

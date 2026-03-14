@@ -134,7 +134,6 @@ export default function AppLayout() {
                 </NavLink>
               );
             })}
-            ))}
           </nav>
 
           {/* Spacer for mobile */}

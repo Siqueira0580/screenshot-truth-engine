@@ -1181,6 +1181,8 @@ export default function CompositionStudioPage() {
           onUpdated={setSharedWithEmails}
         />
       )}
+
+      <VirtualPiano />
     </div>
   );
 }

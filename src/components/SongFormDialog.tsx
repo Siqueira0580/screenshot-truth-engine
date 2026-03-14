@@ -195,8 +195,8 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       toast.error("Selecione um arquivo PDF");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("O arquivo é muito grande (Máx: 5MB).");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Arquivo muito grande (máx. 10MB)");
       return;
     }
     setIsParsing(true);
@@ -207,6 +207,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       if (error) throw error;
 
       if (data) {
+        // The AI returns structured data with all fields
         setForm((prev) => ({
           ...prev,
           title: data.title || prev.title,
@@ -224,7 +225,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       }
     } catch (err) {
       console.error("PDF parse error:", err);
-      toast.error("Erro ao ler o PDF. Verifique se o ficheiro não está corrompido.");
+      toast.error("Erro ao processar o PDF");
     } finally {
       setIsParsing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

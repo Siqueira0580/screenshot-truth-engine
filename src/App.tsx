@@ -35,6 +35,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminRoute from "@/components/AdminRoute";
 import PricingPage from "@/pages/PricingPage";
+import TermsInterceptor from "@/components/TermsInterceptor";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();

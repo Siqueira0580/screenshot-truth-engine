@@ -142,7 +142,7 @@ export default function ArtistsPage() {
   const deleteM = useMutation({
     mutationFn: deleteArtist,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
       toast.success("Artista excluído");
     },
   });

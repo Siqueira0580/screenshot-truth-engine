@@ -127,6 +127,11 @@ export default function ArtistExplorePage() {
       toast.error("Selecione um arquivo PDF válido");
       return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("O arquivo é muito grande (Máx: 5MB).");
+      if (sheetPdfInputRef.current) sheetPdfInputRef.current.value = "";
+      return;
+    }
     setUploadingSheetPdf(true);
     try {
       const fileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
@@ -165,6 +170,7 @@ export default function ArtistExplorePage() {
       setImportUrl("");
       fetchSongs();
     } catch (err: any) {
+      console.error("PDF upload error:", err);
       toast.error("Erro ao enviar PDF: " + (err.message || "Tente novamente"));
     } finally {
       setUploadingSheetPdf(false);

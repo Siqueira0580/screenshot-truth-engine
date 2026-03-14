@@ -252,6 +252,13 @@ export default function CompositionsHomePage() {
         title="Apagar Composição"
         description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
       />
+
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        title="Desbloqueie o Cofre Criativo!"
+        description="A ferramenta de Composição é exclusiva do Plano Pro. Assine para começar a escrever as suas músicas originais."
+      />
     </div>
   );
 }

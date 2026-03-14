@@ -69,13 +69,13 @@ export default function ArtistsPage() {
   });
 
   const { data: artists = [], isLoading } = useQuery({
-    queryKey: ["artists"],
-    queryFn: fetchArtists,
+    queryKey: ["user-library-artists"],
+    queryFn: fetchUserLibraryArtists,
   });
 
   const { data: songs = [] } = useQuery({
-    queryKey: ["songs"],
-    queryFn: fetchSongs,
+    queryKey: ["user-library"],
+    queryFn: fetchUserLibrary,
   });
 
   const artistSongCount = useMemo(() => {

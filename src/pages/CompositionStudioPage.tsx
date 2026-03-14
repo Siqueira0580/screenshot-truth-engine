@@ -54,6 +54,8 @@ export default function CompositionStudioPage() {
   const [tonePopoverOpen, setTonePopoverOpen] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const rhymeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
+  const [lyricsSuggestions, setLyricsSuggestions] = useState<string[]>([]);
 
   /** Export composition as a song to Studio (creates song + audio_tracks) */
   const handleExportToStudio = useCallback(async () => {

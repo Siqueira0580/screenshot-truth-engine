@@ -5,7 +5,7 @@ import { Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2, Pen
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { fetchArtists, fetchSongsByArtist, updateArtistPhoto, removeFromUserLibrary, deleteSong } from "@/lib/supabase-queries";
+import { fetchUserLibraryArtists, fetchUserLibrarySongsByArtist, updateArtistPhoto, removeFromUserLibrary, deleteSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import {
@@ -34,22 +34,22 @@ export default function ArtistDetailPage() {
   const queryClient = useQueryClient();
 
   const { data: artists = [] } = useQuery({
-    queryKey: ["artists"],
-    queryFn: fetchArtists,
+    queryKey: ["user-library-artists"],
+    queryFn: fetchUserLibraryArtists,
   });
 
   const artist = artists.find((a) => a.id === id);
 
   const { data: songs = [], isLoading } = useQuery({
-    queryKey: ["artist-songs", artist?.name, sort],
-    queryFn: () => fetchSongsByArtist(artist!.name, sort),
+    queryKey: ["user-library-artist-songs", artist?.name, sort],
+    queryFn: () => fetchUserLibrarySongsByArtist(artist!.name, sort),
     enabled: !!artist,
   });
 
   const photoMutation = useMutation({
     mutationFn: (file: File) => updateArtistPhoto(id!, file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
       toast.success("Foto atualizada!");
     },
     onError: () => toast.error("Erro ao enviar foto"),
@@ -63,10 +63,9 @@ export default function ArtistDetailPage() {
       await deleteSong(songId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artist-songs"] });
       queryClient.invalidateQueries({ queryKey: ["user-library"] });
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
       toast.success("Música excluída com sucesso!");
       setDeleteTarget(null);
     },

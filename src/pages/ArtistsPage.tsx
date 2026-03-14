@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
-import { fetchArtists, createArtist, deleteArtist, fetchSongs } from "@/lib/supabase-queries";
+import { createArtist, deleteArtist, fetchUserLibrary, fetchUserLibraryArtists } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import GuidedTour from "@/components/GuidedTour";
@@ -69,13 +69,13 @@ export default function ArtistsPage() {
   });
 
   const { data: artists = [], isLoading } = useQuery({
-    queryKey: ["artists"],
-    queryFn: fetchArtists,
+    queryKey: ["user-library-artists"],
+    queryFn: fetchUserLibraryArtists,
   });
 
   const { data: songs = [] } = useQuery({
-    queryKey: ["songs"],
-    queryFn: fetchSongs,
+    queryKey: ["user-library"],
+    queryFn: fetchUserLibrary,
   });
 
   const artistSongCount = useMemo(() => {
@@ -129,7 +129,8 @@ export default function ArtistsPage() {
   const createM = useMutation({
     mutationFn: () => createArtist({ name, about: about || undefined }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
       toast.success("Artista adicionado!");
       setFormOpen(false);
       setName("");
@@ -141,7 +142,7 @@ export default function ArtistsPage() {
   const deleteM = useMutation({
     mutationFn: deleteArtist,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
       toast.success("Artista excluído");
     },
   });

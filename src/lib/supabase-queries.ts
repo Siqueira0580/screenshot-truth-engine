@@ -324,6 +324,33 @@ export async function fetchArtists() {
   return data as Artist[];
 }
 
+/** Fetch artists derived from the user's personal library (only artists the user has songs for) */
+export async function fetchUserLibraryArtists(): Promise<Artist[]> {
+  const userId = await getCurrentUserId();
+  // Get distinct artist names from user's library
+  const { data: libraryData, error } = await supabase
+    .from("user_library")
+    .select("songs!inner(artist)")
+    .eq("user_id", userId);
+  if (error) throw error;
+
+  const artistNames = new Set<string>();
+  for (const row of (libraryData || [])) {
+    const artist = (row.songs as any)?.artist;
+    if (artist) artistNames.add(artist);
+  }
+  if (artistNames.size === 0) return [];
+
+  // Fetch matching artist records
+  const { data: artists, error: artistError } = await supabase
+    .from("artists")
+    .select("*")
+    .in("name", Array.from(artistNames))
+    .order("name");
+  if (artistError) throw artistError;
+  return (artists || []) as Artist[];
+}
+
 export async function createArtist(artist: { name: string; about?: string }) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase.from("artists").insert({ ...artist, created_by: userId }).select().single();
@@ -416,6 +443,36 @@ export async function fetchSongsByArtist(artistName: string, sort: string = "alp
   const { data, error } = await query;
   if (error) throw error;
   return data as Song[];
+}
+
+/** Fetch songs by artist filtered to user's personal library only */
+export async function fetchUserLibrarySongsByArtist(artistName: string, sort: string = "alpha_asc") {
+  const userId = await getCurrentUserId();
+  const { data: libraryData, error } = await supabase
+    .from("user_library")
+    .select("songs!inner(*)")
+    .eq("user_id", userId);
+  if (error) throw error;
+
+  let songs = (libraryData || [])
+    .map((row: any) => row.songs as Song)
+    .filter((s) => s.artist && s.artist.toLowerCase() === artistName.toLowerCase());
+
+  switch (sort) {
+    case "alpha_desc":
+      songs.sort((a, b) => b.title.localeCompare(a.title));
+      break;
+    case "most_accessed":
+      songs.sort((a, b) => (b.access_count || 0) - (a.access_count || 0));
+      break;
+    case "recent":
+      songs.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      break;
+    default:
+      songs.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  return songs;
 }
 
 export async function incrementAccessCount(id: string) {

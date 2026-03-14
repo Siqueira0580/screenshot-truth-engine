@@ -59,6 +59,20 @@ export default function AppLayout() {
         </button>
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
+          if (item.proOnly && isFree) {
+            return (
+              <button
+                key={item.to}
+                type="button"
+                onClick={() => setPaywallOpen(true)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-[9px] font-medium transition-colors w-full text-muted-foreground hover:text-foreground opacity-60"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+              </button>
+            );
+          }
           return (
             <NavLink
               key={item.to}

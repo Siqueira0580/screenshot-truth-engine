@@ -127,7 +127,10 @@ export default function CompositionsHomePage() {
             {compositions.length} composiç{compositions.length === 1 ? "ão" : "ões"} • Privado e seguro
           </p>
         </div>
-        <Button id="tour-comp-new" className="gap-2" onClick={() => navigate("/compose")}>
+        <Button id="tour-comp-new" className="gap-2" onClick={() => {
+          if (isFree) { setPaywallOpen(true); return; }
+          navigate("/compose");
+        }}>
           <Plus className="h-4 w-4" /> Nova Composição
         </Button>
       </div>

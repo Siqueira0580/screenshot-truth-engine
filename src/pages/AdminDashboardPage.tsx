@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, Users, DollarSign, Settings, Menu } from "lucide-react";
+import { ArrowLeft, Shield, Users, DollarSign, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminFinancialTab from "@/components/admin/AdminFinancialTab";

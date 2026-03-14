@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useSubscription } from "@/hooks/useSubscription";
-import { BackButton } from "@/components/ui/BackButton";
+import BackButton from "@/components/ui/BackButton";
 
 const plans = [
   {

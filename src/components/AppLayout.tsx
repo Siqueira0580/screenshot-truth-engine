@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -30,6 +31,7 @@ const navItems = [
 
 export default function AppLayout() {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -210,6 +212,12 @@ export default function AppLayout() {
                   <Settings className="h-4 w-4" />
                   Configurações
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2 cursor-pointer text-primary">
+                    <ShieldCheck className="h-4 w-4" />
+                    Painel Administrativo
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {

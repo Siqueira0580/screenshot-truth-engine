@@ -20,6 +20,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 import PaywallModal from "@/components/PaywallModal";
+import GlobalBanner from "@/components/GlobalBanner";
 
 const navItems = [
   { to: "/songs", icon: Music, label: "Músicas", proOnly: false },

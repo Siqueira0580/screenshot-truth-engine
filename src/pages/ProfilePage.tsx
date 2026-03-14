@@ -228,6 +228,55 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+      {/* Subscription Card */}
+      <Card className="border-border bg-card">
+        <CardContent className="pt-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Crown className={`h-5 w-5 ${isPro ? "text-amber-500" : "text-muted-foreground"}`} />
+              <span className="font-semibold text-foreground">
+                Plano {isPro ? "Pro" : "Free"}
+              </span>
+            </div>
+            <Badge variant={isPro ? "default" : "secondary"} className={isPro ? "bg-amber-500/10 text-amber-600 border-amber-500/20" : ""}>
+              {isPro ? "Ativo" : "Gratuito"}
+            </Badge>
+          </div>
+
+          {isPro && profile?.pro_expires_at && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CalendarClock className="h-4 w-4" />
+              <span>
+                Expira em{" "}
+                <span className="font-medium text-foreground">
+                  {new Date(profile.pro_expires_at).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+              </span>
+            </div>
+          )}
+
+          <Button
+            variant={isPro ? "outline" : "default"}
+            className={`w-full gap-2 ${!isPro ? "bg-gradient-to-r from-amber-500 to-primary text-primary-foreground" : ""}`}
+            onClick={() => navigate("/planos")}
+          >
+            {isPro ? (
+              <>
+                <RefreshCw className="h-4 w-4" /> Renovar Plano
+              </>
+            ) : (
+              <>
+                <Crown className="h-4 w-4" /> Assinar Pro
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
       {/* Termos de Uso */}
       <Link
         to="/terms"

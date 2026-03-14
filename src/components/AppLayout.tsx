@@ -274,6 +274,13 @@ export default function AppLayout() {
         </div>
       </nav>
       </div>{/* close flex-1 wrapper */}
+
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        title="Desbloqueie o Estúdio de Criação!"
+        description="Esta é uma ferramenta exclusiva do Plano Pro. Assine para ter acesso ao Estúdio, Compor e Repertórios ilimitados."
+      />
     </div>
   );
 }

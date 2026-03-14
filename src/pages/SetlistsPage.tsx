@@ -68,6 +68,8 @@ export default function SetlistsPage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const { isFree } = useSubscription();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 

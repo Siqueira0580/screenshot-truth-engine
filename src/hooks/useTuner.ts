@@ -156,6 +156,10 @@ export function useTuner() {
   const [instrument, setInstrument] = useState<string>("guitar");
   const [targetIndex, setTargetIndex] = useState<number>(0);
   const [tunerData, setTunerData] = useState<TunerResult | null>(null);
+  const [isPlayingRef, setIsPlayingRef] = useState(false);
+  const refOscRef = useRef<OscillatorNode | null>(null);
+  const refGainRef = useRef<GainNode | null>(null);
+  const refCtxRef = useRef<AudioContext | null>(null);
 
   const streamRef = useRef<MediaStream | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);

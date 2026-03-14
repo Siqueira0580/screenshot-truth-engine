@@ -34,15 +34,15 @@ export default function ArtistDetailPage() {
   const queryClient = useQueryClient();
 
   const { data: artists = [] } = useQuery({
-    queryKey: ["artists"],
-    queryFn: fetchArtists,
+    queryKey: ["user-library-artists"],
+    queryFn: fetchUserLibraryArtists,
   });
 
   const artist = artists.find((a) => a.id === id);
 
   const { data: songs = [], isLoading } = useQuery({
-    queryKey: ["artist-songs", artist?.name, sort],
-    queryFn: () => fetchSongsByArtist(artist!.name, sort),
+    queryKey: ["user-library-artist-songs", artist?.name, sort],
+    queryFn: () => fetchUserLibrarySongsByArtist(artist!.name, sort),
     enabled: !!artist,
   });
 

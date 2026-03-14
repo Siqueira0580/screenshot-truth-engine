@@ -15,6 +15,8 @@ import { pt } from "date-fns/locale";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 
 const COMPOSITIONS_TOUR_STEPS = [
   {
@@ -60,6 +62,8 @@ export default function CompositionsHomePage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const { isFree } = useSubscription();
   const { run: runTour, completeTour, replayTour } = useGuidedTour("compositions_page");
 
   useState(() => {
@@ -123,7 +127,10 @@ export default function CompositionsHomePage() {
             {compositions.length} composiç{compositions.length === 1 ? "ão" : "ões"} • Privado e seguro
           </p>
         </div>
-        <Button id="tour-comp-new" className="gap-2" onClick={() => navigate("/compose")}>
+        <Button id="tour-comp-new" className="gap-2" onClick={() => {
+          if (isFree) { setPaywallOpen(true); return; }
+          navigate("/compose");
+        }}>
           <Plus className="h-4 w-4" /> Nova Composição
         </Button>
       </div>
@@ -172,7 +179,10 @@ export default function CompositionsHomePage() {
               : "A sua prancheta está limpa. Comece a escrever o seu próximo sucesso. Tudo o que compor aqui é privado e seguro."}
           </p>
           {!search && (
-            <Button className="gap-2" size="lg" onClick={() => navigate("/compose")}>
+            <Button className="gap-2" size="lg" onClick={() => {
+              if (isFree) { setPaywallOpen(true); return; }
+              navigate("/compose");
+            }}>
               <Plus className="h-4 w-4" /> Nova Composição
             </Button>
           )}
@@ -241,6 +251,13 @@ export default function CompositionsHomePage() {
         onConfirm={handleConfirmDelete}
         title="Apagar Composição"
         description="Tem certeza que deseja apagar esta composição? Esta ação não pode ser desfeita."
+      />
+
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        title="Desbloqueie o Cofre Criativo!"
+        description="A ferramenta de Composição é exclusiva do Plano Pro. Assine para começar a escrever as suas músicas originais."
       />
     </div>
   );

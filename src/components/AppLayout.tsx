@@ -17,13 +17,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 
 const navItems = [
-  { to: "/songs", icon: Music, label: "Músicas" },
-  { to: "/setlists", icon: ListMusic, label: "Setlists" },
-  { to: "/artists", icon: Users, label: "Artistas" },
-  { to: "/compositions", icon: PenTool, label: "Compor" },
-  { to: "/studio", icon: Headphones, label: "Estúdio" },
+  { to: "/songs", icon: Music, label: "Músicas", proOnly: false },
+  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false },
+  { to: "/artists", icon: Users, label: "Artistas", proOnly: false },
+  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true },
+  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true },
 ];
 
 export default function AppLayout() {
@@ -31,6 +33,8 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { isFree } = useSubscription();
+  const [paywallOpen, setPaywallOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
 
@@ -55,6 +59,20 @@ export default function AppLayout() {
         </button>
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
+          if (item.proOnly && isFree) {
+            return (
+              <button
+                key={item.to}
+                type="button"
+                onClick={() => setPaywallOpen(true)}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-[9px] font-medium transition-colors w-full text-muted-foreground hover:text-foreground opacity-60"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+              </button>
+            );
+          }
           return (
             <NavLink
               key={item.to}
@@ -83,24 +101,39 @@ export default function AppLayout() {
 
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1 flex-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/"}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                  )
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
+            {navItems.map((item) => {
+              if (item.proOnly && isFree) {
+                return (
+                  <button
+                    key={item.to}
+                    type="button"
+                    onClick={() => setPaywallOpen(true)}
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap text-muted-foreground hover:bg-secondary hover:text-foreground opacity-60"
+                  >
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              }
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    )
+                  }
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
           </nav>
 
           {/* Spacer for mobile */}
@@ -201,31 +234,53 @@ export default function AppLayout() {
       {/* Mobile Bottom Navigation — hidden in landscape */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden landscape:hidden">
         <div className="flex items-center justify-around h-16">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px]",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+          {navItems.map((item) => {
+            if (item.proOnly && isFree) {
+              return (
+                <button
+                  key={item.to}
+                  type="button"
+                  onClick={() => setPaywallOpen(true)}
+                  className="flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px] text-muted-foreground opacity-60"
+                >
+                  <item.icon className="h-5 w-5" />
                   <span>{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
+                </button>
+              );
+            }
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === "/"}
+                className={({ isActive }) =>
+                  cn(
+                    "flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px]",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground"
+                  )
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <item.icon className={cn("h-5 w-5", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+                    <span>{item.label}</span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
         </div>
       </nav>
       </div>{/* close flex-1 wrapper */}
+
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        title="Desbloqueie o Estúdio de Criação!"
+        description="Esta é uma ferramenta exclusiva do Plano Pro. Assine para ter acesso ao Estúdio, Compor e Repertórios ilimitados."
+      />
     </div>
   );
 }

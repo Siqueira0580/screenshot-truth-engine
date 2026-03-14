@@ -34,6 +34,7 @@ import TermsOfUsePage from "@/pages/TermsOfUsePage";
 import NotFound from "./pages/NotFound";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminRoute from "@/components/AdminRoute";
+import PricingPage from "@/pages/PricingPage";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -94,6 +95,7 @@ const App = () => (
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/tuner" element={<TunerPage />} />
                 <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
+                <Route path="/planos" element={<PricingPage />} />
               </Route>
               <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/live/:sessionId" element={<LiveViewerPage />} />

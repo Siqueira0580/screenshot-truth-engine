@@ -14,6 +14,8 @@ import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import AutoSetlistGeneratorModal from "@/components/AutoSetlistGeneratorModal";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 import type { Step } from "react-joyride";
 
 const SETLISTS_TOUR_STEPS: Step[] = [
@@ -66,6 +68,8 @@ export default function SetlistsPage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const { isFree } = useSubscription();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -135,12 +139,18 @@ export default function SetlistsPage() {
           </p>
         </div>
         <div id="tour-setlist-actions" className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setAutoGenOpen(true)} className="gap-1 text-xs sm:text-sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            if (isFree && setlists.length >= 3) { setPaywallOpen(true); return; }
+            setAutoGenOpen(true);
+          }} className="gap-1 text-xs sm:text-sm">
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">Sugerir Repertório</span>
             <span className="sm:hidden">Sugerir</span>
           </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)} className="text-xs sm:text-sm">
+          <Button size="sm" onClick={() => {
+            if (isFree && setlists.length >= 3) { setPaywallOpen(true); return; }
+            setCreateOpen(true);
+          }} className="text-xs sm:text-sm">
             <Plus className="h-4 w-4 mr-1" />
             Novo
           </Button>
@@ -300,6 +310,13 @@ export default function SetlistsPage() {
         steps={SETLISTS_TOUR_STEPS}
         run={runSetlistsTour}
         onFinish={completeTour}
+      />
+
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        title="Limite de Repertórios Atingido!"
+        description="Você atingiu o limite de 3 repertórios do plano gratuito. Assine o Pro para criar repertórios ilimitados para todos os seus shows!"
       />
     </div>
   );

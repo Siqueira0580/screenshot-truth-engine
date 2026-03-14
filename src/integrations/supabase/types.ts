@@ -312,6 +312,7 @@ export type Database = {
           library_setup_completed: boolean
           phone: string | null
           preferred_instrument: string
+          subscription_plan: string
           wizard_completed: boolean
         }
         Insert: {
@@ -326,6 +327,7 @@ export type Database = {
           library_setup_completed?: boolean
           phone?: string | null
           preferred_instrument?: string
+          subscription_plan?: string
           wizard_completed?: boolean
         }
         Update: {
@@ -340,6 +342,7 @@ export type Database = {
           library_setup_completed?: boolean
           phone?: string | null
           preferred_instrument?: string
+          subscription_plan?: string
           wizard_completed?: boolean
         }
         Relationships: []

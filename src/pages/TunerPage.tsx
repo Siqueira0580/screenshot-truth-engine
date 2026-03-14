@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mic, MicOff } from "lucide-react";
+import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import BackButton from "@/components/ui/BackButton";
 

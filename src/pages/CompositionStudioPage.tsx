@@ -1051,7 +1051,49 @@ export default function CompositionStudioPage() {
                 </div>
               </TabsContent>
 
-              <TabsContent value="rhymes" className="space-y-4 mt-4">
+              <TabsContent value="lyrics" className="space-y-4 mt-4">
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    A IA analisa o que você já escreveu e sugere 3 continuações de versos.
+                  </p>
+                  <Button
+                    onClick={handleSuggestLyrics}
+                    disabled={isLoadingLyrics || !editorText.trim()}
+                    className="w-full gap-2"
+                    variant="outline"
+                  >
+                    {isLoadingLyrics ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 text-primary" />
+                    )}
+                    {isLoadingLyrics ? "Gerando..." : "Sugerir Próximo Verso"}
+                  </Button>
+
+                  {lyricsSuggestions.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5" /> Sugestões
+                      </p>
+                      {lyricsSuggestions.map((suggestion, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleInsertSuggestion(suggestion)}
+                          className={cn(
+                            "w-full rounded-lg border border-primary/20 bg-primary/5 p-3 text-left",
+                            "hover:bg-primary/15 hover:border-primary/40 transition-colors"
+                          )}
+                        >
+                          <p className="text-[10px] text-muted-foreground mb-1">Opção {idx + 1}</p>
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{suggestion}</p>
+                          <p className="text-[10px] text-primary mt-1.5 font-medium">Clique para inserir ↵</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
                 <div className="relative">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input

@@ -969,6 +969,9 @@ export default function CompositionStudioPage() {
                 <TabsTrigger value="harmony" className="flex-1 gap-1.5 text-xs">
                   <Music className="h-3.5 w-3.5" /> Harmonia
                 </TabsTrigger>
+                <TabsTrigger value="lyrics" className="flex-1 gap-1.5 text-xs">
+                  <Sparkles className="h-3.5 w-3.5" /> Letras IA
+                </TabsTrigger>
                 <TabsTrigger value="rhymes" className="flex-1 gap-1.5 text-xs">
                   ✍️ Rimas
                 </TabsTrigger>

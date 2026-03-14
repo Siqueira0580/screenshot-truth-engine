@@ -312,6 +312,7 @@ export type Database = {
           library_setup_completed: boolean
           phone: string | null
           preferred_instrument: string
+          pro_expires_at: string | null
           subscription_plan: string
           terms_accepted: boolean
           wizard_completed: boolean
@@ -328,6 +329,7 @@ export type Database = {
           library_setup_completed?: boolean
           phone?: string | null
           preferred_instrument?: string
+          pro_expires_at?: string | null
           subscription_plan?: string
           terms_accepted?: boolean
           wizard_completed?: boolean
@@ -344,6 +346,7 @@ export type Database = {
           library_setup_completed?: boolean
           phone?: string | null
           preferred_instrument?: string
+          pro_expires_at?: string | null
           subscription_plan?: string
           terms_accepted?: boolean
           wizard_completed?: boolean

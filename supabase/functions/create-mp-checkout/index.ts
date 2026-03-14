@@ -6,14 +6,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const PLANS: Record<string, { title: string; unit_price: number; frequency?: { type: string; value: number } }> = {
+const PLANS: Record<string, { title: string; unit_price: number }> = {
   monthly: {
     title: "Smart Cifra PRO — Mensal",
-    unit_price: 19.9,
+    unit_price: 14.9,
   },
   annual: {
-    title: "Smart Cifra PRO — Anual",
-    unit_price: 199.0,
+    title: "Smart Cifra PRO — Anual (10% OFF)",
+    unit_price: 160.92,
   },
 };
 
@@ -23,7 +23,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Validate auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -69,9 +68,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build the webhook URL dynamically
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const webhookUrl = `${supabaseUrl}/functions/v1/mp-webhook`;
+
+    // Encode billing cycle in external_reference: "userId|cycle"
+    const externalReference = `${user.id}|${plan_type}`;
 
     const preferenceBody = {
       items: [
@@ -85,7 +86,7 @@ Deno.serve(async (req) => {
       payer: {
         email: user.email,
       },
-      external_reference: user.id,
+      external_reference: externalReference,
       back_urls: {
         success: `${req.headers.get("origin") || "https://smartcifra.com"}/planos?status=success`,
         failure: `${req.headers.get("origin") || "https://smartcifra.com"}/planos?status=failure`,

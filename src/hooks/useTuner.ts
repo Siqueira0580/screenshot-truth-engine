@@ -202,9 +202,12 @@ export function useTuner() {
         const hz = autoCorrelate(buffer, audioCtx.sampleRate);
 
         if (hz > 0) {
-          // Find closest target string for current instrument
+          // Determine target: chromatic auto-detect or manual preset
           const currentPreset = INSTRUMENT_PRESETS[instrument];
-          const target = currentPreset?.strings[targetIndex] ?? currentPreset?.strings[0];
+          const isChromatic = currentPreset.strings.length === 0;
+          const target = isChromatic
+            ? findClosestNote(hz)
+            : (currentPreset.strings[targetIndex] ?? currentPreset.strings[0]);
           if (!target) { rafRef.current = requestAnimationFrame(loop); return; }
 
           const rawCents = hzToCents(hz, target.hz);

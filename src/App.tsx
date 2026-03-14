@@ -95,6 +95,7 @@ const App = () => (
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/tuner" element={<TunerPage />} />
                 <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
+                <Route path="/planos" element={<PricingPage />} />
               </Route>
               <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
               <Route path="/live/:sessionId" element={<LiveViewerPage />} />

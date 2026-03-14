@@ -311,6 +311,13 @@ export default function SetlistsPage() {
         run={runSetlistsTour}
         onFinish={completeTour}
       />
+
+      <PaywallModal
+        open={paywallOpen}
+        onOpenChange={setPaywallOpen}
+        title="Limite de Repertórios Atingido!"
+        description="Você atingiu o limite de 3 repertórios do plano gratuito. Assine o Pro para criar repertórios ilimitados para todos os seus shows!"
+      />
     </div>
   );
 }

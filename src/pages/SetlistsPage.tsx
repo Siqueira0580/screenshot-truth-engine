@@ -14,6 +14,8 @@ import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import AutoSetlistGeneratorModal from "@/components/AutoSetlistGeneratorModal";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 import type { Step } from "react-joyride";
 
 const SETLISTS_TOUR_STEPS: Step[] = [

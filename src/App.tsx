@@ -109,6 +109,7 @@ const App = () => (
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <PwaInstallBanner />
           </UserPreferencesProvider>
           </ThemeProvider>
         </AuthProvider>

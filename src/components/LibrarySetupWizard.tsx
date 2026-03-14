@@ -55,12 +55,16 @@ export default function LibrarySetupWizard({ onComplete }: Props) {
         await addFilteredSongsToLibrary(artistNames, favoriteStyles);
         toast.success("Músicas dos seus favoritos adicionadas!");
       } else {
+        // Estúdio Vazio
         toast.success("Estúdio pronto! Importe suas músicas quando quiser.");
       }
 
       await supabase
         .from("profiles")
-        .update({ library_setup_completed: true } as any)
+        .update({
+          library_setup_completed: true,
+          started_with_empty_studio: selected === "empty",
+        } as any)
         .eq("id", user.id);
 
       onComplete();

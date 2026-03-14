@@ -20,6 +20,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 import PaywallModal from "@/components/PaywallModal";
+import GlobalBanner from "@/components/GlobalBanner";
 
 const navItems = [
   { to: "/songs", icon: Music, label: "Músicas", proOnly: false },
@@ -54,6 +55,7 @@ export default function AppLayout() {
 
   return (
     <div className="h-screen flex flex-col landscape:flex-row bg-background overflow-hidden pb-16 lg:pb-0 landscape:pb-0">
+      <GlobalBanner />
       {/* Landscape Side Rail (mobile only, hidden on lg+) */}
       <nav className="hidden landscape:flex landscape:lg:hidden flex-col items-center gap-1 py-2 px-1 w-14 shrink-0 border-r border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl z-50 overflow-y-auto">
         <button type="button" onClick={() => navigate("/songs")} className="mb-2">

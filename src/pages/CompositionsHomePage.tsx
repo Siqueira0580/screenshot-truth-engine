@@ -62,6 +62,8 @@ export default function CompositionsHomePage() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("recent");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const { isFree } = useSubscription();
   const { run: runTour, completeTour, replayTour } = useGuidedTour("compositions_page");
 
   useState(() => {

@@ -101,7 +101,7 @@ export default function VirtualPiano() {
 
   if (!expanded) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-30 flex justify-center pb-2 pointer-events-none">
+      <div className="fixed bottom-20 md:bottom-0 left-0 right-0 z-30 flex justify-center pb-2 pointer-events-none">
         <Button
           variant="secondary"
           size="sm"
@@ -117,7 +117,7 @@ export default function VirtualPiano() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_20px_hsl(var(--primary)/0.1)]">
+    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_20px_hsl(var(--primary)/0.1)]">
       {/* Collapse bar */}
       <div className="flex items-center justify-center py-1.5">
         <Button

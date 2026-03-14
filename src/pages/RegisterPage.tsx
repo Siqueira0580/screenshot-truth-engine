@@ -81,12 +81,13 @@ export default function RegisterPage() {
       const { error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
-        options: {
+          options: {
           emailRedirectTo: window.location.origin,
           data: {
             first_name: data.firstName,
             last_name: data.lastName,
             phone: cleanPhone || undefined,
+            terms_accepted: true,
           },
         },
       });

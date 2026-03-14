@@ -35,6 +35,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminRoute from "@/components/AdminRoute";
 import PricingPage from "@/pages/PricingPage";
+import TermsInterceptor from "@/components/TermsInterceptor";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
@@ -80,7 +81,7 @@ const App = () => (
               <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
               <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+              <Route element={<ProtectedRoute><TermsInterceptor><AppLayout /></TermsInterceptor></ProtectedRoute>}>
                 <Route path="/songs" element={<SongsPage />} />
                 <Route path="/songs/:id" element={<SongDetailPage />} />
                 <Route path="/setlists" element={<SetlistsPage />} />

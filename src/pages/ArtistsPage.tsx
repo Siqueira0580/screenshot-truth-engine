@@ -129,7 +129,8 @@ export default function ArtistsPage() {
   const createM = useMutation({
     mutationFn: () => createArtist({ name, about: about || undefined }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
       toast.success("Artista adicionado!");
       setFormOpen(false);
       setName("");

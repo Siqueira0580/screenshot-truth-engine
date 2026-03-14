@@ -212,6 +212,12 @@ export default function AppLayout() {
                   <Settings className="h-4 w-4" />
                   Configurações
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2 cursor-pointer text-primary">
+                    <ShieldCheck className="h-4 w-4" />
+                    Painel Administrativo
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {

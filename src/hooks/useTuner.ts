@@ -166,7 +166,8 @@ export function useTuner() {
   const isInTuneRef = useRef(false);
 
   const preset = INSTRUMENT_PRESETS[instrument];
-  const targetString = preset.strings[targetIndex] ?? preset.strings[0];
+  const isChromaticMode = preset.strings.length === 0;
+  const targetString = isChromaticMode ? null : (preset.strings[targetIndex] ?? preset.strings[0]);
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);

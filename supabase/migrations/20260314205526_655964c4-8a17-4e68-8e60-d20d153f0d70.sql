@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS started_with_empty_studio boolean NOT NULL DEFAULT false;

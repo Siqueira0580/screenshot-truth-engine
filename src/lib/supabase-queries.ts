@@ -393,6 +393,39 @@ function normalizeArtistName(raw: string): string {
     .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
 }
 
+/** Fetch artist photo from iTunes API */
+async function fetchItunesArtistPhoto(artistName: string): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&entity=musicArtist&limit=1`
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    const result = json.results?.[0];
+    if (!result) return null;
+    // Use artworkUrl100 and upscale to 300x300
+    const url = result.artworkUrl100?.replace("100x100", "300x300") || result.artworkUrl100 || null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+/** Check if current user started with empty studio */
+async function userStartedWithEmptyStudio(): Promise<boolean> {
+  try {
+    const userId = await getCurrentUserId();
+    const { data } = await supabase
+      .from("profiles")
+      .select("started_with_empty_studio")
+      .eq("id", userId)
+      .single();
+    return !!(data as any)?.started_with_empty_studio;
+  } catch {
+    return false;
+  }
+}
+
 export async function findOrCreateArtist(name: string, photoUrl?: string): Promise<Artist> {
   const normalized = normalizeArtistName(name);
   const userId = await getCurrentUserId();
@@ -404,19 +437,36 @@ export async function findOrCreateArtist(name: string, photoUrl?: string): Promi
     .limit(1);
 
   if (existing && existing.length > 0) {
+    // If no photo yet, try iTunes if user started with empty studio
+    if (!existing[0].photo_url && !photoUrl) {
+      const isEmpty = await userStartedWithEmptyStudio();
+      if (isEmpty) {
+        const itunesPhoto = await fetchItunesArtistPhoto(normalized);
+        if (itunesPhoto) {
+          await supabase.from("artists").update({ photo_url: itunesPhoto }).eq("id", existing[0].id);
+          return { ...existing[0], photo_url: itunesPhoto } as Artist;
+        }
+      }
+    }
     if (photoUrl && !existing[0].photo_url) {
-      await supabase
-        .from("artists")
-        .update({ photo_url: photoUrl })
-        .eq("id", existing[0].id);
+      await supabase.from("artists").update({ photo_url: photoUrl }).eq("id", existing[0].id);
       return { ...existing[0], photo_url: photoUrl } as Artist;
     }
     return existing[0] as Artist;
   }
 
+  // New artist — conditionally fetch iTunes photo
+  let finalPhoto = photoUrl || null;
+  if (!finalPhoto) {
+    const isEmpty = await userStartedWithEmptyStudio();
+    if (isEmpty) {
+      finalPhoto = await fetchItunesArtistPhoto(normalized);
+    }
+  }
+
   const { data, error } = await supabase
     .from("artists")
-    .insert({ name: normalized, photo_url: photoUrl || null, created_by: userId })
+    .insert({ name: normalized, photo_url: finalPhoto, created_by: userId })
     .select()
     .single();
   if (error) throw error;

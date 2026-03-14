@@ -301,7 +301,17 @@ export default function CompositionStudioPage() {
 
   const isActiveRecording = recordingState === "recording" || recordingState === "paused";
 
-  // ─── Auto-save (debounced 10s) ───
+  // ─── Deep-link: auto-start recorder via ?action=record ───
+  useEffect(() => {
+    if (searchParams.get("action") === "record" && recordingState === "idle") {
+      startRecording();
+      // Clean the param so it doesn't re-trigger
+      const next = new URLSearchParams(searchParams);
+      next.delete("action");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, recordingState, startRecording, setSearchParams]);
+
   useEffect(() => {
     if (!hasInteracted.current || isActiveRecording || isTranscribing) return;
 

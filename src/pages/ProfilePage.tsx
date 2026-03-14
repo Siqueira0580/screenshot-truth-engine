@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw } from "lucide-react";
+import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";

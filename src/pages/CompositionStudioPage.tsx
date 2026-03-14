@@ -503,6 +503,36 @@ export default function CompositionStudioPage() {
     toast.success("Composição limpa!");
   }, []);
 
+  // ─── AI Lyrics Co-Pilot ───
+  const handleSuggestLyrics = useCallback(async () => {
+    if (!editorText.trim() || editorText.trim().length < 5) {
+      toast.error("Escreva pelo menos 5 caracteres para a IA sugerir continuações.");
+      return;
+    }
+    setIsLoadingLyrics(true);
+    setLyricsSuggestions([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-lyrics", {
+        body: { prompt: editorText, style },
+      });
+      if (error) throw error;
+      const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      setLyricsSuggestions(suggestions);
+      if (suggestions.length === 0) toast.warning("Nenhuma sugestão gerada. Tente novamente.");
+    } catch (err) {
+      console.error("Lyrics suggestion error:", err);
+      toast.error("Erro ao gerar sugestões de letras.");
+    } finally {
+      setIsLoadingLyrics(false);
+    }
+  }, [editorText, style]);
+
+  const handleInsertSuggestion = useCallback((text: string) => {
+    setEditorText((prev) => (prev ? prev + "\n" + text : text));
+    setLyricsSuggestions([]);
+    toast.success("Verso inserido!");
+  }, []);
+
   // Parse displayText into renderable ChordPro tokens
   const parsedLines = displayText
     ? displayText.split("\n").map((line) => {

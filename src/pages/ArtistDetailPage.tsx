@@ -5,7 +5,7 @@ import { Music2, Eye, SortAsc, SortDesc, TrendingUp, Clock, Camera, Loader2, Pen
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { fetchArtists, fetchSongsByArtist, updateArtistPhoto, removeFromUserLibrary, deleteSong } from "@/lib/supabase-queries";
+import { fetchUserLibraryArtists, fetchUserLibrarySongsByArtist, updateArtistPhoto, removeFromUserLibrary, deleteSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import {

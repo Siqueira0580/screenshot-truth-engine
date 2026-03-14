@@ -91,6 +91,7 @@ export default function TunerPage() {
     targetIndex,
     targetString,
     preset,
+    isChromaticMode,
     toggle,
     changeInstrument,
     setTargetIndex,

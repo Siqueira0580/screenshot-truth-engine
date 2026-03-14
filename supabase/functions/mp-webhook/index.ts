@@ -14,8 +14,6 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
 
-    // Mercado Pago sends different notification types
-    // We only care about payment notifications
     if (body.type !== "payment" && body.action !== "payment.created" && body.action !== "payment.updated") {
       return new Response(JSON.stringify({ received: true }), {
         status: 200,
@@ -41,7 +39,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch payment details from Mercado Pago API
     const paymentResponse = await fetch(
       `https://api.mercadopago.com/v1/payments/${paymentId}`,
       {
@@ -64,11 +61,17 @@ Deno.serve(async (req) => {
 
     console.log(`Payment ${paymentId}: status=${payment.status}, ref=${payment.external_reference}`);
 
-    // Only upgrade on approved payments
     if (payment.status === "approved" && payment.external_reference) {
-      const userId = payment.external_reference;
+      // Parse external_reference: "userId|cycle"
+      const parts = payment.external_reference.split("|");
+      const userId = parts[0];
+      const cycle = parts[1] || "monthly";
 
-      // Use service role key for privileged update
+      // Calculate expiration: 30 days for monthly, 365 days for annual
+      const daysToAdd = cycle === "annual" ? 365 : 30;
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + daysToAdd);
+
       const supabaseAdmin = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -76,7 +79,10 @@ Deno.serve(async (req) => {
 
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
-        .update({ subscription_plan: "pro" })
+        .update({
+          subscription_plan: "pro",
+          pro_expires_at: expiresAt.toISOString(),
+        })
         .eq("id", userId);
 
       if (updateError) {
@@ -87,7 +93,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      console.log(`User ${userId} upgraded to PRO successfully`);
+      console.log(`User ${userId} upgraded to PRO (${cycle}, expires ${expiresAt.toISOString()})`);
     }
 
     return new Response(JSON.stringify({ received: true }), {

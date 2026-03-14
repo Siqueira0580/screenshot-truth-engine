@@ -1,54 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, X, Crown, Music, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BackButton from "@/components/ui/BackButton";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
-import { useEffect } from "react";
 
-const plans = [
-  {
-    id: "free" as const,
-    name: "Free",
-    price: "R$ 0",
-    period: "para sempre",
-    description: "Músicas ilimitadas, Importação por Link, Auto-Scroll, Até 3 Repertórios simultâneos.",
-    features: [
-      { text: "Músicas ilimitadas", included: true },
-      { text: "Importação por Link (URL)", included: true },
-      { text: "Auto-Scroll (Teleprompter)", included: true },
-      { text: "Até 3 Repertórios simultâneos", included: true },
-      { text: "Estúdio de Criação (Compor)", included: false },
-      { text: "Edição Avançada (Estúdio)", included: false },
-      { text: "Repertórios ilimitados", included: false },
-    ],
-  },
-  {
-    id: "pro" as const,
-    name: "Pro",
-    price: "R$ 19,90",
-    period: "/mês",
-    description: "Tudo do Free + Criação autoral (Compor), Edição Avançada (Estúdio) e Repertórios Ilimitados.",
-    features: [
-      { text: "Tudo do plano Free", included: true },
-      { text: "Repertórios ilimitados", included: true },
-      { text: "Estúdio de Criação (Compor)", included: true },
-      { text: "Edição Avançada (Estúdio)", included: true },
-      { text: "Suporte prioritário", included: true },
-    ],
-    highlighted: true,
-  },
-];
+const MONTHLY_PRICE = 14.9;
+const ANNUAL_PRICE = +(MONTHLY_PRICE * 12 * 0.9).toFixed(2); // 160.92
+const ANNUAL_MONTHLY_EQUIV = +(ANNUAL_PRICE / 12).toFixed(2); // 13.41
 
 export default function PricingPage() {
   const { plan: currentPlan } = useSubscription();
   const { user } = useAuth();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("monthly");
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -62,7 +33,7 @@ export default function PricingPage() {
     }
   }, [searchParams]);
 
-  const handleSubscribe = async (planType: "monthly" | "annual" = "monthly") => {
+  const handleSubscribe = async () => {
     if (!user) {
       toast.error("Faça login para assinar.");
       return;
@@ -71,7 +42,7 @@ export default function PricingPage() {
     setCheckoutLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("create-mp-checkout", {
-        body: { plan_type: planType },
+        body: { plan_type: billingCycle },
       });
 
       if (error) {
@@ -93,6 +64,47 @@ export default function PricingPage() {
     }
   };
 
+  const isAnnual = billingCycle === "annual";
+
+  const plans = [
+    {
+      id: "free" as const,
+      name: "Free",
+      price: "R$ 0",
+      period: "para sempre",
+      description: "Músicas ilimitadas, Importação por Link, Auto-Scroll, Até 3 Repertórios simultâneos.",
+      features: [
+        { text: "Músicas ilimitadas", included: true },
+        { text: "Importação por Link (URL)", included: true },
+        { text: "Auto-Scroll (Teleprompter)", included: true },
+        { text: "Até 3 Repertórios simultâneos", included: true },
+        { text: "Estúdio de Criação (Compor)", included: false },
+        { text: "Edição Avançada (Estúdio)", included: false },
+        { text: "Repertórios ilimitados", included: false },
+      ],
+    },
+    {
+      id: "pro" as const,
+      name: "Pro",
+      price: isAnnual
+        ? `R$ ${ANNUAL_PRICE.toFixed(2).replace(".", ",")}`
+        : `R$ ${MONTHLY_PRICE.toFixed(2).replace(".", ",")}`,
+      period: isAnnual ? "/ano" : "/mês",
+      equivalentMonthly: isAnnual
+        ? `equivale a R$ ${ANNUAL_MONTHLY_EQUIV.toFixed(2).replace(".", ",")}/mês`
+        : null,
+      description: "Tudo do Free + Criação autoral (Compor), Edição Avançada (Estúdio) e Repertórios Ilimitados.",
+      features: [
+        { text: "Tudo do plano Free", included: true },
+        { text: "Repertórios ilimitados", included: true },
+        { text: "Estúdio de Criação (Compor)", included: true },
+        { text: "Edição Avançada (Estúdio)", included: true },
+        { text: "Suporte prioritário", included: true },
+      ],
+      highlighted: true,
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background px-4 py-8 md:px-8 md:py-12">
       <div className="max-w-4xl mx-auto">
@@ -105,6 +117,25 @@ export default function PricingPage() {
           <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
             Comece grátis e desbloqueie todo o potencial do Smart Cifra quando estiver pronto.
           </p>
+
+          {/* Billing cycle toggle */}
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <span className={`text-sm font-medium ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
+              Mensal
+            </span>
+            <Switch
+              checked={isAnnual}
+              onCheckedChange={(checked) => setBillingCycle(checked ? "annual" : "monthly")}
+            />
+            <span className={`text-sm font-medium ${isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
+              Anual
+            </span>
+            {isAnnual && (
+              <Badge variant="secondary" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                10% OFF
+              </Badge>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 max-w-3xl mx-auto">
@@ -139,6 +170,9 @@ export default function PricingPage() {
                     <span className="text-3xl font-bold text-foreground">{p.price}</span>
                     <span className="text-sm text-muted-foreground">{p.period}</span>
                   </div>
+                  {"equivalentMonthly" in p && p.equivalentMonthly && (
+                    <p className="text-xs text-green-600 mt-1">{p.equivalentMonthly}</p>
+                  )}
                   <CardDescription className="mt-2">{p.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -164,7 +198,7 @@ export default function PricingPage() {
                   ) : p.id === "pro" ? (
                     <Button
                       className="w-full gap-2 bg-gradient-to-r from-amber-500 to-primary hover:from-amber-600 hover:to-primary/90 text-primary-foreground"
-                      onClick={() => handleSubscribe("monthly")}
+                      onClick={handleSubscribe}
                       disabled={checkoutLoading}
                     >
                       {checkoutLoading ? (

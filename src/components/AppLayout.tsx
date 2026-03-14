@@ -271,7 +271,6 @@ export default function AppLayout() {
               </NavLink>
             );
           })}
-          ))}
         </div>
       </nav>
       </div>{/* close flex-1 wrapper */}

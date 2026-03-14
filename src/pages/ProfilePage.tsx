@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { isPro } = useSubscription();
+  const { canInstall, isInstalled, promptInstall } = usePwaInstall();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -49,7 +49,7 @@ export default function ArtistDetailPage() {
   const photoMutation = useMutation({
     mutationFn: (file: File) => updateArtistPhoto(id!, file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["artists"] });
+      queryClient.invalidateQueries({ queryKey: ["user-library-artists"] });
       toast.success("Foto atualizada!");
     },
     onError: () => toast.error("Erro ao enviar foto"),

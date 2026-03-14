@@ -324,6 +324,33 @@ export async function fetchArtists() {
   return data as Artist[];
 }
 
+/** Fetch artists derived from the user's personal library (only artists the user has songs for) */
+export async function fetchUserLibraryArtists(): Promise<Artist[]> {
+  const userId = await getCurrentUserId();
+  // Get distinct artist names from user's library
+  const { data: libraryData, error } = await supabase
+    .from("user_library")
+    .select("songs!inner(artist)")
+    .eq("user_id", userId);
+  if (error) throw error;
+
+  const artistNames = new Set<string>();
+  for (const row of (libraryData || [])) {
+    const artist = (row.songs as any)?.artist;
+    if (artist) artistNames.add(artist);
+  }
+  if (artistNames.size === 0) return [];
+
+  // Fetch matching artist records
+  const { data: artists, error: artistError } = await supabase
+    .from("artists")
+    .select("*")
+    .in("name", Array.from(artistNames))
+    .order("name");
+  if (artistError) throw artistError;
+  return (artists || []) as Artist[];
+}
+
 export async function createArtist(artist: { name: string; about?: string }) {
   const userId = await getCurrentUserId();
   const { data, error } = await supabase.from("artists").insert({ ...artist, created_by: userId }).select().single();

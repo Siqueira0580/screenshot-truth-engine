@@ -15,6 +15,8 @@ import { pt } from "date-fns/locale";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { useSubscription } from "@/hooks/useSubscription";
+import PaywallModal from "@/components/PaywallModal";
 
 const COMPOSITIONS_TOUR_STEPS = [
   {

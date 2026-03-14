@@ -273,6 +273,7 @@ export function useTuner() {
     targetIndex,
     targetString,
     preset,
+    isChromaticMode,
     start,
     stop,
     toggle,

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Save, Share2, Mic, Square, Music, Sparkles, Search, Loader2, Trash2, ArrowLeft, UserPlus, Eraser, Headphones, Pause, Code, Eye } from "lucide-react";
+import { Save, Share2, Mic, Square, Music, Sparkles, Search, Loader2, Trash2, ArrowLeft, UserPlus, Eraser, Headphones, Pause, Code, Eye, PenLine } from "lucide-react";
+import VirtualPiano from "@/components/VirtualPiano";
 import InviteCollaboratorModal from "@/components/InviteCollaboratorModal";
 import AudioTakesList, { type AudioTake } from "@/components/AudioTakesList";
 import { useAuth } from "@/contexts/AuthContext";
@@ -53,6 +54,8 @@ export default function CompositionStudioPage() {
   const [tonePopoverOpen, setTonePopoverOpen] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const rhymeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
+  const [lyricsSuggestions, setLyricsSuggestions] = useState<string[]>([]);
 
   /** Export composition as a song to Studio (creates song + audio_tracks) */
   const handleExportToStudio = useCallback(async () => {
@@ -500,6 +503,36 @@ export default function CompositionStudioPage() {
     toast.success("Composição limpa!");
   }, []);
 
+  // ─── AI Lyrics Co-Pilot ───
+  const handleSuggestLyrics = useCallback(async () => {
+    if (!editorText.trim() || editorText.trim().length < 5) {
+      toast.error("Escreva pelo menos 5 caracteres para a IA sugerir continuações.");
+      return;
+    }
+    setIsLoadingLyrics(true);
+    setLyricsSuggestions([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-lyrics", {
+        body: { prompt: editorText, style },
+      });
+      if (error) throw error;
+      const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : [];
+      setLyricsSuggestions(suggestions);
+      if (suggestions.length === 0) toast.warning("Nenhuma sugestão gerada. Tente novamente.");
+    } catch (err) {
+      console.error("Lyrics suggestion error:", err);
+      toast.error("Erro ao gerar sugestões de letras.");
+    } finally {
+      setIsLoadingLyrics(false);
+    }
+  }, [editorText, style]);
+
+  const handleInsertSuggestion = useCallback((text: string) => {
+    setEditorText((prev) => (prev ? prev + "\n" + text : text));
+    setLyricsSuggestions([]);
+    toast.success("Verso inserido!");
+  }, []);
+
   // Parse displayText into renderable ChordPro tokens
   const parsedLines = displayText
     ? displayText.split("\n").map((line) => {
@@ -936,6 +969,9 @@ export default function CompositionStudioPage() {
                 <TabsTrigger value="harmony" className="flex-1 gap-1.5 text-xs">
                   <Music className="h-3.5 w-3.5" /> Harmonia
                 </TabsTrigger>
+                <TabsTrigger value="lyrics" className="flex-1 gap-1.5 text-xs">
+                  <Sparkles className="h-3.5 w-3.5" /> Letras IA
+                </TabsTrigger>
                 <TabsTrigger value="rhymes" className="flex-1 gap-1.5 text-xs">
                   ✍️ Rimas
                 </TabsTrigger>
@@ -1012,6 +1048,49 @@ export default function CompositionStudioPage() {
                       </button>
                     ))}
                   </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="lyrics" className="space-y-4 mt-4">
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    A IA analisa o que você já escreveu e sugere 3 continuações de versos.
+                  </p>
+                  <Button
+                    onClick={handleSuggestLyrics}
+                    disabled={isLoadingLyrics || !editorText.trim()}
+                    className="w-full gap-2"
+                    variant="outline"
+                  >
+                    {isLoadingLyrics ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 text-primary" />
+                    )}
+                    {isLoadingLyrics ? "Gerando..." : "Sugerir Próximo Verso"}
+                  </Button>
+
+                  {lyricsSuggestions.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                        <Sparkles className="h-3.5 w-3.5" /> Sugestões
+                      </p>
+                      {lyricsSuggestions.map((suggestion, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleInsertSuggestion(suggestion)}
+                          className={cn(
+                            "w-full rounded-lg border border-primary/20 bg-primary/5 p-3 text-left",
+                            "hover:bg-primary/15 hover:border-primary/40 transition-colors"
+                          )}
+                        >
+                          <p className="text-[10px] text-muted-foreground mb-1">Opção {idx + 1}</p>
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{suggestion}</p>
+                          <p className="text-[10px] text-primary mt-1.5 font-medium">Clique para inserir ↵</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
@@ -1102,6 +1181,8 @@ export default function CompositionStudioPage() {
           onUpdated={setSharedWithEmails}
         />
       )}
+
+      <VirtualPiano />
     </div>
   );
 }

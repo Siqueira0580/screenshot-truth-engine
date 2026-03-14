@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 import DangerZone from "@/components/DangerZone";
 import BackButton from "@/components/ui/BackButton";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
 
 interface Profile {
   id: string;

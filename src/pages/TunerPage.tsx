@@ -132,28 +132,36 @@ export default function TunerPage() {
             </Select>
           </div>
 
-          {/* String Buttons */}
-          <div className="flex flex-wrap justify-center gap-2">
-            {preset.strings.map((s, i) => (
-              <Button
-                key={s.note}
-                size="sm"
-                variant={targetIndex === i ? "default" : "outline"}
-                className={cn(
-                  "min-w-[56px] font-mono text-sm transition-all",
-                  targetIndex === i && "ring-2 ring-primary/50"
-                )}
-                onClick={() => setTargetIndex(i)}
-              >
-                {s.note}
-              </Button>
-            ))}
-          </div>
+          {/* String Buttons (hidden in chromatic mode) */}
+          {!isChromaticMode && (
+            <div className="flex flex-wrap justify-center gap-2">
+              {preset.strings.map((s, i) => (
+                <Button
+                  key={s.note}
+                  size="sm"
+                  variant={targetIndex === i ? "default" : "outline"}
+                  className={cn(
+                    "min-w-[56px] font-mono text-sm transition-all",
+                    targetIndex === i && "ring-2 ring-primary/50"
+                  )}
+                  onClick={() => setTargetIndex(i)}
+                >
+                  {s.note}
+                </Button>
+              ))}
+            </div>
+          )}
 
           {/* Target info */}
-          <p className="text-xs text-muted-foreground font-mono">
-            Alvo: {targetString.note} — {targetString.hz.toFixed(2)} Hz
-          </p>
+          {isChromaticMode ? (
+            <p className="text-xs text-muted-foreground font-mono">
+              Modo Cromático — deteção automática de nota
+            </p>
+          ) : targetString ? (
+            <p className="text-xs text-muted-foreground font-mono">
+              Alvo: {targetString.note} — {targetString.hz.toFixed(2)} Hz
+            </p>
+          ) : null}
 
           {/* Mic toggle */}
           <Button

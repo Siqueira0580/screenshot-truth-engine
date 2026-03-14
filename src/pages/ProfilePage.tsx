@@ -19,6 +19,8 @@ interface Profile {
   phone: string | null;
   email: string | null;
   avatar_url: string | null;
+  subscription_plan: string;
+  pro_expires_at: string | null;
 }
 
 export default function ProfilePage() {

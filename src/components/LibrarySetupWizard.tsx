@@ -55,7 +55,6 @@ export default function LibrarySetupWizard({ onComplete }: Props) {
         await addFilteredSongsToLibrary(artistNames, favoriteStyles);
         toast.success("Músicas dos seus favoritos adicionadas!");
       } else {
-        // Estúdio Vazio
         toast.success("Estúdio pronto! Importe suas músicas quando quiser.");
       }
 

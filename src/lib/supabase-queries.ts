@@ -405,7 +405,10 @@ export async function findOrCreateArtist(name: string, photoUrl?: string): Promi
 
   if (existing && existing.length > 0) {
     if (photoUrl && !existing[0].photo_url) {
-      await supabase.from("artists").update({ photo_url: photoUrl }).eq("id", existing[0].id);
+      await supabase
+        .from("artists")
+        .update({ photo_url: photoUrl })
+        .eq("id", existing[0].id);
       return { ...existing[0], photo_url: photoUrl } as Artist;
     }
     return existing[0] as Artist;

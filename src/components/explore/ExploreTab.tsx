@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2, Music2, Plus, Disc3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +13,6 @@ interface ArtistStat {
 }
 
 async function fetchUserExploreData(userId: string) {
-  // Fetch user library songs with details
   const { data: libraryData, error } = await supabase
     .from("user_library")
     .select("songs!inner(id, title, artist, created_at, access_count)")
@@ -32,12 +31,10 @@ async function fetchUserExploreData(userId: string) {
     }
   }
 
-  // Sort by count desc, take top 10
   const topArtistNames = [...artistMap.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 
-  // Fetch artist photos
   let artistStats: ArtistStat[] = [];
   if (topArtistNames.length > 0) {
     const { data: artists } = await supabase
@@ -57,7 +54,6 @@ async function fetchUserExploreData(userId: string) {
     }));
   }
 
-  // Top 10 recent songs
   const recentSongs = songs.slice(0, 10);
 
   return { totalSongs: songs.length, artistStats, recentSongs };
@@ -66,7 +62,6 @@ async function fetchUserExploreData(userId: string) {
 export default function ExploreTab() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery({
     queryKey: ["explore-user-data", user?.id],
@@ -84,7 +79,6 @@ export default function ExploreTab() {
 
   const { totalSongs = 0, artistStats = [], recentSongs = [] } = data || {};
 
-  // Empty State
   if (totalSongs === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-4 text-center space-y-4">
@@ -107,7 +101,6 @@ export default function ExploreTab() {
 
   return (
     <div className="space-y-8">
-      {/* Top Artistas */}
       {artistStats.length > 0 && (
         <section>
           <h2 className="text-lg font-bold text-foreground mb-4">🎤 Top Artistas</h2>
@@ -141,7 +134,6 @@ export default function ExploreTab() {
         </section>
       )}
 
-      {/* Top 10 Músicas Recentes */}
       <section>
         <h2 className="text-lg font-bold text-foreground mb-4">🏆 Top 10 Recentes</h2>
         <div className="space-y-1">

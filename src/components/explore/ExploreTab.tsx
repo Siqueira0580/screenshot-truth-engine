@@ -18,12 +18,14 @@ export default function ExploreTab() {
 
   // When personalized and category is "Todos", use personalized data; otherwise use category filter
   const usePersonalized = isPersonalized && category === "Todos";
-  const tracks = usePersonalized ? personalizedTracks : categoryTracks;
-  const isLoading = usePersonalized ? pLoading : cLoading;
-  const isError = usePersonalized ? pError : cError;
+  // Fallback: if personalized fails or returns empty, use global charts
+  const hasPersonalizedData = usePersonalized && personalizedTracks.length > 0 && !pError;
+  const tracks = hasPersonalizedData ? personalizedTracks : categoryTracks;
+  const isLoading = hasPersonalizedData ? pLoading : (usePersonalized ? (pLoading && cLoading) : cLoading);
+  const isError = hasPersonalizedData ? false : (usePersonalized ? (pError && cError) : cError);
 
   // Build featured artists from user preferences when personalized
-  const featuredArtistOverrides = usePersonalized
+  const featuredArtistOverrides = hasPersonalizedData
     ? favoriteArtists.map((a, i) => ({
         id: Number(a.id) || 90000 + i,
         title: "",
@@ -82,11 +84,11 @@ export default function ExploreTab() {
           <TopChartsList
             tracks={tracks}
             onAddSong={handleAddSong}
-            title={usePersonalized ? "🏆 O Seu Top 10" : "🏆 Top 10 Global"}
+            title={hasPersonalizedData ? "🏆 O Seu Top 10" : "🏆 Top 10 Global"}
           />
           <FeaturedArtists
             tracks={featuredArtistOverrides || tracks}
-            title={usePersonalized ? "🎤 Os Seus Artistas" : "🎤 Artistas em Destaque"}
+            title={hasPersonalizedData ? "🎤 Os Seus Artistas" : "🎤 Artistas em Destaque"}
           />
         </>
       )}

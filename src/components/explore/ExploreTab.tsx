@@ -25,7 +25,7 @@ export default function ExploreTab() {
   const isError = hasPersonalizedData ? false : (usePersonalized ? (pError && cError) : cError);
 
   // Build featured artists from user preferences when personalized
-  const featuredArtistOverrides = usePersonalized
+  const featuredArtistOverrides = hasPersonalizedData
     ? favoriteArtists.map((a, i) => ({
         id: Number(a.id) || 90000 + i,
         title: "",

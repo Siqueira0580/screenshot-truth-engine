@@ -84,11 +84,11 @@ export default function ExploreTab() {
           <TopChartsList
             tracks={tracks}
             onAddSong={handleAddSong}
-            title={usePersonalized ? "🏆 O Seu Top 10" : "🏆 Top 10 Global"}
+            title={hasPersonalizedData ? "🏆 O Seu Top 10" : "🏆 Top 10 Global"}
           />
           <FeaturedArtists
             tracks={featuredArtistOverrides || tracks}
-            title={usePersonalized ? "🎤 Os Seus Artistas" : "🎤 Artistas em Destaque"}
+            title={hasPersonalizedData ? "🎤 Os Seus Artistas" : "🎤 Artistas em Destaque"}
           />
         </>
       )}

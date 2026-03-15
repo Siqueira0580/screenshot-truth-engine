@@ -61,10 +61,7 @@ export default function LibrarySetupWizard({ onComplete }: Props) {
 
       await supabase
         .from("profiles")
-        .update({
-          library_setup_completed: true,
-          started_with_empty_studio: selected === "empty",
-        } as any)
+        .update({ library_setup_completed: true } as any)
         .eq("id", user.id);
 
       onComplete();

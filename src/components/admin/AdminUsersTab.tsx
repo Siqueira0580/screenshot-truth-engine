@@ -9,6 +9,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { toast } from "@/components/ui/sonner";
 import { Users, Crown, Music, MoreVertical, Award, Ban } from "lucide-react";
@@ -18,6 +19,7 @@ interface Profile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  avatar_url: string | null;
   preferred_instrument: string;
   subscription_plan: string;
   pro_expires_at: string | null;
@@ -38,7 +40,7 @@ export default function AdminUsersTab() {
     const [profilesRes, songsRes] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, first_name, last_name, email, preferred_instrument, subscription_plan, pro_expires_at, created_at")
+        .select("id, first_name, last_name, email, avatar_url, preferred_instrument, subscription_plan, pro_expires_at, created_at")
         .order("created_at", { ascending: false }),
       supabase.from("songs").select("id", { count: "exact", head: true }),
     ]);
@@ -110,7 +112,7 @@ export default function AdminUsersTab() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
+                    <TableHead>Utilizador</TableHead>
                     <TableHead>E-mail</TableHead>
                     <TableHead>Plano</TableHead>
                     <TableHead>Cadastro</TableHead>
@@ -120,8 +122,18 @@ export default function AdminUsersTab() {
                 <TableBody>
                   {profiles.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="font-medium">
-                        {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={p.avatar_url ?? undefined} alt={p.first_name ?? ""} />
+                            <AvatarFallback className="text-xs">
+                              {(p.first_name?.[0] ?? "").toUpperCase()}{(p.last_name?.[0] ?? "").toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">
+                            {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell>{p.email ?? "—"}</TableCell>
                       <TableCell>

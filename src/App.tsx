@@ -84,7 +84,7 @@ const App = () => (
               <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
               <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route element={<ProtectedRoute><MaintenanceInterceptor><TermsInterceptor><AppLayout /></TermsInterceptor></MaintenanceInterceptor></ProtectedRoute>}>
+              <Route element={<ProtectedRoute><MaintenanceInterceptor><TermsInterceptor><VipMaintenanceGuard><AppLayout /></VipMaintenanceGuard></TermsInterceptor></MaintenanceInterceptor></ProtectedRoute>}>
                 <Route path="/songs" element={<SongsPage />} />
                 <Route path="/songs/:id" element={<SongDetailPage />} />
                 <Route path="/setlists" element={<SetlistsPage />} />

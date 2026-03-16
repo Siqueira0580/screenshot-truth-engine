@@ -12,6 +12,7 @@ import SongFormDialog from "@/components/SongFormDialog";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import ImportSongModal from "@/components/ImportSongModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useAutoEnrichment } from "@/hooks/useAutoEnrichment";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ExploreTab from "@/components/explore/ExploreTab";

@@ -40,7 +40,7 @@ export default function AdminUsersTab() {
     const [profilesRes, songsRes] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, first_name, last_name, email, preferred_instrument, subscription_plan, pro_expires_at, created_at")
+        .select("id, first_name, last_name, email, avatar_url, preferred_instrument, subscription_plan, pro_expires_at, created_at")
         .order("created_at", { ascending: false }),
       supabase.from("songs").select("id", { count: "exact", head: true }),
     ]);

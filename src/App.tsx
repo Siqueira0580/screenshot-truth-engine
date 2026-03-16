@@ -37,6 +37,7 @@ import AdminRoute from "@/components/AdminRoute";
 import PricingPage from "@/pages/PricingPage";
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
+import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";
 import PwaInstallBanner from "@/components/PwaInstallBanner";
 import { Loader2 } from "lucide-react";
 

@@ -48,8 +48,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setLoading(false);
 
-        // Sync OAuth metadata on sign-in
-        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user) {
+        // Handle OAuth intent verification & profile sync
+        if (event === "SIGNED_IN" && session?.user) {
+          const intent = localStorage.getItem('oauth_intent');
+          localStorage.removeItem('oauth_intent');
+
+          if (intent === 'login') {
+            const createdAt = new Date(session.user.created_at).getTime();
+            const now = Date.now();
+            const isNewAccount = (now - createdAt) < 10000; // < 10 seconds
+
+            if (isNewAccount) {
+              // OAuth auto-created this account but user intended LOGIN only
+              setTimeout(async () => {
+                await supabase.auth.signOut();
+                toast.error("Parece que ainda não tem registo no sistema! Por favor, utilize a opção de criar conta.", { duration: 5000 });
+                window.location.href = '/register';
+              }, 0);
+              return;
+            }
+          }
+
+          setTimeout(() => syncProfileFromOAuth(session.user), 0);
+        }
+
+        if (event === "TOKEN_REFRESHED" && session?.user) {
           setTimeout(() => syncProfileFromOAuth(session.user), 0);
         }
       }

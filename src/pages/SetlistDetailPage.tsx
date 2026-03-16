@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -216,11 +218,16 @@ export default function SetlistDetailPage() {
 
   const queryClient = useQueryClient();
 
+  const { user } = useAuth();
+
   const { data: setlist } = useQuery({
     queryKey: ["setlist", id],
     queryFn: () => fetchSetlist(id!),
     enabled: !!id,
   });
+
+  const isOwner = !!(user && setlist && (setlist as any).user_id === user.id);
+  const isPublic = !!(setlist as any)?.is_public;
 
   const { data: items = [] } = useQuery({
     queryKey: ["setlist-items", id],
@@ -538,8 +545,14 @@ export default function SetlistDetailPage() {
         intervalDuration={(setlist as any)?.interval_duration}
         showDuration={(setlist as any)?.show_duration}
         musicians={(setlist as any)?.musicians}
-        onSettingsClick={() => setSettingsOpen(true)}
+        onSettingsClick={isOwner ? () => setSettingsOpen(true) : undefined}
       >
+        {!isOwner && (
+          <Badge variant="secondary" className="text-xs gap-1">
+            <Eye className="h-3 w-3" />
+            Somente leitura
+          </Badge>
+        )}
         {stageSync.connectedCount > 1 && (
           <Badge variant="secondary" className="text-xs">
             <Wifi className="h-3 w-3 mr-1" />
@@ -548,84 +561,148 @@ export default function SetlistDetailPage() {
         )}
       </SetlistHeader>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        {dirty && (
-          <Button onClick={() => {
-            const payload = items.map((item: any) => {
-              const ov = localOverrides[item.id];
-              return { id: item.id, loop_count: ov?.loop_count ?? item.loop_count ?? null, speed: ov?.speed ?? item.speed ?? null, bpm: ov?.bpm ?? item.bpm ?? null };
-            });
-            bulkUpdateSetlistItems(payload).then(() => {
-              queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
-              setLocalOverrides({});
-              setDirty(false);
-              toast.success("Configurações salvas!");
-            });
-          }} className="gap-2">
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">Salvar</span>
-          </Button>
-        )}
-        {items.length > 0 && (
-          <>
-            {stageSync.isMaster ? (
-              <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
-                <Radio className="h-4 w-4" /><span className="hidden sm:inline">Parar</span>
-              </Button>
-            ) : stageSync.isFollowing ? (
-              <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
-                <WifiOff className="h-4 w-4" /><span className="hidden sm:inline">Desconectar</span>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2">
-                <Radio className="h-4 w-4" /><span className="hidden sm:inline">Palco</span>
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
-              <UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Convidar</span>
-            </Button>
-            <Button variant={autoHideControls ? "outline" : "secondary"} size="sm" onClick={() => setAutoHideControls((v) => !v)} className="gap-2">
-              {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Visível"}</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleShareWhatsApp} className="gap-2" title="Compartilhar via WhatsApp">
-              <Share2 className="h-4 w-4" /><span className="hidden sm:inline">WhatsApp</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              title="Copiar Link Público"
-              onClick={async () => {
+      {/* ── Sharing Toggle (Owner Only) ── */}
+      {isOwner && (
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              {isPublic ? <Globe className="h-4 w-4 text-primary" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
+              <div>
+                <p className="text-sm font-semibold">Compartilhar Repertório</p>
+                <p className="text-xs text-muted-foreground">
+                  {isPublic ? "Qualquer pessoa com o link pode visualizar" : "Apenas você pode ver este repertório"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={isPublic}
+              onCheckedChange={async (checked) => {
                 try {
-                  const sl = setlist as any;
-                  let token = sl?.public_share_token;
-                  if (!token) {
-                    token = crypto.randomUUID();
-                    const { error } = await supabase
-                      .from("setlists")
-                      .update({ public_share_token: token } as any)
-                      .eq("id", id!);
-                    if (error) throw error;
-                    queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-                  }
-                  const publicUrl = `${window.location.origin}/share/setlist/${token}`;
-                  await navigator.clipboard.writeText(publicUrl);
-                  toast.success("Link público copiado!");
+                  const { error } = await supabase
+                    .from("setlists")
+                    .update({ is_public: checked } as any)
+                    .eq("id", id!);
+                  if (error) throw error;
+                  queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+                  toast.success(checked ? "Repertório público! Link disponível." : "Repertório privado.");
                 } catch {
-                  toast.error("Erro ao gerar link público");
+                  toast.error("Erro ao alterar visibilidade");
                 }
               }}
-            >
-              <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Link Público</span>
+            />
+          </div>
+          {isPublic && (
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={`${window.location.origin}/setlists/${id}`}
+                className="flex-1 text-xs bg-muted/50"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(`${window.location.origin}/setlists/${id}`);
+                  toast.success("Link copiado!");
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Copiar
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Owner Action Buttons ── */}
+      {isOwner && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {dirty && (
+            <Button onClick={() => {
+              const payload = items.map((item: any) => {
+                const ov = localOverrides[item.id];
+                return { id: item.id, loop_count: ov?.loop_count ?? item.loop_count ?? null, speed: ov?.speed ?? item.speed ?? null, bpm: ov?.bpm ?? item.bpm ?? null };
+              });
+              bulkUpdateSetlistItems(payload).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+                setLocalOverrides({});
+                setDirty(false);
+                toast.success("Configurações salvas!");
+              });
+            }} className="gap-2">
+              <Save className="h-4 w-4" />
+              <span className="hidden sm:inline">Salvar</span>
             </Button>
-            <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
-          </>
-        )}
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" /><span className="hidden sm:inline ml-1">Adicionar</span>
-        </Button>
-      </div>
+          )}
+          {items.length > 0 && (
+            <>
+              {stageSync.isMaster ? (
+                <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
+                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Parar</span>
+                </Button>
+              ) : stageSync.isFollowing ? (
+                <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
+                  <WifiOff className="h-4 w-4" /><span className="hidden sm:inline">Desconectar</span>
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2">
+                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Palco</span>
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
+                <UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Convidar</span>
+              </Button>
+              <Button variant={autoHideControls ? "outline" : "secondary"} size="sm" onClick={() => setAutoHideControls((v) => !v)} className="gap-2">
+                {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Visível"}</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleShareWhatsApp} className="gap-2" title="Compartilhar via WhatsApp">
+                <Share2 className="h-4 w-4" /><span className="hidden sm:inline">WhatsApp</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                title="Copiar Link Público"
+                onClick={async () => {
+                  try {
+                    const sl = setlist as any;
+                    let token = sl?.public_share_token;
+                    if (!token) {
+                      token = crypto.randomUUID();
+                      const { error } = await supabase
+                        .from("setlists")
+                        .update({ public_share_token: token } as any)
+                        .eq("id", id!);
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+                    }
+                    const publicUrl = `${window.location.origin}/share/setlist/${token}`;
+                    await navigator.clipboard.writeText(publicUrl);
+                    toast.success("Link público copiado!");
+                  } catch {
+                    toast.error("Erro ao gerar link público");
+                  }
+                }}
+              >
+                <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Link Público</span>
+              </Button>
+              <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+            </>
+          )}
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" /><span className="hidden sm:inline ml-1">Adicionar</span>
+          </Button>
+        </div>
+      )}
+
+      {/* ── Read-only: only teleprompter for visitors ── */}
+      {!isOwner && items.length > 0 && (
+        <div className="flex items-center gap-2">
+          <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+        </div>
+      )}
 
       {stageSync.isFollowing && stageSync.masterName && (
         <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
@@ -641,15 +718,15 @@ export default function SetlistDetailPage() {
       )}
 
       {/* Screen Share Panel */}
-      {items.length > 0 && <ScreenSharePanel setlistId={id!} />}
+      {isOwner && items.length > 0 && <ScreenSharePanel setlistId={id!} />}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
           <Music2 className="h-10 w-10 mb-3 opacity-40" />
           <p>Nenhuma música na setlist</p>
-          <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>
+          {isOwner && <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>}
         </div>
-      ) : (
+      ) : isOwner ? (
         <>
           <SetlistToolbar
             sortBy={sortBy} onSortChange={setSortBy}
@@ -683,78 +760,116 @@ export default function SetlistDetailPage() {
             </SortableContext>
           </DndContext>
         </>
+      ) : (
+        <div className="space-y-1">
+          {processedItems.map((item: any, i: number) => (
+            <Link
+              key={item.id}
+              to={`/songs/${item.song_id}`}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-primary/30 transition-colors"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary font-mono text-sm font-bold">
+                {i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm sm:text-base truncate">{item.songs?.title}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                  {item.songs?.artist}
+                  {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
+                </p>
+              </div>
+              <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
+            </Link>
+          ))}
+        </div>
       )}
 
-      <CreateFromSelectionBar
-        count={selectedSongs.size}
-        globalCount={globalSelectedSongs.size}
-        onSubmit={handleCreateFromSelection}
-        onSearchGlobal={() => setGlobalSearchOpen(true)}
-      />
+      {isOwner && (
+        <>
+          <CreateFromSelectionBar
+            count={selectedSongs.size}
+            globalCount={globalSelectedSongs.size}
+            onSubmit={handleCreateFromSelection}
+            onSearchGlobal={() => setGlobalSearchOpen(true)}
+          />
 
-      <GlobalSongSearchModal
-        open={globalSearchOpen}
-        onOpenChange={setGlobalSearchOpen}
-        selectedSongIds={globalSelectedSongs}
-        onToggleSong={toggleGlobalSong}
-        onBulkToggleSongs={bulkToggleGlobalSongs}
-        existingSetlistSongIds={existingIds}
-        currentSetlistId={id}
-      />
+          <GlobalSongSearchModal
+            open={globalSearchOpen}
+            onOpenChange={setGlobalSearchOpen}
+            selectedSongIds={globalSelectedSongs}
+            onToggleSong={toggleGlobalSong}
+            onBulkToggleSongs={bulkToggleGlobalSongs}
+            existingSetlistSongIds={existingIds}
+            currentSetlistId={id}
+          />
 
-      {/* Add song dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenres([]); } }}>
-        <DialogContent className="max-h-[80vh] flex flex-col">
-          <DialogHeader><DialogTitle>Adicionar Música</DialogTitle></DialogHeader>
-          <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <div className="flex flex-wrap gap-2 w-full mt-3 mb-4">
-            {["Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
-              <button
-                key={genre}
-                onClick={() => toggleGenre(genre)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                  selectedGenres.includes(genre)
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/50 text-secondary-foreground border border-border hover:bg-secondary"
+          {/* Add song dialog */}
+          <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenres([]); } }}>
+            <DialogContent className="max-h-[80vh] flex flex-col">
+              <DialogHeader><DialogTitle>Adicionar Música</DialogTitle></DialogHeader>
+              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className="flex flex-wrap gap-2 w-full mt-3 mb-4">
+                {["Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
+                  <button
+                    key={genre}
+                    onClick={() => toggleGenre(genre)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                      selectedGenres.includes(genre)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary/50 text-secondary-foreground border border-border hover:bg-secondary"
+                    )}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
+                {availableSongs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhuma música disponível</p>
+                ) : (
+                  availableSongs.map((song) => (
+                    <button key={song.id} onClick={() => addMutation.mutate(song.id)} className="w-full flex items-center gap-3 rounded-lg p-3 text-left hover:bg-secondary transition-colors">
+                      <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{song.title}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {song.artist} {song.musical_key && `· ${song.musical_key}`}
+                          {song.style && <span className="ml-1 text-xs opacity-60">• {song.style}</span>}
+                        </p>
+                      </div>
+                    </button>
+                  ))
                 )}
-              >
-                {genre}
-              </button>
-            ))}
-          </div>
-          <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
-            {availableSongs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma música disponível</p>
-            ) : (
-              availableSongs.map((song) => (
-                <button key={song.id} onClick={() => addMutation.mutate(song.id)} className="w-full flex items-center gap-3 rounded-lg p-3 text-left hover:bg-secondary transition-colors">
-                  <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{song.title}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {song.artist} {song.musical_key && `· ${song.musical_key}`}
-                      {song.style && <span className="ml-1 text-xs opacity-60">• {song.style}</span>}
-                    </p>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+              </div>
+            </DialogContent>
+          </Dialog>
 
-      <StageSyncInviteModal open={!!stageSync.invite} masterName={stageSync.invite?.masterName || ""} onAccept={stageSync.acceptInvite} onDecline={stageSync.declineInvite} />
-      <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
+          <StageSyncInviteModal open={!!stageSync.invite} masterName={stageSync.invite?.masterName || ""} onAccept={stageSync.acceptInvite} onDecline={stageSync.declineInvite} />
+          <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
 
-      <SetlistSettingsModal
-        open={settingsOpen} onOpenChange={setSettingsOpen}
-        setlist={setlist ? { ...(setlist as any) } : null}
-        onSave={async (data) => {
-          await updateSetlist(id!, data as any);
-          queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-        }}
-      />
+          <SetlistSettingsModal
+            open={settingsOpen} onOpenChange={setSettingsOpen}
+            setlist={setlist ? { ...(setlist as any) } : null}
+            onSave={async (data) => {
+              await updateSetlist(id!, data as any);
+              queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+            }}
+          />
+
+          <ConfirmDeleteModal
+            open={!!deleteTarget}
+            onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+            onConfirm={() => {
+              if (deleteTarget) {
+                removeMutation.mutate(deleteTarget);
+                setDeleteTarget(null);
+              }
+            }}
+            description="Tem a certeza de que deseja remover esta música do repertório? Esta ação não pode ser desfeita."
+          />
+        </>
+      )}
 
       <Teleprompter
         songs={processedItems.map((item: any) => ({
@@ -771,18 +886,6 @@ export default function SetlistDetailPage() {
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
         autoHideControls={autoHideControls}
-      />
-
-      <ConfirmDeleteModal
-        open={!!deleteTarget}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
-        onConfirm={() => {
-          if (deleteTarget) {
-            removeMutation.mutate(deleteTarget);
-            setDeleteTarget(null);
-          }
-        }}
-        description="Tem a certeza de que deseja remover esta música do repertório? Esta ação não pode ser desfeita."
       />
     </div>
   );

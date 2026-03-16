@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { toast } from "@/components/ui/sonner";
-import { Users, Crown, Music, MoreVertical, Award, Ban, Search, X } from "lucide-react";
+import { Users, Crown, Music, MoreVertical, Award, Ban, Search, X, UserX } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -78,6 +78,15 @@ export default function AdminUsersTab() {
       .eq("id", profile.id);
     if (error) toast.error("Erro ao conceder PRO.");
     else { toast.success(`PRO concedido a ${profile.email}.`); fetchAll(); }
+  };
+
+  const revokePro = async (profile: Profile) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ subscription_plan: "free", pro_expires_at: null })
+      .eq("id", profile.id);
+    if (error) toast.error("Erro ao revogar PRO.");
+    else { toast.success(`PRO revogado de ${profile.email}.`); fetchAll(); }
   };
 
   const handleSuspend = async () => {
@@ -188,9 +197,15 @@ export default function AdminUsersTab() {
                             <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => grantPro(p)} className="gap-2 cursor-pointer">
-                              <Award className="h-4 w-4" /> Conceder PRO
-                            </DropdownMenuItem>
+                            {p.subscription_plan === "pro" ? (
+                              <DropdownMenuItem onClick={() => revokePro(p)} className="gap-2 cursor-pointer text-amber-600 focus:text-amber-600">
+                                <UserX className="h-4 w-4" /> Revogar PRO
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => grantPro(p)} className="gap-2 cursor-pointer">
+                                <Award className="h-4 w-4" /> Conceder PRO
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => setSuspendTarget(p)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
                               <Ban className="h-4 w-4" /> Suspender Conta
                             </DropdownMenuItem>

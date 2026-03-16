@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck } from "lucide-react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -13,21 +13,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import smartCifraLogo from "@/assets/smart-cifra-logo.png";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import PaywallModal from "@/components/PaywallModal";
 import GlobalBanner from "@/components/GlobalBanner";
 
 const navItems = [
-  { to: "/songs", icon: Music, label: "Músicas", proOnly: false },
-  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false },
-  { to: "/artists", icon: Users, label: "Artistas", proOnly: false },
-  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true },
-  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true },
+  { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false },
+  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false, vipArea: false },
+  { to: "/artists", icon: Users, label: "Artistas", proOnly: false, vipArea: false },
+  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true, vipArea: true },
+  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true, vipArea: true },
 ];
 
 export default function AppLayout() {
@@ -37,6 +37,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { isFree } = useSubscription();
+  const { vipMaintenanceMode } = useGlobalSettings();
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");

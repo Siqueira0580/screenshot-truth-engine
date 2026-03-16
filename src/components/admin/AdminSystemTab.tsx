@@ -143,7 +143,27 @@ export default function AdminSystemTab() {
         </CardContent>
       </Card>
 
-      {/* Public Setlists Moderation */}
+      {/* VIP Maintenance Mode (Studio & Compose Kill Switch) */}
+      <Card className="border-border">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2 space-y-0">
+          <Wrench className="h-5 w-5 text-orange-500" />
+          <CardTitle className="text-lg">Modo Atualização VIP (Estúdio & Compor)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground font-medium">
+                {vipMaintenanceMode ? "Estúdio & Compor DESATIVADOS" : "Estúdio & Compor operacionais"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Desabilita o acesso aos menus Estúdio e Compor para todos os utilizadores (exceto Admins).
+              </p>
+            </div>
+            <Switch checked={vipMaintenanceMode} onCheckedChange={toggleVipMaintenance} />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="border-border">
         <CardHeader className="flex flex-row items-center gap-2 pb-2 space-y-0">
           <Globe className="h-5 w-5 text-blue-500" />

@@ -78,38 +78,40 @@ const App = () => (
         <AuthProvider>
           <ThemeProvider>
           <UserPreferencesProvider>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-              <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-              <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route element={<ProtectedRoute><MaintenanceInterceptor><TermsInterceptor><VipMaintenanceGuard><AppLayout /></VipMaintenanceGuard></TermsInterceptor></MaintenanceInterceptor></ProtectedRoute>}>
-                <Route path="/songs" element={<SongsPage />} />
-                <Route path="/songs/:id" element={<SongDetailPage />} />
-                <Route path="/setlists" element={<SetlistsPage />} />
-                <Route path="/setlists/:id" element={<SetlistDetailPage />} />
-                <Route path="/artists" element={<ArtistsPage />} />
-                <Route path="/studio" element={<StudioPage />} />
-                <Route path="/studio/:songId" element={<StudioDetailPage />} />
-                <Route path="/compositions" element={<CompositionsHomePage />} />
-                <Route path="/compose" element={<CompositionStudioPage />} />
-                <Route path="/study/:songId" element={<StudyPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/tuner" element={<TunerPage />} />
-                <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
-                <Route path="/planos" element={<PricingPage />} />
-              </Route>
-              <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
-              <Route path="/live/:sessionId" element={<LiveViewerPage />} />
-              <Route element={<PublicLayout />}>
-                <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />
-                <Route path="/share/song/:id" element={<PublicSongPage />} />
-                <Route path="/terms" element={<TermsOfUsePage />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <MaintenanceInterceptor>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+                <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+                <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route element={<ProtectedRoute><TermsInterceptor><VipMaintenanceGuard><AppLayout /></VipMaintenanceGuard></TermsInterceptor></ProtectedRoute>}>
+                  <Route path="/songs" element={<SongsPage />} />
+                  <Route path="/songs/:id" element={<SongDetailPage />} />
+                  <Route path="/setlists" element={<SetlistsPage />} />
+                  <Route path="/setlists/:id" element={<SetlistDetailPage />} />
+                  <Route path="/artists" element={<ArtistsPage />} />
+                  <Route path="/studio" element={<StudioPage />} />
+                  <Route path="/studio/:songId" element={<StudioDetailPage />} />
+                  <Route path="/compositions" element={<CompositionsHomePage />} />
+                  <Route path="/compose" element={<CompositionStudioPage />} />
+                  <Route path="/study/:songId" element={<StudyPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/tuner" element={<TunerPage />} />
+                  <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
+                  <Route path="/planos" element={<PricingPage />} />
+                </Route>
+                <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+                <Route path="/live/:sessionId" element={<LiveViewerPage />} />
+                <Route element={<PublicLayout />}>
+                  <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />
+                  <Route path="/share/song/:id" element={<PublicSongPage />} />
+                  <Route path="/terms" element={<TermsOfUsePage />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </MaintenanceInterceptor>
             <PwaInstallBanner />
           </UserPreferencesProvider>
           </ThemeProvider>

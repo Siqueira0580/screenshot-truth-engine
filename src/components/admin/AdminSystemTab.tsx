@@ -28,14 +28,16 @@ export default function AdminSystemTab() {
 
   useEffect(() => {
     async function load() {
-      const [bannerRes, modeRes, setlistsRes] = await Promise.all([
+      const [bannerRes, modeRes, vipModeRes, setlistsRes] = await Promise.all([
         supabase.from("global_settings").select("setting_value").eq("setting_key", "maintenance_banner").maybeSingle(),
         supabase.from("global_settings").select("setting_value").eq("setting_key", "maintenance_mode").maybeSingle(),
+        supabase.from("global_settings").select("setting_value").eq("setting_key", "vip_maintenance_mode").maybeSingle(),
         supabase.from("setlists").select("id, name, public_share_token, user_id").not("public_share_token", "is", null),
       ]);
       setSavedBanner(bannerRes.data?.setting_value ?? "");
       setBannerText(bannerRes.data?.setting_value ?? "");
       setMaintenanceMode(modeRes.data?.setting_value === "true");
+      setVipMaintenanceMode(vipModeRes.data?.setting_value === "true");
       setPublicSetlists(setlistsRes.data ?? []);
       setLoading(false);
     }

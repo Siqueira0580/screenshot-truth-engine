@@ -727,7 +727,6 @@ export default function SetlistDetailPage() {
           {isOwner && <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>}
         </div>
       ) : isOwner ? (
-        <>
           <SetlistToolbar
             sortBy={sortBy} onSortChange={setSortBy}
             filterKey={filterKey} onFilterKeyChange={setFilterKey}

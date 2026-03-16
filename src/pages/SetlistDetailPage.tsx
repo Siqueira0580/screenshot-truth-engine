@@ -218,11 +218,16 @@ export default function SetlistDetailPage() {
 
   const queryClient = useQueryClient();
 
+  const { user } = useAuth();
+
   const { data: setlist } = useQuery({
     queryKey: ["setlist", id],
     queryFn: () => fetchSetlist(id!),
     enabled: !!id,
   });
+
+  const isOwner = !!(user && setlist && (setlist as any).user_id === user.id);
+  const isPublic = !!(setlist as any)?.is_public;
 
   const { data: items = [] } = useQuery({
     queryKey: ["setlist-items", id],

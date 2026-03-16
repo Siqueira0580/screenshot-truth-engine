@@ -68,6 +68,12 @@ export default function AdminSystemTab() {
     toast.success(checked ? "Modo manutenção ativado." : "Modo manutenção desativado.");
   };
 
+  const toggleVipMaintenance = async (checked: boolean) => {
+    setVipMaintenanceMode(checked);
+    await upsertSetting("vip_maintenance_mode", checked ? "true" : "false");
+    toast.success(checked ? "Modo Atualização VIP ativado." : "Modo Atualização VIP desativado.");
+  };
+
   const revokePublicLink = async (setlist: PublicSetlist) => {
     const { error } = await supabase
       .from("setlists")

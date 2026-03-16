@@ -56,8 +56,8 @@ export default function AppLayout() {
 
   // Check if a nav item is blocked (paywall or VIP maintenance)
   const isItemBlocked = (item: typeof navItems[0]) => {
-    if (item.proOnly && isFree) return "paywall";
     if (item.vipArea && vipMaintenanceMode && !isAdmin) return "maintenance";
+    if (item.proOnly && isFree) return "paywall";
     return false;
   };
 

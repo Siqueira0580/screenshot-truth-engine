@@ -1,29 +1,40 @@
-import { useEffect, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
-import { toast } from "sonner";
+import MaintenancePage from "@/pages/MaintenancePage";
 
 const VIP_ROUTES = ["/studio", "/compositions", "/compose", "/study"];
 
+const isMaintenanceEnabled = (value: string | boolean | null | undefined) =>
+  String(value).toLowerCase() === "true";
+
 export default function VipMaintenanceGuard({ children }: { children: React.ReactNode }) {
-  const { isAdmin } = useUserRole();
-  const { vipMaintenanceMode } = useGlobalSettings();
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { vipMaintenanceMode, loading: settingsLoading } = useGlobalSettings();
   const location = useLocation();
-  const navigate = useNavigate();
-  const redirected = useRef(false);
 
-  const isVipRoute = VIP_ROUTES.some((r) => location.pathname.startsWith(r));
+  const isVipRoute = VIP_ROUTES.some((route) => location.pathname.startsWith(route));
+  const isLoading = authLoading || settingsLoading || (user ? roleLoading : false);
 
-  useEffect(() => {
-    if (vipMaintenanceMode && !isAdmin && isVipRoute && !redirected.current) {
-      redirected.current = true;
-      toast.info("O Estúdio está a receber melhorias e voltará em breve!");
-      navigate("/songs", { replace: true });
-    } else if (!isVipRoute) {
-      redirected.current = false;
-    }
-  }, [vipMaintenanceMode, isAdmin, isVipRoute, navigate]);
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user || !isVipRoute) return <>{children}</>;
+  if (isAdmin) return <>{children}</>;
+
+  const isMaintenanceActive = isMaintenanceEnabled(vipMaintenanceMode);
+
+  if (isMaintenanceActive) {
+    return <MaintenancePage />;
+  }
 
   return <>{children}</>;
 }

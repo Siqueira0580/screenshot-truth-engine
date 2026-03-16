@@ -3,31 +3,56 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useUserRole() {
-  const { user } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const { user, loading: authLoading } = useAuth();
+  const [resolvedUserId, setResolvedUserId] = useState<string | null>(null);
+  const [resolvedIsAdmin, setResolvedIsAdmin] = useState(false);
 
   useEffect(() => {
+    let isActive = true;
+
+    if (authLoading) {
+      return () => {
+        isActive = false;
+      };
+    }
+
     if (!user) {
-      setIsAdmin(false);
-      setLoading(false);
-      return;
+      setResolvedUserId(null);
+      setResolvedIsAdmin(false);
+      return () => {
+        isActive = false;
+      };
+    }
+
+    const currentUserId = user.id;
+
+    if (resolvedUserId === currentUserId) {
+      return () => {
+        isActive = false;
+      };
     }
 
     const fetchRole = async () => {
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .eq("role", "admin")
-        .maybeSingle();
+      const { data, error } = await supabase.rpc("has_role", {
+        _user_id: currentUserId,
+        _role: "admin",
+      });
 
-      setIsAdmin(!error && !!data);
-      setLoading(false);
+      if (!isActive) return;
+
+      setResolvedIsAdmin(!error && data === true);
+      setResolvedUserId(currentUserId);
     };
 
     fetchRole();
-  }, [user]);
+
+    return () => {
+      isActive = false;
+    };
+  }, [user, authLoading, resolvedUserId]);
+
+  const loading = authLoading || (!!user && resolvedUserId !== user.id);
+  const isAdmin = !loading && !!user && resolvedIsAdmin;
 
   return { isAdmin, loading };
 }

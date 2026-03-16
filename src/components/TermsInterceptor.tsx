@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Loader2, ShieldCheck, LogOut } from "lucide-react";
@@ -13,6 +14,7 @@ interface TermsInterceptorProps {
 
 export default function TermsInterceptor({ children }: TermsInterceptorProps) {
   const { user, signOut } = useAuth();
+  const { isAdmin, loading: roleLoading } = useUserRole();
   const [termsAccepted, setTermsAccepted] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [accepting, setAccepting] = useState(false);
@@ -33,6 +35,9 @@ export default function TermsInterceptor({ children }: TermsInterceptorProps) {
         setLoading(false);
       });
   }, [user]);
+
+  // Admin bypass — never block admins
+  if (isAdmin && !roleLoading) return <>{children}</>;
 
   if (loading) {
     return (

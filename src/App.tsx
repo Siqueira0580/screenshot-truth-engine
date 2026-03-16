@@ -39,6 +39,7 @@ import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
 import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";
 import PwaInstallBanner from "@/components/PwaInstallBanner";
+import OnboardingGuard from "@/components/OnboardingGuard";
 import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();

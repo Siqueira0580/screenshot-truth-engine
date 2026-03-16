@@ -228,7 +228,7 @@ export default function RegisterPage() {
 
             <Button type="submit" className="w-full landscape:col-span-2" disabled={loading || hasErrors}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Cadastrar
+              Criar Nova Conta
             </Button>
           </form>
 

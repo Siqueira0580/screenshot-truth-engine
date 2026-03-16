@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/sonner";
-import { Megaphone, Power, Globe, Trash2 } from "lucide-react";
+import { Megaphone, Power, Globe, Trash2, Wrench } from "lucide-react";
 
 interface PublicSetlist {
   id: string;
@@ -22,19 +22,22 @@ export default function AdminSystemTab() {
   const [bannerText, setBannerText] = useState("");
   const [savedBanner, setSavedBanner] = useState("");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [vipMaintenanceMode, setVipMaintenanceMode] = useState(false);
   const [publicSetlists, setPublicSetlists] = useState<PublicSetlist[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const [bannerRes, modeRes, setlistsRes] = await Promise.all([
+      const [bannerRes, modeRes, vipModeRes, setlistsRes] = await Promise.all([
         supabase.from("global_settings").select("setting_value").eq("setting_key", "maintenance_banner").maybeSingle(),
         supabase.from("global_settings").select("setting_value").eq("setting_key", "maintenance_mode").maybeSingle(),
+        supabase.from("global_settings").select("setting_value").eq("setting_key", "vip_maintenance_mode").maybeSingle(),
         supabase.from("setlists").select("id, name, public_share_token, user_id").not("public_share_token", "is", null),
       ]);
       setSavedBanner(bannerRes.data?.setting_value ?? "");
       setBannerText(bannerRes.data?.setting_value ?? "");
       setMaintenanceMode(modeRes.data?.setting_value === "true");
+      setVipMaintenanceMode(vipModeRes.data?.setting_value === "true");
       setPublicSetlists(setlistsRes.data ?? []);
       setLoading(false);
     }
@@ -63,6 +66,12 @@ export default function AdminSystemTab() {
     setMaintenanceMode(checked);
     await upsertSetting("maintenance_mode", checked ? "true" : "false");
     toast.success(checked ? "Modo manutenção ativado." : "Modo manutenção desativado.");
+  };
+
+  const toggleVipMaintenance = async (checked: boolean) => {
+    setVipMaintenanceMode(checked);
+    await upsertSetting("vip_maintenance_mode", checked ? "true" : "false");
+    toast.success(checked ? "Modo Atualização VIP ativado." : "Modo Atualização VIP desativado.");
   };
 
   const revokePublicLink = async (setlist: PublicSetlist) => {
@@ -134,7 +143,27 @@ export default function AdminSystemTab() {
         </CardContent>
       </Card>
 
-      {/* Public Setlists Moderation */}
+      {/* VIP Maintenance Mode (Studio & Compose Kill Switch) */}
+      <Card className="border-border">
+        <CardHeader className="flex flex-row items-center gap-2 pb-2 space-y-0">
+          <Wrench className="h-5 w-5 text-orange-500" />
+          <CardTitle className="text-lg">Modo Atualização VIP (Estúdio & Compor)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-foreground font-medium">
+                {vipMaintenanceMode ? "Estúdio & Compor DESATIVADOS" : "Estúdio & Compor operacionais"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Desabilita o acesso aos menus Estúdio e Compor para todos os utilizadores (exceto Admins).
+              </p>
+            </div>
+            <Switch checked={vipMaintenanceMode} onCheckedChange={toggleVipMaintenance} />
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="border-border">
         <CardHeader className="flex flex-row items-center gap-2 pb-2 space-y-0">
           <Globe className="h-5 w-5 text-blue-500" />

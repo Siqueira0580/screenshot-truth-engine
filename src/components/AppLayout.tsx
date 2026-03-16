@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck } from "lucide-react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -13,21 +13,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import smartCifraLogo from "@/assets/smart-cifra-logo.png";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import PaywallModal from "@/components/PaywallModal";
 import GlobalBanner from "@/components/GlobalBanner";
 
 const navItems = [
-  { to: "/songs", icon: Music, label: "Músicas", proOnly: false },
-  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false },
-  { to: "/artists", icon: Users, label: "Artistas", proOnly: false },
-  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true },
-  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true },
+  { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false },
+  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false, vipArea: false },
+  { to: "/artists", icon: Users, label: "Artistas", proOnly: false, vipArea: false },
+  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true, vipArea: true },
+  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true, vipArea: true },
 ];
 
 export default function AppLayout() {
@@ -37,6 +37,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { isFree } = useSubscription();
+  const { vipMaintenanceMode } = useGlobalSettings();
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
@@ -53,6 +54,21 @@ export default function AppLayout() {
       });
   }, [user]);
 
+  // Check if a nav item is blocked (paywall or VIP maintenance)
+  const isItemBlocked = (item: typeof navItems[0]) => {
+    if (item.proOnly && isFree) return "paywall";
+    if (item.vipArea && vipMaintenanceMode && !isAdmin) return "maintenance";
+    return false;
+  };
+
+  const handleBlockedClick = (blockType: "paywall" | "maintenance") => {
+    if (blockType === "paywall") {
+      setPaywallOpen(true);
+    } else {
+      toast.info("O Estúdio está a receber melhorias e voltará em breve!");
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col landscape:flex-row bg-background overflow-hidden pb-16 lg:pb-0 landscape:pb-0">
       <GlobalBanner />
@@ -63,17 +79,18 @@ export default function AppLayout() {
         </button>
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
-          if (item.proOnly && isFree) {
+          const blocked = isItemBlocked(item);
+          if (blocked) {
             return (
               <button
                 key={item.to}
                 type="button"
-                onClick={() => setPaywallOpen(true)}
+                onClick={() => handleBlockedClick(blocked)}
                 className={cn(
                   "flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-[9px] font-medium transition-colors w-full text-muted-foreground hover:text-foreground opacity-60"
                 )}
               >
-                <item.icon className="h-4 w-4" />
+                {blocked === "maintenance" ? <Lock className="h-4 w-4" /> : <item.icon className="h-4 w-4" />}
               </button>
             );
           }
@@ -106,15 +123,16 @@ export default function AppLayout() {
           {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1 flex-1">
             {navItems.map((item) => {
-              if (item.proOnly && isFree) {
+              const blocked = isItemBlocked(item);
+              if (blocked) {
                 return (
                   <button
                     key={item.to}
                     type="button"
-                    onClick={() => setPaywallOpen(true)}
+                    onClick={() => handleBlockedClick(blocked)}
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors whitespace-nowrap text-muted-foreground hover:bg-secondary hover:text-foreground opacity-60"
                   >
-                    <item.icon className="h-4 w-4" />
+                    {blocked === "maintenance" ? <Lock className="h-4 w-4" /> : <item.icon className="h-4 w-4" />}
                     <span>{item.label}</span>
                   </button>
                 );
@@ -245,15 +263,16 @@ export default function AppLayout() {
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden landscape:hidden">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
-            if (item.proOnly && isFree) {
+            const blocked = isItemBlocked(item);
+            if (blocked) {
               return (
                 <button
                   key={item.to}
                   type="button"
-                  onClick={() => setPaywallOpen(true)}
+                  onClick={() => handleBlockedClick(blocked)}
                   className="flex flex-col items-center gap-1 px-3 py-2 text-xs font-medium transition-colors rounded-lg min-w-[60px] text-muted-foreground opacity-60"
                 >
-                  <item.icon className="h-5 w-5" />
+                  {blocked === "maintenance" ? <Lock className="h-5 w-5" /> : <item.icon className="h-5 w-5" />}
                   <span>{item.label}</span>
                 </button>
               );

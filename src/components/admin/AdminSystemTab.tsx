@@ -9,7 +9,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { toast } from "@/components/ui/sonner";
-import { Megaphone, Power, Globe, Trash2 } from "lucide-react";
+import { Megaphone, Power, Globe, Trash2, Wrench } from "lucide-react";
 
 interface PublicSetlist {
   id: string;

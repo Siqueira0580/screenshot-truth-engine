@@ -9,25 +9,28 @@ export default function MaintenanceInterceptor({ children }: { children: React.R
   const { isAdmin, loading: roleLoading } = useUserRole();
   const { maintenanceMode, loading: settingsLoading } = useGlobalSettings();
 
-  // 1. Aguardar carregamento inicial da sessão
-  const isLoading = authLoading || settingsLoading || (user && roleLoading);
+  // 1. Trava de carregamento (garante que perfil/role/settings foram lidos)
+  const isLoading = authLoading || settingsLoading || (user ? roleLoading : false);
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // 2. Visitantes não autenticados: acesso livre (precisam chegar ao login)
+  // 2. Visitantes não autenticados: acesso livre (precisam chegar ao login/registo)
   if (!user) return <>{children}</>;
 
-  // 3. Admin autenticado: bypass absoluto
+  // 3. BYPASS ABSOLUTO PARA O ADMIN (chave mestra)
   if (isAdmin) return <>{children}</>;
 
-  // 4. Utilizador comum + manutenção ativa: bloqueio total
-  if (maintenanceMode) return <MaintenancePage />;
+  // 4. A BARREIRA DE MANUTENÇÃO — String-safe para boolean/string do Supabase
+  const isMaintenanceActive = String(maintenanceMode).toLowerCase() === "true";
+  if (isMaintenanceActive) {
+    return <MaintenancePage />;
+  }
 
-  // 5. Fluxo normal
+  // 5. Caminho livre se não houver manutenção
   return <>{children}</>;
 }

@@ -1,19 +1,16 @@
-import { useLocation } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
+import { useAuth } from "@/contexts/AuthContext";
 import MaintenancePage from "@/pages/MaintenancePage";
 import { Loader2 } from "lucide-react";
 
-const PUBLIC_WHITELIST = ["/login", "/register", "/forgot-password", "/reset-password", "/terms", "/"];
-
 export default function MaintenanceInterceptor({ children }: { children: React.ReactNode }) {
+  const { user, loading: authLoading } = useAuth();
   const { isAdmin, loading: roleLoading } = useUserRole();
   const { maintenanceMode, loading: settingsLoading } = useGlobalSettings();
-  const location = useLocation();
 
-  const isLoading = roleLoading || settingsLoading;
-
-  // Step 1: Wait for data
+  // 1. Aguardar carregamento inicial da sessão
+  const isLoading = authLoading || settingsLoading || (user && roleLoading);
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -22,18 +19,15 @@ export default function MaintenanceInterceptor({ children }: { children: React.R
     );
   }
 
-  // Step 2: Whitelist public routes (login, register, etc.)
-  const isWhitelisted = PUBLIC_WHITELIST.some((r) =>
-    r === "/" ? location.pathname === "/" : location.pathname.startsWith(r)
-  );
-  if (isWhitelisted) return <>{children}</>;
+  // 2. Visitantes não autenticados: acesso livre (precisam chegar ao login)
+  if (!user) return <>{children}</>;
 
-  // Step 3: Admin bypass — absolute
+  // 3. Admin autenticado: bypass absoluto
   if (isAdmin) return <>{children}</>;
 
-  // Step 4: Global maintenance block
+  // 4. Utilizador comum + manutenção ativa: bloqueio total
   if (maintenanceMode) return <MaintenancePage />;
 
-  // Step 5: Normal flow
+  // 5. Fluxo normal
   return <>{children}</>;
 }

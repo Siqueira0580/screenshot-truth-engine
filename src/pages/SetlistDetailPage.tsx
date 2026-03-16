@@ -718,15 +718,15 @@ export default function SetlistDetailPage() {
       )}
 
       {/* Screen Share Panel */}
-      {items.length > 0 && <ScreenSharePanel setlistId={id!} />}
+      {isOwner && items.length > 0 && <ScreenSharePanel setlistId={id!} />}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
           <Music2 className="h-10 w-10 mb-3 opacity-40" />
           <p>Nenhuma música na setlist</p>
-          <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>
+          {isOwner && <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>}
         </div>
-      ) : (
+      ) : isOwner ? (
         <>
           <SetlistToolbar
             sortBy={sortBy} onSortChange={setSortBy}
@@ -759,6 +759,30 @@ export default function SetlistDetailPage() {
               </div>
             </SortableContext>
           </DndContext>
+        </>
+      ) : (
+        /* ── Read-Only Song List for Non-Owners ── */
+        <div className="space-y-1">
+          {processedItems.map((item: any, i: number) => (
+            <Link
+              key={item.id}
+              to={`/songs/${item.song_id}`}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-primary/30 transition-colors"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-primary/10 text-primary font-mono text-sm font-bold">
+                {i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm sm:text-base truncate">{item.songs?.title}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                  {item.songs?.artist}
+                  {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
+                </p>
+              </div>
+              <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
+            </Link>
+          ))}
+        </div>
         </>
       )}
 

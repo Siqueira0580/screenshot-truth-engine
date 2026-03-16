@@ -5,11 +5,12 @@ import { Music2, Upload, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchSongs, fetchArtists, createSong, checkDuplicateSong } from "@/lib/supabase-queries";
+import { fetchArtists, createSong, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { useAuth } from "@/contexts/AuthContext";
 
 const STUDIO_TOUR_STEPS = [
   {
@@ -37,6 +38,7 @@ const STUDIO_TOUR_STEPS = [
 export default function StudioPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [uploadingNew, setUploadingNew] = useState(false);
   const newAudioRef = useRef<HTMLInputElement>(null);
@@ -46,7 +48,21 @@ export default function StudioPage() {
     (window as any).__replayStudioTour = replayTour;
   });
 
-  const { data: songs = [] } = useQuery({ queryKey: ["songs"], queryFn: fetchSongs });
+  // Fetch ONLY songs created by the current user (privacy isolation)
+  const { data: songs = [] } = useQuery({
+    queryKey: ["studio-songs", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("songs")
+        .select("*")
+        .eq("created_by", user.id)
+        .order("title");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
 
   const filteredSongs = songs.filter(s =>
@@ -88,7 +104,7 @@ export default function StudioPage() {
       });
       if (dbErr) throw dbErr;
 
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      queryClient.invalidateQueries({ queryKey: ["studio-songs"] });
       toast.success(`"${title}" adicionado!`);
       navigate(`/studio/${song.id}`);
     } catch (err: any) {

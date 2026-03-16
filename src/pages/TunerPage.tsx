@@ -253,7 +253,7 @@ export default function TunerPage() {
             ) : isActive ? (
               <div className="flex flex-col items-center gap-3 text-muted-foreground">
                 <Mic className="h-12 w-12 animate-pulse text-primary" />
-                <p className="text-base">Toque a corda {targetString.note}…</p>
+                <p className="text-base">{targetString ? `Toque a corda ${targetString.note}…` : "Toque uma nota…"}</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 text-muted-foreground">

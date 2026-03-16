@@ -10,7 +10,17 @@ interface ArtistPref {
   imageUrl: string | null;
 }
 
+interface UserPreferencesProfile {
+  id: string;
+  preferredInstrument: Instrument;
+  wizardCompleted: boolean;
+  librarySetupCompleted: boolean;
+  favoriteStyles: string[];
+  favoriteArtists: ArtistPref[];
+}
+
 interface UserPreferences {
+  profile: UserPreferencesProfile | null;
   preferredInstrument: Instrument;
   setPreferredInstrument: (instrument: Instrument) => Promise<void>;
   wizardCompleted: boolean;
@@ -23,6 +33,7 @@ interface UserPreferences {
 }
 
 const UserPreferencesContext = createContext<UserPreferences>({
+  profile: null,
   preferredInstrument: "guitar",
   setPreferredInstrument: async () => {},
   wizardCompleted: false,
@@ -37,48 +48,84 @@ const UserPreferencesContext = createContext<UserPreferences>({
 export const useUserPreferences = () => useContext(UserPreferencesContext);
 
 export function UserPreferencesProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [profile, setProfile] = useState<UserPreferencesProfile | null>(null);
   const [preferredInstrument, setInstrumentState] = useState<Instrument>("guitar");
   const [wizardCompleted, setWizardCompleted] = useState(false);
   const [librarySetupCompleted, setLibrarySetupCompleted] = useState(false);
   const [favoriteStyles, setFavoriteStyles] = useState<string[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<ArtistPref[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isFetchingProfile, setIsFetchingProfile] = useState(false);
+
+  const activeProfile = user && profile?.id === user.id ? profile : null;
+  const loading = authLoading || isFetchingProfile || (!!user && !activeProfile);
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user) {
       const stored = localStorage.getItem("preferred_instrument") as Instrument | null;
-      if (stored) setInstrumentState(stored);
-      setLoading(false);
+      setProfile(null);
+      setInstrumentState(stored || "guitar");
+      setWizardCompleted(false);
+      setLibrarySetupCompleted(false);
+      setFavoriteStyles([]);
+      setFavoriteArtists([]);
+      setIsFetchingProfile(false);
       return;
     }
 
-    // CRITICAL: Reset loading to true before fetching to prevent FOUC
-    // Without this, navigating or transitioning from null→user leaves loading=false
-    // while wizardCompleted is still false, causing the onboarding wizard to flash.
-    setLoading(true);
+    let cancelled = false;
 
-    supabase
-      .from("profiles")
-      .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          if (data.preferred_instrument) setInstrumentState(data.preferred_instrument as Instrument);
-          setWizardCompleted(!!(data as any).wizard_completed);
-          setLibrarySetupCompleted(!!(data as any).library_setup_completed);
-          setFavoriteStyles(((data as any).favorite_styles as string[]) || []);
-          const artists = (data as any).favorite_artists;
-          setFavoriteArtists(Array.isArray(artists) ? artists : []);
+    const loadProfile = async () => {
+      setIsFetchingProfile(true);
+
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")
+          .eq("id", user.id)
+          .single();
+
+        if (cancelled || !data) return;
+
+        const nextPreferredInstrument = (data.preferred_instrument as Instrument) || "guitar";
+        const nextFavoriteStyles = ((data as any).favorite_styles as string[]) || [];
+        const artists = (data as any).favorite_artists;
+        const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
+        const nextProfile: UserPreferencesProfile = {
+          id: user.id,
+          preferredInstrument: nextPreferredInstrument,
+          wizardCompleted: !!(data as any).wizard_completed,
+          librarySetupCompleted: !!(data as any).library_setup_completed,
+          favoriteStyles: nextFavoriteStyles,
+          favoriteArtists: nextFavoriteArtists,
+        };
+
+        setProfile(nextProfile);
+        setInstrumentState(nextProfile.preferredInstrument);
+        setWizardCompleted(nextProfile.wizardCompleted);
+        setLibrarySetupCompleted(nextProfile.librarySetupCompleted);
+        setFavoriteStyles(nextProfile.favoriteStyles);
+        setFavoriteArtists(nextProfile.favoriteArtists);
+      } finally {
+        if (!cancelled) {
+          setIsFetchingProfile(false);
         }
-        setLoading(false);
-      });
-  }, [user]);
+      }
+    };
+
+    void loadProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user]);
 
   const setPreferredInstrument = useCallback(
     async (instrument: Instrument) => {
       setInstrumentState(instrument);
+      setProfile((prev) => (prev ? { ...prev, preferredInstrument: instrument } : prev));
       localStorage.setItem("preferred_instrument", instrument);
       if (user) {
         await supabase
@@ -92,13 +139,26 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
   const saveWizardPreferences = useCallback(
     async (styles: string[], artists: ArtistPref[], skipped = false) => {
+      const nextStyles = skipped ? [] : styles;
+      const nextArtists = skipped ? [] : artists;
+
       setWizardCompleted(true);
-      setFavoriteStyles(skipped ? [] : styles);
-      setFavoriteArtists(skipped ? [] : artists);
+      setFavoriteStyles(nextStyles);
+      setFavoriteArtists(nextArtists);
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              wizardCompleted: true,
+              favoriteStyles: nextStyles,
+              favoriteArtists: nextArtists,
+            }
+          : prev
+      );
 
       localStorage.setItem(
         "smartcifra_preferences",
-        JSON.stringify({ styles: skipped ? [] : styles, artists: skipped ? [] : artists, skipped })
+        JSON.stringify({ styles: nextStyles, artists: nextArtists, skipped })
       );
 
       if (user) {
@@ -106,8 +166,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           .from("profiles")
           .update({
             wizard_completed: true,
-            favorite_styles: skipped ? [] : styles,
-            favorite_artists: skipped ? [] : artists,
+            favorite_styles: nextStyles,
+            favorite_artists: nextArtists,
           } as any)
           .eq("id", user.id);
       }
@@ -117,11 +177,13 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
 
   const markLibrarySetupDone = useCallback(() => {
     setLibrarySetupCompleted(true);
+    setProfile((prev) => (prev ? { ...prev, librarySetupCompleted: true } : prev));
   }, []);
 
   return (
     <UserPreferencesContext.Provider
       value={{
+        profile: activeProfile,
         preferredInstrument,
         setPreferredInstrument,
         wizardCompleted,

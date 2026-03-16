@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import SongFormDialog from "@/components/SongFormDialog";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import ImportSongModal from "@/components/ImportSongModal";
+import OnboardingGuard from "@/components/OnboardingGuard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAutoEnrichment } from "@/hooks/useAutoEnrichment";
@@ -81,21 +82,16 @@ export default function SongsPage() {
 
   const { isAdmin } = useUserRole();
 
-  // Admin bypass — never show onboarding wizards to admins
   const showWizard = !isAdmin && !prefsLoading && !wizardCompleted && !wizardDismissed;
   const showLibrarySetup = !isAdmin && !prefsLoading && wizardCompleted && !librarySetupCompleted && !librarySetupDismissed && !showWizard;
 
-  // Guided tour (react-joyride)
   const { run: runGuidedTour, completeTour, replayTour } = useGuidedTour("songs_page");
-  // Only run guided tour after onboarding modal, wizard, and library setup are all done
   const shouldRunGuidedTour = runGuidedTour && !tourVisible && !showWizard && !showLibrarySetup;
 
-  // Expose replay function globally for the help button in AppLayout
   useState(() => {
     (window as any).__replaySongsTour = replayTour;
   });
 
-  // Fetch user's personal library instead of all global songs
   const { data: songs = [], isLoading } = useQuery({
     queryKey: ["user-library"],
     queryFn: fetchUserLibrary,
@@ -104,7 +100,6 @@ export default function SongsPage() {
 
   useAutoEnrichment(songs);
 
-  // "Delete" = remove from personal library (NOT global delete)
   const removeM = useMutation({
     mutationFn: removeFromUserLibrary,
     onSuccess: () => {
@@ -116,12 +111,18 @@ export default function SongsPage() {
   const handleBulkPdfImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    const pdfFiles = Array.from(files).filter(f => f.type === "application/pdf");
-    if (pdfFiles.length === 0) { toast.error("Nenhum arquivo PDF selecionado"); return; }
+
+    const pdfFiles = Array.from(files).filter((f) => f.type === "application/pdf");
+    if (pdfFiles.length === 0) {
+      toast.error("Nenhum arquivo PDF selecionado");
+      return;
+    }
+
     setImportingPdfs(true);
     setPdfProgress({ done: 0, total: pdfFiles.length });
     let successCount = 0;
     let errorCount = 0;
+
     for (let i = 0; i < pdfFiles.length; i++) {
       const file = pdfFiles[i];
       try {
@@ -129,18 +130,23 @@ export default function SongsPage() {
         formData.append("file", file);
         const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
         if (error) throw error;
-        if (data && (data.title || data.body_text)) {
-          let artistName = data.artist || null;
-          const songTitle = data.title || file.name.replace(/\.pdf$/i, "");
 
-          // Anti-duplicate check
+        if (data && (data.title || data.body_text)) {
+          const artistName = data.artist || null;
+          const songTitle = data.title || file.name.replace(/\.pdf$/i, "");
           const { checkDuplicateSong } = await import("@/lib/supabase-queries");
           const duplicateId = await checkDuplicateSong(songTitle, artistName);
+
           if (duplicateId) {
             toast.warning(`"${songTitle}" já existe no seu repertório — ignorada.`);
             errorCount++;
           } else {
-            if (artistName) { try { await findOrCreateArtist(artistName); } catch {} }
+            if (artistName) {
+              try {
+                await findOrCreateArtist(artistName);
+              } catch {}
+            }
+
             await createSongAndAddToLibrary({
               title: songTitle,
               artist: artistName,
@@ -153,10 +159,16 @@ export default function SongsPage() {
             });
             successCount++;
           }
-        } else { errorCount++; }
-      } catch { errorCount++; }
+        } else {
+          errorCount++;
+        }
+      } catch {
+        errorCount++;
+      }
+
       setPdfProgress({ done: i + 1, total: pdfFiles.length });
     }
+
     queryClient.invalidateQueries({ queryKey: ["user-library"] });
     if (successCount > 0) toast.success(`${successCount} música${successCount > 1 ? "s" : ""} importada${successCount > 1 ? "s" : ""} com sucesso!`);
     if (errorCount > 0) toast.warning(`${errorCount} PDF${errorCount > 1 ? "s" : ""} não pôde${errorCount > 1 ? "ram" : ""} ser processado${errorCount > 1 ? "s" : ""}`);
@@ -164,7 +176,6 @@ export default function SongsPage() {
     setPdfProgress({ done: 0, total: 0 });
     if (pdfInputRef.current) pdfInputRef.current.value = "";
   };
-
 
   const filtered = useMemo(() => {
     let list = songs.filter(
@@ -188,161 +199,180 @@ export default function SongsPage() {
         list = [...list].sort((a, b) => new Date(b.added_at || b.created_at).getTime() - new Date(a.added_at || a.created_at).getTime());
         break;
     }
+
     return list;
   }, [songs, search, sortMode]);
 
   return (
-    <div className="space-y-4 w-full max-w-full overflow-x-hidden px-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Músicas</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{songs.length} música{songs.length !== 1 ? "s" : ""} na biblioteca</p>
+    <OnboardingGuard>
+      <div className="space-y-4 w-full max-w-full overflow-x-hidden px-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Músicas</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">{songs.length} música{songs.length !== 1 ? "s" : ""} na biblioteca</p>
+          </div>
         </div>
-      </div>
 
-      <Tabs defaultValue="explore" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList id="tour-tabs" className="w-full grid grid-cols-2">
-          <TabsTrigger value="explore">🔍 Explorar</TabsTrigger>
-          <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="explore" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList id="tour-tabs" className="w-full grid grid-cols-2">
+            <TabsTrigger value="explore">🔍 Explorar</TabsTrigger>
+            <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="library" className="space-y-3 mt-3">
-          <div id="tour-add-buttons" className="flex items-center gap-1.5 justify-end flex-wrap">
-            <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
-            <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
-              {importingPdfs ? (<><Loader2 className="h-4 w-4 animate-spin" /><span className="hidden md:inline text-xs">PDFs {pdfProgress.done}/{pdfProgress.total}</span></>) : (<><FileUp className="h-4 w-4" /><span className="hidden md:inline text-xs">Importar PDFs</span></>)}
-            </Button>
-            <Button variant="outline" onClick={() => setImportLinkOpen(true)} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
-              <Link2 className="h-4 w-4" /><span className="hidden md:inline text-xs">Link</span>
-            </Button>
-            <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
-              <Plus className="h-4 w-4" /><span className="hidden md:inline text-xs">Nova</span>
-            </Button>
-          </div>
-
-          {/* Search + Sort */}
-          <div id="tour-search" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
+          <TabsContent value="library" className="space-y-3 mt-3">
+            <div id="tour-add-buttons" className="flex items-center gap-1.5 justify-end flex-wrap">
+              <input ref={pdfInputRef} type="file" accept=".pdf" multiple className="hidden" onChange={handleBulkPdfImport} />
+              <Button variant="outline" onClick={() => pdfInputRef.current?.click()} disabled={importingPdfs} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+                {importingPdfs ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="hidden md:inline text-xs">PDFs {pdfProgress.done}/{pdfProgress.total}</span>
+                  </>
+                ) : (
+                  <>
+                    <FileUp className="h-4 w-4" />
+                    <span className="hidden md:inline text-xs">Importar PDFs</span>
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={() => setImportLinkOpen(true)} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+                <Link2 className="h-4 w-4" />
+                <span className="hidden md:inline text-xs">Link</span>
+              </Button>
+              <Button onClick={() => { setEditingSong(null); setFormOpen(true); }} size="icon" className="h-8 w-8 md:w-auto md:h-9 md:px-3 md:gap-2">
+                <Plus className="h-4 w-4" />
+                <span className="hidden md:inline text-xs">Nova</span>
+              </Button>
             </div>
-            <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-              <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="recent">Recentes</SelectItem>
-                <SelectItem value="oldest">Mais Antigas</SelectItem>
-                <SelectItem value="az">A-Z</SelectItem>
-                <SelectItem value="za">Z-A</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
-          {isLoading ? (
-            <div className="grid gap-3">{[1, 2, 3].map((i) => (<div key={i} className="h-20 animate-pulse rounded-lg bg-card" />))}</div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-              <Music2 className="h-12 w-12 mb-4 opacity-40" />
-              <p className="text-lg">Nenhuma música encontrada</p>
-              <p className="text-sm mt-1">Importe ou adicione músicas à sua biblioteca pessoal.</p>
+            <div id="tour-search" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
+              </div>
+              <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
+                <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="recent">Recentes</SelectItem>
+                  <SelectItem value="oldest">Mais Antigas</SelectItem>
+                  <SelectItem value="az">A-Z</SelectItem>
+                  <SelectItem value="za">Z-A</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <div className="grid gap-2 w-full max-w-full landscape:grid-cols-2 lg:grid-cols-1">
-              {filtered.map((song, i) => (
-                <div
-                  key={song.id}
-                  className="group flex items-center justify-between w-full max-w-full gap-3 p-3 rounded-lg border-none bg-card transition-all hover:shadow-[var(--shadow-glow)] animate-fade-in"
-                  style={{ boxShadow: "var(--shadow-card)", animationDelay: `${i * 30}ms` }}
-                >
-                  <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
-                      {i + 1}
-                    </div>
-                    <div className="min-w-0 flex-1 flex flex-col">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <p className="font-semibold truncate">{song.title}</p>
-                        {(song as any).pdf_url && (
-                          <span className="shrink-0 text-red-500" title="Partitura PDF">
-                            <FileText className="h-3.5 w-3.5" />
-                          </span>
-                        )}
+
+            {isLoading ? (
+              <div className="grid gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-lg bg-card" />
+                ))}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                <Music2 className="h-12 w-12 mb-4 opacity-40" />
+                <p className="text-lg">Nenhuma música encontrada</p>
+                <p className="text-sm mt-1">Importe ou adicione músicas à sua biblioteca pessoal.</p>
+              </div>
+            ) : (
+              <div className="grid gap-2 w-full max-w-full landscape:grid-cols-2 lg:grid-cols-1">
+                {filtered.map((song, i) => (
+                  <div
+                    key={song.id}
+                    className="group flex items-center justify-between w-full max-w-full gap-3 p-3 rounded-lg border-none bg-card transition-all hover:shadow-[var(--shadow-glow)] animate-fade-in"
+                    style={{ boxShadow: "var(--shadow-card)", animationDelay: `${i * 30}ms` }}
+                  >
+                    <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
+                        {i + 1}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
-                        {song.artist && <span className="truncate">{song.artist}</span>}
-                        {song.musical_key && (
-                          <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
-                            {song.musical_key}
-                          </span>
-                        )}
-                        {song.bpm && <span className="shrink-0">{song.bpm} BPM</span>}
+                      <div className="min-w-0 flex-1 flex flex-col">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <p className="font-semibold truncate">{song.title}</p>
+                          {(song as any).pdf_url && (
+                            <span className="shrink-0 text-red-500" title="Partitura PDF">
+                              <FileText className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
+                          {song.artist && <span className="truncate">{song.artist}</span>}
+                          {song.musical_key && (
+                            <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
+                              {song.musical_key}
+                            </span>
+                          )}
+                          {song.bpm && <span className="shrink-0">{song.bpm} BPM</span>}
+                        </div>
                       </div>
+                    </Link>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={() => { setEditingSong(song.id); setFormOpen(true); }}
+                        title="Editar"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleteTarget(song.id)}
+                        title="Remover"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </Link>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-primary"
-                      onClick={() => { setEditingSong(song.id); setFormOpen(true); }}
-                      title="Editar"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => setDeleteTarget(song.id)}
-                      title="Remover"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-        <TabsContent value="explore" className="mt-4">
-          <ExploreTab />
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="explore" className="mt-4">
+            <ExploreTab />
+          </TabsContent>
+        </Tabs>
 
-      <SongFormDialog open={formOpen} onOpenChange={setFormOpen} songId={editingSong} />
-      <ImportSongModal open={importLinkOpen} onOpenChange={setImportLinkOpen} />
-      <ConfirmDeleteModal
-        open={!!deleteTarget}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
-        onConfirm={() => {
-          if (deleteTarget) {
-            removeM.mutate(deleteTarget);
-            setDeleteTarget(null);
-          }
-        }}
-        title="Remover da Biblioteca"
-        description="Deseja remover esta música da sua biblioteca pessoal? A música permanece disponível no catálogo global."
-      />
+        <SongFormDialog open={formOpen} onOpenChange={setFormOpen} songId={editingSong} />
+        <ImportSongModal open={importLinkOpen} onOpenChange={setImportLinkOpen} />
+        <ConfirmDeleteModal
+          open={!!deleteTarget}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
+          onConfirm={() => {
+            if (deleteTarget) {
+              removeM.mutate(deleteTarget);
+              setDeleteTarget(null);
+            }
+          }}
+          title="Remover da Biblioteca"
+          description="Deseja remover esta música da sua biblioteca pessoal? A música permanece disponível no catálogo global."
+        />
 
-      {tourVisible && (
-        <OnboardingTour onComplete={() => { dismissTour(); setTourVisible(false); }} />
-      )}
+        {tourVisible && (
+          <OnboardingTour onComplete={() => { dismissTour(); setTourVisible(false); }} />
+        )}
 
-      {showWizard && !tourVisible && (
-        <PersonalizationWizard onComplete={() => setWizardDismissed(true)} />
-      )}
+        {showWizard && !tourVisible && (
+          <PersonalizationWizard onComplete={() => setWizardDismissed(true)} />
+        )}
 
-      {showLibrarySetup && !tourVisible && (
-        <LibrarySetupWizard onComplete={() => { setLibrarySetupDismissed(true); markLibrarySetupDone(); queryClient.invalidateQueries({ queryKey: ["user-library"] }); }} />
-      )}
+        {showLibrarySetup && !tourVisible && (
+          <LibrarySetupWizard onComplete={() => { setLibrarySetupDismissed(true); markLibrarySetupDone(); queryClient.invalidateQueries({ queryKey: ["user-library"] }); }} />
+        )}
 
-      {/* Guided Tour (react-joyride) - runs after all onboarding modals */}
-      <GuidedTour
-        steps={SONGS_TOUR_STEPS}
-        run={shouldRunGuidedTour}
-        onFinish={completeTour}
-      />
-    </div>
+        <GuidedTour
+          steps={SONGS_TOUR_STEPS}
+          run={shouldRunGuidedTour}
+          onFinish={completeTour}
+        />
+      </div>
+    </OnboardingGuard>
   );
 }

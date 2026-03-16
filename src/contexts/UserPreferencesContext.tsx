@@ -61,9 +61,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const loading = authLoading || isFetchingProfile || (!!user && !activeProfile);
 
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
+    if (authLoading) return;
 
     if (!user) {
       const stored = localStorage.getItem("preferred_instrument") as Instrument | null;
@@ -78,44 +76,46 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
 
     let cancelled = false;
-    setIsFetchingProfile(true);
 
-    supabase
-      .from("profiles")
-      .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")
-      .eq("id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (cancelled) return;
+    const loadProfile = async () => {
+      setIsFetchingProfile(true);
 
-        if (data) {
-          const nextPreferredInstrument = (data.preferred_instrument as Instrument) || "guitar";
-          const nextFavoriteStyles = ((data as any).favorite_styles as string[]) || [];
-          const artists = (data as any).favorite_artists;
-          const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
-          const nextProfile: UserPreferencesProfile = {
-            id: user.id,
-            preferredInstrument: nextPreferredInstrument,
-            wizardCompleted: !!(data as any).wizard_completed,
-            librarySetupCompleted: !!(data as any).library_setup_completed,
-            favoriteStyles: nextFavoriteStyles,
-            favoriteArtists: nextFavoriteArtists,
-          };
+      try {
+        const { data } = await supabase
+          .from("profiles")
+          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")
+          .eq("id", user.id)
+          .single();
 
-          setProfile(nextProfile);
-          setInstrumentState(nextProfile.preferredInstrument);
-          setWizardCompleted(nextProfile.wizardCompleted);
-          setLibrarySetupCompleted(nextProfile.librarySetupCompleted);
-          setFavoriteStyles(nextProfile.favoriteStyles);
-          setFavoriteArtists(nextProfile.favoriteArtists);
+        if (cancelled || !data) return;
+
+        const nextPreferredInstrument = (data.preferred_instrument as Instrument) || "guitar";
+        const nextFavoriteStyles = ((data as any).favorite_styles as string[]) || [];
+        const artists = (data as any).favorite_artists;
+        const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
+        const nextProfile: UserPreferencesProfile = {
+          id: user.id,
+          preferredInstrument: nextPreferredInstrument,
+          wizardCompleted: !!(data as any).wizard_completed,
+          librarySetupCompleted: !!(data as any).library_setup_completed,
+          favoriteStyles: nextFavoriteStyles,
+          favoriteArtists: nextFavoriteArtists,
+        };
+
+        setProfile(nextProfile);
+        setInstrumentState(nextProfile.preferredInstrument);
+        setWizardCompleted(nextProfile.wizardCompleted);
+        setLibrarySetupCompleted(nextProfile.librarySetupCompleted);
+        setFavoriteStyles(nextProfile.favoriteStyles);
+        setFavoriteArtists(nextProfile.favoriteArtists);
+      } finally {
+        if (!cancelled) {
+          setIsFetchingProfile(false);
         }
+      }
+    };
 
-        setIsFetchingProfile(false);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setIsFetchingProfile(false);
-      });
+    void loadProfile();
 
     return () => {
       cancelled = true;

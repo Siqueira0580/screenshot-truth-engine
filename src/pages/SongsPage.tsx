@@ -78,8 +78,11 @@ export default function SongsPage() {
   const [librarySetupDismissed, setLibrarySetupDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState("explore");
 
-  const showWizard = !prefsLoading && !wizardCompleted && !wizardDismissed;
-  const showLibrarySetup = !prefsLoading && wizardCompleted && !librarySetupCompleted && !librarySetupDismissed && !showWizard;
+  const { isAdmin } = useUserRole();
+
+  // Admin bypass — never show onboarding wizards to admins
+  const showWizard = !isAdmin && !prefsLoading && !wizardCompleted && !wizardDismissed;
+  const showLibrarySetup = !isAdmin && !prefsLoading && wizardCompleted && !librarySetupCompleted && !librarySetupDismissed && !showWizard;
 
   // Guided tour (react-joyride)
   const { run: runGuidedTour, completeTour, replayTour } = useGuidedTour("songs_page");

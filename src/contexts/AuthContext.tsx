@@ -18,26 +18,23 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-/** Sync Google OAuth metadata to profiles table */
+/** Ensure profile exists and sync OAuth metadata */
 async function syncProfileFromOAuth(user: User) {
   const meta = user.user_metadata;
-  if (!meta) return;
-
-  const firstName = meta.first_name || meta.given_name || meta.full_name?.split(" ")[0] || meta.name?.split(" ")[0];
-  const lastName = meta.last_name || meta.family_name || (meta.full_name?.split(" ").slice(1).join(" ")) || (meta.name?.split(" ").slice(1).join(" "));
-  const avatarUrl = meta.avatar_url || meta.picture;
-
-  if (!firstName && !avatarUrl) return;
-
-  const updates: Record<string, string | null> = {};
-  if (firstName) updates.first_name = firstName;
-  if (lastName) updates.last_name = lastName;
-  if (avatarUrl) updates.avatar_url = avatarUrl;
+  
+  const firstName = meta?.first_name || meta?.given_name || meta?.full_name?.split(" ")[0] || meta?.name?.split(" ")[0] || user.email?.split("@")[0];
+  const lastName = meta?.last_name || meta?.family_name || (meta?.full_name?.split(" ").slice(1).join(" ")) || (meta?.name?.split(" ").slice(1).join(" ")) || null;
+  const avatarUrl = meta?.avatar_url || meta?.picture || null;
 
   await supabase
     .from("profiles")
-    .update(updates)
-    .eq("id", user.id);
+    .upsert({
+      id: user.id,
+      email: user.email,
+      first_name: firstName || null,
+      last_name: lastName || null,
+      avatar_url: avatarUrl,
+    }, { onConflict: "id", ignoreDuplicates: false });
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

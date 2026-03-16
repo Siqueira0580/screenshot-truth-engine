@@ -410,6 +410,7 @@ export type Database = {
           end_time: string | null
           id: string
           interval_duration: number | null
+          is_public: boolean
           musicians: Json | null
           name: string
           public_share_token: string | null
@@ -424,6 +425,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           interval_duration?: number | null
+          is_public?: boolean
           musicians?: Json | null
           name: string
           public_share_token?: string | null
@@ -438,6 +440,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           interval_duration?: number | null
+          is_public?: boolean
           musicians?: Json | null
           name?: string
           public_share_token?: string | null

@@ -197,9 +197,15 @@ export default function AdminUsersTab() {
                             <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => grantPro(p)} className="gap-2 cursor-pointer">
-                              <Award className="h-4 w-4" /> Conceder PRO
-                            </DropdownMenuItem>
+                            {p.subscription_plan === "pro" ? (
+                              <DropdownMenuItem onClick={() => revokePro(p)} className="gap-2 cursor-pointer text-amber-600 focus:text-amber-600">
+                                <UserX className="h-4 w-4" /> Revogar PRO
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => grantPro(p)} className="gap-2 cursor-pointer">
+                                <Award className="h-4 w-4" /> Conceder PRO
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem onClick={() => setSuspendTarget(p)} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
                               <Ban className="h-4 w-4" /> Suspender Conta
                             </DropdownMenuItem>

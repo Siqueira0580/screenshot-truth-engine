@@ -160,7 +160,7 @@ export default function AdminUsersTab() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((p) => (
+                  {filtered.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">

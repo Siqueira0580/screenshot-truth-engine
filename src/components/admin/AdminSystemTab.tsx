@@ -22,6 +22,7 @@ export default function AdminSystemTab() {
   const [bannerText, setBannerText] = useState("");
   const [savedBanner, setSavedBanner] = useState("");
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [vipMaintenanceMode, setVipMaintenanceMode] = useState(false);
   const [publicSetlists, setPublicSetlists] = useState<PublicSetlist[]>([]);
   const [loading, setLoading] = useState(true);
 

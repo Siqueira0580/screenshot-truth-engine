@@ -52,11 +52,16 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
+      localStorage.setItem('oauth_intent', 'login');
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
-      if (error) toast.error(error.message);
+      if (error) {
+        localStorage.removeItem('oauth_intent');
+        toast.error(error.message);
+      }
     } catch (err: any) {
+      localStorage.removeItem('oauth_intent');
       toast.error(err.message);
     } finally {
       setGoogleLoading(false);

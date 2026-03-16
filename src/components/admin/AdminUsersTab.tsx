@@ -80,6 +80,15 @@ export default function AdminUsersTab() {
     else { toast.success(`PRO concedido a ${profile.email}.`); fetchAll(); }
   };
 
+  const revokePro = async (profile: Profile) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ subscription_plan: "free", pro_expires_at: null })
+      .eq("id", profile.id);
+    if (error) toast.error("Erro ao revogar PRO.");
+    else { toast.success(`PRO revogado de ${profile.email}.`); fetchAll(); }
+  };
+
   const handleSuspend = async () => {
     if (!suspendTarget) return;
     const { error } = await supabase.from("profiles").delete().eq("id", suspendTarget.id);

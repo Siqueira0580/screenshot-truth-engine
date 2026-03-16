@@ -545,8 +545,14 @@ export default function SetlistDetailPage() {
         intervalDuration={(setlist as any)?.interval_duration}
         showDuration={(setlist as any)?.show_duration}
         musicians={(setlist as any)?.musicians}
-        onSettingsClick={() => setSettingsOpen(true)}
+        onSettingsClick={isOwner ? () => setSettingsOpen(true) : undefined}
       >
+        {!isOwner && (
+          <Badge variant="secondary" className="text-xs gap-1">
+            <Eye className="h-3 w-3" />
+            Somente leitura
+          </Badge>
+        )}
         {stageSync.connectedCount > 1 && (
           <Badge variant="secondary" className="text-xs">
             <Wifi className="h-3 w-3 mr-1" />
@@ -555,84 +561,148 @@ export default function SetlistDetailPage() {
         )}
       </SetlistHeader>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        {dirty && (
-          <Button onClick={() => {
-            const payload = items.map((item: any) => {
-              const ov = localOverrides[item.id];
-              return { id: item.id, loop_count: ov?.loop_count ?? item.loop_count ?? null, speed: ov?.speed ?? item.speed ?? null, bpm: ov?.bpm ?? item.bpm ?? null };
-            });
-            bulkUpdateSetlistItems(payload).then(() => {
-              queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
-              setLocalOverrides({});
-              setDirty(false);
-              toast.success("Configurações salvas!");
-            });
-          }} className="gap-2">
-            <Save className="h-4 w-4" />
-            <span className="hidden sm:inline">Salvar</span>
-          </Button>
-        )}
-        {items.length > 0 && (
-          <>
-            {stageSync.isMaster ? (
-              <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
-                <Radio className="h-4 w-4" /><span className="hidden sm:inline">Parar</span>
-              </Button>
-            ) : stageSync.isFollowing ? (
-              <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
-                <WifiOff className="h-4 w-4" /><span className="hidden sm:inline">Desconectar</span>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2">
-                <Radio className="h-4 w-4" /><span className="hidden sm:inline">Palco</span>
-              </Button>
-            )}
-            <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
-              <UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Convidar</span>
-            </Button>
-            <Button variant={autoHideControls ? "outline" : "secondary"} size="sm" onClick={() => setAutoHideControls((v) => !v)} className="gap-2">
-              {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Visível"}</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleShareWhatsApp} className="gap-2" title="Compartilhar via WhatsApp">
-              <Share2 className="h-4 w-4" /><span className="hidden sm:inline">WhatsApp</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              title="Copiar Link Público"
-              onClick={async () => {
+      {/* ── Sharing Toggle (Owner Only) ── */}
+      {isOwner && (
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              {isPublic ? <Globe className="h-4 w-4 text-primary" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
+              <div>
+                <p className="text-sm font-semibold">Compartilhar Repertório</p>
+                <p className="text-xs text-muted-foreground">
+                  {isPublic ? "Qualquer pessoa com o link pode visualizar" : "Apenas você pode ver este repertório"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={isPublic}
+              onCheckedChange={async (checked) => {
                 try {
-                  const sl = setlist as any;
-                  let token = sl?.public_share_token;
-                  if (!token) {
-                    token = crypto.randomUUID();
-                    const { error } = await supabase
-                      .from("setlists")
-                      .update({ public_share_token: token } as any)
-                      .eq("id", id!);
-                    if (error) throw error;
-                    queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-                  }
-                  const publicUrl = `${window.location.origin}/share/setlist/${token}`;
-                  await navigator.clipboard.writeText(publicUrl);
-                  toast.success("Link público copiado!");
+                  const { error } = await supabase
+                    .from("setlists")
+                    .update({ is_public: checked } as any)
+                    .eq("id", id!);
+                  if (error) throw error;
+                  queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+                  toast.success(checked ? "Repertório público! Link disponível." : "Repertório privado.");
                 } catch {
-                  toast.error("Erro ao gerar link público");
+                  toast.error("Erro ao alterar visibilidade");
                 }
               }}
-            >
-              <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Link Público</span>
+            />
+          </div>
+          {isPublic && (
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={`${window.location.origin}/setlists/${id}`}
+                className="flex-1 text-xs bg-muted/50"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={async () => {
+                  await navigator.clipboard.writeText(`${window.location.origin}/setlists/${id}`);
+                  toast.success("Link copiado!");
+                }}
+              >
+                <Copy className="h-3.5 w-3.5" />
+                Copiar
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Owner Action Buttons ── */}
+      {isOwner && (
+        <div className="flex items-center gap-2 flex-wrap">
+          {dirty && (
+            <Button onClick={() => {
+              const payload = items.map((item: any) => {
+                const ov = localOverrides[item.id];
+                return { id: item.id, loop_count: ov?.loop_count ?? item.loop_count ?? null, speed: ov?.speed ?? item.speed ?? null, bpm: ov?.bpm ?? item.bpm ?? null };
+              });
+              bulkUpdateSetlistItems(payload).then(() => {
+                queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+                setLocalOverrides({});
+                setDirty(false);
+                toast.success("Configurações salvas!");
+              });
+            }} className="gap-2">
+              <Save className="h-4 w-4" />
+              <span className="hidden sm:inline">Salvar</span>
             </Button>
-            <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
-          </>
-        )}
-        <Button onClick={() => setAddOpen(true)}>
-          <Plus className="h-4 w-4" /><span className="hidden sm:inline ml-1">Adicionar</span>
-        </Button>
-      </div>
+          )}
+          {items.length > 0 && (
+            <>
+              {stageSync.isMaster ? (
+                <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
+                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Parar</span>
+                </Button>
+              ) : stageSync.isFollowing ? (
+                <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
+                  <WifiOff className="h-4 w-4" /><span className="hidden sm:inline">Desconectar</span>
+                </Button>
+              ) : (
+                <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2">
+                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Palco</span>
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
+                <UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Convidar</span>
+              </Button>
+              <Button variant={autoHideControls ? "outline" : "secondary"} size="sm" onClick={() => setAutoHideControls((v) => !v)} className="gap-2">
+                {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Visível"}</span>
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleShareWhatsApp} className="gap-2" title="Compartilhar via WhatsApp">
+                <Share2 className="h-4 w-4" /><span className="hidden sm:inline">WhatsApp</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                title="Copiar Link Público"
+                onClick={async () => {
+                  try {
+                    const sl = setlist as any;
+                    let token = sl?.public_share_token;
+                    if (!token) {
+                      token = crypto.randomUUID();
+                      const { error } = await supabase
+                        .from("setlists")
+                        .update({ public_share_token: token } as any)
+                        .eq("id", id!);
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+                    }
+                    const publicUrl = `${window.location.origin}/share/setlist/${token}`;
+                    await navigator.clipboard.writeText(publicUrl);
+                    toast.success("Link público copiado!");
+                  } catch {
+                    toast.error("Erro ao gerar link público");
+                  }
+                }}
+              >
+                <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Link Público</span>
+              </Button>
+              <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+            </>
+          )}
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="h-4 w-4" /><span className="hidden sm:inline ml-1">Adicionar</span>
+          </Button>
+        </div>
+      )}
+
+      {/* ── Read-only: only teleprompter for visitors ── */}
+      {!isOwner && items.length > 0 && (
+        <div className="flex items-center gap-2">
+          <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+        </div>
+      )}
 
       {stageSync.isFollowing && stageSync.masterName && (
         <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">

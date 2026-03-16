@@ -24,10 +24,10 @@ export function useGlobalSettings() {
         (payload) => {
           const row = payload.new as { setting_key: string; setting_value: string | null } | undefined;
           if (row?.setting_key === "maintenance_mode") {
-            setMaintenanceMode(row.setting_value === "true");
+            setMaintenanceMode(String(row.setting_value).toLowerCase() === "true");
           }
           if (row?.setting_key === "vip_maintenance_mode") {
-            setVipMaintenanceMode(row.setting_value === "true");
+            setVipMaintenanceMode(String(row.setting_value).toLowerCase() === "true");
           }
         }
       )

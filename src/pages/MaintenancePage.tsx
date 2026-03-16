@@ -7,7 +7,7 @@ export default function MaintenancePage() {
   const { user, signOut } = useAuth();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 text-center">
+    <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 text-center">
       <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-xl mb-6 opacity-80" />
       <div className="rounded-full bg-destructive/10 p-4 mb-6">
         <Wrench className="h-10 w-10 text-destructive" />

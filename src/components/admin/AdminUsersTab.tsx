@@ -12,7 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { toast } from "@/components/ui/sonner";
-import { Users, Crown, Music, MoreVertical, Award, Ban } from "lucide-react";
+import { Users, Crown, Music, MoreVertical, Award, Ban, Search, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Profile {
   id: string;
@@ -30,10 +32,22 @@ export default function AdminUsersTab() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [suspendTarget, setSuspendTarget] = useState<Profile | null>(null);
+  const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState<string>("all");
 
   const [totalUsers, setTotalUsers] = useState(0);
   const [proUsers, setProUsers] = useState(0);
   const [totalSongs, setTotalSongs] = useState(0);
+
+  const filtered = profiles.filter((p) => {
+    const term = search.toLowerCase();
+    const matchesSearch = !term ||
+      (p.first_name?.toLowerCase().includes(term)) ||
+      (p.last_name?.toLowerCase().includes(term)) ||
+      (p.email?.toLowerCase().includes(term));
+    const matchesPlan = planFilter === "all" || p.subscription_plan === planFilter;
+    return matchesSearch && matchesPlan;
+  });
 
   const fetchAll = async () => {
     setLoading(true);
@@ -101,8 +115,34 @@ export default function AdminUsersTab() {
 
       {/* Users Table */}
       <Card className="border-border">
-        <CardHeader>
-          <CardTitle className="text-lg">Utilizadores ({profiles.length})</CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <CardTitle className="text-lg">Utilizadores ({filtered.length})</CardTitle>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-initial">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar nome ou e-mail..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 h-9 w-full sm:w-56"
+              />
+              {search && (
+                <button onClick={() => setSearch("")} className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <Select value={planFilter} onValueChange={setPlanFilter}>
+              <SelectTrigger className="h-9 w-28">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="free">Free</SelectItem>
+                <SelectItem value="pro">PRO</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -120,7 +160,7 @@ export default function AdminUsersTab() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((p) => (
+                  {filtered.map((p) => (
                     <TableRow key={p.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">

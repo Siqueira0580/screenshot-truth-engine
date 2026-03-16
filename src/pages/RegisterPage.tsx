@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -40,10 +40,12 @@ type FormErrors = Partial<Record<keyof z.infer<typeof registerSchema>, string>>;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const prefillEmail = searchParams.get("email") || "";
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(prefillEmail);
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -226,7 +228,7 @@ export default function RegisterPage() {
 
             <Button type="submit" className="w-full landscape:col-span-2" disabled={loading || hasErrors}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Cadastrar
+              Criar Nova Conta
             </Button>
           </form>
 

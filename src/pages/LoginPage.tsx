@@ -27,9 +27,14 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
         if (error.message.includes("Invalid login")) {
-          toast.error("Email ou senha incorretos. Não tem conta?", {
-            action: { label: "Cadastrar", onClick: () => navigate("/register") },
+          toast.error("Não encontramos uma conta com este e-mail. Vamos criar o seu cadastro agora!", {
+            action: { label: "Cadastrar", onClick: () => navigate(`/register?email=${encodeURIComponent(email.trim())}`) },
+            duration: 5000,
           });
+          // Auto-redirect to register with email pre-filled after a short delay
+          setTimeout(() => {
+            navigate(`/register?email=${encodeURIComponent(email.trim())}`);
+          }, 2000);
         } else {
           toast.error(error.message);
         }
@@ -60,17 +65,14 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
-      {/* Left: Feature Showcase (hidden on mobile, shown on lg+) */}
       <div className="hidden lg:block lg:w-1/2 xl:w-[55%]">
         <AuthFeatureShowcase />
       </div>
 
-      {/* Right: Login Form */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-sm space-y-8">
           <AuthBranding subtitle="Entre na sua conta" />
 
-          {/* Mobile-only feature banner */}
           <div className="lg:hidden rounded-xl border border-transparent bg-card p-4 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
             <p className="text-xs font-semibold text-primary uppercase tracking-wider">Novidades</p>
             <div className="space-y-2">
@@ -128,7 +130,7 @@ export default function LoginPage() {
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Entrar
+              Entrar no Sistema
             </Button>
           </form>
 
@@ -163,7 +165,7 @@ export default function LoginPage() {
           <p className="text-center text-sm text-muted-foreground">
             Não tem conta?{" "}
             <Link to="/register" className="text-primary hover:underline font-medium">
-              Cadastrar
+              Criar Nova Conta
             </Link>
           </p>
         </div>

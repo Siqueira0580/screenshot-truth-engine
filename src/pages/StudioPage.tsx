@@ -38,6 +38,7 @@ const STUDIO_TOUR_STEPS = [
 export default function StudioPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [uploadingNew, setUploadingNew] = useState(false);
   const newAudioRef = useRef<HTMLInputElement>(null);
@@ -47,7 +48,21 @@ export default function StudioPage() {
     (window as any).__replayStudioTour = replayTour;
   });
 
-  const { data: songs = [] } = useQuery({ queryKey: ["songs"], queryFn: fetchSongs });
+  // Fetch ONLY songs created by the current user (privacy isolation)
+  const { data: songs = [] } = useQuery({
+    queryKey: ["studio-songs", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("songs")
+        .select("*")
+        .eq("created_by", user.id)
+        .order("title");
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
 
   const filteredSongs = songs.filter(s =>

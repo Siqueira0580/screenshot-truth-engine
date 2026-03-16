@@ -104,7 +104,7 @@ export default function StudioPage() {
       });
       if (dbErr) throw dbErr;
 
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      queryClient.invalidateQueries({ queryKey: ["studio-songs"] });
       toast.success(`"${title}" adicionado!`);
       navigate(`/studio/${song.id}`);
     } catch (err: any) {

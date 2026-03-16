@@ -122,8 +122,18 @@ export default function AdminUsersTab() {
                 <TableBody>
                   {profiles.map((p) => (
                     <TableRow key={p.id}>
-                      <TableCell className="font-medium">
-                        {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={p.avatar_url ?? undefined} alt={p.first_name ?? ""} />
+                            <AvatarFallback className="text-xs">
+                              {(p.first_name?.[0] ?? "").toUpperCase()}{(p.last_name?.[0] ?? "").toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">
+                            {[p.first_name, p.last_name].filter(Boolean).join(" ") || "—"}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell>{p.email ?? "—"}</TableCell>
                       <TableCell>

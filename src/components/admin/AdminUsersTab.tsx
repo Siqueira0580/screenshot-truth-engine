@@ -9,6 +9,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { toast } from "@/components/ui/sonner";
 import { Users, Crown, Music, MoreVertical, Award, Ban } from "lucide-react";
@@ -18,6 +19,7 @@ interface Profile {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
+  avatar_url: string | null;
   preferred_instrument: string;
   subscription_plan: string;
   pro_expires_at: string | null;

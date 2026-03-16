@@ -53,6 +53,11 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // CRITICAL: Reset loading to true before fetching to prevent FOUC
+    // Without this, navigating or transitioning from null→user leaves loading=false
+    // while wizardCompleted is still false, causing the onboarding wizard to flash.
+    setLoading(true);
+
     supabase
       .from("profiles")
       .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")

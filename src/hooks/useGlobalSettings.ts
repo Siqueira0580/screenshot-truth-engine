@@ -11,8 +11,8 @@ export function useGlobalSettings() {
       supabase.from("global_settings").select("setting_value").eq("setting_key", "maintenance_mode").maybeSingle(),
       supabase.from("global_settings").select("setting_value").eq("setting_key", "vip_maintenance_mode").maybeSingle(),
     ]).then(([mRes, vRes]) => {
-      setMaintenanceMode(mRes.data?.setting_value === "true");
-      setVipMaintenanceMode(vRes.data?.setting_value === "true");
+      setMaintenanceMode(String(mRes.data?.setting_value).toLowerCase() === "true");
+      setVipMaintenanceMode(String(vRes.data?.setting_value).toLowerCase() === "true");
       setLoading(false);
     });
 

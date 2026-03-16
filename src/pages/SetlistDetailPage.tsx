@@ -784,76 +784,92 @@ export default function SetlistDetailPage() {
         </div>
       )}
 
-      <CreateFromSelectionBar
-        count={selectedSongs.size}
-        globalCount={globalSelectedSongs.size}
-        onSubmit={handleCreateFromSelection}
-        onSearchGlobal={() => setGlobalSearchOpen(true)}
-      />
+      {isOwner && (
+        <>
+          <CreateFromSelectionBar
+            count={selectedSongs.size}
+            globalCount={globalSelectedSongs.size}
+            onSubmit={handleCreateFromSelection}
+            onSearchGlobal={() => setGlobalSearchOpen(true)}
+          />
 
-      <GlobalSongSearchModal
-        open={globalSearchOpen}
-        onOpenChange={setGlobalSearchOpen}
-        selectedSongIds={globalSelectedSongs}
-        onToggleSong={toggleGlobalSong}
-        onBulkToggleSongs={bulkToggleGlobalSongs}
-        existingSetlistSongIds={existingIds}
-        currentSetlistId={id}
-      />
+          <GlobalSongSearchModal
+            open={globalSearchOpen}
+            onOpenChange={setGlobalSearchOpen}
+            selectedSongIds={globalSelectedSongs}
+            onToggleSong={toggleGlobalSong}
+            onBulkToggleSongs={bulkToggleGlobalSongs}
+            existingSetlistSongIds={existingIds}
+            currentSetlistId={id}
+          />
 
-      {/* Add song dialog */}
-      <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenres([]); } }}>
-        <DialogContent className="max-h-[80vh] flex flex-col">
-          <DialogHeader><DialogTitle>Adicionar Música</DialogTitle></DialogHeader>
-          <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} />
-          <div className="flex flex-wrap gap-2 w-full mt-3 mb-4">
-            {["Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
-              <button
-                key={genre}
-                onClick={() => toggleGenre(genre)}
-                className={cn(
-                  "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
-                  selectedGenres.includes(genre)
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/50 text-secondary-foreground border border-border hover:bg-secondary"
+          {/* Add song dialog */}
+          <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenres([]); } }}>
+            <DialogContent className="max-h-[80vh] flex flex-col">
+              <DialogHeader><DialogTitle>Adicionar Música</DialogTitle></DialogHeader>
+              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className="flex flex-wrap gap-2 w-full mt-3 mb-4">
+                {["Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
+                  <button
+                    key={genre}
+                    onClick={() => toggleGenre(genre)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-full text-xs font-semibold transition-colors",
+                      selectedGenres.includes(genre)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary/50 text-secondary-foreground border border-border hover:bg-secondary"
+                    )}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
+                {availableSongs.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Nenhuma música disponível</p>
+                ) : (
+                  availableSongs.map((song) => (
+                    <button key={song.id} onClick={() => addMutation.mutate(song.id)} className="w-full flex items-center gap-3 rounded-lg p-3 text-left hover:bg-secondary transition-colors">
+                      <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate">{song.title}</p>
+                        <p className="text-sm text-muted-foreground truncate">
+                          {song.artist} {song.musical_key && `· ${song.musical_key}`}
+                          {song.style && <span className="ml-1 text-xs opacity-60">• {song.style}</span>}
+                        </p>
+                      </div>
+                    </button>
+                  ))
                 )}
-              >
-                {genre}
-              </button>
-            ))}
-          </div>
-          <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
-            {availableSongs.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhuma música disponível</p>
-            ) : (
-              availableSongs.map((song) => (
-                <button key={song.id} onClick={() => addMutation.mutate(song.id)} className="w-full flex items-center gap-3 rounded-lg p-3 text-left hover:bg-secondary transition-colors">
-                  <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{song.title}</p>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {song.artist} {song.musical_key && `· ${song.musical_key}`}
-                      {song.style && <span className="ml-1 text-xs opacity-60">• {song.style}</span>}
-                    </p>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+              </div>
+            </DialogContent>
+          </Dialog>
 
-      <StageSyncInviteModal open={!!stageSync.invite} masterName={stageSync.invite?.masterName || ""} onAccept={stageSync.acceptInvite} onDecline={stageSync.declineInvite} />
-      <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
+          <StageSyncInviteModal open={!!stageSync.invite} masterName={stageSync.invite?.masterName || ""} onAccept={stageSync.acceptInvite} onDecline={stageSync.declineInvite} />
+          <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
 
-      <SetlistSettingsModal
-        open={settingsOpen} onOpenChange={setSettingsOpen}
-        setlist={setlist ? { ...(setlist as any) } : null}
-        onSave={async (data) => {
-          await updateSetlist(id!, data as any);
-          queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-        }}
-      />
+          <SetlistSettingsModal
+            open={settingsOpen} onOpenChange={setSettingsOpen}
+            setlist={setlist ? { ...(setlist as any) } : null}
+            onSave={async (data) => {
+              await updateSetlist(id!, data as any);
+              queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+            }}
+          />
+
+          <ConfirmDeleteModal
+            open={!!deleteTarget}
+            onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+            onConfirm={() => {
+              if (deleteTarget) {
+                removeMutation.mutate(deleteTarget);
+                setDeleteTarget(null);
+              }
+            }}
+            description="Tem a certeza de que deseja remover esta música do repertório? Esta ação não pode ser desfeita."
+          />
+        </>
+      )}
 
       <Teleprompter
         songs={processedItems.map((item: any) => ({

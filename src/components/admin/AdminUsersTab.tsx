@@ -112,7 +112,7 @@ export default function AdminUsersTab() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nome</TableHead>
+                    <TableHead>Utilizador</TableHead>
                     <TableHead>E-mail</TableHead>
                     <TableHead>Plano</TableHead>
                     <TableHead>Cadastro</TableHead>

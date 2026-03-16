@@ -328,6 +328,15 @@ export default function CompositionStudioPage() {
   const transcribeAudio = useCallback(async (audioBlob: Blob) => {
     setIsTranscribing(true);
     try {
+      // ── Gatekeeper: reject silent audio before calling AI ──
+      const { checkAudioVolume, sanitizeTranscription } = await import("@/lib/audio-silence-check");
+      const hasSound = await checkAudioVolume(audioBlob);
+      if (!hasSound) {
+        toast.info("Nenhum som detectado na gravação. Tente novamente falando ou cantando.");
+        setIsTranscribing(false);
+        return;
+      }
+
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
         reader.onloadend = () => {
@@ -349,7 +358,8 @@ export default function CompositionStudioPage() {
 
       if (error) throw error;
 
-      let transcription = data?.transcription?.trim();
+      // ── Post-processing: filter hallucinations ──
+      let transcription = sanitizeTranscription(data?.transcription ?? "");
       if (transcription) {
         const detectedKey = data?.detected_key || selectedKey;
         if (!originalKey && detectedKey) {

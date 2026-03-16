@@ -32,10 +32,22 @@ export default function AdminUsersTab() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [suspendTarget, setSuspendTarget] = useState<Profile | null>(null);
+  const [search, setSearch] = useState("");
+  const [planFilter, setPlanFilter] = useState<string>("all");
 
   const [totalUsers, setTotalUsers] = useState(0);
   const [proUsers, setProUsers] = useState(0);
   const [totalSongs, setTotalSongs] = useState(0);
+
+  const filtered = profiles.filter((p) => {
+    const term = search.toLowerCase();
+    const matchesSearch = !term ||
+      (p.first_name?.toLowerCase().includes(term)) ||
+      (p.last_name?.toLowerCase().includes(term)) ||
+      (p.email?.toLowerCase().includes(term));
+    const matchesPlan = planFilter === "all" || p.subscription_plan === planFilter;
+    return matchesSearch && matchesPlan;
+  });
 
   const fetchAll = async () => {
     setLoading(true);

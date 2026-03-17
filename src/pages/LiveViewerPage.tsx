@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useScreenShare } from "@/hooks/useScreenShare";
-import { Monitor, Loader2, WifiOff, Maximize } from "lucide-react";
+import { Monitor, Loader2, WifiOff, Maximize, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 
@@ -22,6 +22,10 @@ export default function LiveViewerPage() {
       setConnected(true);
     }
   }, [sessionId, connected, connectAsViewer]);
+
+  const handleRetry = () => {
+    setConnected(false);
+  };
 
   useEffect(() => {
     if (videoRef.current && remoteStream) {
@@ -70,6 +74,10 @@ export default function LiveViewerPage() {
             <>
               <WifiOff className="h-12 w-12 text-red-400" />
               <p className="text-lg">{error}</p>
+              <Button variant="outline" size="sm" onClick={handleRetry} className="gap-2 mt-2 text-white border-white/20 hover:bg-white/10">
+                <RefreshCw className="h-4 w-4" />
+                Tentar Novamente
+              </Button>
             </>
           ) : (
             <>

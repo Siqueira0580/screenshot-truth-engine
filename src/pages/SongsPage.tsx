@@ -78,7 +78,7 @@ export default function SongsPage() {
   const [tourVisible, setTourVisible] = useState(showTour);
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [librarySetupDismissed, setLibrarySetupDismissed] = useState(false);
-  const [activeTab, setActiveTab] = useState("explore");
+  const [activeTab, setActiveTab] = useState<"explore" | "library">("library");
 
   const { isAdmin } = useUserRole();
 
@@ -228,7 +228,7 @@ export default function SongsPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="explore" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs defaultValue="explore" value={activeTab} onValueChange={(value) => setActiveTab(value as "explore" | "library")} className="w-full">
           <TabsList id="tour-tabs" className="w-full grid grid-cols-2">
             <TabsTrigger value="explore">🔍 Explorar</TabsTrigger>
             <TabsTrigger value="library">🎵 Minhas Músicas</TabsTrigger>

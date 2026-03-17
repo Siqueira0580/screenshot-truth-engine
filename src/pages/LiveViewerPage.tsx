@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useScreenShare } from "@/hooks/useScreenShare";
-import { Monitor, Loader2, WifiOff, Maximize } from "lucide-react";
+import { Monitor, Loader2, WifiOff, Maximize, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import smartCifraLogo from "@/assets/smart-cifra-logo.png";
 

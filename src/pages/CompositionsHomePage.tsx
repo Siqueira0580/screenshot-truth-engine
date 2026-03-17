@@ -183,7 +183,7 @@ export default function CompositionsHomePage() {
               if (isFree) { setPaywallOpen(true); return; }
               navigate("/compose");
             }}>
-              <Plus className="h-4 w-4" /> Nova Composição
+              <Plus className="h-4 w-4" /> Começar a Compor
             </Button>
           )}
         </div>

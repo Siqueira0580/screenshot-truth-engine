@@ -168,6 +168,48 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_sessions: {
+        Row: {
+          created_at: string
+          current_song_index: number
+          id: string
+          is_playing: boolean
+          master_id: string
+          master_name: string | null
+          scroll_top: number
+          setlist_id: string
+          speed: number | null
+          transpose: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_song_index?: number
+          id: string
+          is_playing?: boolean
+          master_id: string
+          master_name?: string | null
+          scroll_top?: number
+          setlist_id: string
+          speed?: number | null
+          transpose?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_song_index?: number
+          id?: string
+          is_playing?: boolean
+          master_id?: string
+          master_name?: string | null
+          scroll_top?: number
+          setlist_id?: string
+          speed?: number | null
+          transpose?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       composition_audios: {
         Row: {
           audio_url: string

@@ -109,10 +109,13 @@ export default function SongsPage() {
   });
 
   const handleBulkPdfImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const input = e.target;
+    const filesToProcess = Array.from(input.files || []);
+    input.value = "";
 
-    const pdfFiles = Array.from(files).filter((f) => f.type === "application/pdf");
+    if (filesToProcess.length === 0) return;
+
+    const pdfFiles = filesToProcess.filter((file) => file.type === "application/pdf");
     if (pdfFiles.length === 0) {
       toast.error("Nenhum arquivo PDF selecionado");
       return;
@@ -123,58 +126,70 @@ export default function SongsPage() {
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < pdfFiles.length; i++) {
-      const file = pdfFiles[i];
-      try {
-        const formData = new FormData();
-        formData.append("file", file);
-        const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
-        if (error) throw error;
-
-        if (data && (data.title || data.body_text)) {
-          const artistName = data.artist || null;
-          const songTitle = data.title || file.name.replace(/\.pdf$/i, "");
-          const { checkDuplicateSong } = await import("@/lib/supabase-queries");
-          const duplicateId = await checkDuplicateSong(songTitle, artistName);
-
-          if (duplicateId) {
-            toast.warning(`"${songTitle}" já existe no seu repertório — ignorada.`);
+    try {
+      for (const [index, file] of pdfFiles.entries()) {
+        try {
+          if (file.size > 5 * 1024 * 1024) {
+            toast.warning(`O arquivo ${file.name} excede o limite de 5MB.`);
             errorCount++;
-          } else {
-            if (artistName) {
-              try {
-                await findOrCreateArtist(artistName);
-              } catch {}
-            }
-
-            await createSongAndAddToLibrary({
-              title: songTitle,
-              artist: artistName,
-              composer: data.composer || null,
-              musical_key: data.musical_key || null,
-              style: data.style || null,
-              bpm: data.bpm ? parseInt(data.bpm) : null,
-              time_signature: data.time_signature || "4/4",
-              body_text: data.body_text || data.text || null,
-            });
-            successCount++;
+            continue;
           }
-        } else {
+
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
+          if (error) throw error;
+
+          if (data && (data.title || data.body_text)) {
+            const artistName = data.artist || null;
+            const songTitle = data.title || file.name.replace(/\.pdf$/i, "");
+            const { checkDuplicateSong } = await import("@/lib/supabase-queries");
+            const duplicateId = await checkDuplicateSong(songTitle, artistName);
+
+            if (duplicateId) {
+              toast.warning(`"${songTitle}" já existe no seu repertório — ignorada.`);
+              errorCount++;
+            } else {
+              if (artistName) {
+                try {
+                  await findOrCreateArtist(artistName);
+                } catch {}
+              }
+
+              await createSongAndAddToLibrary({
+                title: songTitle,
+                artist: artistName,
+                composer: data.composer || null,
+                musical_key: data.musical_key || null,
+                style: data.style || null,
+                bpm: data.bpm ? parseInt(data.bpm) : null,
+                time_signature: data.time_signature || "4/4",
+                body_text: data.body_text || data.text || null,
+              });
+              successCount++;
+            }
+          } else {
+            toast.warning(`O arquivo ${file.name} falhou ao ser processado.`);
+            errorCount++;
+          }
+        } catch {
+          toast.warning(`O arquivo ${file.name} falhou ao ser processado.`);
           errorCount++;
+        } finally {
+          setPdfProgress({ done: index + 1, total: pdfFiles.length });
+          await new Promise((resolve) => setTimeout(resolve, 300));
         }
-      } catch {
-        errorCount++;
       }
 
-      setPdfProgress({ done: i + 1, total: pdfFiles.length });
+      queryClient.invalidateQueries({ queryKey: ["user-library"] });
+      if (successCount > 0) toast.success(`${successCount} música${successCount > 1 ? "s" : ""} importada${successCount > 1 ? "s" : ""} com sucesso!`);
+      if (errorCount > 0) toast.warning(`${errorCount} PDF${errorCount > 1 ? "s" : ""} não pôde${errorCount > 1 ? "ram" : ""} ser processado${errorCount > 1 ? "s" : ""}`);
+    } finally {
+      setImportingPdfs(false);
+      setPdfProgress({ done: 0, total: 0 });
+      if (pdfInputRef.current) pdfInputRef.current.value = "";
     }
-
-    queryClient.invalidateQueries({ queryKey: ["user-library"] });
-    if (successCount > 0) toast.success(`${successCount} música${successCount > 1 ? "s" : ""} importada${successCount > 1 ? "s" : ""} com sucesso!`);
-    if (errorCount > 0) toast.warning(`${errorCount} PDF${errorCount > 1 ? "s" : ""} não pôde${errorCount > 1 ? "ram" : ""} ser processado${errorCount > 1 ? "s" : ""}`);
-    setImportingPdfs(false);
-    setPdfProgress({ done: 0, total: 0 });
-    if (pdfInputRef.current) pdfInputRef.current.value = "";
   };
 
   const filtered = useMemo(() => {

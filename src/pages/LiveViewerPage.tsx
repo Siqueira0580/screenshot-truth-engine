@@ -23,6 +23,10 @@ export default function LiveViewerPage() {
     }
   }, [sessionId, connected, connectAsViewer]);
 
+  const handleRetry = () => {
+    setConnected(false);
+  };
+
   useEffect(() => {
     if (videoRef.current && remoteStream) {
       videoRef.current.srcObject = remoteStream;

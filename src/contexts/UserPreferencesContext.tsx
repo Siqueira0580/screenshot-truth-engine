@@ -63,7 +63,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user) {
+    if (!user?.id) {
       const stored = localStorage.getItem("preferred_instrument") as Instrument | null;
       setProfile(null);
       setInstrumentState(stored || "guitar");
@@ -71,6 +71,11 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       setLibrarySetupCompleted(false);
       setFavoriteStyles([]);
       setFavoriteArtists([]);
+      setIsFetchingProfile(false);
+      return;
+    }
+
+    if (profile?.id === user.id) {
       setIsFetchingProfile(false);
       return;
     }
@@ -120,7 +125,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [authLoading, user]);
+  }, [authLoading, user?.id, profile?.id]);
 
   const setPreferredInstrument = useCallback(
     async (instrument: Instrument) => {

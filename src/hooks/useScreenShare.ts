@@ -167,12 +167,38 @@ export function useScreenShare({ sessionId }: UseScreenShareOptions) {
 
     const channelName = `screen-share-${sessionId}`;
     const channel = supabase.channel(channelName);
+    let gotOffer = false;
+    let retryInterval: ReturnType<typeof setInterval> | null = null;
+
+    const sendViewerJoin = () => {
+      channel.send({
+        type: "broadcast",
+        event: "signal",
+        payload: {
+          type: "viewer-join",
+          senderId: myIdRef.current,
+        },
+      });
+    };
 
     channel
       .on("broadcast", { event: "signal" }, async ({ payload }: { payload: any }) => {
         if (payload.targetId && payload.targetId !== myIdRef.current) return;
 
         if (payload.type === "offer") {
+          gotOffer = true;
+          if (retryInterval) {
+            clearInterval(retryInterval);
+            retryInterval = null;
+          }
+
+          // Clean up any previous peer for this sender before creating a new one
+          const existingPc = peerConnectionsRef.current.get(payload.senderId);
+          if (existingPc) {
+            existingPc.close();
+            peerConnectionsRef.current.delete(payload.senderId);
+          }
+
           const pc = createPeerConnection(payload.senderId, channel);
 
           await pc.setRemoteDescription(new RTCSessionDescription(payload.data));
@@ -200,19 +226,55 @@ export function useScreenShare({ sessionId }: UseScreenShareOptions) {
           }
         }
       })
-      .subscribe(() => {
-        // Announce presence to master
-        channel.send({
-          type: "broadcast",
-          event: "signal",
-          payload: {
-            type: "viewer-join",
-            senderId: myIdRef.current,
-          },
-        });
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          // Send initial viewer-join and retry every 3s until we get an offer
+          sendViewerJoin();
+          retryInterval = setInterval(() => {
+            if (!gotOffer) {
+              console.log("[ScreenShare] Retrying viewer-join...");
+              sendViewerJoin();
+            } else if (retryInterval) {
+              clearInterval(retryInterval);
+              retryInterval = null;
+            }
+          }, 3000);
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          setError("Falha na ligação ao canal. Verifique a sua internet e tente novamente.");
+          if (retryInterval) {
+            clearInterval(retryInterval);
+            retryInterval = null;
+          }
+        }
       });
 
     channelRef.current = channel;
+
+    // Global timeout: if no offer received within 15s, show offline message
+    const timeoutId = setTimeout(() => {
+      if (!gotOffer) {
+        setError("A transmissão parece estar offline ou o Mestre ainda não partilhou o ecrã.");
+        if (retryInterval) {
+          clearInterval(retryInterval);
+          retryInterval = null;
+        }
+      }
+    }, 15000);
+
+    // Store cleanup refs
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      if (retryInterval) {
+        clearInterval(retryInterval);
+      }
+    };
+
+    // Attach cleanup to the channel unsubscribe flow
+    const originalUnsubscribe = channel.unsubscribe.bind(channel);
+    channel.unsubscribe = () => {
+      cleanup();
+      return originalUnsubscribe();
+    };
   }, [sessionId, createPeerConnection]);
 
   // Cleanup on unmount

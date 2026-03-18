@@ -66,6 +66,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<UserPreferencesProfile | null>(null);
   const [preferredInstrument, setInstrumentState] = useState<Instrument>("guitar");
+  const [defaultGenre, setDefaultGenreState] = useState("todos");
   const [wizardCompleted, setWizardCompleted] = useState(false);
   const [librarySetupCompleted, setLibrarySetupCompleted] = useState(false);
   const [favoriteStyles, setFavoriteStyles] = useState<string[]>([]);

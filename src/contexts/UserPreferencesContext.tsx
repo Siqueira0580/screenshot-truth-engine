@@ -33,6 +33,8 @@ interface UserPreferences {
   markLibrarySetupDone: () => void;
   hasSeenWizard: boolean;
   markWizardSeen: () => Promise<void>;
+  hasSeenRepertoireWizard: boolean;
+  markRepertoireWizardSeen: () => Promise<void>;
   loading: boolean;
 }
 

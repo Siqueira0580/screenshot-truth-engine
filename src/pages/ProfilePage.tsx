@@ -86,7 +86,10 @@ export default function ProfilePage() {
     if (error) {
       toast.error("Erro ao salvar perfil");
     } else {
-      toast.success("Perfil atualizado com sucesso!");
+      toast("Perfil atualizado!", {
+        description: "As suas configurações foram salvas. Por favor, atualize a página ou faça um novo acesso para aplicar a sua nova aba padrão na página inicial.",
+        duration: 5000,
+      });
       await loadProfile();
     }
     setSaving(false);

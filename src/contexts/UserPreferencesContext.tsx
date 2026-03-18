@@ -112,6 +112,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const artists = (data as any).favorite_artists;
         const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
         const nextHasSeenWizard = !!(data as any).has_seen_wizard;
+        const nextHasSeenRepertoireWizard = !!(data as any).has_seen_repertoire_wizard;
         const nextProfile: UserPreferencesProfile = {
           id: user.id,
           preferredInstrument: nextPreferredInstrument,
@@ -120,6 +121,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           favoriteStyles: nextFavoriteStyles,
           favoriteArtists: nextFavoriteArtists,
           hasSeenWizard: nextHasSeenWizard,
+          hasSeenRepertoireWizard: nextHasSeenRepertoireWizard,
         };
 
         setProfile(nextProfile);

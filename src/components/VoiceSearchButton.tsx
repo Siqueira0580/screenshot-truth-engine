@@ -36,9 +36,21 @@ export default function VoiceSearchButton() {
         body: { query },
       });
 
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-      if (!data?.title) throw new Error("Cifra não encontrada");
+      if (error) throw new Error("Falha na comunicação com o servidor.");
+
+      if (!data || data.success === false) {
+        toast.error(data?.error || "Não foi possível importar a música.");
+        setState("idle");
+        setTranscript("");
+        return;
+      }
+
+      if (!data.title) {
+        toast.error("Cifra não encontrada.");
+        setState("idle");
+        setTranscript("");
+        return;
+      }
 
       setState("importing");
 

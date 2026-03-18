@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
 
     if (!searchResp.ok) {
       console.error("Search failed:", searchResp.status);
-      return await fallbackToAI(query);
+      return ok({ success: false, error: "Não foi possível pesquisar no Cifra Club." });
     }
 
     const searchHtml = await searchResp.text();

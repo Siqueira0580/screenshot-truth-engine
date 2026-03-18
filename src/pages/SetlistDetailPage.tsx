@@ -42,6 +42,7 @@ import ScreenSharePanel from "@/components/ScreenSharePanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useVoiceSearch, isVoiceSupported } from "@/hooks/useVoiceSearch";
 
 const CHROMATIC_ORDER = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 function chromaticIndex(key: string | null | undefined): number {

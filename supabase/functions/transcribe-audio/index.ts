@@ -123,8 +123,31 @@ ERRADO (acorde duplicado — NUNCA faça isto):
     }
 
     const aiData = await aiResponse.json();
-    const chordProText: string =
+    let chordProText: string =
       aiData.choices?.[0]?.message?.content?.trim() ?? "";
+
+    // ── Post-processing: limpar alucinações ─────────────────────
+    // Remove markdown code fences
+    const codeBlockMatch = chordProText.match(/```(?:chordpro|text)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      chordProText = codeBlockMatch[1].trim();
+    }
+
+    // Remove conversational preamble/postamble lines
+    chordProText = chordProText
+      .split("\n")
+      .filter((line) => {
+        const trimmed = line.trim().toLowerCase();
+        // Remove lines that are purely conversational
+        if (/^(aqui está|espero que|segue a|segue abaixo|pronto|claro|com certeza)/i.test(trimmed)) return false;
+        // Remove ChordPro directives
+        if (/^\{[^}]+\}$/.test(trimmed)) return false;
+        // Remove lines that are ONLY chords (no lyrics) — the duplicate header pattern
+        if (/^\[[\w#b/+°ø()]+\](\s*\[[\w#b/+°ø()]+\])*\s*$/.test(trimmed)) return false;
+        return true;
+      })
+      .join("\n")
+      .trim();
 
     // ── Salvar na tabela audio_tracks (se ID fornecido) ─────────
     if (audio_track_id) {

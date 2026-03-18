@@ -113,6 +113,7 @@ export default function SongsPage() {
     enabled: !!user,
   });
 
+  songsRef.current = songs;
   useAutoEnrichment(songs);
 
   const removeM = useMutation({

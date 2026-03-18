@@ -67,9 +67,19 @@ export default function SongsPage() {
   const { user } = useAuth();
   const { wizardCompleted, librarySetupCompleted, markLibrarySetupDone, loading: prefsLoading } = useUserPreferences();
   const [search, setSearch] = useState("");
+  const songsRef = useRef(songs);
+  songsRef.current = songs;
   const voiceSearch = useVoiceSearch(useCallback((text: string) => {
     setSearch(text);
-    toast.info(`Buscando: "${text}"`);
+    const term = text.toLowerCase();
+    const matches = songsRef.current.filter(
+      (s) => s.title.toLowerCase().includes(term) || (s.artist && s.artist.toLowerCase().includes(term))
+    );
+    if (matches.length === 0) {
+      toast.warning("Música não encontrada no seu estúdio. Adicione-a primeiro na aba Explorar.");
+    } else {
+      toast.info(`${matches.length} resultado${matches.length > 1 ? "s" : ""} para "${text}"`);
+    }
   }, []));
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [formOpen, setFormOpen] = useState(false);

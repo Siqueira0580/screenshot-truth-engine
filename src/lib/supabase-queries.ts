@@ -229,9 +229,12 @@ export async function deleteSong(id: string) {
 // ─── SETLISTS ───
 
 export async function fetchSetlists() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
   const { data, error } = await supabase
     .from("setlists")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data as Setlist[];

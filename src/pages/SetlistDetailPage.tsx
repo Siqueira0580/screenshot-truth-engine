@@ -218,6 +218,15 @@ export default function SetlistDetailPage() {
   const [selectedSongs, setSelectedSongs] = useState<Set<string>>(new Set());
   const [globalSelectedSongs, setGlobalSelectedSongs] = useState<Set<string>>(new Set());
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const { hasSeenRepertoireWizard, markRepertoireWizardSeen, loading: prefsLoading } = useUserPreferences();
+  const [showRepertoireWizard, setShowRepertoireWizard] = useState(false);
+
+  useEffect(() => {
+    if (!prefsLoading && !hasSeenRepertoireWizard) {
+      const timer = setTimeout(() => setShowRepertoireWizard(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [prefsLoading, hasSeenRepertoireWizard]);
 
   const queryClient = useQueryClient();
 

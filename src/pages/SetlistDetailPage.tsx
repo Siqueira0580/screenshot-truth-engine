@@ -260,6 +260,7 @@ export default function SetlistDetailPage() {
     queryFn: fetchSongs,
     enabled: addOpen || globalSearchOpen,
   });
+  allSongsRef.current = allSongs;
 
   // Offline cache
   useOfflineCache(id, setlist, items);

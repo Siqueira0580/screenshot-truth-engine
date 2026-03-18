@@ -249,6 +249,8 @@ export default function ProfilePage() {
                 <SelectItem value="worship">Worship</SelectItem>
                 <SelectItem value="samba">Samba</SelectItem>
                 <SelectItem value="pagode">Pagode</SelectItem>
+                <SelectItem value="mpb">MPB</SelectItem>
+                <SelectItem value="forro">Forró</SelectItem>
               </SelectContent>
             </Select>
           </div>

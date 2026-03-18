@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
-const CATEGORIES = ["Todos", "Rock", "Pop", "Sertanejo", "Worship", "Samba", "Pagode"];
+const CATEGORIES = ["Todos", "Rock", "Pop", "Sertanejo", "Worship", "Samba", "Pagode", "MPB", "Forró"];
 
 interface CategoryPillsProps {
   selected: string;

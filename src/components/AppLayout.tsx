@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -11,6 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import smartCifraLogo from "@/assets/smart-cifra-logo.webp";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +25,23 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import PaywallModal from "@/components/PaywallModal";
 import GlobalBanner from "@/components/GlobalBanner";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+
+const GENRE_OPTIONS = [
+  { value: "todos", label: "🎵 Todos" },
+  { value: "pop", label: "🎤 Pop" },
+  { value: "rock", label: "🎸 Rock" },
+  { value: "sertanejo", label: "🤠 Sertanejo" },
+  { value: "worship", label: "🙏 Worship" },
+  { value: "samba", label: "🥁 Samba" },
+  { value: "pagode", label: "☀️ Pagode" },
+  { value: "forro", label: "🪗 Forró" },
+  { value: "mpb", label: "🇧🇷 MPB" },
+  { value: "gospel", label: "✝️ Gospel" },
+  { value: "eletronica", label: "🎧 Eletrônica" },
+  { value: "reggae", label: "🟢 Reggae" },
+  { value: "funk", label: "🔊 Funk" },
+];
 
 const navItems = [
   { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false },
@@ -39,6 +60,7 @@ export default function AppLayout() {
   const { isFree } = useSubscription();
   const { vipMaintenanceMode } = useGlobalSettings();
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const { defaultGenre, setDefaultGenre } = useUserPreferences();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
 
@@ -238,6 +260,32 @@ export default function AppLayout() {
                     Painel Administrativo
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
+                    <Home className="h-4 w-4" />
+                    Estilo da Home
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="max-h-64 overflow-y-auto">
+                      {GENRE_OPTIONS.map((g) => (
+                        <DropdownMenuItem
+                          key={g.value}
+                          className={cn("cursor-pointer", defaultGenre === g.value && "bg-primary/10 text-primary font-semibold")}
+                          onClick={async () => {
+                            await setDefaultGenre(g.value);
+                            toast.success(`Estilo atualizado para ${g.label.replace(/^\S+\s/, "")}!`);
+                            if (location.pathname === "/songs" || location.pathname === "/") {
+                              window.location.reload();
+                            }
+                          }}
+                        >
+                          {g.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {

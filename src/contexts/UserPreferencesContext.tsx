@@ -19,6 +19,7 @@ interface UserPreferencesProfile {
   favoriteArtists: ArtistPref[];
   hasSeenWizard: boolean;
   hasSeenRepertoireWizard: boolean;
+  defaultGenre: string;
 }
 
 interface UserPreferences {
@@ -35,6 +36,8 @@ interface UserPreferences {
   markWizardSeen: () => Promise<void>;
   hasSeenRepertoireWizard: boolean;
   markRepertoireWizardSeen: () => Promise<void>;
+  defaultGenre: string;
+  setDefaultGenre: (genre: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -52,6 +55,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   markWizardSeen: async () => {},
   hasSeenRepertoireWizard: true,
   markRepertoireWizardSeen: async () => {},
+  defaultGenre: "todos",
+  setDefaultGenre: async () => {},
   loading: true,
 });
 
@@ -61,6 +66,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<UserPreferencesProfile | null>(null);
   const [preferredInstrument, setInstrumentState] = useState<Instrument>("guitar");
+  const [defaultGenre, setDefaultGenreState] = useState("todos");
   const [wizardCompleted, setWizardCompleted] = useState(false);
   const [librarySetupCompleted, setLibrarySetupCompleted] = useState(false);
   const [favoriteStyles, setFavoriteStyles] = useState<string[]>([]);
@@ -101,7 +107,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard, has_seen_repertoire_wizard")
+          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard, has_seen_repertoire_wizard, default_genre")
           .eq("id", user.id)
           .single();
 
@@ -113,6 +119,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
         const nextHasSeenWizard = !!(data as any).has_seen_wizard;
         const nextHasSeenRepertoireWizard = !!(data as any).has_seen_repertoire_wizard;
+        const nextDefaultGenre = (data as any).default_genre || "todos";
         const nextProfile: UserPreferencesProfile = {
           id: user.id,
           preferredInstrument: nextPreferredInstrument,
@@ -122,6 +129,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           favoriteArtists: nextFavoriteArtists,
           hasSeenWizard: nextHasSeenWizard,
           hasSeenRepertoireWizard: nextHasSeenRepertoireWizard,
+          defaultGenre: nextDefaultGenre,
         };
 
         setProfile(nextProfile);
@@ -132,6 +140,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setFavoriteArtists(nextProfile.favoriteArtists);
         setHasSeenWizard(nextHasSeenWizard);
         setHasSeenRepertoireWizard(nextHasSeenRepertoireWizard);
+        setDefaultGenreState(nextDefaultGenre);
       } finally {
         if (!cancelled) {
           setIsFetchingProfile(false);
@@ -226,6 +235,17 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const setDefaultGenre = useCallback(async (genre: string) => {
+    setDefaultGenreState(genre);
+    setProfile((prev) => (prev ? { ...prev, defaultGenre: genre } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ default_genre: genre } as any)
+        .eq("id", user.id);
+    }
+  }, [user]);
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -242,6 +262,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         markWizardSeen,
         hasSeenRepertoireWizard,
         markRepertoireWizardSeen,
+        defaultGenre,
+        setDefaultGenre,
         loading,
       }}
     >

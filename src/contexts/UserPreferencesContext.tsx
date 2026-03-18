@@ -195,6 +195,17 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     setProfile((prev) => (prev ? { ...prev, librarySetupCompleted: true } : prev));
   }, []);
 
+  const markWizardSeen = useCallback(async () => {
+    setHasSeenWizard(true);
+    setProfile((prev) => (prev ? { ...prev, hasSeenWizard: true } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ has_seen_wizard: true } as any)
+        .eq("id", user.id);
+    }
+  }, [user]);
+
   return (
     <UserPreferencesContext.Provider
       value={{

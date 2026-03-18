@@ -105,6 +105,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const nextFavoriteStyles = ((data as any).favorite_styles as string[]) || [];
         const artists = (data as any).favorite_artists;
         const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
+        const nextHasSeenWizard = !!(data as any).has_seen_wizard;
         const nextProfile: UserPreferencesProfile = {
           id: user.id,
           preferredInstrument: nextPreferredInstrument,
@@ -112,6 +113,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           librarySetupCompleted: !!(data as any).library_setup_completed,
           favoriteStyles: nextFavoriteStyles,
           favoriteArtists: nextFavoriteArtists,
+          hasSeenWizard: nextHasSeenWizard,
         };
 
         setProfile(nextProfile);
@@ -120,6 +122,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setLibrarySetupCompleted(nextProfile.librarySetupCompleted);
         setFavoriteStyles(nextProfile.favoriteStyles);
         setFavoriteArtists(nextProfile.favoriteArtists);
+        setHasSeenWizard(nextHasSeenWizard);
       } finally {
         if (!cancelled) {
           setIsFetchingProfile(false);

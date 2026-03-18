@@ -131,6 +131,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setFavoriteStyles(nextProfile.favoriteStyles);
         setFavoriteArtists(nextProfile.favoriteArtists);
         setHasSeenWizard(nextHasSeenWizard);
+        setHasSeenRepertoireWizard(nextHasSeenRepertoireWizard);
       } finally {
         if (!cancelled) {
           setIsFetchingProfile(false);

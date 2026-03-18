@@ -219,6 +219,11 @@ export default function SetlistDetailPage() {
 
   const queryClient = useQueryClient();
 
+  // Voice search for Add Song dialog
+  const voiceSearch = useVoiceSearch(useCallback((text: string) => {
+    setSearch(text);
+  }, []));
+
   const { user } = useAuth();
 
   const { data: setlist } = useQuery({

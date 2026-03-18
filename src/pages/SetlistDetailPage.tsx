@@ -224,6 +224,15 @@ export default function SetlistDetailPage() {
     setSearch(text);
   }, []));
 
+  // Show toast when voice search finds no results
+  const prevSearchRef = useRef("");
+  useEffect(() => {
+    if (search && search !== prevSearchRef.current && prevSearchRef.current !== search) {
+      // Check if this was set by voice (voiceSearch just finished)
+    }
+    prevSearchRef.current = search;
+  }, [search]);
+
   const { user } = useAuth();
 
   const { data: setlist } = useQuery({

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePersonalizedCharts } from "@/hooks/usePersonalizedCharts";
 import { useTopCharts, type DeezerTrack } from "@/hooks/useTopCharts";
 import { Loader2 } from "lucide-react";
@@ -8,23 +8,61 @@ import HeroCarousel from "./HeroCarousel";
 import TopChartsList from "./TopChartsList";
 import FeaturedArtists from "./FeaturedArtists";
 import { createSong, findOrCreateArtist } from "@/lib/supabase-queries";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const GENRE_TO_CATEGORY: Record<string, string> = {
+  todos: "Todos",
+  pop: "Pop",
+  rock: "Rock",
+  sertanejo: "Sertanejo",
+  worship: "Worship",
+  samba: "Samba",
+  pagode: "Pagode",
+};
+
+function useDefaultGenre() {
+  return useQuery({
+    queryKey: ["profile-default-genre"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return "Todos";
+      const { data } = await supabase
+        .from("profiles")
+        .select("default_genre")
+        .eq("id", user.id)
+        .single();
+      const genre = data?.default_genre || "todos";
+      return GENRE_TO_CATEGORY[genre] || "Todos";
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+}
 
 export default function ExploreTab() {
-  const [category, setCategory] = useState("Todos");
+  const { data: defaultCategory, isLoading: genreLoading } = useDefaultGenre();
+  const [category, setCategory] = useState<string | null>(null);
+
+  // Set initial category once the default genre loads
+  useEffect(() => {
+    if (defaultCategory && category === null) {
+      setCategory(defaultCategory);
+    }
+  }, [defaultCategory, category]);
+
+  const activeCategory = category ?? "Todos";
+
   const { data: personalizedTracks = [], isLoading: pLoading, isError: pError, isPersonalized, favoriteArtists } = usePersonalizedCharts();
-  const { data: categoryTracks = [], isLoading: cLoading, isError: cError } = useTopCharts(category);
+  const { data: categoryTracks = [], isLoading: cLoading, isError: cError } = useTopCharts(activeCategory);
   const queryClient = useQueryClient();
 
-  // When personalized and category is "Todos", use personalized data; otherwise use category filter
-  const usePersonalized = isPersonalized && category === "Todos";
-  // Fallback: if personalized fails or returns empty, use global charts
+  const usePersonalized = isPersonalized && activeCategory === "Todos";
   const hasPersonalizedData = usePersonalized && personalizedTracks.length > 0 && !pError;
   const tracks = hasPersonalizedData ? personalizedTracks : categoryTracks;
   const isLoading = hasPersonalizedData ? pLoading : (usePersonalized ? (pLoading && cLoading) : cLoading);
   const isError = hasPersonalizedData ? false : (usePersonalized ? (pError && cError) : cError);
 
-  // Build featured artists from user preferences when personalized
   const featuredArtistOverrides = hasPersonalizedData
     ? favoriteArtists.map((a, i) => ({
         id: Number(a.id) || 90000 + i,
@@ -66,9 +104,28 @@ export default function ExploreTab() {
     });
   };
 
+  // Show skeleton while reading user's preferred genre to avoid category "flash"
+  if (genreLoading || category === null) {
+    return (
+      <div className="space-y-8">
+        <div className="flex gap-3 pb-2 px-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-24 rounded-md" />
+          ))}
+        </div>
+        <Skeleton className="h-48 w-full rounded-xl" />
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      <CategoryPills selected={category} onSelect={setCategory} />
+      <CategoryPills selected={activeCategory} onSelect={setCategory} />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">

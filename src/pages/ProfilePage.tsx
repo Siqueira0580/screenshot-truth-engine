@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download } from "lucide-react";
+import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download, Music } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useSubscription } from "@/hooks/useSubscription";
 import DangerZone from "@/components/DangerZone";
@@ -40,6 +41,7 @@ export default function ProfilePage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [defaultGenre, setDefaultGenre] = useState("todos");
 
   useEffect(() => {
     if (!user) return;
@@ -63,6 +65,7 @@ export default function ProfilePage() {
     setFirstName(data.first_name || "");
     setLastName(data.last_name || "");
     setPhone(data.phone || "");
+    setDefaultGenre(data.default_genre || "todos");
     setLoading(false);
   }
 
@@ -76,6 +79,7 @@ export default function ProfilePage() {
         first_name: firstName.trim() || null,
         last_name: lastName.trim() || null,
         phone: phone.trim() || null,
+        default_genre: defaultGenre,
       })
       .eq("id", user.id);
 
@@ -223,6 +227,27 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <Label>E-mail</Label>
             <Input value={user?.email || ""} disabled className="opacity-60" />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="defaultGenre" className="flex items-center gap-1.5">
+              <Music className="h-4 w-4 text-primary" />
+              Estilo favorito na tela inicial
+            </Label>
+            <Select value={defaultGenre} onValueChange={setDefaultGenre}>
+              <SelectTrigger id="defaultGenre">
+                <SelectValue placeholder="Selecione um estilo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="pop">Pop</SelectItem>
+                <SelectItem value="rock">Rock</SelectItem>
+                <SelectItem value="sertanejo">Sertanejo</SelectItem>
+                <SelectItem value="worship">Worship</SelectItem>
+                <SelectItem value="samba">Samba</SelectItem>
+                <SelectItem value="pagode">Pagode</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <Button onClick={handleSave} disabled={saving} className="w-full">

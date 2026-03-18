@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
 
     if (!searchResp.ok) {
       console.error("Search failed:", searchResp.status);
-      return await fallbackToAI(query);
+      return ok({ success: false, error: "Não foi possível pesquisar no Cifra Club." });
     }
 
     const searchHtml = await searchResp.text();
@@ -113,8 +113,8 @@ Deno.serve(async (req) => {
     }
 
     if (!cifraUrl) {
-      console.log("No direct link found, falling back to AI");
-      return await fallbackToAI(query);
+      console.log("No direct link found");
+      return ok({ success: false, error: "Música não localizada no Cifra Club." });
     }
 
     console.log("Found cifra URL:", cifraUrl);
@@ -130,15 +130,15 @@ Deno.serve(async (req) => {
 
     if (!cifraResp.ok) {
       console.error("Cifra page failed:", cifraResp.status);
-      return await fallbackToAI(query);
+      return ok({ success: false, error: "Não foi possível aceder à página da cifra." });
     }
 
     const cifraHtml = await cifraResp.text();
     const result = extractChordContent(cifraHtml);
 
     if (!result || !result.content) {
-      console.log("Failed to extract content, falling back to AI");
-      return await fallbackToAI(query);
+      console.log("Failed to extract content from page");
+      return ok({ success: false, error: "Não foi possível extrair a cifra desta página." });
     }
 
     console.log("Extracted:", result.title, "-", result.artist);
@@ -158,61 +158,3 @@ Deno.serve(async (req) => {
   }
 });
 
-async function fallbackToAI(query: string) {
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) {
-    return ok({ success: false, error: "Música não localizada nas bases de dados." });
-  }
-
-  try {
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `You are a Brazilian music chord sheet expert. Given a song query, return the cifra in ChordPro format.
-Return ONLY valid JSON (no markdown):
-{
-  "title": "song title",
-  "artist": "artist name",
-  "content": "full lyrics with [chords] in ChordPro format",
-  "musical_key": "key e.g. Am, C",
-  "source": "ai"
-}
-If you don't know the song, return exactly: {"error": "ERROR_SONG_NOT_FOUND"}`,
-          },
-          { role: "user", content: `Busque a cifra para: ${query}` },
-        ],
-        temperature: 0,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      console.error("AI fallback error:", await aiResponse.text());
-      return ok({ success: false, error: "Música não localizada nas bases de dados." });
-    }
-
-    const aiResult = await aiResponse.json();
-    const content = aiResult.choices?.[0]?.message?.content || "";
-    const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-    const parsed = JSON.parse(jsonStr);
-
-    if (parsed.error) {
-      const msg = parsed.error === "ERROR_SONG_NOT_FOUND"
-        ? "Música não localizada nas bases de dados."
-        : parsed.error;
-      return ok({ success: false, error: msg });
-    }
-
-    return ok({ success: true, ...parsed });
-  } catch (e) {
-    console.error("AI parse error:", e);
-    return ok({ success: false, error: "Música não localizada nas bases de dados." });
-  }
-}

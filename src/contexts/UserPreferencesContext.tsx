@@ -30,6 +30,8 @@ interface UserPreferences {
   favoriteArtists: ArtistPref[];
   saveWizardPreferences: (styles: string[], artists: ArtistPref[], skipped?: boolean) => Promise<void>;
   markLibrarySetupDone: () => void;
+  hasSeenWizard: boolean;
+  markWizardSeen: () => Promise<void>;
   loading: boolean;
 }
 

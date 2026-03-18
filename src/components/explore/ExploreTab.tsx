@@ -20,6 +20,8 @@ const GENRE_TO_CATEGORY: Record<string, string> = {
   worship: "Worship",
   samba: "Samba",
   pagode: "Pagode",
+  mpb: "MPB",
+  forro: "Forró",
 };
 
 function useDefaultGenre() {

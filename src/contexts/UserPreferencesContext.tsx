@@ -218,6 +218,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         favoriteArtists,
         saveWizardPreferences,
         markLibrarySetupDone,
+        hasSeenWizard,
+        markWizardSeen,
         loading,
       }}
     >

@@ -1,8 +1,8 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText } from "lucide-react";
-import VoiceSearchButton from "@/components/VoiceSearchButton";
+import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText, Mic, MicOff } from "lucide-react";
+import { useVoiceSearch, isVoiceSupported } from "@/hooks/useVoiceSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -24,6 +24,7 @@ import LibrarySetupWizard from "@/components/LibrarySetupWizard";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { cn } from "@/lib/utils";
 import type { Step } from "react-joyride";
 
 type SortMode = "recent" | "oldest" | "az" | "za";
@@ -66,6 +67,10 @@ export default function SongsPage() {
   const { user } = useAuth();
   const { wizardCompleted, librarySetupCompleted, markLibrarySetupDone, loading: prefsLoading } = useUserPreferences();
   const [search, setSearch] = useState("");
+  const voiceSearch = useVoiceSearch(useCallback((text: string) => {
+    setSearch(text);
+    toast.info(`Buscando: "${text}"`);
+  }, []));
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [formOpen, setFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<string | null>(null);
@@ -267,7 +272,28 @@ export default function SongsPage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
                 </div>
-                <VoiceSearchButton />
+                {isVoiceSupported && (
+                  <div className="relative">
+                    <Button
+                      size="icon"
+                      variant={voiceSearch.isListening ? "destructive" : "outline"}
+                      className={cn(
+                        "shrink-0 h-9 w-9 rounded-full transition-all",
+                        voiceSearch.isListening && "animate-pulse shadow-[0_0_12px_hsl(var(--destructive)/0.4)]"
+                      )}
+                      onClick={voiceSearch.toggle}
+                      title="Buscar por voz"
+                    >
+                      {voiceSearch.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                    {voiceSearch.isListening && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
                 <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">

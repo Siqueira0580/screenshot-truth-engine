@@ -22,6 +22,10 @@ const GENRE_TO_CATEGORY: Record<string, string> = {
   pagode: "Pagode",
   mpb: "MPB",
   forro: "Forró",
+  gospel: "Gospel",
+  eletronica: "Eletrônica",
+  reggae: "Reggae",
+  funk: "Funk",
 };
 
 function useDefaultGenre() {

@@ -242,19 +242,19 @@ export default function ProfilePage() {
                 <SelectValue placeholder="Selecione um estilo" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="pop">Pop</SelectItem>
-                <SelectItem value="rock">Rock</SelectItem>
-                <SelectItem value="sertanejo">Sertanejo</SelectItem>
-                <SelectItem value="worship">Worship</SelectItem>
-                <SelectItem value="samba">Samba</SelectItem>
-                <SelectItem value="pagode">Pagode</SelectItem>
-                <SelectItem value="mpb">MPB</SelectItem>
-                <SelectItem value="forro">Forró</SelectItem>
-                <SelectItem value="gospel">Gospel</SelectItem>
-                <SelectItem value="eletronica">Eletrônica</SelectItem>
-                <SelectItem value="reggae">Reggae</SelectItem>
-                <SelectItem value="funk">Funk</SelectItem>
+                <SelectItem value="todos">🎵 Todos</SelectItem>
+                <SelectItem value="pop">🎤 Pop</SelectItem>
+                <SelectItem value="rock">🎸 Rock</SelectItem>
+                <SelectItem value="sertanejo">🤠 Sertanejo</SelectItem>
+                <SelectItem value="worship">🙏 Worship</SelectItem>
+                <SelectItem value="samba">🥁 Samba</SelectItem>
+                <SelectItem value="pagode">🪘 Pagode</SelectItem>
+                <SelectItem value="mpb">🇧🇷 MPB</SelectItem>
+                <SelectItem value="forro">🪗 Forró</SelectItem>
+                <SelectItem value="gospel">✝️ Gospel</SelectItem>
+                <SelectItem value="eletronica">🎧 Eletrônica</SelectItem>
+                <SelectItem value="reggae">🟢 Reggae</SelectItem>
+                <SelectItem value="funk">🔊 Funk</SelectItem>
               </SelectContent>
             </Select>
           </div>

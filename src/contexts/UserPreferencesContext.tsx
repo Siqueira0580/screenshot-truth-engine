@@ -18,6 +18,7 @@ interface UserPreferencesProfile {
   favoriteStyles: string[];
   favoriteArtists: ArtistPref[];
   hasSeenWizard: boolean;
+  hasSeenRepertoireWizard: boolean;
 }
 
 interface UserPreferences {

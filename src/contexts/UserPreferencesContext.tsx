@@ -235,6 +235,17 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const setDefaultGenre = useCallback(async (genre: string) => {
+    setDefaultGenreState(genre);
+    setProfile((prev) => (prev ? { ...prev, defaultGenre: genre } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ default_genre: genre } as any)
+        .eq("id", user.id);
+    }
+  }, [user]);
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -251,6 +262,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         markWizardSeen,
         hasSeenRepertoireWizard,
         markRepertoireWizardSeen,
+        defaultGenre,
+        setDefaultGenre,
         loading,
       }}
     >

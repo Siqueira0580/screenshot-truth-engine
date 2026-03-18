@@ -22,6 +22,10 @@ const GENRE_TO_CATEGORY: Record<string, string> = {
   pagode: "Pagode",
   mpb: "MPB",
   forro: "Forró",
+  gospel: "Gospel",
+  eletronica: "Eletrônica",
+  reggae: "Reggae",
+  funk: "Funk",
 };
 
 function useDefaultGenre() {
@@ -127,7 +131,7 @@ export default function ExploreTab() {
 
   return (
     <div className="space-y-8">
-      <CategoryPills selected={activeCategory} onSelect={setCategory} />
+      <CategoryPills selected={activeCategory} onSelect={setCategory} defaultGenre={defaultCategory} />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">

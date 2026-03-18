@@ -137,8 +137,8 @@ Deno.serve(async (req) => {
     const result = extractChordContent(cifraHtml);
 
     if (!result || !result.content) {
-      console.log("Failed to extract content, falling back to AI");
-      return await fallbackToAI(query);
+      console.log("Failed to extract content from page");
+      return ok({ success: false, error: "Não foi possível extrair a cifra desta página." });
     }
 
     console.log("Extracted:", result.title, "-", result.artist);

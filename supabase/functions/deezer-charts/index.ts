@@ -12,6 +12,8 @@ const GENRE_MAP: Record<string, number> = {
   "Worship": 461,
   "Samba": 65,
   "Pagode": 65,
+  "MPB": 197,
+  "Forró": 466,
 };
 
 serve(async (req) => {

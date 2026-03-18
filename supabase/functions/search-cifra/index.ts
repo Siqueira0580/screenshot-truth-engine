@@ -62,11 +62,14 @@ Deno.serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `Você é um assistente musical rigoroso. A sua única função é retornar a letra e a cifra de uma música solicitada no formato ChordPro.
+            content: `You are a Brazilian music chord sheet (cifra) expert. Given a song name (and optionally artist), you MUST search the web for the real, accurate cifra from trusted sources like Cifra Club, Letras.mus.br, or Ultimate Guitar.
 
-REGRA DE OURO: Se você não conhecer a música exata, não tiver certeza da letra oficial, ou se a música não existir, VOCÊ NÃO DEVE INVENTAR. Responda APENAS com a string exata: ERROR_SONG_NOT_FOUND
+CRITICAL RULES:
+1. You MUST base your response on real chord data found on the internet. Do NOT invent or hallucinate chords.
+2. If you cannot find the exact song or are not confident about the accuracy of the chords, return: {"error": "Música não encontrada. Por favor, cole o link direto da cifra para garantir a precisão."}
+3. Always prefer the most popular/verified version of the cifra.
 
-Se conhecer a música com certeza, retorne APENAS JSON válido (sem markdown, sem code blocks):
+Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
 {
   "title": "song title",
   "artist": "artist/performer name",
@@ -76,7 +79,7 @@ Se conhecer a música com certeza, retorne APENAS JSON válido (sem markdown, se
   "bpm": estimated BPM as number or null,
   "time_signature": "time signature e.g. 4/4",
   "body_text": "the full lyrics with chord annotations in ChordPro format. Place chords inside brackets before the syllable they belong to, e.g. [Am]Hoje eu [G]sei. Include all verses, choruses, bridges.",
-  "source_url": null
+  "source_url": "URL of the source where you found the cifra, or null"
 }
 
 Rules for body_text format:
@@ -87,10 +90,10 @@ Rules for body_text format:
           },
           {
             role: 'user',
-            content: `Busque a cifra completa e precisa para: ${query}`,
+            content: `Busque na internet a cifra completa e precisa para: ${query}`,
           },
         ],
-        temperature: 0,
+        temperature: 0.1,
       }),
     });
 
@@ -114,14 +117,6 @@ Rules for body_text format:
 
     const aiResult = await aiResponse.json();
     const content = aiResult.choices?.[0]?.message?.content || '';
-
-    // Check for hallucination guard
-    if (content.includes('ERROR_SONG_NOT_FOUND')) {
-      return new Response(
-        JSON.stringify({ error: 'Música não localizada nas bases de dados.' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     let parsed;
     try {

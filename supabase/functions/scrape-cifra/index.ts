@@ -210,27 +210,26 @@ async function fallbackToAI(query: string, corsHeaders: Record<string, string>) 
         messages: [
           {
             role: "system",
-            content: `Você é um assistente musical rigoroso. A sua única função é retornar a letra e a cifra de uma música solicitada no formato ChordPro.
-
-REGRA DE OURO: Se você não conhecer a música exata, não tiver certeza da letra oficial, ou se a música não existir, VOCÊ NÃO DEVE INVENTAR. Responda APENAS com a string exata: ERROR_SONG_NOT_FOUND
-
-Se conhecer a música com certeza, retorne APENAS JSON válido (sem markdown):
+            content: `You are a Brazilian music chord sheet expert. Given a song query, return the cifra in ChordPro format.
+Return ONLY valid JSON (no markdown):
 {
-  "title": "título da música",
-  "artist": "artista",
-  "content": "letra completa com [acordes] no formato ChordPro",
-  "musical_key": "tonalidade ex: Am, C",
+  "title": "song title",
+  "artist": "artist name",
+  "content": "full lyrics with [chords] in ChordPro format",
+  "musical_key": "key e.g. Am, C",
   "source": "ai"
-}`,
+}
+If you can't find it, return: {"error": "Cifra não encontrada"}`,
           },
           { role: "user", content: `Busque a cifra para: ${query}` },
         ],
-        temperature: 0,
+        temperature: 0.1,
       }),
     });
 
     if (!aiResponse.ok) {
-      console.error("AI fallback error:", await aiResponse.text());
+      const text = await aiResponse.text();
+      console.error("AI fallback error:", text);
       return new Response(
         JSON.stringify({ error: "Cifra não encontrada." }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -239,15 +238,6 @@ Se conhecer a música com certeza, retorne APENAS JSON válido (sem markdown):
 
     const aiResult = await aiResponse.json();
     const content = aiResult.choices?.[0]?.message?.content || "";
-
-    // Check for hallucination guard
-    if (content.includes("ERROR_SONG_NOT_FOUND")) {
-      return new Response(
-        JSON.stringify({ error: "Música não localizada nas bases de dados." }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const jsonStr = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const parsed = JSON.parse(jsonStr);
 

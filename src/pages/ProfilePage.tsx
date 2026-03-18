@@ -41,6 +41,7 @@ export default function ProfilePage() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [defaultGenre, setDefaultGenre] = useState("todos");
 
   useEffect(() => {
     if (!user) return;

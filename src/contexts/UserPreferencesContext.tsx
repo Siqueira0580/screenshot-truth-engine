@@ -19,6 +19,7 @@ interface UserPreferencesProfile {
   favoriteArtists: ArtistPref[];
   hasSeenWizard: boolean;
   hasSeenRepertoireWizard: boolean;
+  defaultGenre: string;
 }
 
 interface UserPreferences {
@@ -35,6 +36,8 @@ interface UserPreferences {
   markWizardSeen: () => Promise<void>;
   hasSeenRepertoireWizard: boolean;
   markRepertoireWizardSeen: () => Promise<void>;
+  defaultGenre: string;
+  setDefaultGenre: (genre: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -52,6 +55,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   markWizardSeen: async () => {},
   hasSeenRepertoireWizard: true,
   markRepertoireWizardSeen: async () => {},
+  defaultGenre: "todos",
+  setDefaultGenre: async () => {},
   loading: true,
 });
 

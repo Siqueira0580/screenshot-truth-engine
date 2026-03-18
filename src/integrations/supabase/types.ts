@@ -659,6 +659,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_setlist: {
+        Args: { p_token: string }
+        Returns: {
+          end_time: string
+          id: string
+          is_public: boolean
+          musicians: Json
+          name: string
+          show_date: string
+          start_time: string
+        }[]
+      }
       get_public_setlist_items: {
         Args: { p_token: string }
         Returns: {

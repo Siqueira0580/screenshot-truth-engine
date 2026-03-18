@@ -45,6 +45,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   favoriteArtists: [],
   saveWizardPreferences: async () => {},
   markLibrarySetupDone: () => {},
+  hasSeenWizard: true,
+  markWizardSeen: async () => {},
   loading: true,
 });
 

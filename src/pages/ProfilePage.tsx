@@ -251,6 +251,10 @@ export default function ProfilePage() {
                 <SelectItem value="pagode">Pagode</SelectItem>
                 <SelectItem value="mpb">MPB</SelectItem>
                 <SelectItem value="forro">Forró</SelectItem>
+                <SelectItem value="gospel">Gospel</SelectItem>
+                <SelectItem value="eletronica">Eletrônica</SelectItem>
+                <SelectItem value="reggae">Reggae</SelectItem>
+                <SelectItem value="funk">Funk</SelectItem>
               </SelectContent>
             </Select>
           </div>

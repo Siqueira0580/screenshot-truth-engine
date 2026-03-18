@@ -50,6 +50,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   markLibrarySetupDone: () => {},
   hasSeenWizard: true,
   markWizardSeen: async () => {},
+  hasSeenRepertoireWizard: true,
+  markRepertoireWizardSeen: async () => {},
   loading: true,
 });
 

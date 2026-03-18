@@ -65,6 +65,7 @@ export default function ProfilePage() {
     setFirstName(data.first_name || "");
     setLastName(data.last_name || "");
     setPhone(data.phone || "");
+    setDefaultGenre(data.default_genre || "todos");
     setLoading(false);
   }
 

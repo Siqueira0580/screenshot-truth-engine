@@ -35,6 +35,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminRoute from "@/components/AdminRoute";
 import PricingPage from "@/pages/PricingPage";
+import CommunityPage from "@/pages/CommunityPage";
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
 import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";
@@ -92,6 +93,7 @@ const App = () => (
                   <Route path="/setlists" element={<SetlistsPage />} />
                   <Route path="/setlists/:id" element={<SetlistDetailPage />} />
                   <Route path="/artists" element={<ArtistsPage />} />
+                  <Route path="/community" element={<CommunityPage />} />
                   <Route path="/studio" element={<StudioPage />} />
                   <Route path="/studio/:songId" element={<StudioDetailPage />} />
                   <Route path="/compositions" element={<CompositionsHomePage />} />

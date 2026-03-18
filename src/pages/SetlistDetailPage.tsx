@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock, Mic, MicOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -42,6 +42,7 @@ import ScreenSharePanel from "@/components/ScreenSharePanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useVoiceSearch, isVoiceSupported } from "@/hooks/useVoiceSearch";
 
 const CHROMATIC_ORDER = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 function chromaticIndex(key: string | null | undefined): number {
@@ -217,6 +218,11 @@ export default function SetlistDetailPage() {
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
 
   const queryClient = useQueryClient();
+
+  // Voice search for Add Song dialog
+  const voiceSearch = useVoiceSearch(useCallback((text: string) => {
+    setSearch(text);
+  }, []));
 
   const { user } = useAuth();
 
@@ -807,7 +813,31 @@ export default function SetlistDetailPage() {
           <Dialog open={addOpen} onOpenChange={(open) => { setAddOpen(open); if (!open) { setSearch(""); setSelectedGenres([]); } }}>
             <DialogContent className="max-h-[80vh] flex flex-col">
               <DialogHeader><DialogTitle>Adicionar Música</DialogTitle></DialogHeader>
-              <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Buscar por título ou artista..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="flex-1"
+                />
+                {isVoiceSupported && (
+                  <Button
+                    size="icon"
+                    variant={voiceSearch.isListening ? "destructive" : "outline"}
+                    className={cn(
+                      "shrink-0 h-10 w-10 rounded-full transition-all",
+                      voiceSearch.isListening && "animate-pulse shadow-[0_0_12px_hsl(var(--destructive)/0.4)]"
+                    )}
+                    onClick={voiceSearch.toggle}
+                    title="Buscar por voz"
+                  >
+                    {voiceSearch.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  </Button>
+                )}
+              </div>
+              {voiceSearch.isListening && (
+                <p className="text-xs text-muted-foreground animate-pulse">🎙️ Fale o nome da música...</p>
+              )}
               <div className="flex flex-wrap gap-2 w-full mt-3 mb-4">
                 {["Samba", "Pagode", "Sertanejo", "Funk", "Worship", "Gospel", "Rock", "Pop", "MPB", "Bossa Nova", "Forró", "Axé", "Reggae"].map((genre) => (
                   <button
@@ -825,21 +855,46 @@ export default function SetlistDetailPage() {
                 ))}
               </div>
               <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
-                {availableSongs.length === 0 ? (
+                {search.trim() && availableSongs.length === 0 ? (
+                  <div className="text-center py-8 space-y-2">
+                    <p className="text-sm text-muted-foreground">Nenhuma música encontrada</p>
+                    <p className="text-xs text-muted-foreground">Adicione-a primeiro na página de Músicas.</p>
+                  </div>
+                ) : availableSongs.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">Nenhuma música disponível</p>
                 ) : (
-                  availableSongs.map((song) => (
-                    <button key={song.id} onClick={() => addMutation.mutate(song.id)} className="w-full flex items-center gap-3 rounded-lg p-3 text-left hover:bg-secondary transition-colors">
-                      <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{song.title}</p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {song.artist} {song.musical_key && `· ${song.musical_key}`}
-                          {song.style && <span className="ml-1 text-xs opacity-60">• {song.style}</span>}
-                        </p>
+                  <>
+                    {search.trim() && availableSongs.length === 1 && (
+                      <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-2 mb-2">
+                        <Music2 className="h-4 w-4 text-primary" />
+                        <span className="text-xs text-primary font-medium flex-1">
+                          Música "{availableSongs[0].title}" encontrada!
+                        </span>
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs gap-1"
+                          onClick={() => {
+                            addMutation.mutate(availableSongs[0].id);
+                            setSearch("");
+                          }}
+                        >
+                          <Plus className="h-3 w-3" /> Adicionar
+                        </Button>
                       </div>
-                    </button>
-                  ))
+                    )}
+                    {availableSongs.map((song) => (
+                      <button key={song.id} onClick={() => addMutation.mutate(song.id)} className="w-full flex items-center gap-3 rounded-lg p-3 text-left hover:bg-secondary transition-colors">
+                        <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate">{song.title}</p>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {song.artist} {song.musical_key && `· ${song.musical_key}`}
+                            {song.style && <span className="ml-1 text-xs opacity-60">• {song.style}</span>}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </>
                 )}
               </div>
             </DialogContent>

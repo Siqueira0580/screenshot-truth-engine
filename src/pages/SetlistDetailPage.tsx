@@ -220,18 +220,17 @@ export default function SetlistDetailPage() {
   const queryClient = useQueryClient();
 
   // Voice search for Add Song dialog
+  const allSongsRef = useRef<any[]>([]);
   const voiceSearch = useVoiceSearch(useCallback((text: string) => {
     setSearch(text);
-  }, []));
-
-  // Show toast when voice search finds no results
-  const prevSearchRef = useRef("");
-  useEffect(() => {
-    if (search && search !== prevSearchRef.current && prevSearchRef.current !== search) {
-      // Check if this was set by voice (voiceSearch just finished)
+    const term = text.toLowerCase();
+    const matches = allSongsRef.current.filter(
+      (s: any) => s.title.toLowerCase().includes(term) || (s.artist && s.artist.toLowerCase().includes(term))
+    );
+    if (matches.length === 0) {
+      toast.warning("Música não encontrada no seu estúdio. Adicione-a primeiro na página de Músicas.");
     }
-    prevSearchRef.current = search;
-  }, [search]);
+  }, []));
 
   const { user } = useAuth();
 

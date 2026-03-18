@@ -215,6 +215,17 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const markRepertoireWizardSeen = useCallback(async () => {
+    setHasSeenRepertoireWizard(true);
+    setProfile((prev) => (prev ? { ...prev, hasSeenRepertoireWizard: true } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ has_seen_repertoire_wizard: true } as any)
+        .eq("id", user.id);
+    }
+  }, [user]);
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -229,6 +240,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         markLibrarySetupDone,
         hasSeenWizard,
         markWizardSeen,
+        hasSeenRepertoireWizard,
+        markRepertoireWizardSeen,
         loading,
       }}
     >

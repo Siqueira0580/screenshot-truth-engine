@@ -987,6 +987,14 @@ export default function SetlistDetailPage() {
         onClose={() => setTeleprompterOpen(false)}
         autoHideControls={autoHideControls}
       />
+
+      <RepertoireWizard
+        open={showRepertoireWizard}
+        onComplete={() => {
+          setShowRepertoireWizard(false);
+          markRepertoireWizardSeen();
+        }}
+      />
     </div>
   );
 }

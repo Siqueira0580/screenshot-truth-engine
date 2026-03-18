@@ -594,9 +594,9 @@ export default function SetlistDetailPage() {
             <div className="flex items-center gap-2">
               {isPublic ? <Globe className="h-4 w-4 text-primary" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
               <div>
-                <p className="text-sm font-semibold">Compartilhar Repertório</p>
+                <p className="text-sm font-semibold">Publicar na Comunidade</p>
                 <p className="text-xs text-muted-foreground">
-                  {isPublic ? "Qualquer pessoa com o link pode visualizar" : "Apenas você pode ver este repertório"}
+                  {isPublic ? "Visível para todos na aba Explorar e via link" : "Apenas você pode ver este repertório"}
                 </p>
               </div>
             </div>

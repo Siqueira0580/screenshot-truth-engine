@@ -700,6 +700,23 @@ export default function SetlistDetailPage() {
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" /><span className="hidden sm:inline ml-1">Adicionar</span>
           </Button>
+          {isVoiceSupported && (
+            <Button
+              size="icon"
+              variant={voiceSearch.isListening ? "destructive" : "outline"}
+              className={cn(
+                "shrink-0 h-10 w-10 rounded-full transition-all",
+                voiceSearch.isListening && "animate-pulse shadow-[0_0_12px_hsl(var(--destructive)/0.4)]"
+              )}
+              onClick={() => {
+                if (!addOpen) setAddOpen(true);
+                voiceSearch.toggle();
+              }}
+              title="Buscar por voz"
+            >
+              {voiceSearch.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </Button>
+          )}
         </div>
       )}
 

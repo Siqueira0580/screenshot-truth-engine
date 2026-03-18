@@ -115,6 +115,14 @@ Rules for body_text format:
     const aiResult = await aiResponse.json();
     const content = aiResult.choices?.[0]?.message?.content || '';
 
+    // Check for hallucination guard
+    if (content.includes('ERROR_SONG_NOT_FOUND')) {
+      return new Response(
+        JSON.stringify({ error: 'Música não localizada nas bases de dados.' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     let parsed;
     try {
       const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();

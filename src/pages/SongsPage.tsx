@@ -24,6 +24,7 @@ import LibrarySetupWizard from "@/components/LibrarySetupWizard";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { cn } from "@/lib/utils";
 import type { Step } from "react-joyride";
 
 type SortMode = "recent" | "oldest" | "az" | "za";

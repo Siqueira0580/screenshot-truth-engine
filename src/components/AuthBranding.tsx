@@ -1,4 +1,4 @@
-import smartCifraLogo from "@/assets/smart-cifra-logo.png";
+import smartCifraLogo from "@/assets/smart-cifra-logo.webp";
 
 interface AuthBrandingProps {
   subtitle?: string;

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Music, Sparkles, Zap, ListMusic, Import, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import smartCifraLogo from "@/assets/smart-cifra-logo.png";
+import smartCifraLogo from "@/assets/smart-cifra-logo.webp";
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 30 },

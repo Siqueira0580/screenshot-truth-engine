@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import smartCifraLogo from "@/assets/smart-cifra-logo.png";
+import smartCifraLogo from "@/assets/smart-cifra-logo.webp";
 
 export default function PublicLayout() {
   return (

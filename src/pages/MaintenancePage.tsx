@@ -1,7 +1,7 @@
 import { Wrench, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import smartCifraLogo from "@/assets/smart-cifra-logo.png";
+import smartCifraLogo from "@/assets/smart-cifra-logo.webp";
 
 export default function MaintenancePage() {
   const { user, signOut } = useAuth();

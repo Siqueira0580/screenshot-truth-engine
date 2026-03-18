@@ -37,8 +37,18 @@ export default function VoiceSearchButton() {
       });
 
       if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-      if (!data?.title) throw new Error("Cifra não encontrada");
+      if (data?.error) {
+        toast.warning("Não conseguimos localizar esta música. Tente falar o nome do artista junto com o nome da música.");
+        setState("idle");
+        setTranscript("");
+        return;
+      }
+      if (!data?.title) {
+        toast.warning("Não conseguimos localizar esta música. Tente falar o nome do artista junto com o nome da música.");
+        setState("idle");
+        setTranscript("");
+        return;
+      }
 
       setState("importing");
 

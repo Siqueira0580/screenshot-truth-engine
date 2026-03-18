@@ -2,6 +2,7 @@ import { useRef, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText } from "lucide-react";
+import VoiceSearchButton from "@/components/VoiceSearchButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -261,9 +262,12 @@ export default function SongsPage() {
             </div>
 
             <div id="tour-search" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
+              <div className="relative flex-1 flex items-center gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
+                </div>
+                <VoiceSearchButton />
               </div>
               <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
                 <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">

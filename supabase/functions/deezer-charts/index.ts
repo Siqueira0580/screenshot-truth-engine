@@ -14,6 +14,10 @@ const GENRE_MAP: Record<string, number> = {
   "Pagode": 65,
   "MPB": 197,
   "Forró": 466,
+  "Gospel": 461,
+  "Eletrônica": 106,
+  "Reggae": 144,
+  "Funk": 197,
 };
 
 serve(async (req) => {

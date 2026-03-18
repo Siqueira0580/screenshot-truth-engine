@@ -113,8 +113,8 @@ Deno.serve(async (req) => {
     }
 
     if (!cifraUrl) {
-      console.log("No direct link found, falling back to AI");
-      return await fallbackToAI(query);
+      console.log("No direct link found");
+      return ok({ success: false, error: "Música não localizada no Cifra Club." });
     }
 
     console.log("Found cifra URL:", cifraUrl);

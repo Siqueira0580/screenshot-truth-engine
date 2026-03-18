@@ -95,7 +95,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")
+          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard")
           .eq("id", user.id)
           .single();
 

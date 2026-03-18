@@ -261,6 +261,32 @@ export default function AppLayout() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
+                    <Home className="h-4 w-4" />
+                    Estilo da Home
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuPortal>
+                    <DropdownMenuSubContent className="max-h-64 overflow-y-auto">
+                      {GENRE_OPTIONS.map((g) => (
+                        <DropdownMenuItem
+                          key={g.value}
+                          className={cn("cursor-pointer", defaultGenre === g.value && "bg-primary/10 text-primary font-semibold")}
+                          onClick={async () => {
+                            await setDefaultGenre(g.value);
+                            toast.success(`Estilo atualizado para ${g.label.replace(/^\S+\s/, "")}!`);
+                            if (location.pathname === "/songs" || location.pathname === "/") {
+                              window.location.reload();
+                            }
+                          }}
+                        >
+                          {g.label}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuPortal>
+                </DropdownMenuSub>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
                     await signOut();

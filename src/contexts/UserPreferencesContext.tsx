@@ -77,6 +77,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       setLibrarySetupCompleted(false);
       setFavoriteStyles([]);
       setFavoriteArtists([]);
+      setHasSeenWizard(true);
       setIsFetchingProfile(false);
       return;
     }

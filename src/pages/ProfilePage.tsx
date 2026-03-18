@@ -79,6 +79,7 @@ export default function ProfilePage() {
         first_name: firstName.trim() || null,
         last_name: lastName.trim() || null,
         phone: phone.trim() || null,
+        default_genre: defaultGenre,
       })
       .eq("id", user.id);
 

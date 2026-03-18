@@ -67,6 +67,10 @@ export default function SongsPage() {
   const { user } = useAuth();
   const { wizardCompleted, librarySetupCompleted, markLibrarySetupDone, loading: prefsLoading } = useUserPreferences();
   const [search, setSearch] = useState("");
+  const voiceSearch = useVoiceSearch(useCallback((text: string) => {
+    setSearch(text);
+    toast.info(`Buscando: "${text}"`);
+  }, []));
   const [sortMode, setSortMode] = useState<SortMode>("recent");
   const [formOpen, setFormOpen] = useState(false);
   const [editingSong, setEditingSong] = useState<string | null>(null);

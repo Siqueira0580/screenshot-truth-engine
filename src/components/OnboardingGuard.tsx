@@ -2,10 +2,11 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import OnboardingWizard from "@/components/OnboardingWizard";
 
 export default function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { user, loading: authLoading } = useAuth();
-  const { profile, loading: prefsLoading } = useUserPreferences();
+  const { profile, loading: prefsLoading, hasSeenWizard, markWizardSeen } = useUserPreferences();
   const { loading: roleLoading } = useUserRole();
 
   const isLoading = authLoading || prefsLoading || (user ? roleLoading : false);
@@ -18,5 +19,12 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {user && profile && !hasSeenWizard && (
+        <OnboardingWizard open={true} onComplete={markWizardSeen} />
+      )}
+    </>
+  );
 }

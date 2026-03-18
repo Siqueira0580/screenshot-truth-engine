@@ -17,6 +17,7 @@ interface UserPreferencesProfile {
   librarySetupCompleted: boolean;
   favoriteStyles: string[];
   favoriteArtists: ArtistPref[];
+  hasSeenWizard: boolean;
 }
 
 interface UserPreferences {
@@ -29,6 +30,8 @@ interface UserPreferences {
   favoriteArtists: ArtistPref[];
   saveWizardPreferences: (styles: string[], artists: ArtistPref[], skipped?: boolean) => Promise<void>;
   markLibrarySetupDone: () => void;
+  hasSeenWizard: boolean;
+  markWizardSeen: () => Promise<void>;
   loading: boolean;
 }
 
@@ -42,6 +45,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   favoriteArtists: [],
   saveWizardPreferences: async () => {},
   markLibrarySetupDone: () => {},
+  hasSeenWizard: true,
+  markWizardSeen: async () => {},
   loading: true,
 });
 
@@ -55,6 +60,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const [librarySetupCompleted, setLibrarySetupCompleted] = useState(false);
   const [favoriteStyles, setFavoriteStyles] = useState<string[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<ArtistPref[]>([]);
+  const [hasSeenWizard, setHasSeenWizard] = useState(true);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
 
   const activeProfile = user && profile?.id === user.id ? profile : null;
@@ -71,6 +77,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       setLibrarySetupCompleted(false);
       setFavoriteStyles([]);
       setFavoriteArtists([]);
+      setHasSeenWizard(true);
       setIsFetchingProfile(false);
       return;
     }
@@ -88,7 +95,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists")
+          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard")
           .eq("id", user.id)
           .single();
 
@@ -98,6 +105,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const nextFavoriteStyles = ((data as any).favorite_styles as string[]) || [];
         const artists = (data as any).favorite_artists;
         const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
+        const nextHasSeenWizard = !!(data as any).has_seen_wizard;
         const nextProfile: UserPreferencesProfile = {
           id: user.id,
           preferredInstrument: nextPreferredInstrument,
@@ -105,6 +113,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           librarySetupCompleted: !!(data as any).library_setup_completed,
           favoriteStyles: nextFavoriteStyles,
           favoriteArtists: nextFavoriteArtists,
+          hasSeenWizard: nextHasSeenWizard,
         };
 
         setProfile(nextProfile);
@@ -113,6 +122,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setLibrarySetupCompleted(nextProfile.librarySetupCompleted);
         setFavoriteStyles(nextProfile.favoriteStyles);
         setFavoriteArtists(nextProfile.favoriteArtists);
+        setHasSeenWizard(nextHasSeenWizard);
       } finally {
         if (!cancelled) {
           setIsFetchingProfile(false);
@@ -185,6 +195,17 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     setProfile((prev) => (prev ? { ...prev, librarySetupCompleted: true } : prev));
   }, []);
 
+  const markWizardSeen = useCallback(async () => {
+    setHasSeenWizard(true);
+    setProfile((prev) => (prev ? { ...prev, hasSeenWizard: true } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ has_seen_wizard: true } as any)
+        .eq("id", user.id);
+    }
+  }, [user]);
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -197,6 +218,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         favoriteArtists,
         saveWizardPreferences,
         markLibrarySetupDone,
+        hasSeenWizard,
+        markWizardSeen,
         loading,
       }}
     >

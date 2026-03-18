@@ -350,6 +350,7 @@ export type Database = {
           favorite_artists: Json | null
           favorite_styles: string[] | null
           first_name: string | null
+          has_seen_repertoire_wizard: boolean | null
           has_seen_wizard: boolean | null
           id: string
           last_name: string | null
@@ -371,6 +372,7 @@ export type Database = {
           favorite_artists?: Json | null
           favorite_styles?: string[] | null
           first_name?: string | null
+          has_seen_repertoire_wizard?: boolean | null
           has_seen_wizard?: boolean | null
           id: string
           last_name?: string | null
@@ -392,6 +394,7 @@ export type Database = {
           favorite_artists?: Json | null
           favorite_styles?: string[] | null
           first_name?: string | null
+          has_seen_repertoire_wizard?: boolean | null
           has_seen_wizard?: boolean | null
           id?: string
           last_name?: string | null

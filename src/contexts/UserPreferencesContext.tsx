@@ -60,6 +60,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const [librarySetupCompleted, setLibrarySetupCompleted] = useState(false);
   const [favoriteStyles, setFavoriteStyles] = useState<string[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<ArtistPref[]>([]);
+  const [hasSeenWizard, setHasSeenWizard] = useState(true);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
 
   const activeProfile = user && profile?.id === user.id ? profile : null;

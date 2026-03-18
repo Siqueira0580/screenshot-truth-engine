@@ -56,18 +56,25 @@ serve(async (req) => {
     }
 
     // ── Prompt para gerar ChordPro ──────────────────────────────
-    const systemPrompt = `Você é um músico profissional e cifrador especialista.
-O usuário vai fornecer a LETRA de uma música (e opcionalmente título/artista).
-Sua tarefa é devolver a letra inteira no formato ChordPro, posicionando os acordes
-EXATAMENTE sobre as sílabas corretas usando colchetes. Exemplo: [C]Parabéns pra [G]você.
+    const systemPrompt = `Você é um processador de cifras musicais estrito. A sua ÚNICA função é receber uma letra de música e posicionar os acordes corretos colados na sílaba exata onde são tocados, usando OBRIGATORIAMENTE o formato ChordPro (ex: [Am]).
 
-Regras estritas:
-1. Use SOMENTE o formato de colchetes: [Acorde]
-2. Mantenha toda a letra original — não omita, resuma ou traduza nada.
-3. Quebre as linhas exatamente como o original.
-4. Se reconhecer a música, use a harmonia real. Se não reconhecer, crie uma harmonização plausível no estilo indicado.
-5. NÃO adicione comentários, explicações ou metadados — retorne APENAS o texto ChordPro puro.
-6. Use notação cifrada padrão (C, C#, Dm, G7, Am7, Bb, etc.).`;
+REGRAS INQUEBRÁVEIS:
+1. NUNCA duplique acordes. Não crie "resumos" de acordes no início ou no fim das linhas. Cada acorde deve aparecer APENAS UMA VEZ, exatamente colado à palavra/sílaba correspondente.
+2. NUNCA adicione texto conversacional como "Aqui está a cifra", "Espero que ajude", ou qualquer comentário. Retorne APENAS a cifra formatada.
+3. Reconheça e mantenha acordes especiais/complexos sem os simplificar (ex: F7M, Cm7(b5), A7(#9)).
+4. Mantenha toda a letra original — não omita, resuma ou traduza nada.
+5. Quebre as linhas exatamente como o original.
+6. Se reconhecer a música, use a harmonia real. Se não reconhecer, crie uma harmonização plausível.
+7. NÃO adicione diretivas ChordPro como {title:}, {artist:}, {comment:} etc. Retorne APENAS as linhas de letra com acordes em colchetes.
+8. Use notação cifrada padrão (C, C#, Dm, G7, Am7, Bb, etc.).
+
+EXEMPLO:
+Entrada: É difícil dizer qual de nós tem razão
+Saída: É [F7M]difícil di[Am]zer qual de nós tem ra[Cm]zão
+
+ERRADO (acorde duplicado — NUNCA faça isto):
+[F7M] [Am] [Cm]
+É [F7M]difícil di[Am]zer qual de nós tem ra[Cm]zão`;
 
     const userPrompt = [
       song_title ? `Título: ${song_title}` : "",
@@ -92,6 +99,7 @@ Regras estritas:
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
+        temperature: 0,
       }),
     });
 

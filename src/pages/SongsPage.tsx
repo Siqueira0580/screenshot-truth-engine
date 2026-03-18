@@ -272,7 +272,28 @@ export default function SongsPage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
                 </div>
-                <VoiceSearchButton />
+                {isVoiceSupported && (
+                  <div className="relative">
+                    <Button
+                      size="icon"
+                      variant={voiceSearch.isListening ? "destructive" : "outline"}
+                      className={cn(
+                        "shrink-0 h-9 w-9 rounded-full transition-all",
+                        voiceSearch.isListening && "animate-pulse shadow-[0_0_12px_hsl(var(--destructive)/0.4)]"
+                      )}
+                      onClick={voiceSearch.toggle}
+                      title="Buscar por voz"
+                    >
+                      {voiceSearch.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                    {voiceSearch.isListening && (
+                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
                 <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">

@@ -18,6 +18,7 @@ interface UserPreferencesProfile {
   favoriteStyles: string[];
   favoriteArtists: ArtistPref[];
   hasSeenWizard: boolean;
+  hasSeenRepertoireWizard: boolean;
 }
 
 interface UserPreferences {
@@ -32,6 +33,8 @@ interface UserPreferences {
   markLibrarySetupDone: () => void;
   hasSeenWizard: boolean;
   markWizardSeen: () => Promise<void>;
+  hasSeenRepertoireWizard: boolean;
+  markRepertoireWizardSeen: () => Promise<void>;
   loading: boolean;
 }
 
@@ -47,6 +50,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   markLibrarySetupDone: () => {},
   hasSeenWizard: true,
   markWizardSeen: async () => {},
+  hasSeenRepertoireWizard: true,
+  markRepertoireWizardSeen: async () => {},
   loading: true,
 });
 
@@ -61,6 +66,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const [favoriteStyles, setFavoriteStyles] = useState<string[]>([]);
   const [favoriteArtists, setFavoriteArtists] = useState<ArtistPref[]>([]);
   const [hasSeenWizard, setHasSeenWizard] = useState(true);
+  const [hasSeenRepertoireWizard, setHasSeenRepertoireWizard] = useState(true);
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
 
   const activeProfile = user && profile?.id === user.id ? profile : null;
@@ -95,7 +101,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard")
+          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard, has_seen_repertoire_wizard")
           .eq("id", user.id)
           .single();
 
@@ -106,6 +112,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const artists = (data as any).favorite_artists;
         const nextFavoriteArtists = Array.isArray(artists) ? artists : [];
         const nextHasSeenWizard = !!(data as any).has_seen_wizard;
+        const nextHasSeenRepertoireWizard = !!(data as any).has_seen_repertoire_wizard;
         const nextProfile: UserPreferencesProfile = {
           id: user.id,
           preferredInstrument: nextPreferredInstrument,
@@ -114,6 +121,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           favoriteStyles: nextFavoriteStyles,
           favoriteArtists: nextFavoriteArtists,
           hasSeenWizard: nextHasSeenWizard,
+          hasSeenRepertoireWizard: nextHasSeenRepertoireWizard,
         };
 
         setProfile(nextProfile);
@@ -123,6 +131,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setFavoriteStyles(nextProfile.favoriteStyles);
         setFavoriteArtists(nextProfile.favoriteArtists);
         setHasSeenWizard(nextHasSeenWizard);
+        setHasSeenRepertoireWizard(nextHasSeenRepertoireWizard);
       } finally {
         if (!cancelled) {
           setIsFetchingProfile(false);
@@ -206,6 +215,17 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const markRepertoireWizardSeen = useCallback(async () => {
+    setHasSeenRepertoireWizard(true);
+    setProfile((prev) => (prev ? { ...prev, hasSeenRepertoireWizard: true } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ has_seen_repertoire_wizard: true } as any)
+        .eq("id", user.id);
+    }
+  }, [user]);
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -220,6 +240,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         markLibrarySetupDone,
         hasSeenWizard,
         markWizardSeen,
+        hasSeenRepertoireWizard,
+        markRepertoireWizardSeen,
         loading,
       }}
     >

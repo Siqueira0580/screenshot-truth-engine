@@ -43,6 +43,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useVoiceSearch, isVoiceSupported } from "@/hooks/useVoiceSearch";
+import RepertoireWizard from "@/components/RepertoireWizard";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 const CHROMATIC_ORDER = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"];
 function chromaticIndex(key: string | null | undefined): number {
@@ -216,6 +218,15 @@ export default function SetlistDetailPage() {
   const [selectedSongs, setSelectedSongs] = useState<Set<string>>(new Set());
   const [globalSelectedSongs, setGlobalSelectedSongs] = useState<Set<string>>(new Set());
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
+  const { hasSeenRepertoireWizard, markRepertoireWizardSeen, loading: prefsLoading } = useUserPreferences();
+  const [showRepertoireWizard, setShowRepertoireWizard] = useState(false);
+
+  useEffect(() => {
+    if (!prefsLoading && !hasSeenRepertoireWizard) {
+      const timer = setTimeout(() => setShowRepertoireWizard(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [prefsLoading, hasSeenRepertoireWizard]);
 
   const queryClient = useQueryClient();
 
@@ -975,6 +986,14 @@ export default function SetlistDetailPage() {
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
         autoHideControls={autoHideControls}
+      />
+
+      <RepertoireWizard
+        open={showRepertoireWizard}
+        onComplete={() => {
+          setShowRepertoireWizard(false);
+          markRepertoireWizardSeen();
+        }}
       />
     </div>
   );

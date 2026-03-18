@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.generate-lyrics]
 verify_jwt = false
+
+[functions.scrape-cifra]
+verify_jwt = false

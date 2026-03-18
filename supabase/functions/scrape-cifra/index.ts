@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
 
     if (!cifraResp.ok) {
       console.error("Cifra page failed:", cifraResp.status);
-      return await fallbackToAI(query);
+      return ok({ success: false, error: "Não foi possível aceder à página da cifra." });
     }
 
     const cifraHtml = await cifraResp.text();

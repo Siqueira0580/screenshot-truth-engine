@@ -36,6 +36,8 @@ import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminRoute from "@/components/AdminRoute";
 import PricingPage from "@/pages/PricingPage";
 import CommunityPage from "@/pages/CommunityPage";
+import MessagesPage from "@/pages/MessagesPage";
+import ChatPage from "@/pages/ChatPage";
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
 import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";

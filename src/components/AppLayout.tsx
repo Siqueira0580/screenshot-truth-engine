@@ -44,14 +44,17 @@ const GENRE_OPTIONS = [
 ];
 
 const navItems = [
-  { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false },
-  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false, vipArea: false },
-  { to: "/community", icon: Globe, label: "Explorar", proOnly: false, vipArea: false },
-  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", proOnly: false, vipArea: false },
-  { to: "/artists", icon: Users, label: "Artistas", proOnly: false, vipArea: false },
-  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true, vipArea: true },
-  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true, vipArea: true },
+  { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false, mobileBottom: true },
+  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false, vipArea: false, mobileBottom: true },
+  { to: "/community", icon: Globe, label: "Explorar", proOnly: false, vipArea: false, mobileBottom: false },
+  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", proOnly: false, vipArea: false, mobileBottom: false },
+  { to: "/artists", icon: Users, label: "Artistas", proOnly: false, vipArea: false, mobileBottom: true },
+  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true, vipArea: true, mobileBottom: true },
+  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true, vipArea: true, mobileBottom: true },
 ];
+
+const mobileBottomItems = navItems.filter(i => i.mobileBottom);
+const mobileHeaderItems = navItems.filter(i => !i.mobileBottom);
 
 export default function AppLayout() {
   const { user, signOut } = useAuth();

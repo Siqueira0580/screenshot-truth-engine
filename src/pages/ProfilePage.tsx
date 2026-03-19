@@ -42,6 +42,8 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [defaultGenre, setDefaultGenre] = useState("todos");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
 
   useEffect(() => {
     if (!user) return;

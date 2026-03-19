@@ -236,6 +236,35 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <Label>E-mail</Label>
             <Input value={user?.email || ""} disabled className="opacity-60" />
+           </div>
+
+          {/* Redes Sociais */}
+          <div className="space-y-2">
+            <Label htmlFor="instagramUrl" className="flex items-center gap-1.5">
+              <Instagram className="h-4 w-4 text-primary" />
+              Link do Instagram
+            </Label>
+            <Input
+              id="instagramUrl"
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              placeholder="https://instagram.com/seu_perfil"
+              maxLength={255}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="facebookUrl" className="flex items-center gap-1.5">
+              <Facebook className="h-4 w-4 text-primary" />
+              Link do Facebook
+            </Label>
+            <Input
+              id="facebookUrl"
+              value={facebookUrl}
+              onChange={(e) => setFacebookUrl(e.target.value)}
+              placeholder="https://facebook.com/seu_perfil"
+              maxLength={255}
+            />
           </div>
 
           <div className="space-y-2">

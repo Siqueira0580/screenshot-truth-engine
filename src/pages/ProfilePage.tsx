@@ -68,6 +68,8 @@ export default function ProfilePage() {
     setLastName(data.last_name || "");
     setPhone(data.phone || "");
     setDefaultGenre(data.default_genre || "todos");
+    setInstagramUrl(data.instagram_url || "");
+    setFacebookUrl(data.facebook_url || "");
     setLoading(false);
   }
 

@@ -84,6 +84,8 @@ export default function ProfilePage() {
         last_name: lastName.trim() || null,
         phone: phone.trim() || null,
         default_genre: defaultGenre,
+        instagram_url: instagramUrl.trim() || null,
+        facebook_url: facebookUrl.trim() || null,
       })
       .eq("id", user.id);
 

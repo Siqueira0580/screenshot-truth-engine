@@ -297,20 +297,22 @@ export default function CommunityPage() {
                       {commentCount > 0 && <span className="text-xs font-medium">{commentCount}</span>}
                     </Button>
 
-                    {/* Message button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                          onClick={() => toast.info("Funcionalidade de bate-papo interno chegando em breve!")}
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Enviar mensagem</TooltipContent>
-                    </Tooltip>
+                    {/* Message button — hide if author is current user */}
+                    {user && setlist.user_id !== user.id && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                            onClick={() => navigate(`/mensagens/${setlist.user_id}`)}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Enviar mensagem</TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
 
                   {/* Social links */}

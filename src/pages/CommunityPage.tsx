@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Globe, Music2, CalendarDays, Search, Heart, MessageCircle, Send,
-  Instagram, Facebook, Megaphone, Trash2,
+  Instagram, Facebook, Megaphone, MoreHorizontal, Pencil, Trash2,
+  ShieldAlert, Ban, Youtube,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,11 +16,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import CommentsSheet from "@/components/CommentsSheet";
 import CommunityRulesModal from "@/components/CommunityRulesModal";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
+import YouTubeMiniPlayer from "@/components/YouTubeMiniPlayer";
 
 /* ─── Types ─── */
 interface PublicSetlist {
@@ -43,6 +53,10 @@ interface CommunityPost {
   user_id: string;
   content: string;
   created_at: string;
+  updated_at: string | null;
+  youtube_url: string | null;
+  instagram_url: string | null;
+  facebook_url: string | null;
   profiles: {
     first_name: string | null;
     last_name: string | null;
@@ -61,6 +75,11 @@ const getInitials = (p: { first_name: string | null; last_name: string | null } 
   return [p.first_name, p.last_name].filter(Boolean).map((n) => n![0]?.toUpperCase()).join("") || "?";
 };
 
+const extractYouTubeId = (url: string): string | null => {
+  const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+  return m?.[1] || null;
+};
+
 /* ═══════════════════════════════════════════════════════ */
 export default function CommunityPage() {
   const { user } = useAuth();
@@ -70,7 +89,35 @@ export default function CommunityPage() {
   const [search, setSearch] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [activeSetlist, setActiveSetlist] = useState<{ id: string; name: string } | null>(null);
+
+  // Post composer state
   const [postText, setPostText] = useState("");
+  const [postYoutube, setPostYoutube] = useState("");
+  const [postInstagram, setPostInstagram] = useState("");
+  const [postFacebook, setPostFacebook] = useState("");
+
+  // Edit modal state
+  const [editPost, setEditPost] = useState<CommunityPost | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editYoutube, setEditYoutube] = useState("");
+  const [editInstagram, setEditInstagram] = useState("");
+  const [editFacebook, setEditFacebook] = useState("");
+
+  // Delete confirm state
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; isAdmin?: boolean } | null>(null);
+
+  /* ── Fetch current user profile (is_banned, is_admin) ── */
+  const { data: currentProfile } = useQuery({
+    queryKey: ["my-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("is_banned, is_admin").eq("id", user!.id).single();
+      return data as { is_banned: boolean | null; is_admin: boolean | null } | null;
+    },
+  });
+
+  const isBanned = currentProfile?.is_banned === true;
+  const isAdmin = currentProfile?.is_admin === true;
 
   /* ── Fetch public setlists ── */
   const { data: setlists = [], isLoading: loadingSetlists } = useQuery({
@@ -110,7 +157,7 @@ export default function CommunityPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_posts")
-        .select("id, user_id, content, created_at, profiles:user_id(first_name, last_name, avatar_url)")
+        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, profiles:user_id(first_name, last_name, avatar_url)")
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -170,16 +217,42 @@ export default function CommunityPage() {
 
   /* ── Create post mutation ── */
   const createPostMutation = useMutation({
-    mutationFn: async (content: string) => {
-      const { error } = await supabase.from("community_posts").insert({ user_id: user!.id, content });
+    mutationFn: async (payload: { content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string }) => {
+      const { error } = await supabase.from("community_posts").insert({
+        user_id: user!.id,
+        content: payload.content,
+        youtube_url: payload.youtube_url || null,
+        instagram_url: payload.instagram_url || null,
+        facebook_url: payload.facebook_url || null,
+      });
       if (error) throw error;
     },
     onSuccess: () => {
-      setPostText("");
+      setPostText(""); setPostYoutube(""); setPostInstagram(""); setPostFacebook("");
       toast.success("Postagem publicada!");
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     },
     onError: () => toast.error("Erro ao publicar postagem"),
+  });
+
+  /* ── Update post mutation ── */
+  const updatePostMutation = useMutation({
+    mutationFn: async (payload: { id: string; content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string }) => {
+      const { error } = await supabase.from("community_posts").update({
+        content: payload.content,
+        youtube_url: payload.youtube_url || null,
+        instagram_url: payload.instagram_url || null,
+        facebook_url: payload.facebook_url || null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", payload.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setEditPost(null);
+      toast.success("Postagem atualizada!");
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+    },
+    onError: () => toast.error("Erro ao atualizar postagem"),
   });
 
   /* ── Delete post mutation ── */
@@ -189,10 +262,21 @@ export default function CommunityPage() {
       if (error) throw error;
     },
     onSuccess: () => {
+      setDeleteTarget(null);
       toast.success("Postagem removida");
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
     },
     onError: () => toast.error("Erro ao remover postagem"),
+  });
+
+  /* ── Ban user mutation ── */
+  const banUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.from("profiles").update({ is_banned: true }).eq("id", userId);
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Utilizador banido da comunidade"),
+    onError: () => toast.error("Erro ao banir utilizador"),
   });
 
   const getLikeInfo = useCallback((setlistId: string) => {
@@ -208,7 +292,34 @@ export default function CommunityPage() {
     const trimmed = postText.trim();
     if (!trimmed) return;
     if (trimmed.length > 1000) { toast.error("Máximo de 1000 caracteres"); return; }
-    createPostMutation.mutate(trimmed);
+    createPostMutation.mutate({
+      content: trimmed,
+      youtube_url: postYoutube.trim() || undefined,
+      instagram_url: postInstagram.trim() || undefined,
+      facebook_url: postFacebook.trim() || undefined,
+    });
+  };
+
+  const openEditModal = (post: CommunityPost) => {
+    setEditPost(post);
+    setEditText(post.content);
+    setEditYoutube(post.youtube_url || "");
+    setEditInstagram(post.instagram_url || "");
+    setEditFacebook(post.facebook_url || "");
+  };
+
+  const handleSaveEdit = () => {
+    if (!editPost) return;
+    const trimmed = editText.trim();
+    if (!trimmed) return;
+    if (trimmed.length > 1000) { toast.error("Máximo de 1000 caracteres"); return; }
+    updatePostMutation.mutate({
+      id: editPost.id,
+      content: trimmed,
+      youtube_url: editYoutube.trim() || undefined,
+      instagram_url: editInstagram.trim() || undefined,
+      facebook_url: editFacebook.trim() || undefined,
+    });
   };
 
   return (
@@ -227,34 +338,58 @@ export default function CommunityPage() {
         <CommunityRulesModal />
       </div>
 
-      {/* Post Composer */}
+      {/* Post Composer or Banned Message */}
       {user && (
-        <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-          <Textarea
-            value={postText}
-            onChange={(e) => setPostText(e.target.value)}
-            placeholder="O que você quer compartilhar com os músicos? (Busca de banda, aulas, dicas...)"
-            maxLength={1000}
-            rows={3}
-            className="resize-none bg-background"
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
-            <Button
-              size="sm"
-              disabled={!postText.trim() || createPostMutation.isPending}
-              onClick={handlePublishPost}
-              className="gap-1.5"
-            >
-              {createPostMutation.isPending ? (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              ) : (
-                <Megaphone className="h-4 w-4" />
-              )}
-              Publicar
-            </Button>
+        isBanned ? (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-center">
+            <Ban className="h-6 w-6 mx-auto text-destructive mb-2" />
+            <p className="text-sm text-destructive font-medium">
+              A sua conta foi suspensa da comunidade por violar as regras.
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+            <Textarea
+              value={postText}
+              onChange={(e) => setPostText(e.target.value)}
+              placeholder="O que você quer compartilhar com os músicos? (Busca de banda, aulas, dicas...)"
+              maxLength={1000}
+              rows={3}
+              className="resize-none bg-background"
+            />
+            {/* Media URL Inputs */}
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="relative">
+                <Youtube className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                <Input placeholder="Link YouTube" value={postYoutube} onChange={(e) => setPostYoutube(e.target.value)} className="pl-9 text-xs h-9" />
+              </div>
+              <div className="relative">
+                <Instagram className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
+                <Input placeholder="Link Instagram" value={postInstagram} onChange={(e) => setPostInstagram(e.target.value)} className="pl-9 text-xs h-9" />
+              </div>
+              <div className="relative">
+                <Facebook className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500" />
+                <Input placeholder="Link Facebook" value={postFacebook} onChange={(e) => setPostFacebook(e.target.value)} className="pl-9 text-xs h-9" />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
+              <Button
+                size="sm"
+                disabled={!postText.trim() || createPostMutation.isPending}
+                onClick={handlePublishPost}
+                className="gap-1.5"
+              >
+                {createPostMutation.isPending ? (
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <Megaphone className="h-4 w-4" />
+                )}
+                Publicar
+              </Button>
+            </div>
+          </div>
+        )
       )}
 
       {/* Search */}
@@ -289,37 +424,109 @@ export default function CommunityPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {filteredPosts.map((post) => (
-                <div key={post.id} className="rounded-xl border border-border bg-card p-4 space-y-3 transition-all hover:border-primary/20">
-                  {/* Author */}
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9 border border-border">
-                      <AvatarImage src={post.profiles?.avatar_url || undefined} />
-                      <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">{getInitials(post.profiles)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{getAuthorName(post.profiles)}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })}
-                      </p>
+              {filteredPosts.map((post) => {
+                const ytId = post.youtube_url ? extractYouTubeId(post.youtube_url) : null;
+                const isOwner = user?.id === post.user_id;
+                const wasEdited = !!post.updated_at && post.updated_at !== post.created_at;
+
+                return (
+                  <div key={post.id} className="rounded-xl border border-border bg-card p-4 space-y-3 transition-all hover:border-primary/20">
+                    {/* Author + Actions */}
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-9 w-9 border border-border">
+                        <AvatarImage src={post.profiles?.avatar_url || undefined} />
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">{getInitials(post.profiles)}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{getAuthorName(post.profiles)}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })}
+                          {wasEdited && <span className="ml-1 italic">(editado)</span>}
+                        </p>
+                      </div>
+                      {/* Dropdown menu for owner / admin */}
+                      {(isOwner || isAdmin) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            {isOwner && (
+                              <>
+                                <DropdownMenuItem onClick={() => openEditModal(post)} className="gap-2">
+                                  <Pencil className="h-4 w-4" /> Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setDeleteTarget({ id: post.id })} className="gap-2 text-destructive focus:text-destructive">
+                                  <Trash2 className="h-4 w-4" /> Excluir
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {isAdmin && !isOwner && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setDeleteTarget({ id: post.id, isAdmin: true })} className="gap-2 text-destructive focus:text-destructive">
+                                  <ShieldAlert className="h-4 w-4" /> 🛡️ Excluir (Admin)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => banUserMutation.mutate(post.user_id)} className="gap-2 text-destructive focus:text-destructive">
+                                  <Ban className="h-4 w-4" /> 🔨 Banir Usuário
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {isAdmin && isOwner && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem disabled className="gap-2 text-muted-foreground text-xs">
+                                  <ShieldAlert className="h-4 w-4" /> Você é o autor
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
-                    {user?.id === post.user_id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => deletePostMutation.mutate(post.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+
+                    {/* Content */}
+                    <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
+                      {post.content}
+                    </p>
+
+                    {/* YouTube Embed */}
+                    {ytId && (
+                      <div className="rounded-lg overflow-hidden border border-border">
+                        <iframe
+                          className="w-full aspect-video"
+                          src={`https://www.youtube.com/embed/${ytId}?rel=0`}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          title="YouTube"
+                        />
+                      </div>
+                    )}
+
+                    {/* Social Links */}
+                    {(post.instagram_url || post.facebook_url) && (
+                      <div className="flex items-center gap-2">
+                        {post.instagram_url && (
+                          <a href={post.instagram_url} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs text-pink-500 border-pink-500/30 hover:bg-pink-500/10">
+                              <Instagram className="h-3.5 w-3.5" /> Instagram
+                            </Button>
+                          </a>
+                        )}
+                        {post.facebook_url && (
+                          <a href={post.facebook_url} target="_blank" rel="noopener noreferrer">
+                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
+                              <Facebook className="h-3.5 w-3.5" /> Facebook
+                            </Button>
+                          </a>
+                        )}
+                      </div>
                     )}
                   </div>
-                  {/* Content */}
-                  <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
-                    {post.content}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </TabsContent>
@@ -341,7 +548,6 @@ export default function CommunityPage() {
 
                 return (
                   <div key={setlist.id} className="rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
-                    {/* Author Header */}
                     <div className="flex items-center gap-3 px-5 pt-5 pb-3">
                       <Avatar className="h-10 w-10 border border-border">
                         <AvatarImage src={setlist.profiles?.avatar_url || undefined} />
@@ -354,7 +560,6 @@ export default function CommunityPage() {
                       <Badge variant="secondary" className="shrink-0 text-[10px] gap-1"><Globe className="h-3 w-3" />Público</Badge>
                     </div>
 
-                    {/* Content */}
                     <Link to={`/setlists/${setlist.id}`} className="block px-5 pb-3 group">
                       <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors truncate">{setlist.name}</h3>
                       <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
@@ -367,7 +572,6 @@ export default function CommunityPage() {
                       </div>
                     </Link>
 
-                    {/* Actions */}
                     <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
                       <div className="flex items-center gap-1">
                         <Button
@@ -418,6 +622,54 @@ export default function CommunityPage() {
       {activeSetlist && (
         <CommentsSheet open={commentsOpen} onOpenChange={setCommentsOpen} setlistId={activeSetlist.id} setlistName={activeSetlist.name} />
       )}
+
+      {/* Edit Post Modal */}
+      <Dialog open={!!editPost} onOpenChange={(o) => { if (!o) setEditPost(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar Postagem</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              maxLength={1000}
+              rows={4}
+              className="resize-none bg-background"
+            />
+            <div className="grid gap-2 sm:grid-cols-3">
+              <div className="relative">
+                <Youtube className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                <Input placeholder="YouTube" value={editYoutube} onChange={(e) => setEditYoutube(e.target.value)} className="pl-9 text-xs h-9" />
+              </div>
+              <div className="relative">
+                <Instagram className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
+                <Input placeholder="Instagram" value={editInstagram} onChange={(e) => setEditInstagram(e.target.value)} className="pl-9 text-xs h-9" />
+              </div>
+              <div className="relative">
+                <Facebook className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500" />
+                <Input placeholder="Facebook" value={editFacebook} onChange={(e) => setEditFacebook(e.target.value)} className="pl-9 text-xs h-9" />
+              </div>
+            </div>
+            <span className="text-[11px] text-muted-foreground">{editText.length}/1000</span>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPost(null)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} disabled={!editText.trim() || updatePostMutation.isPending}>
+              {updatePostMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <ConfirmDeleteModal
+        open={!!deleteTarget}
+        onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}
+        onConfirm={() => { if (deleteTarget) deletePostMutation.mutate(deleteTarget.id); }}
+        title="Excluir postagem"
+        description={deleteTarget?.isAdmin ? "Excluir esta postagem como moderador? Esta ação não pode ser desfeita." : "Tem certeza de que deseja excluir esta postagem?"}
+      />
     </div>
   );
 }

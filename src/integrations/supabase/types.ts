@@ -416,6 +416,38 @@ export type Database = {
         }
         Relationships: []
       }
+      setlist_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          setlist_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          setlist_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          setlist_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setlist_comments_setlist_id_fkey"
+            columns: ["setlist_id"]
+            isOneToOne: false
+            referencedRelation: "setlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       setlist_items: {
         Row: {
           bpm: number | null
@@ -460,6 +492,35 @@ export type Database = {
             columns: ["song_id"]
             isOneToOne: false
             referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      setlist_likes: {
+        Row: {
+          created_at: string
+          id: string
+          setlist_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          setlist_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          setlist_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setlist_likes_setlist_id_fkey"
+            columns: ["setlist_id"]
+            isOneToOne: false
+            referencedRelation: "setlists"
             referencedColumns: ["id"]
           },
         ]

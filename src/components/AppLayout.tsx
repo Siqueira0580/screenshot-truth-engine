@@ -189,6 +189,25 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Mobile-only header buttons for Community & Messages */}
+            {mobileHeaderItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.to);
+              return (
+                <Button
+                  key={item.to}
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate(item.to)}
+                  title={item.label}
+                  className={cn(
+                    "lg:hidden",
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <item.icon className={cn("h-4 w-4", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+                </Button>
+              );
+            })}
             {["/songs", "/setlists", "/artists", "/compositions", "/studio"].some(p => location.pathname.startsWith(p)) && (
               <Button
                 variant="ghost"

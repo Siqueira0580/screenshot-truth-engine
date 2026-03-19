@@ -214,20 +214,32 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
+          updated_at: string | null
           user_id: string | null
+          youtube_url: string | null
         }
         Insert: {
           content: string
           created_at?: string
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
+          updated_at?: string | null
           user_id?: string | null
+          youtube_url?: string | null
         }
         Update: {
           content?: string
           created_at?: string
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
+          updated_at?: string | null
           user_id?: string | null
+          youtube_url?: string | null
         }
         Relationships: [
           {
@@ -426,6 +438,8 @@ export type Database = {
           has_seen_wizard: boolean | null
           id: string
           instagram_url: string | null
+          is_admin: boolean | null
+          is_banned: boolean | null
           last_name: string | null
           library_setup_completed: boolean
           phone: string | null
@@ -450,6 +464,8 @@ export type Database = {
           has_seen_wizard?: boolean | null
           id: string
           instagram_url?: string | null
+          is_admin?: boolean | null
+          is_banned?: boolean | null
           last_name?: string | null
           library_setup_completed?: boolean
           phone?: string | null
@@ -474,6 +490,8 @@ export type Database = {
           has_seen_wizard?: boolean | null
           id?: string
           instagram_url?: string | null
+          is_admin?: boolean | null
+          is_banned?: boolean | null
           last_name?: string | null
           library_setup_completed?: boolean
           phone?: string | null

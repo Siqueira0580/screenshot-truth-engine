@@ -44,14 +44,17 @@ const GENRE_OPTIONS = [
 ];
 
 const navItems = [
-  { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false },
-  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false, vipArea: false },
-  { to: "/community", icon: Globe, label: "Explorar", proOnly: false, vipArea: false },
-  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", proOnly: false, vipArea: false },
-  { to: "/artists", icon: Users, label: "Artistas", proOnly: false, vipArea: false },
-  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true, vipArea: true },
-  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true, vipArea: true },
+  { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false, mobileBottom: true },
+  { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false, vipArea: false, mobileBottom: true },
+  { to: "/community", icon: Globe, label: "Explorar", proOnly: false, vipArea: false, mobileBottom: false },
+  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", proOnly: false, vipArea: false, mobileBottom: false },
+  { to: "/artists", icon: Users, label: "Artistas", proOnly: false, vipArea: false, mobileBottom: true },
+  { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true, vipArea: true, mobileBottom: true },
+  { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true, vipArea: true, mobileBottom: true },
 ];
+
+const mobileBottomItems = navItems.filter(i => i.mobileBottom);
+const mobileHeaderItems = navItems.filter(i => !i.mobileBottom);
 
 export default function AppLayout() {
   const { user, signOut } = useAuth();
@@ -186,6 +189,25 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
+            {/* Mobile-only header buttons for Community & Messages */}
+            {mobileHeaderItems.map((item) => {
+              const isActive = location.pathname.startsWith(item.to);
+              return (
+                <Button
+                  key={item.to}
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate(item.to)}
+                  title={item.label}
+                  className={cn(
+                    "lg:hidden",
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <item.icon className={cn("h-4 w-4", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
+                </Button>
+              );
+            })}
             {["/songs", "/setlists", "/artists", "/compositions", "/studio"].some(p => location.pathname.startsWith(p)) && (
               <Button
                 variant="ghost"
@@ -312,7 +334,7 @@ export default function AppLayout() {
       {/* Mobile Bottom Navigation — hidden in landscape */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl lg:hidden landscape:hidden">
         <div className="flex items-center justify-around h-16">
-          {navItems.map((item) => {
+          {mobileBottomItems.map((item) => {
             const blocked = isItemBlocked(item);
             if (blocked) {
               return (

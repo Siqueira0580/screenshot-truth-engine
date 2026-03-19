@@ -29,7 +29,7 @@ import { toast } from "sonner";
 import CommentsSheet from "@/components/CommentsSheet";
 import CommunityRulesModal from "@/components/CommunityRulesModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
-import YouTubeMiniPlayer from "@/components/YouTubeMiniPlayer";
+
 
 /* ─── Types ─── */
 interface PublicSetlist {

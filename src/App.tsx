@@ -96,6 +96,8 @@ const App = () => (
                   <Route path="/setlists/:id" element={<SetlistDetailPage />} />
                   <Route path="/artists" element={<ArtistsPage />} />
                   <Route path="/community" element={<CommunityPage />} />
+                  <Route path="/mensagens" element={<MessagesPage />} />
+                  <Route path="/mensagens/:userId" element={<ChatPage />} />
                   <Route path="/studio" element={<StudioPage />} />
                   <Route path="/studio/:songId" element={<StudioDetailPage />} />
                   <Route path="/compositions" element={<CompositionsHomePage />} />

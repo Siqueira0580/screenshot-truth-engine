@@ -347,12 +347,14 @@ export type Database = {
           created_at: string
           default_genre: string | null
           email: string | null
+          facebook_url: string | null
           favorite_artists: Json | null
           favorite_styles: string[] | null
           first_name: string | null
           has_seen_repertoire_wizard: boolean | null
           has_seen_wizard: boolean | null
           id: string
+          instagram_url: string | null
           last_name: string | null
           library_setup_completed: boolean
           phone: string | null
@@ -369,12 +371,14 @@ export type Database = {
           created_at?: string
           default_genre?: string | null
           email?: string | null
+          facebook_url?: string | null
           favorite_artists?: Json | null
           favorite_styles?: string[] | null
           first_name?: string | null
           has_seen_repertoire_wizard?: boolean | null
           has_seen_wizard?: boolean | null
           id: string
+          instagram_url?: string | null
           last_name?: string | null
           library_setup_completed?: boolean
           phone?: string | null
@@ -391,12 +395,14 @@ export type Database = {
           created_at?: string
           default_genre?: string | null
           email?: string | null
+          facebook_url?: string | null
           favorite_artists?: Json | null
           favorite_styles?: string[] | null
           first_name?: string | null
           has_seen_repertoire_wizard?: boolean | null
           has_seen_wizard?: boolean | null
           id?: string
+          instagram_url?: string | null
           last_name?: string | null
           library_setup_completed?: boolean
           phone?: string | null

@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock, Home, Globe } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock, Home, Globe, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -47,6 +47,7 @@ const navItems = [
   { to: "/songs", icon: Music, label: "Músicas", proOnly: false, vipArea: false },
   { to: "/setlists", icon: ListMusic, label: "Setlists", proOnly: false, vipArea: false },
   { to: "/community", icon: Globe, label: "Explorar", proOnly: false, vipArea: false },
+  { to: "/mensagens", icon: MessageSquare, label: "Mensagens", proOnly: false, vipArea: false },
   { to: "/artists", icon: Users, label: "Artistas", proOnly: false, vipArea: false },
   { to: "/compositions", icon: PenTool, label: "Compor", proOnly: true, vipArea: true },
   { to: "/studio", icon: Headphones, label: "Estúdio", proOnly: true, vipArea: true },

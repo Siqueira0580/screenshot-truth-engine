@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Globe, Music2, CalendarDays, Search, Heart, MessageCircle, Send, Instagram, Facebook } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +32,7 @@ interface PublicSetlist {
 
 export default function CommunityPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -296,20 +297,22 @@ export default function CommunityPage() {
                       {commentCount > 0 && <span className="text-xs font-medium">{commentCount}</span>}
                     </Button>
 
-                    {/* Message button */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                          onClick={() => toast.info("Funcionalidade de bate-papo interno chegando em breve!")}
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Enviar mensagem</TooltipContent>
-                    </Tooltip>
+                    {/* Message button — hide if author is current user */}
+                    {user && setlist.user_id !== user.id && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
+                            onClick={() => navigate(`/mensagens/${setlist.user_id}`)}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Enviar mensagem</TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
 
                   {/* Social links */}

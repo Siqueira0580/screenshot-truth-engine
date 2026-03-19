@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download, Music } from "lucide-react";
+import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download, Music, Instagram, Facebook } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -42,6 +42,8 @@ export default function ProfilePage() {
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [defaultGenre, setDefaultGenre] = useState("todos");
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -66,6 +68,8 @@ export default function ProfilePage() {
     setLastName(data.last_name || "");
     setPhone(data.phone || "");
     setDefaultGenre(data.default_genre || "todos");
+    setInstagramUrl(data.instagram_url || "");
+    setFacebookUrl(data.facebook_url || "");
     setLoading(false);
   }
 
@@ -80,6 +84,8 @@ export default function ProfilePage() {
         last_name: lastName.trim() || null,
         phone: phone.trim() || null,
         default_genre: defaultGenre,
+        instagram_url: instagramUrl.trim() || null,
+        facebook_url: facebookUrl.trim() || null,
       })
       .eq("id", user.id);
 
@@ -230,6 +236,35 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <Label>E-mail</Label>
             <Input value={user?.email || ""} disabled className="opacity-60" />
+           </div>
+
+          {/* Redes Sociais */}
+          <div className="space-y-2">
+            <Label htmlFor="instagramUrl" className="flex items-center gap-1.5">
+              <Instagram className="h-4 w-4 text-primary" />
+              Link do Instagram
+            </Label>
+            <Input
+              id="instagramUrl"
+              value={instagramUrl}
+              onChange={(e) => setInstagramUrl(e.target.value)}
+              placeholder="https://instagram.com/seu_perfil"
+              maxLength={255}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="facebookUrl" className="flex items-center gap-1.5">
+              <Facebook className="h-4 w-4 text-primary" />
+              Link do Facebook
+            </Label>
+            <Input
+              id="facebookUrl"
+              value={facebookUrl}
+              onChange={(e) => setFacebookUrl(e.target.value)}
+              placeholder="https://facebook.com/seu_perfil"
+              maxLength={255}
+            />
           </div>
 
           <div className="space-y-2">

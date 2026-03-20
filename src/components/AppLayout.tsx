@@ -66,6 +66,7 @@ export default function AppLayout() {
   const { isFree } = useSubscription();
   const { vipMaintenanceMode } = useGlobalSettings();
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { defaultGenre, setDefaultGenre } = useUserPreferences();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");

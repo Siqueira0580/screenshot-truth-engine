@@ -561,12 +561,6 @@ export default function SetlistDetailPage() {
             Somente leitura
           </Badge>
         )}
-        {stageSync.connectedCount > 1 && (
-          <Badge variant="secondary" className="text-xs">
-            <Wifi className="h-3 w-3 mr-1" />
-            {stageSync.connectedCount} online
-          </Badge>
-        )}
       </SetlistHeader>
 
       {/* ── Sharing Toggle (Owner Only) ── */}

@@ -718,21 +718,6 @@ export default function SetlistDetailPage() {
         </div>
       )}
 
-      {stageSync.isFollowing && stageSync.masterName && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-          <Radio className="h-4 w-4 text-primary animate-pulse" />
-          <span>A seguir <strong className="text-primary">{stageSync.masterName}</strong></span>
-        </div>
-      )}
-      {stageSync.isMaster && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          <Radio className="h-4 w-4 text-destructive animate-pulse" />
-          <span><strong className="text-destructive">Transmissão Mestre</strong> — {stageSync.connectedCount - 1} conectado(s)</span>
-        </div>
-      )}
-
-      {/* Screen Share Panel */}
-      {isOwner && items.length > 0 && <ScreenSharePanel setlistId={id!} />}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">

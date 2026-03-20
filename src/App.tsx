@@ -110,7 +110,7 @@ const App = () => (
                   <Route path="/planos" element={<PricingPage />} />
                 </Route>
                 <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
-                <Route path="/live/:sessionId" element={<LiveViewerPage />} />
+                
                 <Route element={<PublicLayout />}>
                   <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />
                   <Route path="/share/song/:id" element={<PublicSongPage />} />

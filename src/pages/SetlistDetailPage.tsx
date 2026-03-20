@@ -36,7 +36,7 @@ import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import ShowButton from "@/components/ShowButton";
-import ScreenSharePanel from "@/components/ScreenSharePanel";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";

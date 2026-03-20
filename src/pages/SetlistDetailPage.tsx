@@ -893,7 +893,7 @@ export default function SetlistDetailPage() {
             </DialogContent>
           </Dialog>
 
-          <StageSyncInviteModal open={!!stageSync.invite} masterName={stageSync.invite?.masterName || ""} onAccept={stageSync.acceptInvite} onDecline={stageSync.declineInvite} />
+          
           <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
 
           <SetlistSettingsModal

@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock, Home, Globe, MessageSquare } from "lucide-react";
+import { Music, ListMusic, Users, Headphones, PenTool, LogOut, Settings, Sun, Moon, User, HelpCircle, ShieldCheck, Lock, Home, Globe, MessageSquare, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,7 @@ export default function AppLayout() {
   const { isFree } = useSubscription();
   const { vipMaintenanceMode } = useGlobalSettings();
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { defaultGenre, setDefaultGenre } = useUserPreferences();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
@@ -189,25 +191,7 @@ export default function AppLayout() {
           <div className="flex-1 lg:hidden" />
 
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* Mobile-only header buttons for Community & Messages */}
-            {mobileHeaderItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.to);
-              return (
-                <Button
-                  key={item.to}
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate(item.to)}
-                  title={item.label}
-                  className={cn(
-                    "lg:hidden",
-                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <item.icon className={cn("h-4 w-4", isActive && "drop-shadow-[0_0_6px_hsl(var(--primary))]")} />
-                </Button>
-              );
-            })}
+            {/* Desktop-only utility buttons */}
             {["/songs", "/setlists", "/artists", "/compositions", "/studio"].some(p => location.pathname.startsWith(p)) && (
               <Button
                 variant="ghost"
@@ -229,7 +213,7 @@ export default function AppLayout() {
                   }
                 }}
                 title="Tour de Ajuda"
-                className="text-muted-foreground hover:text-foreground"
+                className="hidden lg:inline-flex text-muted-foreground hover:text-foreground"
               >
                 <HelpCircle className="h-4 w-4" />
               </Button>
@@ -239,7 +223,7 @@ export default function AppLayout() {
               size="icon"
               onClick={toggleTheme}
               title={theme === "dark" ? "Modo Claro" : "Modo Escuro"}
-              className="text-muted-foreground hover:text-foreground"
+              className="hidden lg:inline-flex text-muted-foreground hover:text-foreground"
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
@@ -248,10 +232,12 @@ export default function AppLayout() {
               size="icon"
               onClick={() => navigate("/settings")}
               title="Configurações"
-              className="text-muted-foreground hover:text-foreground"
+              className="hidden lg:inline-flex text-muted-foreground hover:text-foreground"
             >
               <Settings className="h-4 w-4" />
             </Button>
+
+            {/* Desktop avatar dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
@@ -323,6 +309,132 @@ export default function AppLayout() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Mobile hamburger menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="lg:hidden text-muted-foreground hover:text-foreground">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72 p-0">
+                <SheetHeader className="p-4 pb-2 border-b border-border/50">
+                  <SheetTitle className="flex items-center gap-2 text-base">
+                    <img src={smartCifraLogo} alt="Smart Cifra" className="h-8 w-8 rounded-md" />
+                    Smart Cifra
+                  </SheetTitle>
+                </SheetHeader>
+
+                <div className="flex flex-col py-2">
+                  {/* User info */}
+                  <div className="flex items-center gap-3 px-4 py-3 border-b border-border/30">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={avatarUrl || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{user?.email}</p>
+                    </div>
+                  </div>
+
+                  {/* Navigation links */}
+                  <nav className="flex flex-col py-2">
+                    {mobileHeaderItems.map((item) => {
+                      const isActive = location.pathname.startsWith(item.to);
+                      return (
+                        <button
+                          key={item.to}
+                          onClick={() => { navigate(item.to); setMobileMenuOpen(false); }}
+                          className={cn(
+                            "flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors",
+                            isActive ? "text-primary bg-primary/5" : "text-foreground hover:bg-secondary"
+                          )}
+                        >
+                          <item.icon className="h-5 w-5" />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  <div className="border-t border-border/30 my-1" />
+
+                  {/* Utility links */}
+                  <button
+                    onClick={() => { navigate("/profile"); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <User className="h-5 w-5" />
+                    Meu Perfil
+                  </button>
+                  <button
+                    onClick={() => { navigate("/settings"); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                  >
+                    <Settings className="h-5 w-5" />
+                    Configurações
+                  </button>
+                  {["/songs", "/setlists", "/artists", "/compositions", "/studio"].some(p => location.pathname.startsWith(p)) && (
+                    <button
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        const path = location.pathname;
+                        if (path.startsWith("/songs") && (window as any).__replaySongsTour) {
+                          (window as any).__replaySongsTour();
+                        } else if (path.startsWith("/setlists") && (window as any).__replaySetlistsTour) {
+                          (window as any).__replaySetlistsTour();
+                        } else if (path.startsWith("/artists") && (window as any).__replayArtistsTour) {
+                          (window as any).__replayArtistsTour();
+                        } else if (path.startsWith("/compositions") && (window as any).__replayCompositionsTour) {
+                          (window as any).__replayCompositionsTour();
+                        } else if (path === "/studio" && (window as any).__replayStudioTour) {
+                          (window as any).__replayStudioTour();
+                        } else {
+                          toast.info("Nenhum tour disponível para esta página.");
+                        }
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                    >
+                      <HelpCircle className="h-5 w-5" />
+                      Tour de Ajuda
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { toggleTheme(); setMobileMenuOpen(false); }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                  >
+                    {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                    {theme === "dark" ? "Modo Claro" : "Modo Escuro"}
+                  </button>
+
+                  {isAdmin && (
+                    <>
+                      <div className="border-t border-border/30 my-1" />
+                      <button
+                        onClick={() => { navigate("/admin"); setMobileMenuOpen(false); }}
+                        className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-primary hover:bg-secondary transition-colors"
+                      >
+                        <ShieldCheck className="h-5 w-5" />
+                        Painel Administrativo
+                      </button>
+                    </>
+                  )}
+
+                  <div className="border-t border-border/30 my-1" />
+                  <button
+                    onClick={async () => {
+                      setMobileMenuOpen(false);
+                      await signOut();
+                      toast.success("Sessão terminada com sucesso");
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Sair
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

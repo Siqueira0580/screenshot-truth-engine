@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Radio, Wifi, WifiOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock, Mic, MicOff } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock, Mic, MicOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,6 @@ import {
 
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
-import { useStageSync } from "@/hooks/useStageSync";
-import StageSyncInviteModal from "@/components/StageSyncInviteModal";
 import SyncInviteModal from "@/components/SyncInviteModal";
 import SetlistToolbar, { type SortBy } from "@/components/SetlistToolbar";
 import CreateFromSelectionBar from "@/components/CreateFromSelectionBar";
@@ -38,7 +36,7 @@ import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import ShowButton from "@/components/ShowButton";
-import ScreenSharePanel from "@/components/ScreenSharePanel";
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -199,7 +197,6 @@ export default function SetlistDetailPage() {
   const isMobile = useIsMobile();
   const isTablet = typeof window !== "undefined" && window.innerWidth >= 768 && window.innerWidth < 1024;
   const [searchParams] = useSearchParams();
-  const inviteToken = searchParams.get("invite");
   const [addOpen, setAddOpen] = useState(false);
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -276,21 +273,6 @@ export default function SetlistDetailPage() {
   // Offline cache
   useOfflineCache(id, setlist, items);
 
-  // Stage sync
-  const stageSync = useStageSync({
-    setlistId: id,
-    inviteToken,
-    onSongChange: (index) => { toast.info(`Mestre navegou para música ${index + 1}`); },
-    onScroll: () => {},
-    onPlay: () => toast.info("Mestre iniciou reprodução"),
-    onPause: () => toast.info("Mestre pausou"),
-  });
-
-  useEffect(() => {
-    if (inviteToken && stageSync.isFollowing && items.length > 0 && !teleprompterOpen) {
-      setTeleprompterOpen(true);
-    }
-  }, [inviteToken, stageSync.isFollowing, items.length]);
 
   // Available keys for filter
   const availableKeys = useMemo(() => {
@@ -579,12 +561,6 @@ export default function SetlistDetailPage() {
             Somente leitura
           </Badge>
         )}
-        {stageSync.connectedCount > 1 && (
-          <Badge variant="secondary" className="text-xs">
-            <Wifi className="h-3 w-3 mr-1" />
-            {stageSync.connectedCount} online
-          </Badge>
-        )}
       </SetlistHeader>
 
       {/* ── Sharing Toggle (Owner Only) ── */}
@@ -663,19 +639,6 @@ export default function SetlistDetailPage() {
           )}
           {items.length > 0 && (
             <>
-              {stageSync.isMaster ? (
-                <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
-                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Parar</span>
-                </Button>
-              ) : stageSync.isFollowing ? (
-                <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
-                  <WifiOff className="h-4 w-4" /><span className="hidden sm:inline">Desconectar</span>
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2">
-                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Palco</span>
-                </Button>
-              )}
               <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
                 <UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Convidar</span>
               </Button>
@@ -755,21 +718,6 @@ export default function SetlistDetailPage() {
         </div>
       )}
 
-      {stageSync.isFollowing && stageSync.masterName && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-          <Radio className="h-4 w-4 text-primary animate-pulse" />
-          <span>A seguir <strong className="text-primary">{stageSync.masterName}</strong></span>
-        </div>
-      )}
-      {stageSync.isMaster && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-          <Radio className="h-4 w-4 text-destructive animate-pulse" />
-          <span><strong className="text-destructive">Transmissão Mestre</strong> — {stageSync.connectedCount - 1} conectado(s)</span>
-        </div>
-      )}
-
-      {/* Screen Share Panel */}
-      {isOwner && items.length > 0 && <ScreenSharePanel setlistId={id!} />}
 
       {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
@@ -945,7 +893,7 @@ export default function SetlistDetailPage() {
             </DialogContent>
           </Dialog>
 
-          <StageSyncInviteModal open={!!stageSync.invite} masterName={stageSync.invite?.masterName || ""} onAccept={stageSync.acceptInvite} onDecline={stageSync.declineInvite} />
+          
           <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
 
           <SetlistSettingsModal

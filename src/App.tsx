@@ -24,7 +24,7 @@ import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import LoginPage from "@/pages/LoginPage";
 import RegisterPage from "@/pages/RegisterPage";
 import LandingPage from "@/pages/LandingPage";
-import LiveViewerPage from "@/pages/LiveViewerPage";
+
 import ArtistExplorePage from "@/pages/ArtistExplorePage";
 import TunerPage from "@/pages/TunerPage";
 import PublicLayout from "@/components/PublicLayout";
@@ -110,7 +110,7 @@ const App = () => (
                   <Route path="/planos" element={<PricingPage />} />
                 </Route>
                 <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
-                <Route path="/live/:sessionId" element={<LiveViewerPage />} />
+                
                 <Route element={<PublicLayout />}>
                   <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />
                   <Route path="/share/song/:id" element={<PublicSongPage />} />

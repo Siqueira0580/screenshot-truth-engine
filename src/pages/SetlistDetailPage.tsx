@@ -27,8 +27,6 @@ import {
 
 import { toast } from "sonner";
 import Teleprompter from "@/components/Teleprompter";
-import { useStageSync } from "@/hooks/useStageSync";
-import StageSyncInviteModal from "@/components/StageSyncInviteModal";
 import SyncInviteModal from "@/components/SyncInviteModal";
 import SetlistToolbar, { type SortBy } from "@/components/SetlistToolbar";
 import CreateFromSelectionBar from "@/components/CreateFromSelectionBar";

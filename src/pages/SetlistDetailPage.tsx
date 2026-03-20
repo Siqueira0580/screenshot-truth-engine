@@ -273,21 +273,6 @@ export default function SetlistDetailPage() {
   // Offline cache
   useOfflineCache(id, setlist, items);
 
-  // Stage sync
-  const stageSync = useStageSync({
-    setlistId: id,
-    inviteToken,
-    onSongChange: (index) => { toast.info(`Mestre navegou para música ${index + 1}`); },
-    onScroll: () => {},
-    onPlay: () => toast.info("Mestre iniciou reprodução"),
-    onPause: () => toast.info("Mestre pausou"),
-  });
-
-  useEffect(() => {
-    if (inviteToken && stageSync.isFollowing && items.length > 0 && !teleprompterOpen) {
-      setTeleprompterOpen(true);
-    }
-  }, [inviteToken, stageSync.isFollowing, items.length]);
 
   // Available keys for filter
   const availableKeys = useMemo(() => {

@@ -639,19 +639,6 @@ export default function SetlistDetailPage() {
           )}
           {items.length > 0 && (
             <>
-              {stageSync.isMaster ? (
-                <Button variant="destructive" size="sm" onClick={stageSync.stopMaster} className="gap-2 animate-pulse">
-                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Parar</span>
-                </Button>
-              ) : stageSync.isFollowing ? (
-                <Button variant="secondary" size="sm" onClick={stageSync.stopFollowing} className="gap-2">
-                  <WifiOff className="h-4 w-4" /><span className="hidden sm:inline">Desconectar</span>
-                </Button>
-              ) : (
-                <Button variant="outline" size="sm" onClick={stageSync.startMaster} className="gap-2">
-                  <Radio className="h-4 w-4" /><span className="hidden sm:inline">Palco</span>
-                </Button>
-              )}
               <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
                 <UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Convidar</span>
               </Button>

@@ -912,6 +912,143 @@ const CHORD_DB: Record<string, Record<string, ChordVoicing>> = {
   },
 };
 
+// ─── Alternative Voicings Database ───────────────────────────────
+// Each key maps to an ARRAY of alternative positions (the primary is in CHORD_DB above)
+const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
+  guitar: {
+    // ── Major alternatives ─────────────────────────────────────
+    C:    [
+      { frets: [3, 3, 5, 5, 5, 3], barres: [{ fret: 3, from: 0, to: 5 }], baseFret: 3 },
+      { frets: [-1, 3, 2, 0, 1, 3] },
+    ],
+    D:    [
+      { frets: [-1, 5, 7, 7, 7, 5], barres: [{ fret: 5, from: 1, to: 5 }], baseFret: 5 },
+      { frets: [-1, -1, 0, 2, 3, 5] },
+    ],
+    E:    [
+      { frets: [-1, 7, 9, 9, 9, 7], barres: [{ fret: 7, from: 1, to: 5 }], baseFret: 7 },
+      { frets: [0, 2, 2, 4, 5, 4], baseFret: 1 },
+    ],
+    F:    [
+      { frets: [-1, -1, 3, 2, 1, 1] },
+      { frets: [-1, 8, 10, 10, 10, 8], barres: [{ fret: 8, from: 1, to: 5 }], baseFret: 8 },
+    ],
+    G:    [
+      { frets: [3, 5, 5, 4, 3, 3], barres: [{ fret: 3, from: 0, to: 5 }], baseFret: 3 },
+      { frets: [3, 2, 0, 0, 3, 3] },
+    ],
+    A:    [
+      { frets: [-1, 0, 2, 2, 2, 5] },
+      { frets: [5, 5, 7, 7, 7, 5], barres: [{ fret: 5, from: 0, to: 5 }], baseFret: 5 },
+    ],
+    B:    [
+      { frets: [7, 7, 9, 9, 9, 7], barres: [{ fret: 7, from: 0, to: 5 }], baseFret: 7 },
+      { frets: [-1, 2, 4, 4, 4, -1], barres: [{ fret: 2, from: 1, to: 1 }] },
+    ],
+
+    // ── Minor alternatives ────────────────────────────────────
+    Am:   [
+      { frets: [5, 5, 7, 7, 6, 5], barres: [{ fret: 5, from: 0, to: 5 }], baseFret: 5 },
+      { frets: [-1, 0, 2, 2, 1, 3] },
+    ],
+    Em:   [
+      { frets: [-1, 7, 9, 9, 8, 7], barres: [{ fret: 7, from: 1, to: 5 }], baseFret: 7 },
+      { frets: [0, 2, 2, 0, 3, 0] },
+    ],
+    Dm:   [
+      { frets: [-1, 5, 7, 7, 6, 5], barres: [{ fret: 5, from: 1, to: 5 }], baseFret: 5 },
+      { frets: [-1, -1, 0, 2, 3, 5] },
+    ],
+    Bm:   [
+      { frets: [7, 7, 9, 9, 8, 7], barres: [{ fret: 7, from: 0, to: 5 }], baseFret: 7 },
+    ],
+
+    // ── Dominant 7 alternatives ───────────────────────────────
+    A7:   [
+      { frets: [5, 5, 7, 5, 7, 5], barres: [{ fret: 5, from: 0, to: 5 }], baseFret: 5 },
+      { frets: [-1, 0, 2, 2, 2, 3] },
+    ],
+    E7:   [
+      { frets: [0, 2, 2, 1, 3, 0] },
+      { frets: [-1, 7, 9, 7, 9, 7], barres: [{ fret: 7, from: 1, to: 5 }], baseFret: 7 },
+    ],
+    D7:   [
+      { frets: [-1, -1, 0, 2, 1, 5] },
+      { frets: [-1, 5, 7, 5, 7, 5], barres: [{ fret: 5, from: 1, to: 5 }], baseFret: 5 },
+    ],
+    G7:   [
+      { frets: [3, 2, 0, 0, 0, 3] },
+      { frets: [3, 5, 3, 4, 3, 3], barres: [{ fret: 3, from: 0, to: 5 }], baseFret: 3 },
+    ],
+    C7:   [
+      { frets: [-1, 3, 5, 3, 5, 3], barres: [{ fret: 3, from: 1, to: 5 }], baseFret: 3 },
+    ],
+    B7:   [
+      { frets: [-1, 2, 4, 2, 4, 2], barres: [{ fret: 2, from: 1, to: 5 }] },
+      { frets: [7, 7, 9, 7, 9, 7], barres: [{ fret: 7, from: 0, to: 5 }], baseFret: 7 },
+    ],
+
+    // ── Minor 7 alternatives ──────────────────────────────────
+    Am7:  [
+      { frets: [5, 5, 7, 5, 6, 5], barres: [{ fret: 5, from: 0, to: 5 }], baseFret: 5 },
+      { frets: [-1, 0, 2, 2, 1, 3] },
+    ],
+    Em7:  [
+      { frets: [0, 2, 2, 0, 3, 0] },
+      { frets: [0, 2, 0, 0, 3, 0] },
+    ],
+    Dm7:  [
+      { frets: [-1, 5, 7, 5, 6, 5], barres: [{ fret: 5, from: 1, to: 5 }], baseFret: 5 },
+    ],
+
+    // ── Maj7 alternatives ─────────────────────────────────────
+    CM7:  [
+      { frets: [-1, 3, 5, 4, 5, 3], barres: [{ fret: 3, from: 1, to: 5 }], baseFret: 3 },
+    ],
+    Cmaj7:[
+      { frets: [-1, 3, 5, 4, 5, 3], barres: [{ fret: 3, from: 1, to: 5 }], baseFret: 3 },
+    ],
+    GM7:  [
+      { frets: [3, 2, 0, 0, 0, 2] },
+    ],
+    AM7:  [
+      { frets: [5, 5, 7, 6, 7, 5], barres: [{ fret: 5, from: 0, to: 5 }], baseFret: 5 },
+    ],
+    FM7:  [
+      { frets: [-1, -1, 3, 2, 1, 0] },
+    ],
+    Fmaj7:[
+      { frets: [-1, -1, 3, 2, 1, 0] },
+    ],
+
+    // ── Sus4 alternatives ─────────────────────────────────────
+    Dsus4: [
+      { frets: [-1, 5, 7, 7, 8, 5], barres: [{ fret: 5, from: 1, to: 5 }], baseFret: 5 },
+    ],
+    Asus4: [
+      { frets: [5, 5, 7, 7, 8, 5], barres: [{ fret: 5, from: 0, to: 5 }], baseFret: 5 },
+    ],
+    Esus4: [
+      { frets: [0, 2, 2, 2, 0, 2] },
+    ],
+  },
+  cavaquinho: {},
+  ukulele: {
+    C:  [
+      { frets: [5, 4, 3, 3], baseFret: 3 },
+    ],
+    Am: [
+      { frets: [2, 4, 4, 5], baseFret: 2 },
+    ],
+    G:  [
+      { frets: [0, 2, 3, 5] },
+    ],
+    F:  [
+      { frets: [2, 0, 1, 3] },
+    ],
+  },
+};
+
 function getStringsForInstrument(instrument: Instrument): number {
   if (instrument === "guitar") return 6;
   return 4;

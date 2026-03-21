@@ -60,6 +60,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   markRepertoireWizardSeen: async () => {},
   defaultGenre: "todos",
   setDefaultGenre: async () => {},
+  chordPreferences: {},
+  saveChordPreference: async () => {},
   loading: true,
 });
 

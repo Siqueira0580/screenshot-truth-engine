@@ -20,6 +20,7 @@ interface UserPreferencesProfile {
   hasSeenWizard: boolean;
   hasSeenRepertoireWizard: boolean;
   defaultGenre: string;
+  chordPreferences: Record<string, number>;
 }
 
 interface UserPreferences {

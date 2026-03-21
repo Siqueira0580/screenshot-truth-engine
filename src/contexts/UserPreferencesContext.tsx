@@ -126,6 +126,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const nextHasSeenWizard = !!(data as any).has_seen_wizard;
         const nextHasSeenRepertoireWizard = !!(data as any).has_seen_repertoire_wizard;
         const nextDefaultGenre = (data as any).default_genre || "todos";
+        const nextChordPrefs = (data as any).chord_preferences as Record<string, number> || {};
         const nextProfile: UserPreferencesProfile = {
           id: user.id,
           preferredInstrument: nextPreferredInstrument,
@@ -136,6 +137,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           hasSeenWizard: nextHasSeenWizard,
           hasSeenRepertoireWizard: nextHasSeenRepertoireWizard,
           defaultGenre: nextDefaultGenre,
+          chordPreferences: nextChordPrefs,
         };
 
         setProfile(nextProfile);

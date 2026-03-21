@@ -39,6 +39,8 @@ interface UserPreferences {
   markRepertoireWizardSeen: () => Promise<void>;
   defaultGenre: string;
   setDefaultGenre: (genre: string) => Promise<void>;
+  chordPreferences: Record<string, number>;
+  saveChordPreference: (chordKey: string, voicingIndex: number) => Promise<void>;
   loading: boolean;
 }
 

@@ -85,6 +85,53 @@ export function resolveChordVoicing(
 }
 
 /**
+ * Resolve ALL available voicings for a chord on a given instrument.
+ * Returns an array of voicings (the first is always the "default" from CHORD_DB).
+ */
+export function resolveAllVoicings(
+  chord: string,
+  instrument: Instrument
+): ChordVoicing[] {
+  if (instrument === "keyboard") return [];
+
+  const db = CHORD_DB[instrument];
+  const altDb = CHORD_ALT_VOICINGS[instrument];
+  if (!db) return [];
+
+  // Find the resolved key in the DB
+  const lookupChain = getChordLookupChain(chord);
+  let resolvedKey: string | null = null;
+
+  for (const { name } of lookupChain) {
+    if (db[name]) { resolvedKey = name; break; }
+    const rootMatch = name.match(/^([A-G][#b]?)(.*)/);
+    if (rootMatch) {
+      const alt = ENHARMONIC[rootMatch[1]];
+      if (alt && db[alt + rootMatch[2]]) { resolvedKey = alt + rootMatch[2]; break; }
+    }
+  }
+
+  if (!resolvedKey) {
+    const normalized = normalizeChordName(chord);
+    const simplifications = buildSimplifications(normalized);
+    for (const simpl of simplifications) {
+      if (db[simpl]) { resolvedKey = simpl; break; }
+      const sMatch = simpl.match(/^([A-G][#b]?)(.*)/);
+      if (sMatch) {
+        const alt = ENHARMONIC[sMatch[1]];
+        if (alt && db[alt + sMatch[2]]) { resolvedKey = alt + sMatch[2]; break; }
+      }
+    }
+  }
+
+  if (!resolvedKey) return [];
+
+  const primary = db[resolvedKey];
+  const alternatives = altDb?.[resolvedKey] || [];
+  return [primary, ...alternatives];
+}
+
+/**
  * Build a list of progressively simpler chord names.
  * E.g. "C#m7b5" → ["C#m7", "C#m", "C#"]
  */

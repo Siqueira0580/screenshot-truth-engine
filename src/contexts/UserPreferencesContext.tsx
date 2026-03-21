@@ -149,6 +149,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setHasSeenWizard(nextHasSeenWizard);
         setHasSeenRepertoireWizard(nextHasSeenRepertoireWizard);
         setDefaultGenreState(nextDefaultGenre);
+        setChordPreferences(nextChordPrefs);
       } finally {
         if (!cancelled) {
           setIsFetchingProfile(false);

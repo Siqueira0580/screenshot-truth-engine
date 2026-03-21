@@ -20,6 +20,7 @@ interface UserPreferencesProfile {
   hasSeenWizard: boolean;
   hasSeenRepertoireWizard: boolean;
   defaultGenre: string;
+  chordPreferences: Record<string, number>;
 }
 
 interface UserPreferences {
@@ -38,6 +39,8 @@ interface UserPreferences {
   markRepertoireWizardSeen: () => Promise<void>;
   defaultGenre: string;
   setDefaultGenre: (genre: string) => Promise<void>;
+  chordPreferences: Record<string, number>;
+  saveChordPreference: (chordKey: string, voicingIndex: number) => Promise<void>;
   loading: boolean;
 }
 
@@ -57,6 +60,8 @@ const UserPreferencesContext = createContext<UserPreferences>({
   markRepertoireWizardSeen: async () => {},
   defaultGenre: "todos",
   setDefaultGenre: async () => {},
+  chordPreferences: {},
+  saveChordPreference: async () => {},
   loading: true,
 });
 
@@ -73,6 +78,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
   const [favoriteArtists, setFavoriteArtists] = useState<ArtistPref[]>([]);
   const [hasSeenWizard, setHasSeenWizard] = useState(true);
   const [hasSeenRepertoireWizard, setHasSeenRepertoireWizard] = useState(true);
+  const [chordPreferences, setChordPreferences] = useState<Record<string, number>>({});
   const [isFetchingProfile, setIsFetchingProfile] = useState(false);
 
   const activeProfile = user && profile?.id === user.id ? profile : null;
@@ -107,7 +113,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
       try {
         const { data } = await supabase
           .from("profiles")
-          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard, has_seen_repertoire_wizard, default_genre")
+          .select("preferred_instrument, wizard_completed, library_setup_completed, favorite_styles, favorite_artists, has_seen_wizard, has_seen_repertoire_wizard, default_genre, chord_preferences")
           .eq("id", user.id)
           .single();
 
@@ -120,6 +126,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         const nextHasSeenWizard = !!(data as any).has_seen_wizard;
         const nextHasSeenRepertoireWizard = !!(data as any).has_seen_repertoire_wizard;
         const nextDefaultGenre = (data as any).default_genre || "todos";
+        const nextChordPrefs = (data as any).chord_preferences as Record<string, number> || {};
         const nextProfile: UserPreferencesProfile = {
           id: user.id,
           preferredInstrument: nextPreferredInstrument,
@@ -130,6 +137,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
           hasSeenWizard: nextHasSeenWizard,
           hasSeenRepertoireWizard: nextHasSeenRepertoireWizard,
           defaultGenre: nextDefaultGenre,
+          chordPreferences: nextChordPrefs,
         };
 
         setProfile(nextProfile);
@@ -141,6 +149,7 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         setHasSeenWizard(nextHasSeenWizard);
         setHasSeenRepertoireWizard(nextHasSeenRepertoireWizard);
         setDefaultGenreState(nextDefaultGenre);
+        setChordPreferences(nextChordPrefs);
       } finally {
         if (!cancelled) {
           setIsFetchingProfile(false);
@@ -246,6 +255,18 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const saveChordPreference = useCallback(async (chordKey: string, voicingIndex: number) => {
+    const updated = { ...chordPreferences, [chordKey]: voicingIndex };
+    setChordPreferences(updated);
+    setProfile((prev) => (prev ? { ...prev, chordPreferences: updated } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ chord_preferences: updated } as any)
+        .eq("id", user.id);
+    }
+  }, [user, chordPreferences]);
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -264,6 +285,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         markRepertoireWizardSeen,
         defaultGenre,
         setDefaultGenre,
+        chordPreferences,
+        saveChordPreference,
         loading,
       }}
     >

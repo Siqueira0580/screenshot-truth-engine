@@ -255,6 +255,18 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const saveChordPreference = useCallback(async (chordKey: string, voicingIndex: number) => {
+    const updated = { ...chordPreferences, [chordKey]: voicingIndex };
+    setChordPreferences(updated);
+    setProfile((prev) => (prev ? { ...prev, chordPreferences: updated } : prev));
+    if (user) {
+      await supabase
+        .from("profiles")
+        .update({ chord_preferences: updated } as any)
+        .eq("id", user.id);
+    }
+  }, [user, chordPreferences]);
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -273,6 +285,8 @@ export function UserPreferencesProvider({ children }: { children: ReactNode }) {
         markRepertoireWizardSeen,
         defaultGenre,
         setDefaultGenre,
+        chordPreferences,
+        saveChordPreference,
         loading,
       }}
     >

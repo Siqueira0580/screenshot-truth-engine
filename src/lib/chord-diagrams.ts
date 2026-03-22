@@ -1176,6 +1176,33 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
     Gaug: [{ frets: [0, 4, 4, 3], baseFret: 3 }],
     Aaug: [{ frets: [2, 1, 1, 2], baseFret: 4 }],
     Baug: [{ frets: [0, 3, 3, 2] }],
+
+    // ── 9 (Dominant 9) alternatives ───────────────────────────
+    C9:   [{ frets: [0, 3, 0, 2] }],
+    D9:   [{ frets: [0, 4, 0, 2] }],
+    E9:   [{ frets: [2, 4, 3, 4], baseFret: 2 }],
+    F9:   [{ frets: [0, 2, 1, 3] }],
+    G9:   [{ frets: [0, 5, 3, 5], baseFret: 3 }],
+    A9:   [{ frets: [0, 2, 2, 4] }],
+    B9:   [{ frets: [2, 2, 2, 4], barres: [{ fret: 2, from: 0, to: 2 }] }],
+
+    // ── 7sus4 alternatives ────────────────────────────────────
+    C7sus4:[{ frets: [0, 3, 1, 1], barres: [{ fret: 1, from: 2, to: 3 }] }],
+    D7sus4:[{ frets: [0, 2, 0, 1] }],
+    E7sus4:[{ frets: [2, 4, 5, 3], baseFret: 2 }],
+    F7sus4:[{ frets: [0, 3, 1, 0] }],
+    G7sus4:[{ frets: [0, 5, 3, 1], baseFret: 3 }],
+    A7sus4:[{ frets: [0, 2, 2, 3] }],
+    B7sus4:[{ frets: [2, 2, 2, 3], barres: [{ fret: 2, from: 0, to: 2 }] }],
+
+    // ── Dim7 alternatives ─────────────────────────────────────
+    Cdim7: [{ frets: [2, 3, 2, 0] }],
+    Ddim7: [{ frets: [4, 5, 4, 2], baseFret: 2 }],
+    Edim7: [{ frets: [1, 2, 1, 2] }],
+    Fdim7: [{ frets: [2, 3, 2, 3], baseFret: 2 }],
+    Gdim7: [{ frets: [0, 4, 3, 4], baseFret: 3 }],
+    Adim7: [{ frets: [1, 2, 1, 2], baseFret: 4 }],
+    Bdim7: [{ frets: [1, 2, 1, 2], baseFret: 2 }],
   },
   ukulele: {
     // ── Major alternatives ─────────────────────────────────────

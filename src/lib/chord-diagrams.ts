@@ -1434,6 +1434,42 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
     Adim7: [{ frets: [2, 3, 2, 0] }],
     Bdim7: [{ frets: [1, 2, 1, 2], baseFret: 4 }],
     Bbdim7:[{ frets: [0, 1, 0, 1], baseFret: 2 }],
+
+    // ── Sus2 alternatives ─────────────────────────────────────
+    Csus2: [{ frets: [0, 2, 0, 3] }],
+    Dsus2: [{ frets: [2, 2, 0, 0] }],
+    Esus2: [{ frets: [4, 4, 0, 2] }],
+    Fsus2: [{ frets: [0, 0, 1, 3] }],
+    Gsus2: [{ frets: [0, 2, 3, 0] }],
+    Asus2: [{ frets: [2, 1, 0, 0] }],
+    Bsus2: [{ frets: [4, 3, 2, 2], baseFret: 2 }],
+
+    // ── m7b5 (Half-diminished) alternatives ───────────────────
+    "Cm7b5": [{ frets: [0, 3, 2, 3] }],
+    "Dm7b5": [{ frets: [1, 2, 1, 3] }],
+    "Em7b5": [{ frets: [0, 3, 2, 0] }],
+    "Fm7b5": [{ frets: [1, 0, 1, 2] }],
+    "Gm7b5": [{ frets: [0, 1, 0, 1] }],
+    "Am7b5": [{ frets: [2, 0, 2, 0] }],
+    "Bm7b5": [{ frets: [4, 2, 2, 0] }],
+
+    // ── 6 (Major 6) alternatives ──────────────────────────────
+    C6:   [{ frets: [0, 0, 0, 0] }, { frets: [5, 4, 3, 0], baseFret: 3 }],
+    D6:   [{ frets: [2, 2, 2, 0], barres: [{ fret: 2, from: 0, to: 2 }] }],
+    E6:   [{ frets: [4, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 3 }] }],
+    F6:   [{ frets: [2, 2, 1, 3] }],
+    G6:   [{ frets: [0, 2, 0, 2] }],
+    A6:   [{ frets: [2, 1, 0, 2] }],
+    B6:   [{ frets: [4, 3, 2, 4], baseFret: 2 }],
+
+    // ── m6 (Minor 6) alternatives ─────────────────────────────
+    Cm6:  [{ frets: [0, 3, 3, 0], barres: [{ fret: 3, from: 1, to: 2 }] }],
+    Dm6:  [{ frets: [2, 2, 1, 0] }],
+    Em6:  [{ frets: [0, 4, 3, 2] }],
+    Fm6:  [{ frets: [1, 0, 1, 0] }],
+    Gm6:  [{ frets: [0, 2, 0, 1] }],
+    Am6:  [{ frets: [2, 0, 0, 2] }],
+    Bm6:  [{ frets: [4, 2, 2, 4], baseFret: 2 }],
   },
 };
 

@@ -1141,6 +1141,41 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
     Fmaj7:[
       { frets: [0, 2, 1, 1] },
     ],
+
+    // ── Sus4 alternatives ─────────────────────────────────────
+    Csus4: [{ frets: [0, 3, 1, 3] }],
+    Dsus4: [{ frets: [0, 2, 0, 3] }],
+    Esus4: [{ frets: [2, 4, 5, 5], baseFret: 2 }],
+    Fsus4: [{ frets: [0, 3, 1, 1], barres: [{ fret: 1, from: 2, to: 3 }] }],
+    Gsus4: [{ frets: [0, 5, 3, 3], baseFret: 3 }],
+    Asus4: [{ frets: [0, 2, 2, 3] }],
+    Bsus4: [{ frets: [2, 2, 2, 3], barres: [{ fret: 2, from: 0, to: 2 }] }],
+
+    // ── Dim alternatives ──────────────────────────────────────
+    Cdim: [{ frets: [2, 3, 2, 3] }],
+    Ddim: [{ frets: [4, 5, 4, 5], baseFret: 2 }],
+    Edim: [{ frets: [1, 2, 1, 2] }],
+    Fdim: [{ frets: [2, 3, 2, 3], baseFret: 2 }],
+    Gdim: [{ frets: [4, 5, 4, 5], baseFret: 4 }],
+    Adim: [{ frets: [1, 2, 1, 2], baseFret: 4 }],
+    Bdim: [{ frets: [1, 2, 1, 2], baseFret: 2 }],
+
+    // ── Add9 alternatives ─────────────────────────────────────
+    Cadd9: [{ frets: [0, 3, 0, 3] }],
+    Dadd9: [{ frets: [0, 4, 0, 2] }],
+    Eadd9: [{ frets: [4, 4, 4, 2], barres: [{ fret: 4, from: 0, to: 2 }] }],
+    Fadd9: [{ frets: [0, 2, 1, 3] }],
+    Gadd9: [{ frets: [0, 5, 3, 5], baseFret: 3 }],
+    Aadd9: [{ frets: [0, 2, 2, 4] }],
+
+    // ── Aug alternatives ──────────────────────────────────────
+    Caug: [{ frets: [1, 3, 1, 2] }],
+    Daug: [{ frets: [3, 5, 3, 4], baseFret: 2 }],
+    Eaug: [{ frets: [1, 4, 4, 4], barres: [{ fret: 4, from: 1, to: 3 }] }],
+    Faug: [{ frets: [2, 1, 1, 2] }],
+    Gaug: [{ frets: [0, 4, 4, 3], baseFret: 3 }],
+    Aaug: [{ frets: [2, 1, 1, 2], baseFret: 4 }],
+    Baug: [{ frets: [0, 3, 3, 2] }],
   },
   ukulele: {
     // ── Major alternatives ─────────────────────────────────────
@@ -1272,6 +1307,42 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
     Amaj7:[
       { frets: [1, 1, 0, 0] },
     ],
+
+    // ── Sus4 alternatives ─────────────────────────────────────
+    Csus4: [{ frets: [0, 0, 1, 3] }, { frets: [5, 5, 3, 3], baseFret: 3 }],
+    Dsus4: [{ frets: [0, 2, 3, 0] }, { frets: [2, 2, 3, 0] }],
+    Esus4: [{ frets: [2, 4, 0, 2] }],
+    Fsus4: [{ frets: [1, 0, 1, 3] }, { frets: [3, 3, 1, 1], barres: [{ fret: 1, from: 2, to: 3 }] }],
+    Gsus4: [{ frets: [0, 2, 3, 3], barres: [{ fret: 3, from: 2, to: 3 }] }],
+    Asus4: [{ frets: [2, 2, 0, 0], barres: [{ fret: 2, from: 0, to: 1 }] }],
+    Bsus4: [{ frets: [4, 4, 2, 2], barres: [{ fret: 2, from: 2, to: 3 }] }],
+
+    // ── Dim alternatives ──────────────────────────────────────
+    Cdim: [{ frets: [0, 3, 2, 3] }, { frets: [2, 3, 2, 3], baseFret: 5 }],
+    Ddim: [{ frets: [1, 2, 1, 0] }],
+    Edim: [{ frets: [0, 3, 2, 0] }],
+    Fdim: [{ frets: [1, 0, 1, 2] }],
+    Gdim: [{ frets: [0, 1, 0, 1] }],
+    Adim: [{ frets: [2, 3, 2, 0] }],
+    Bdim: [{ frets: [4, 2, 2, 0] }],
+    Bbdim:[{ frets: [3, 1, 0, 1] }],
+
+    // ── Add9 alternatives ─────────────────────────────────────
+    Cadd9: [{ frets: [0, 2, 0, 3] }, { frets: [5, 4, 0, 3], baseFret: 3 }],
+    Dadd9: [{ frets: [2, 2, 0, 0], barres: [{ fret: 2, from: 0, to: 1 }] }],
+    Eadd9: [{ frets: [1, 4, 0, 2] }],
+    Fadd9: [{ frets: [0, 0, 1, 3] }],
+    Gadd9: [{ frets: [0, 2, 0, 3] }],
+    Aadd9: [{ frets: [2, 1, 0, 2] }],
+
+    // ── Aug alternatives ──────────────────────────────────────
+    Caug: [{ frets: [1, 0, 0, 3] }, { frets: [5, 4, 4, 3], baseFret: 3 }],
+    Daug: [{ frets: [3, 2, 2, 5], baseFret: 2 }],
+    Eaug: [{ frets: [1, 0, 0, 3] }],
+    Faug: [{ frets: [2, 1, 1, 0] }],
+    Gaug: [{ frets: [0, 3, 3, 2] }],
+    Aaug: [{ frets: [2, 1, 1, 0], baseFret: 4 }],
+    Baug: [{ frets: [0, 3, 3, 2], baseFret: 3 }],
   },
 };
 

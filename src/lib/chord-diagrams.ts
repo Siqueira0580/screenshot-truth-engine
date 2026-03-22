@@ -1032,19 +1032,245 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
       { frets: [0, 2, 2, 2, 0, 2] },
     ],
   },
-  cavaquinho: {},
+  cavaquinho: {
+    // ── Major alternatives ─────────────────────────────────────
+    C:    [
+      { frets: [5, 5, 5, 5], barres: [{ fret: 5, from: 0, to: 3 }], baseFret: 5 },
+      { frets: [0, 3, 0, 2] },
+    ],
+    D:    [
+      { frets: [5, 5, 3, 5], barres: [{ fret: 5, from: 0, to: 3 }], baseFret: 3 },
+      { frets: [0, 2, 0, 2] },
+    ],
+    E:    [
+      { frets: [4, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 3 }], baseFret: 4 },
+      { frets: [2, 4, 5, 4], baseFret: 2 },
+    ],
+    F:    [
+      { frets: [0, 2, 1, 0] },
+      { frets: [5, 5, 5, 5], barres: [{ fret: 5, from: 0, to: 3 }], baseFret: 5 },
+    ],
+    G:    [
+      { frets: [5, 5, 4, 3], baseFret: 3 },
+      { frets: [0, 4, 3, 3], baseFret: 3 },
+    ],
+    A:    [
+      { frets: [2, 4, 5, 4], baseFret: 2 },
+      { frets: [0, 2, 2, 2] },
+    ],
+    B:    [
+      { frets: [2, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
+    ],
+    Bb:   [
+      { frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] },
+    ],
+
+    // ── Minor alternatives ────────────────────────────────────
+    Cm:   [
+      { frets: [5, 5, 4, 5], barres: [{ fret: 5, from: 0, to: 3 }], baseFret: 3 },
+    ],
+    Dm:   [
+      { frets: [5, 5, 3, 4], baseFret: 3 },
+      { frets: [0, 2, 0, 1] },
+    ],
+    Em:   [
+      { frets: [4, 4, 3, 4], barres: [{ fret: 4, from: 0, to: 3 }], baseFret: 4 },
+      { frets: [0, 4, 5, 4], baseFret: 2 },
+    ],
+    Fm:   [
+      { frets: [0, 1, 1, 0], barres: [{ fret: 1, from: 1, to: 2 }] },
+    ],
+    Gm:   [
+      { frets: [5, 5, 3, 5], barres: [{ fret: 5, from: 0, to: 3 }], baseFret: 3 },
+    ],
+    Am:   [
+      { frets: [0, 2, 1, 2] },
+      { frets: [4, 4, 3, 4], barres: [{ fret: 4, from: 0, to: 3 }], baseFret: 2 },
+    ],
+    Bm:   [
+      { frets: [2, 2, 1, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
+    ],
+
+    // ── Dominant 7 alternatives ───────────────────────────────
+    C7:   [
+      { frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    ],
+    D7:   [
+      { frets: [5, 5, 4, 5], barres: [{ fret: 5, from: 0, to: 3 }], baseFret: 3 },
+    ],
+    E7:   [
+      { frets: [4, 4, 3, 3], baseFret: 2 },
+    ],
+    G7:   [
+      { frets: [3, 3, 3, 5], barres: [{ fret: 3, from: 0, to: 2 }], baseFret: 3 },
+    ],
+    A7:   [
+      { frets: [0, 2, 2, 0] },
+    ],
+    B7:   [
+      { frets: [2, 2, 2, 0] },
+    ],
+
+    // ── Minor 7 alternatives ──────────────────────────────────
+    Am7:  [
+      { frets: [0, 2, 1, 0] },
+    ],
+    Dm7:  [
+      { frets: [3, 5, 4, 4], baseFret: 3 },
+    ],
+    Em7:  [
+      { frets: [4, 4, 3, 3], baseFret: 2 },
+    ],
+
+    // ── Maj7 alternatives ─────────────────────────────────────
+    CM7:  [
+      { frets: [5, 5, 5, 4], baseFret: 3 },
+    ],
+    Cmaj7:[
+      { frets: [5, 5, 5, 4], baseFret: 3 },
+    ],
+    GM7:  [
+      { frets: [5, 5, 4, 4], baseFret: 3 },
+    ],
+    Gmaj7:[
+      { frets: [5, 5, 4, 4], baseFret: 3 },
+    ],
+    FM7:  [
+      { frets: [0, 2, 1, 1] },
+    ],
+    Fmaj7:[
+      { frets: [0, 2, 1, 1] },
+    ],
+  },
   ukulele: {
+    // ── Major alternatives ─────────────────────────────────────
     C:  [
       { frets: [5, 4, 3, 3], baseFret: 3 },
+      { frets: [0, 0, 0, 7], baseFret: 5 },
     ],
-    Am: [
-      { frets: [2, 4, 4, 5], baseFret: 2 },
+    D:  [
+      { frets: [2, 2, 2, 5], barres: [{ fret: 2, from: 0, to: 2 }], baseFret: 2 },
+      { frets: [7, 6, 5, 5], baseFret: 5 },
     ],
-    G:  [
-      { frets: [0, 2, 3, 5] },
+    E:  [
+      { frets: [4, 4, 4, 2], barres: [{ fret: 4, from: 0, to: 2 }] },
+      { frets: [1, 4, 0, 2] },
     ],
     F:  [
       { frets: [2, 0, 1, 3] },
+      { frets: [5, 5, 5, 8], barres: [{ fret: 5, from: 0, to: 2 }], baseFret: 5 },
+    ],
+    G:  [
+      { frets: [0, 2, 3, 5] },
+      { frets: [4, 2, 3, 2] },
+    ],
+    A:  [
+      { frets: [2, 1, 0, 4] },
+      { frets: [6, 4, 5, 4], baseFret: 4 },
+    ],
+    B:  [
+      { frets: [4, 3, 2, 2] },
+      { frets: [4, 4, 4, 6], barres: [{ fret: 4, from: 0, to: 2 }], baseFret: 4 },
+    ],
+    Bb: [
+      { frets: [3, 2, 1, 1], barres: [{ fret: 1, from: 2, to: 3 }] },
+    ],
+
+    // ── Minor alternatives ────────────────────────────────────
+    Am: [
+      { frets: [2, 4, 4, 5], baseFret: 2 },
+      { frets: [0, 0, 0, 5], baseFret: 3 },
+    ],
+    Em: [
+      { frets: [0, 4, 3, 2] },
+      { frets: [4, 4, 3, 0] },
+    ],
+    Dm: [
+      { frets: [2, 2, 1, 0] },
+      { frets: [7, 5, 6, 5], baseFret: 5 },
+    ],
+    Bm: [
+      { frets: [4, 2, 2, 2], barres: [{ fret: 2, from: 1, to: 3 }] },
+    ],
+    Gm: [
+      { frets: [0, 2, 3, 1] },
+      { frets: [3, 5, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    ],
+    Fm: [
+      { frets: [1, 0, 1, 3] },
+      { frets: [3, 1, 1, 1], barres: [{ fret: 1, from: 1, to: 3 }] },
+    ],
+    Cm: [
+      { frets: [0, 3, 3, 3], barres: [{ fret: 3, from: 1, to: 3 }] },
+      { frets: [5, 3, 3, 3], barres: [{ fret: 3, from: 1, to: 3 }], baseFret: 3 },
+    ],
+
+    // ── Dominant 7 alternatives ───────────────────────────────
+    C7: [
+      { frets: [0, 0, 0, 1] },
+      { frets: [3, 4, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 },
+    ],
+    G7: [
+      { frets: [0, 2, 1, 2] },
+      { frets: [4, 2, 3, 2] },
+    ],
+    D7: [
+      { frets: [2, 2, 2, 3], barres: [{ fret: 2, from: 0, to: 2 }] },
+    ],
+    A7: [
+      { frets: [0, 1, 0, 0] },
+      { frets: [0, 1, 0, 4] },
+    ],
+    E7: [
+      { frets: [1, 2, 0, 2] },
+      { frets: [4, 4, 4, 5], barres: [{ fret: 4, from: 0, to: 2 }], baseFret: 4 },
+    ],
+    B7: [
+      { frets: [2, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 3 }] },
+    ],
+    F7: [
+      { frets: [2, 3, 1, 3] },
+    ],
+
+    // ── Minor 7 alternatives ──────────────────────────────────
+    Am7: [
+      { frets: [0, 0, 0, 0] },
+      { frets: [0, 4, 3, 3], baseFret: 3 },
+    ],
+    Em7: [
+      { frets: [0, 2, 0, 2] },
+    ],
+    Dm7: [
+      { frets: [2, 2, 1, 3] },
+    ],
+    Gm7: [
+      { frets: [0, 2, 1, 1], barres: [{ fret: 1, from: 2, to: 3 }] },
+    ],
+
+    // ── Maj7 alternatives ─────────────────────────────────────
+    CM7:  [
+      { frets: [0, 0, 0, 2] },
+    ],
+    Cmaj7:[
+      { frets: [0, 0, 0, 2] },
+    ],
+    GM7:  [
+      { frets: [0, 2, 2, 2], barres: [{ fret: 2, from: 1, to: 3 }] },
+    ],
+    Gmaj7:[
+      { frets: [0, 2, 2, 2], barres: [{ fret: 2, from: 1, to: 3 }] },
+    ],
+    FM7:  [
+      { frets: [2, 4, 1, 3] },
+    ],
+    Fmaj7:[
+      { frets: [2, 4, 1, 3] },
+    ],
+    AM7:  [
+      { frets: [1, 1, 0, 0] },
+    ],
+    Amaj7:[
+      { frets: [1, 1, 0, 0] },
     ],
   },
 };

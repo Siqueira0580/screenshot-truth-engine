@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save } from "lucide-react";
+import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BackButton from "@/components/ui/BackButton";

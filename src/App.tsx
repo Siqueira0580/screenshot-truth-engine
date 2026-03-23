@@ -93,6 +93,7 @@ const App = () => (
                 <Route element={<ProtectedRoute><VipMaintenanceGuard><TermsInterceptor><OnboardingGuard><AppLayout /></OnboardingGuard></TermsInterceptor></VipMaintenanceGuard></ProtectedRoute>}>
                   <Route path="/songs" element={<SongsPage />} />
                   <Route path="/songs/:id" element={<SongDetailPage />} />
+                  <Route path="/editar-musica/:id" element={<EditSongPage />} />
                   <Route path="/setlists" element={<SetlistsPage />} />
                   <Route path="/setlists/:id" element={<SetlistDetailPage />} />
                   <Route path="/artists" element={<ArtistsPage />} />

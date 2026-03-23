@@ -32,10 +32,21 @@ export async function fetchUserLibrary() {
 /** Add a song to the user's personal library */
 export async function addToUserLibrary(songId: string) {
   const userId = await getCurrentUserId();
+  // Check if already in library to avoid upsert (no UPDATE RLS policy)
+  const { data: existing } = await supabase
+    .from("user_library")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("song_id", songId)
+    .maybeSingle();
+  if (existing) return; // already in library
   const { error } = await supabase
     .from("user_library")
-    .upsert({ user_id: userId, song_id: songId }, { onConflict: "user_id,song_id" });
-  if (error) throw error;
+    .insert({ user_id: userId, song_id: songId });
+  if (error) {
+    console.error("addToUserLibrary insert error:", error);
+    throw error;
+  }
 }
 
 /** Remove a song from the user's personal library (does NOT delete the global song) */

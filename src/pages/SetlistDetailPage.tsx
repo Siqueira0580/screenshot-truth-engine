@@ -36,6 +36,7 @@ import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import ShowButton from "@/components/ShowButton";
+import ImportSongModal from "@/components/ImportSongModal";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";

@@ -217,6 +217,28 @@ export default function SongDetailPage() {
           <div className="flex items-center gap-2">
             <BackButton />
             <h1 className="text-2xl sm:text-4xl landscape:text-xl font-bold tracking-tight">{song.title}</h1>
+            {isOwner && (
+              <div className="flex items-center gap-1 ml-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-primary hover:text-primary/80"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); navigate(`/compose?id=${song.id}`); }}
+                  title="Editar música"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive/80"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirmDeleteOpen(true); }}
+                  title="Excluir música"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <Button

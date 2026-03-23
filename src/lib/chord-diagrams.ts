@@ -1723,9 +1723,18 @@ function assignFingers(frets: (number | -1)[], barres?: { fret: number; from: nu
 }
 
 /**
+ * Detect whether the current page is in light mode.
+ */
+function isLightTheme(): boolean {
+  if (typeof document === "undefined") return false;
+  return document.documentElement.classList.contains("light");
+}
+
+/**
  * Draw a chord diagram on a canvas — Cifra Club style frame
- * with app theme colors. X/O indicators at bottom, bright grid,
- * white dots with dark numbers, thick nut, rectangular barre.
+ * with HIGH CONTRAST theme-aware colors, thicker lines, and
+ * larger bold finger numbers for maximum mobile legibility.
+ * X/O indicators at bottom, thick nut, rectangular barre.
  */
 export function drawChordDiagram(
   canvas: HTMLCanvasElement,
@@ -1760,9 +1769,10 @@ export function drawChordDiagram(
   const h = canvas.height;
 
   const isFirstPosition = !voicing?.baseFret || voicing.baseFret <= 1;
+  const light = isLightTheme();
 
-  // ── Layout constants (Cifra Club style: grid takes most space, indicators at bottom) ──
-  const nutH = isFirstPosition ? Math.max(4, Math.round(h * 0.025)) : 0;
+  // ── Layout constants ──
+  const nutH = isFirstPosition ? Math.max(5, Math.round(h * 0.035)) : 0;
   const topPad = Math.round(h * 0.04);
   const bottomIndicatorH = Math.round(h * 0.1);
   const sidePad = Math.round(w * 0.14);
@@ -1774,56 +1784,55 @@ export function drawChordDiagram(
   const gridW = w - effectiveSidePadLeft - sidePad;
   const stringSpacing = gridW / (numStrings - 1);
   const fretSpacing = gridH / numFrets;
-  const dotRadius = Math.min(stringSpacing, fretSpacing) * 0.32;
+  const dotRadius = Math.min(stringSpacing, fretSpacing) * 0.34;
 
-  // ── Cifra Club colors adapted to app theme ──
-  const gridLineColor = "hsl(220, 10%, 48%)";       // visible gray lines
-  const stringLineColor = "hsl(220, 10%, 45%)";     // slightly lighter strings
-  const nutColor = "hsl(220, 10%, 75%)";             // bright nut bar
-  const dotColor = "hsl(220, 15%, 88%)";             // white-ish dots (like Cifra Club)
-  const dotTextColor = "hsl(220, 20%, 10%)";         // dark numbers on dots
-  const barreColor = "hsl(220, 15%, 88%)";           // white barre bar
-  const indicatorColor = "hsl(220, 15%, 85%)";       // X/O at bottom
-  const mutedColor = "hsl(220, 10%, 55%)";           // X marks slightly dimmer
-  const baseFretColor = "hsl(220, 10%, 55%)";
-  const unavailableColor = "hsl(220, 10%, 40%)";
+  // ── HIGH CONTRAST theme-aware colors ──
+  const gridLineColor   = light ? "hsl(220, 15%, 30%)" : "hsl(220, 10%, 58%)";
+  const stringLineColor = light ? "hsl(220, 15%, 28%)" : "hsl(220, 10%, 55%)";
+  const nutColor        = light ? "hsl(220, 15%, 20%)" : "hsl(220, 10%, 82%)";
+  const dotColor        = light ? "hsl(220, 20%, 15%)" : "hsl(220, 15%, 92%)";
+  const dotTextColor    = light ? "hsl(0, 0%, 100%)"   : "hsl(220, 20%, 8%)";
+  const barreColor      = light ? "hsl(220, 20%, 15%)" : "hsl(220, 15%, 92%)";
+  const indicatorColor  = light ? "hsl(220, 15%, 20%)" : "hsl(220, 15%, 88%)";
+  const mutedColor      = light ? "hsl(0, 70%, 45%)"   : "hsl(0, 65%, 60%)";
+  const baseFretColor   = light ? "hsl(220, 15%, 25%)" : "hsl(220, 10%, 65%)";
+  const unavailableColor = light ? "hsl(220, 10%, 50%)" : "hsl(220, 10%, 45%)";
 
   // Clear
   ctx.clearRect(0, 0, w, h);
 
-  // ── Nut (thick bar for first position — Cifra Club style) ──
+  // ── Nut (thick bar for first position) ──
   if (isFirstPosition) {
     ctx.fillStyle = nutColor;
     const nutY = topPad;
     ctx.fillRect(effectiveSidePadLeft - 1, nutY, gridW + 2, nutH);
   }
 
-  // ── Base fret indicator (e.g. "2fr") ──
+  // ── Base fret indicator (e.g. "2ª") — LARGER and BOLD ──
   if (!isFirstPosition && voicing?.baseFret) {
     ctx.fillStyle = baseFretColor;
-    ctx.font = `600 ${Math.round(fretSpacing * 0.3)}px system-ui, -apple-system, sans-serif`;
+    ctx.font = `700 ${Math.round(fretSpacing * 0.38)}px system-ui, -apple-system, sans-serif`;
     ctx.textAlign = "right";
     ctx.textBaseline = "middle";
     ctx.fillText(`${voicing.baseFret}ª`, effectiveSidePadLeft - 4, gridTop + fretSpacing * 0.5);
   }
 
-  // ── Grid: horizontal fret lines ──
+  // ── Grid: horizontal fret lines — THICKER ──
   for (let f = 0; f <= numFrets; f++) {
     const y = gridTop + f * fretSpacing;
     ctx.strokeStyle = gridLineColor;
-    ctx.lineWidth = f === 0 && !isFirstPosition ? 1.5 : 1;
+    ctx.lineWidth = f === 0 && !isFirstPosition ? 2 : 1.4;
     ctx.beginPath();
     ctx.moveTo(effectiveSidePadLeft, y);
     ctx.lineTo(effectiveSidePadLeft + gridW, y);
     ctx.stroke();
   }
 
-  // ── Grid: vertical string lines ──
+  // ── Grid: vertical string lines — THICKER ──
   for (let s = 0; s < numStrings; s++) {
     const x = effectiveSidePadLeft + s * stringSpacing;
     ctx.strokeStyle = stringLineColor;
-    // Outer strings slightly thicker (like real guitar)
-    ctx.lineWidth = (s === 0 || s === numStrings - 1) ? 1.2 : 0.8;
+    ctx.lineWidth = (s === 0 || s === numStrings - 1) ? 1.8 : 1.2;
     ctx.beginPath();
     ctx.moveTo(x, gridTop);
     ctx.lineTo(x, gridTop + gridH);
@@ -1832,7 +1841,7 @@ export function drawChordDiagram(
 
   if (!voicing) {
     ctx.fillStyle = unavailableColor;
-    ctx.font = `400 ${Math.round(w * 0.065)}px system-ui, sans-serif`;
+    ctx.font = `500 ${Math.round(w * 0.07)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Indisponível", w / 2, gridTop + gridH / 2);
@@ -1841,7 +1850,7 @@ export function drawChordDiagram(
 
   const fingers = assignFingers(voicing.frets, voicing.barres);
 
-  // ── Barres (Cifra Club style: thick white rectangular bar) ──
+  // ── Barres (thick rectangular bar) — MORE VISIBLE ──
   if (voicing.barres) {
     for (const barre of voicing.barres) {
       const relativeFret = voicing.baseFret && voicing.baseFret > 1
@@ -1850,18 +1859,17 @@ export function drawChordDiagram(
       const y = gridTop + (relativeFret - 0.5) * fretSpacing;
       const x1 = effectiveSidePadLeft + barre.from * stringSpacing;
       const x2 = effectiveSidePadLeft + barre.to * stringSpacing;
-      const barreH = dotRadius * 1.1;
+      const barreH = dotRadius * 1.2;
 
-      // Rectangular barre bar
       ctx.fillStyle = barreColor;
-      const rx = 3; // slight rounding
+      const rx = 3;
       ctx.beginPath();
       ctx.roundRect(x1 - dotRadius * 0.3, y - barreH / 2, (x2 - x1) + dotRadius * 0.6, barreH, rx);
       ctx.fill();
     }
   }
 
-  // ── Fret dots (Cifra Club: white filled circles with dark finger numbers) ──
+  // ── Fret dots with LARGER BOLD finger numbers ──
   for (let s = 0; s < voicing.frets.length; s++) {
     const fret = voicing.frets[s];
     const x = effectiveSidePadLeft + s * stringSpacing;
@@ -1877,16 +1885,16 @@ export function drawChordDiagram(
         : fret;
       const y = gridTop + (relativeFret - 0.5) * fretSpacing;
 
-      // White filled circle
+      // Solid filled circle
       ctx.fillStyle = dotColor;
       ctx.beginPath();
       ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Dark finger number
+      // LARGER BOLD finger number (50%+ bigger than before)
       if (fingers[s] > 0) {
         ctx.fillStyle = dotTextColor;
-        ctx.font = `700 ${Math.round(dotRadius * 1.1)}px system-ui, sans-serif`;
+        ctx.font = `800 ${Math.round(dotRadius * 1.5)}px system-ui, -apple-system, sans-serif`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(String(fingers[s]), x, y + 0.5);
@@ -1894,18 +1902,18 @@ export function drawChordDiagram(
     }
   }
 
-  // ── Bottom indicators: X (muted) and O (open) — Cifra Club style ──
+  // ── Bottom indicators: X (muted) and O (open) — THICKER ──
   if (voicing) {
     const indY = gridTop + gridH + bottomIndicatorH * 0.55;
-    const indR = Math.max(3.5, dotRadius * 0.5);
+    const indR = Math.max(4, dotRadius * 0.55);
     for (let s = 0; s < voicing.frets.length; s++) {
       const fret = voicing.frets[s];
       const x = effectiveSidePadLeft + s * stringSpacing;
       if (fret === -1) {
-        // X mark
+        // X mark — thicker strokes
         ctx.strokeStyle = mutedColor;
-        ctx.lineWidth = 1.6;
-        const sz = indR * 0.7;
+        ctx.lineWidth = 2;
+        const sz = indR * 0.75;
         ctx.beginPath();
         ctx.moveTo(x - sz, indY - sz);
         ctx.lineTo(x + sz, indY + sz);
@@ -1925,7 +1933,7 @@ export function drawChordDiagram(
   // ── Simplified indicator ──
   if (simplified) {
     ctx.fillStyle = unavailableColor;
-    ctx.font = `400 ${Math.round(w * 0.05)}px system-ui, sans-serif`;
+    ctx.font = `500 ${Math.round(w * 0.055)}px system-ui, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "bottom";
     ctx.fillText("* simplificado", w / 2, h - 1);

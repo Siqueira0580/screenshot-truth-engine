@@ -4,6 +4,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import BackButton from "@/components/ui/BackButton";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";

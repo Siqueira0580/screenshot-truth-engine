@@ -906,6 +906,18 @@ export default function SetlistDetailPage() {
           </Dialog>
 
           
+          
+          <ImportSongModal
+            open={importLinkOpen}
+            onOpenChange={(open) => {
+              setImportLinkOpen(open);
+              if (!open) {
+                queryClient.invalidateQueries({ queryKey: ["songs"] });
+                queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+              }
+            }}
+          />
+
           <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
 
           <SetlistSettingsModal

@@ -393,3 +393,112 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+function ChangePasswordCard() {
+  const { user } = useAuth();
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = async () => {
+    setError("");
+    if (!currentPw) { setError("Informe a senha atual."); return; }
+    if (!PASSWORD_REGEX.test(newPw)) {
+      setError("Nova senha: 8-12 caracteres com maiúscula, minúscula, número e caractere especial (!@#$%^&*).");
+      return;
+    }
+    if (newPw !== confirmPw) { setError("As senhas não coincidem."); return; }
+
+    setSaving(true);
+    try {
+      // Re-authenticate
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPw,
+      });
+      if (signInError) {
+        setError("Senha atual incorreta.");
+        setSaving(false);
+        return;
+      }
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPw });
+      if (updateError) throw updateError;
+      toast.success("Senha alterada com sucesso!");
+      setCurrentPw(""); setNewPw(""); setConfirmPw("");
+    } catch (err: any) {
+      setError(err.message || "Erro ao alterar senha.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card className="border-border bg-card">
+      <CardContent className="pt-6 space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <Lock className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold text-foreground">Trocar Senha</h3>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="currentPw">Senha Atual</Label>
+          <div className="relative">
+            <Input
+              id="currentPw"
+              type={showCurrent ? "text" : "password"}
+              value={currentPw}
+              onChange={(e) => { setCurrentPw(e.target.value); setError(""); }}
+              placeholder="Sua senha atual"
+              maxLength={12}
+            />
+            <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="newPw">Nova Senha</Label>
+          <div className="relative">
+            <Input
+              id="newPw"
+              type={showNew ? "text" : "password"}
+              value={newPw}
+              onChange={(e) => { setNewPw(e.target.value); setError(""); }}
+              placeholder="8-12 chars: Aa1@"
+              maxLength={12}
+            />
+            <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+              {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Maiúscula, minúscula, número e especial (!@#$%^&*)</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="confirmPw">Confirmar Nova Senha</Label>
+          <Input
+            id="confirmPw"
+            type="password"
+            value={confirmPw}
+            onChange={(e) => { setConfirmPw(e.target.value); setError(""); }}
+            placeholder="Repita a nova senha"
+            maxLength={12}
+          />
+        </div>
+
+        {error && <p className="text-xs text-destructive">{error}</p>}
+
+        <Button onClick={handleChange} disabled={saving} className="w-full">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Lock className="h-4 w-4 mr-2" />}
+          Alterar Senha
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}

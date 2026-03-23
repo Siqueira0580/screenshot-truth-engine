@@ -208,12 +208,35 @@ export default function SongsPage() {
     }
   };
 
+  const [genreFilter, setGenreFilter] = useState("todos");
+
+  const GENRES = [
+    { value: "todos", label: "🎵 Todos" },
+    { value: "pop", label: "🎤 Pop" },
+    { value: "rock", label: "🎸 Rock" },
+    { value: "sertanejo", label: "🤠 Sertanejo" },
+    { value: "worship", label: "🙏 Worship" },
+    { value: "samba", label: "🥁 Samba" },
+    { value: "pagode", label: "🪘 Pagode" },
+    { value: "mpb", label: "🇧🇷 MPB" },
+    { value: "forro", label: "🪗 Forró" },
+    { value: "gospel", label: "✝️ Gospel" },
+    { value: "bossa nova", label: "🎶 Bossa Nova" },
+    { value: "reggae", label: "🟢 Reggae" },
+    { value: "funk", label: "🔊 Funk" },
+    { value: "axe", label: "🥳 Axé" },
+  ];
+
   const filtered = useMemo(() => {
     let list = songs.filter(
       (s) =>
         s.title.toLowerCase().includes(search.toLowerCase()) ||
         (s.artist && s.artist.toLowerCase().includes(search.toLowerCase()))
     );
+
+    if (genreFilter !== "todos") {
+      list = list.filter((s) => s.style && s.style.toLowerCase() === genreFilter.toLowerCase());
+    }
 
     switch (sortMode) {
       case "oldest":
@@ -232,7 +255,7 @@ export default function SongsPage() {
     }
 
     return list;
-  }, [songs, search, sortMode]);
+  }, [songs, search, sortMode, genreFilter]);
 
   return (
     <OnboardingGuard>

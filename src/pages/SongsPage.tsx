@@ -261,6 +261,15 @@ export default function SongsPage() {
     return list;
   }, [songs, search, sortMode, genreFilter]);
 
+  const groupedSongs = useMemo(() => {
+    return filtered.reduce<Record<string, typeof filtered>>((acc, song) => {
+      const genre = song.style?.trim() || "Outros";
+      if (!acc[genre]) acc[genre] = [];
+      acc[genre].push(song);
+      return acc;
+    }, {});
+  }, [filtered]);
+
   return (
     <OnboardingGuard>
       <div className="space-y-4 w-full max-w-full overflow-x-hidden px-0">

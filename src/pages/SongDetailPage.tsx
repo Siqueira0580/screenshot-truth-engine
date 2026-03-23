@@ -1,13 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play } from "lucide-react";
+import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BackButton from "@/components/ui/BackButton";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import type { Instrument } from "@/lib/chord-diagrams";
 import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
 import ShowButton from "@/components/ShowButton";

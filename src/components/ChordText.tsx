@@ -27,7 +27,7 @@ export default function ChordText({ text, className }: ChordTextProps) {
   }
 
   return (
-    <pre className={className}>
+    <pre className={`${className ?? ""} whitespace-pre-wrap font-mono`} style={{ tabSize: 8 }}>
       {lines.map((line, lineIdx) => (
         <ChordLine key={lineIdx} line={line} isLast={lineIdx === lines.length - 1} />
       ))}
@@ -44,7 +44,7 @@ function ChordLine({ line, isLast }: { line: string; isLast: boolean }) {
         seg.type === "chord" ? (
           <ChordHighlight key={i} chord={seg.content} />
         ) : (
-          <span key={i}>{seg.content}</span>
+          <span key={i} style={{ whiteSpace: "pre-wrap" }}>{seg.content}</span>
         )
       )}
       {!isLast && "\n"}

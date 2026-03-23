@@ -69,9 +69,7 @@ export default function PublicSongPage() {
 
       {song.body_text ? (
         <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
-          <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed">
-            <ChordText text={song.body_text} />
-          </pre>
+          <ChordText text={song.body_text} className="text-sm leading-relaxed" />
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border border-dashed border-border rounded-lg">

@@ -78,7 +78,8 @@ export default function ChordHighlight({ chord }: ChordHighlightProps) {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <span
-          className="text-primary font-bold cursor-pointer hover:text-accent transition-colors duration-150 underline decoration-primary/30 underline-offset-2"
+          className="text-primary font-bold cursor-pointer hover:text-accent transition-colors duration-150 border-b border-dashed border-primary/30 hover:border-primary"
+          style={{ display: "inline", lineHeight: "inherit" }}
           role="button"
           tabIndex={0}
           onClick={(e) => {

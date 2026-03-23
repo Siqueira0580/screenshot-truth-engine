@@ -688,6 +688,7 @@ export type Database = {
           time_signature: string | null
           title: string
           updated_at: string
+          user_id: string | null
           youtube_url: string | null
         }
         Insert: {
@@ -709,6 +710,7 @@ export type Database = {
           time_signature?: string | null
           title: string
           updated_at?: string
+          user_id?: string | null
           youtube_url?: string | null
         }
         Update: {
@@ -730,6 +732,7 @@ export type Database = {
           time_signature?: string | null
           title?: string
           updated_at?: string
+          user_id?: string | null
           youtube_url?: string | null
         }
         Relationships: []

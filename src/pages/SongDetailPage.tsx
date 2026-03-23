@@ -10,7 +10,7 @@ import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
-import type { Instrument } from "@/lib/chord-diagrams";
+
 import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
 import ShowButton from "@/components/ShowButton";

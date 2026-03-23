@@ -195,6 +195,7 @@ export default function SongDetailPage() {
     }
   };
 
+  if (isLoading) {
     return (
       <div className="space-y-4">
         <div className="h-8 w-32 animate-pulse bg-card rounded" />

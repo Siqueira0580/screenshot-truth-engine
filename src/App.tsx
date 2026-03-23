@@ -9,6 +9,7 @@ import { UserPreferencesProvider } from "@/contexts/UserPreferencesContext";
 import AppLayout from "@/components/AppLayout";
 import SongsPage from "@/pages/SongsPage";
 import SongDetailPage from "@/pages/SongDetailPage";
+import EditSongPage from "@/pages/EditSongPage";
 import SetlistsPage from "@/pages/SetlistsPage";
 import SetlistDetailPage from "@/pages/SetlistDetailPage";
 import ArtistsPage from "@/pages/ArtistsPage";

@@ -44,7 +44,7 @@ function ChordLine({ line, isLast }: { line: string; isLast: boolean }) {
         seg.type === "chord" ? (
           <ChordHighlight key={i} chord={seg.content} />
         ) : (
-          <span key={i}>{seg.content}</span>
+          <span key={i} style={{ whiteSpace: "pre-wrap" }}>{seg.content}</span>
         )
       )}
       {!isLast && "\n"}

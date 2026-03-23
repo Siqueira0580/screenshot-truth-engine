@@ -837,6 +837,29 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             <Plus className="h-3 w-3" />
           </Button>
         </div>
+
+        {/* Instrument selector */}
+        <div className="flex items-center gap-1">
+          <Guitar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <Select
+            value={preferredInstrument}
+            onValueChange={async (value) => {
+              const instrument = value as "guitar" | "cavaquinho" | "ukulele" | "keyboard";
+              await setPreferredInstrument(instrument);
+              toast.success(`Instrumento: ${{ guitar: "Violão", cavaquinho: "Cavaquinho", ukulele: "Ukulele", keyboard: "Teclado" }[instrument]}`);
+            }}
+          >
+            <SelectTrigger className="h-7 w-[100px] text-[10px] sm:text-xs border-border bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="z-[200]">
+              <SelectItem value="guitar">Violão</SelectItem>
+              <SelectItem value="cavaquinho">Cavaquinho</SelectItem>
+              <SelectItem value="ukulele">Ukulele</SelectItem>
+              <SelectItem value="keyboard">Teclado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Chord modal */}

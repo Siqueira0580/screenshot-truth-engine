@@ -179,7 +179,22 @@ export default function SongDetailPage() {
     }
   };
 
-  if (isLoading) {
+  const isOwner = user?.id === song?.created_by || user?.id === song?.user_id;
+
+  const handleDeleteSong = async () => {
+    if (!id) return;
+    try {
+      const { error } = await supabase.from("songs").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Música excluída com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      navigate("/songs");
+    } catch (err: any) {
+      console.error("Erro ao excluir música:", err);
+      toast.error(`Erro ao excluir: ${err.message}`);
+    }
+  };
+
     return (
       <div className="space-y-4">
         <div className="h-8 w-32 animate-pulse bg-card rounded" />

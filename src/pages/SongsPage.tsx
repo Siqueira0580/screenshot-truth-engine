@@ -117,6 +117,28 @@ export default function SongsPage() {
     enabled: !!user,
   });
 
+  const { data: artistPhotos = {} } = useQuery({
+    queryKey: ["artist-photos"],
+    queryFn: async () => {
+      const { data } = await supabase.from("artists").select("name, photo_url");
+      const map: Record<string, string> = {};
+      (data || []).forEach((a: any) => {
+        if (a.photo_url) map[a.name.toLowerCase()] = a.photo_url;
+      });
+      return map;
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const toggleGenre = useCallback((genre: string) => {
+    setCollapsedGenres((prev) => {
+      const next = new Set(prev);
+      if (next.has(genre)) next.delete(genre);
+      else next.add(genre);
+      return next;
+    });
+  }, []);
+
   songsRef.current = songs;
   useAutoEnrichment(songs);
 

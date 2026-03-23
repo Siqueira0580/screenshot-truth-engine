@@ -1,7 +1,7 @@
 import { useRef, useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText, Mic, MicOff, LayoutGrid, List, Music } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText, Mic, MicOff, LayoutGrid, List, Music, ChevronDown, ChevronRight, User } from "lucide-react";
 import { useVoiceSearch, isVoiceSupported } from "@/hooks/useVoiceSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

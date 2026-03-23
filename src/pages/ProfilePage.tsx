@@ -303,6 +303,9 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
+      {/* Change Password Card */}
+      <ChangePasswordCard />
+
       {/* Subscription Card */}
       <Card className="border-border bg-card">
         <CardContent className="pt-6 space-y-3">

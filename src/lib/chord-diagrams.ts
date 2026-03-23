@@ -1628,6 +1628,52 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
     Gm6:  [{ frets: [0, 2, 0, 1] }],
     Am6:  [{ frets: [2, 0, 0, 2] }],
     Bm6:  [{ frets: [4, 2, 2, 4], baseFret: 2 }],
+
+    // ── Sharp/Flat Major alternatives (Ukulele) ───────────────
+    "C#":  [{ frets: [1, 1, 1, 4], barres: [{ fret: 1, from: 0, to: 2 }] }],
+    "Db":  [{ frets: [1, 1, 1, 4], barres: [{ fret: 1, from: 0, to: 2 }] }],
+    "Eb":  [{ frets: [0, 3, 3, 1], barres: [{ fret: 3, from: 1, to: 2 }] }, { frets: [3, 3, 3, 6], barres: [{ fret: 3, from: 0, to: 2 }], baseFret: 3 }],
+    "F#":  [{ frets: [3, 1, 2, 1] }, { frets: [6, 5, 4, 4], baseFret: 4 }],
+    "Gb":  [{ frets: [3, 1, 2, 1] }],
+    "Ab":  [{ frets: [5, 3, 4, 3], baseFret: 3 }, { frets: [1, 1, 1, 4], baseFret: 3 }],
+    "G#":  [{ frets: [5, 3, 4, 3], baseFret: 3 }],
+
+    // ── Sharp/Flat Minor alternatives (Ukulele) ───────────────
+    "C#m": [{ frets: [1, 1, 0, 4] }],
+    "Dbm": [{ frets: [1, 1, 0, 4] }],
+    "Ebm": [{ frets: [3, 3, 2, 4], baseFret: 3 }],
+    "F#m": [{ frets: [2, 1, 2, 0] }],
+    "G#m": [{ frets: [4, 3, 4, 2], baseFret: 2 }],
+    "Abm": [{ frets: [4, 3, 4, 2], baseFret: 2 }],
+    "Bbm": [{ frets: [3, 1, 1, 1], barres: [{ fret: 1, from: 1, to: 3 }] }],
+
+    // ── Sharp/Flat Dominant 7 alternatives (Ukulele) ──────────
+    "C#7": [{ frets: [1, 1, 0, 2] }],
+    "Db7": [{ frets: [1, 1, 0, 2] }],
+    "Eb7": [{ frets: [3, 3, 2, 4], baseFret: 3 }],
+    "F#7": [{ frets: [3, 4, 2, 4] }],
+    "Ab7": [{ frets: [1, 3, 2, 3], baseFret: 3 }],
+    "G#7": [{ frets: [1, 3, 2, 3], baseFret: 3 }],
+    "Bb7": [{ frets: [1, 2, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] }],
+
+    // ── Sharp/Flat Minor 7 alternatives (Ukulele) ─────────────
+    "C#m7":[{ frets: [1, 4, 0, 2] }],
+    "Ebm7":[{ frets: [3, 3, 2, 2], baseFret: 3 }],
+    "F#m7":[{ frets: [2, 1, 2, 0] }],
+    "Abm7":[{ frets: [4, 3, 4, 2], baseFret: 2 }],
+    "Bbm7":[{ frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] }],
+
+    // ── Sharp/Flat Maj7 alternatives (Ukulele) ────────────────
+    "C#maj7":[{ frets: [1, 1, 0, 3] }],
+    "C#M7":  [{ frets: [1, 1, 0, 3] }],
+    "Ebmaj7":[{ frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 }],
+    "EbM7":  [{ frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 }],
+    "F#maj7":[{ frets: [3, 1, 2, 0] }],
+    "F#M7":  [{ frets: [3, 1, 2, 0] }],
+    "Abmaj7":[{ frets: [1, 3, 2, 3], baseFret: 3 }],
+    "AbM7":  [{ frets: [1, 3, 2, 3], baseFret: 3 }],
+    "Bbmaj7":[{ frets: [3, 2, 1, 0] }],
+    "BbM7":  [{ frets: [3, 2, 1, 0] }],
   },
 };
 

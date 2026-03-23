@@ -5,7 +5,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check, X } from "lucide-react";
 import AuthBranding from "@/components/AuthBranding";
 import AuthFeatureShowcase from "@/components/AuthFeatureShowcase";
 import { toast } from "sonner";
@@ -41,6 +41,58 @@ const registerSchema = z.object({
 });
 
 type FormErrors = Partial<Record<keyof z.infer<typeof registerSchema>, string>>;
+
+const PASSWORD_RULES = [
+  { label: "8-12 caracteres", test: (p: string) => p.length >= 8 && p.length <= 12 },
+  { label: "Letra maiúscula", test: (p: string) => /[A-Z]/.test(p) },
+  { label: "Letra minúscula", test: (p: string) => /[a-z]/.test(p) },
+  { label: "Número", test: (p: string) => /\d/.test(p) },
+  { label: "Caractere especial", test: (p: string) => /[!@#$%^&*()_\-+=[\]{};:'",.<>?/\\|`~]/.test(p) },
+];
+
+function PasswordFieldWithStrength({ password, setPassword, error }: { password: string; setPassword: (v: string) => void; error?: string }) {
+  const passed = PASSWORD_RULES.filter((r) => r.test(password)).length;
+  const strength = password.length === 0 ? 0 : Math.round((passed / PASSWORD_RULES.length) * 100);
+  const strengthColor = strength <= 40 ? "bg-destructive" : strength <= 80 ? "bg-yellow-500" : "bg-green-500";
+  const strengthLabel = strength <= 40 ? "Fraca" : strength <= 80 ? "Média" : "Forte";
+
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor="password">Senha *</Label>
+      <Input
+        id="password"
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="8-12 chars: Aa1@"
+        autoComplete="new-password"
+        className={error ? "border-destructive focus-visible:ring-destructive" : ""}
+      />
+      {password.length > 0 && (
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center gap-2">
+            <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+              <div className={`h-full transition-all duration-300 rounded-full ${strengthColor}`} style={{ width: `${strength}%` }} />
+            </div>
+            <span className="text-[10px] font-semibold text-muted-foreground w-10">{strengthLabel}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+            {PASSWORD_RULES.map((rule) => {
+              const ok = rule.test(password);
+              return (
+                <span key={rule.label} className={`flex items-center gap-1 text-[10px] ${ok ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>
+                  {ok ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                  {rule.label}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -221,19 +273,11 @@ export default function RegisterPage() {
               {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Senha *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
-                placeholder="8-12 chars: Aa1@"
-                autoComplete="new-password"
-                className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
-              />
-              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
-            </div>
+            <PasswordFieldWithStrength
+              password={password}
+              setPassword={(v) => { setPassword(v); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+              error={errors.password}
+            />
 
             <Button type="submit" className="w-full landscape:col-span-2" disabled={loading || hasErrors}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

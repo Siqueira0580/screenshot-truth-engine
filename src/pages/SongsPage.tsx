@@ -407,6 +407,26 @@ export default function SongsPage() {
                       <LayoutGrid className="h-4 w-4" />
                     </Button>
                   </div>
+                  <div className="flex items-center rounded-md border border-border overflow-hidden">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-9 w-9 rounded-none", groupMode === "grouped" && "bg-primary/10 text-primary")}
+                      onClick={() => setGroupMode("grouped")}
+                      title="Agrupado"
+                    >
+                      <Layers className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-9 w-9 rounded-none", groupMode === "flat" && "bg-primary/10 text-primary")}
+                      onClick={() => setGroupMode("flat")}
+                      title="Todas"
+                    >
+                      <AlignJustify className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

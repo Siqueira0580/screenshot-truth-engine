@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar } from "lucide-react";
+import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BackButton from "@/components/ui/BackButton";
@@ -10,6 +10,8 @@ import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { useAuth } from "@/contexts/AuthContext";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
@@ -28,7 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Save } from "lucide-react";
 
 function extractYoutubeId(url: string | null): string | null {
   if (!url) return null;
@@ -40,6 +41,7 @@ export default function SongDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);
@@ -49,6 +51,7 @@ export default function SongDetailPage() {
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [playerVisible, setPlayerVisible] = useState(false);
   const [linkedVideoId, setLinkedVideoId] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const handleInstrumentChange = async (value: string) => {
     const instrument = value as "guitar" | "cavaquinho" | "ukulele" | "keyboard";
@@ -176,6 +179,22 @@ export default function SongDetailPage() {
     }
   };
 
+  
+
+  const handleDeleteSong = async () => {
+    if (!id) return;
+    try {
+      const { error } = await supabase.from("songs").delete().eq("id", id);
+      if (error) throw error;
+      toast.success("Música excluída com sucesso!");
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      navigate("/songs");
+    } catch (err: any) {
+      console.error("Erro ao excluir música:", err);
+      toast.error(`Erro ao excluir: ${err.message}`);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -186,6 +205,8 @@ export default function SongDetailPage() {
   }
 
   if (!song) return <p className="text-muted-foreground">Música não encontrada.</p>;
+
+  const isOwner = user?.id === song.created_by || user?.id === song.user_id;
 
   const ytId = linkedVideoId || extractYoutubeId(song.youtube_url);
   const displayKey = transposeKey(song.musical_key, transpose);
@@ -199,6 +220,28 @@ export default function SongDetailPage() {
           <div className="flex items-center gap-2">
             <BackButton />
             <h1 className="text-2xl sm:text-4xl landscape:text-xl font-bold tracking-tight">{song.title}</h1>
+            {isOwner && (
+              <div className="flex items-center gap-1 ml-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-primary hover:text-primary/80"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); navigate(`/compose?id=${song.id}`); }}
+                  title="Editar música"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive/80"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); setConfirmDeleteOpen(true); }}
+                  title="Excluir música"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
             <Button
@@ -371,6 +414,13 @@ export default function SongDetailPage() {
           setLinkedVideoId(videoId);
           setPlayerVisible(true);
         }}
+      />
+      <ConfirmDeleteModal
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleDeleteSong}
+        title={`Excluir "${song.title}"?`}
+        description="Tem certeza que deseja excluir esta música? Esta ação não pode ser desfeita e removerá a música da sua biblioteca e de qualquer repertório."
       />
     </div>
   );

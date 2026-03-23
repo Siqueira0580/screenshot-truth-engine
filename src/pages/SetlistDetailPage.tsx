@@ -849,6 +849,17 @@ export default function SetlistDetailPage() {
                 ))}
               </div>
               <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
+                {/* Import from link button */}
+                <button
+                  onClick={() => { setAddOpen(false); setImportLinkOpen(true); }}
+                  className="w-full flex items-center gap-3 rounded-lg p-3 text-left border border-dashed border-primary/30 hover:bg-primary/5 transition-colors mb-2"
+                >
+                  <LinkIcon className="h-4 w-4 text-primary shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm text-primary">Importar da Internet</p>
+                    <p className="text-xs text-muted-foreground">Busque por link e adicione ao acervo</p>
+                  </div>
+                </button>
                 {search.trim() && availableSongs.length === 0 ? (
                   <div className="text-center py-8 space-y-2">
                     <p className="text-sm text-muted-foreground">Nenhuma música encontrada</p>

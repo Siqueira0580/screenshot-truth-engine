@@ -179,7 +179,7 @@ export default function SongDetailPage() {
     }
   };
 
-  const isOwner = user?.id === song?.created_by || user?.id === song?.user_id;
+  
 
   const handleDeleteSong = async () => {
     if (!id) return;

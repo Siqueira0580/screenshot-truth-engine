@@ -412,6 +412,13 @@ export default function SongDetailPage() {
           setPlayerVisible(true);
         }}
       />
+      <ConfirmDeleteModal
+        open={confirmDeleteOpen}
+        onOpenChange={setConfirmDeleteOpen}
+        onConfirm={handleDeleteSong}
+        title={`Excluir "${song.title}"?`}
+        description="Tem certeza que deseja excluir esta música? Esta ação não pode ser desfeita e removerá a música da sua biblioteca e de qualquer repertório."
+      />
     </div>
   );
 }

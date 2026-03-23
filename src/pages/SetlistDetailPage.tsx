@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock, Mic, MicOff } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock, Mic, MicOff, Link as LinkIcon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ import SetlistHeader from "@/components/SetlistHeader";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import ShowButton from "@/components/ShowButton";
+import ImportSongModal from "@/components/ImportSongModal";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
@@ -209,7 +210,7 @@ export default function SetlistDetailPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-
+  const [importLinkOpen, setImportLinkOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("manual");
   const [filterKey, setFilterKey] = useState("all");
   const [selectedSongs, setSelectedSongs] = useState<Set<string>>(new Set());
@@ -848,6 +849,17 @@ export default function SetlistDetailPage() {
                 ))}
               </div>
               <div className="flex-1 max-h-[50vh] overflow-y-auto space-y-1 min-h-0">
+                {/* Import from link button */}
+                <button
+                  onClick={() => { setAddOpen(false); setImportLinkOpen(true); }}
+                  className="w-full flex items-center gap-3 rounded-lg p-3 text-left border border-dashed border-primary/30 hover:bg-primary/5 transition-colors mb-2"
+                >
+                  <LinkIcon className="h-4 w-4 text-primary shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm text-primary">Importar da Internet</p>
+                    <p className="text-xs text-muted-foreground">Busque por link e adicione ao acervo</p>
+                  </div>
+                </button>
                 {search.trim() && availableSongs.length === 0 ? (
                   <div className="text-center py-8 space-y-2">
                     <p className="text-sm text-muted-foreground">Nenhuma música encontrada</p>
@@ -894,6 +906,18 @@ export default function SetlistDetailPage() {
           </Dialog>
 
           
+          
+          <ImportSongModal
+            open={importLinkOpen}
+            onOpenChange={(open) => {
+              setImportLinkOpen(open);
+              if (!open) {
+                queryClient.invalidateQueries({ queryKey: ["songs"] });
+                queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+              }
+            }}
+          />
+
           <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />
 
           <SetlistSettingsModal

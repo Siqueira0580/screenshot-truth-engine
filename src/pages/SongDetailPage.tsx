@@ -40,6 +40,7 @@ export default function SongDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -48,6 +49,14 @@ export default function SongDetailPage() {
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [playerVisible, setPlayerVisible] = useState(false);
   const [linkedVideoId, setLinkedVideoId] = useState<string | null>(null);
+
+  const handleInstrumentChange = async (value: string) => {
+    const instrument = value as "guitar" | "cavaquinho" | "ukulele" | "keyboard";
+    await setPreferredInstrument(instrument);
+    toast.success(`Instrumento alterado para ${
+      { guitar: "Violão", cavaquinho: "Cavaquinho", ukulele: "Ukulele", keyboard: "Teclado" }[instrument]
+    }`);
+  };
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],

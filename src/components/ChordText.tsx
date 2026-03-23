@@ -27,7 +27,7 @@ export default function ChordText({ text, className }: ChordTextProps) {
   }
 
   return (
-    <pre className={className}>
+    <pre className={`${className ?? ""} whitespace-pre-wrap font-mono`} style={{ tabSize: 8 }}>
       {lines.map((line, lineIdx) => (
         <ChordLine key={lineIdx} line={line} isLast={lineIdx === lines.length - 1} />
       ))}

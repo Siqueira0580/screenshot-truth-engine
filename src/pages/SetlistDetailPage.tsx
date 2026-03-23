@@ -210,7 +210,7 @@ export default function SetlistDetailPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-
+  const [importLinkOpen, setImportLinkOpen] = useState(false);
   const [sortBy, setSortBy] = useState<SortBy>("manual");
   const [filterKey, setFilterKey] = useState("all");
   const [selectedSongs, setSelectedSongs] = useState<Set<string>>(new Set());

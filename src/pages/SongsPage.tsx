@@ -426,90 +426,115 @@ export default function SongsPage() {
               <div className="space-y-6">
                 {Object.entries(groupedSongs).sort(([a], [b]) => a.localeCompare(b, "pt")).map(([genre, genreSongs]) => (
                   <div key={genre} className="space-y-2">
-                    {/* Genre Header */}
-                    <div className="flex items-center gap-3">
+                    {/* Genre Header - Clickable to collapse */}
+                    <button
+                      onClick={() => toggleGenre(genre)}
+                      className="flex items-center gap-3 w-full text-left group/header hover:opacity-80 transition-opacity"
+                    >
                       <div className="flex items-center gap-2">
+                        {collapsedGenres.has(genre) ? (
+                          <ChevronRight className="h-4 w-4 text-primary transition-transform" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-primary transition-transform" />
+                        )}
                         <Music className="h-4 w-4 text-primary" />
                         <h3 className="text-base font-bold text-foreground">{genre}</h3>
                       </div>
                       <Badge variant="secondary" className="text-xs font-mono">{genreSongs.length}</Badge>
                       <Separator className="flex-1" />
-                    </div>
+                    </button>
 
-                    {/* Songs - List or Grid */}
-                    {viewMode === "list" ? (
-                      <div className="grid gap-1.5 w-full">
-                        {genreSongs.map((song, i) => (
-                          <div
-                            key={song.id}
-                            className="group flex items-center justify-between w-full gap-3 p-2.5 rounded-lg bg-card transition-all hover:bg-accent/50 animate-fade-in"
-                            style={{ animationDelay: `${i * 20}ms` }}
-                          >
-                            <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-xs font-bold">
-                                {i + 1}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-1.5 min-w-0">
-                                  <p className="font-semibold truncate text-sm">{song.title}</p>
-                                  {(song as any).pdf_url && (
-                                    <span className="shrink-0 text-destructive" title="Partitura PDF">
-                                      <FileText className="h-3 w-3" />
-                                    </span>
-                                  )}
+                    {/* Songs - Collapsible */}
+                    {!collapsedGenres.has(genre) && (
+                      <>
+                        {viewMode === "list" ? (
+                          <div className="grid gap-1.5 w-full">
+                            {genreSongs.map((song, i) => (
+                              <div
+                                key={song.id}
+                                className="group flex items-center justify-between w-full gap-3 p-2.5 rounded-lg bg-card transition-all hover:bg-accent/50 animate-fade-in"
+                                style={{ animationDelay: `${i * 20}ms` }}
+                              >
+                                <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
+                                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-xs font-bold">
+                                    {i + 1}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <p className="font-semibold truncate text-sm">{song.title}</p>
+                                      {(song as any).pdf_url && (
+                                        <span className="shrink-0 text-destructive" title="Partitura PDF">
+                                          <FileText className="h-3 w-3" />
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                                      {song.artist && <span className="truncate">{song.artist}</span>}
+                                      {song.musical_key && (
+                                        <span className="shrink-0 rounded bg-secondary px-1 py-0.5 text-[10px] font-mono font-medium text-secondary-foreground">
+                                          {song.musical_key}
+                                        </span>
+                                      )}
+                                      {song.bpm && <span className="shrink-0">{song.bpm} BPM</span>}
+                                    </div>
+                                  </div>
+                                </Link>
+                                <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => { setEditingSong(song.id); setFormOpen(true); }} title="Editar">
+                                    <Edit className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(song.id)} title="Remover">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
-                                  {song.artist && <span className="truncate">{song.artist}</span>}
-                                  {song.musical_key && (
-                                    <span className="shrink-0 rounded bg-secondary px-1 py-0.5 text-[10px] font-mono font-medium text-secondary-foreground">
-                                      {song.musical_key}
-                                    </span>
-                                  )}
-                                  {song.bpm && <span className="shrink-0">{song.bpm} BPM</span>}
-                                </div>
                               </div>
-                            </Link>
-                            <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => { setEditingSong(song.id); setFormOpen(true); }} title="Editar">
-                                <Edit className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(song.id)} title="Remover">
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {genreSongs.map((song, i) => (
-                          <Link
-                            key={song.id}
-                            to={`/songs/${song.id}`}
-                            className="group flex flex-col gap-2 p-3 rounded-xl bg-card border border-border/50 transition-all hover:border-primary/30 hover:shadow-md animate-fade-in"
-                            style={{ animationDelay: `${i * 20}ms` }}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary font-mono text-xs font-bold">
-                                <Music className="h-4 w-4" />
-                              </div>
-                              {song.musical_key && (
-                                <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-mono font-bold text-secondary-foreground">
-                                  {song.musical_key}
-                                </span>
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-sm truncate">{song.title}</p>
-                              {song.artist && <p className="text-xs text-muted-foreground truncate mt-0.5">{song.artist}</p>}
-                            </div>
-                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-auto">
-                              {song.bpm && <span>{song.bpm} BPM</span>}
-                              {song.style && <span className="truncate">{song.style}</span>}
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
+                        ) : (
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                            {genreSongs.map((song, i) => {
+                              const photoUrl = song.artist ? artistPhotos[song.artist.toLowerCase()] : null;
+                              return (
+                                <Link
+                                  key={song.id}
+                                  to={`/songs/${song.id}`}
+                                  className="group flex flex-col gap-2 p-3 rounded-xl bg-card border border-border/50 transition-all hover:border-primary/30 hover:shadow-md animate-fade-in"
+                                  style={{ animationDelay: `${i * 20}ms` }}
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    {photoUrl ? (
+                                      <img
+                                        src={photoUrl}
+                                        alt={song.artist || ""}
+                                        className="h-10 w-10 shrink-0 rounded-full object-cover border-2 border-primary/20"
+                                      />
+                                    ) : (
+                                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                                        <User className="h-5 w-5" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="font-semibold text-sm truncate">{song.title}</p>
+                                      {song.artist && <p className="text-xs text-muted-foreground truncate">{song.artist}</p>}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-auto">
+                                    <div className="flex items-center gap-2">
+                                      {song.bpm && <span>{song.bpm} BPM</span>}
+                                      {song.style && <span className="truncate">{song.style}</span>}
+                                    </div>
+                                    {song.musical_key && (
+                                      <span className="rounded bg-secondary px-1.5 py-0.5 font-mono font-bold text-secondary-foreground">
+                                        {song.musical_key}
+                                      </span>
+                                    )}
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 ))}

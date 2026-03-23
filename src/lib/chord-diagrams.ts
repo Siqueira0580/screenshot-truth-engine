@@ -1031,6 +1031,119 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
     Esus4: [
       { frets: [0, 2, 2, 2, 0, 2] },
     ],
+
+    // ── Sharp/Flat Major alternatives ─────────────────────────
+    "C#":  [
+      { frets: [-1, 4, 6, 6, 6, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    ],
+    "Db":  [
+      { frets: [-1, 4, 6, 6, 6, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    ],
+    "Eb":  [
+      { frets: [-1, 6, 8, 8, 8, 6], barres: [{ fret: 6, from: 1, to: 5 }], baseFret: 6 },
+      { frets: [-1, -1, 1, 3, 4, 3] },
+    ],
+    "F#":  [
+      { frets: [2, 4, 4, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+      { frets: [-1, 9, 11, 11, 11, 9], barres: [{ fret: 9, from: 1, to: 5 }], baseFret: 9 },
+    ],
+    "Gb":  [
+      { frets: [2, 4, 4, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    ],
+    "Ab":  [
+      { frets: [4, 6, 6, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    ],
+    "Bb":  [
+      { frets: [-1, 1, 3, 3, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+      { frets: [6, 6, 8, 8, 8, 6], barres: [{ fret: 6, from: 0, to: 5 }], baseFret: 6 },
+    ],
+
+    // ── Sharp/Flat Minor alternatives ─────────────────────────
+    "C#m": [
+      { frets: [-1, 4, 6, 6, 5, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    ],
+    "Ebm": [
+      { frets: [-1, 6, 8, 8, 7, 6], barres: [{ fret: 6, from: 1, to: 5 }], baseFret: 6 },
+    ],
+    "F#m": [
+      { frets: [2, 4, 4, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    ],
+    "G#m": [
+      { frets: [4, 6, 6, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    ],
+    "Abm": [
+      { frets: [4, 6, 6, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    ],
+    "Bbm": [
+      { frets: [-1, 1, 3, 3, 2, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    ],
+
+    // ── Sharp/Flat Dominant 7 alternatives ────────────────────
+    "C#7": [
+      { frets: [-1, 4, 6, 4, 6, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    ],
+    "Eb7": [
+      { frets: [-1, -1, 1, 3, 2, 3] },
+      { frets: [-1, 6, 8, 6, 8, 6], barres: [{ fret: 6, from: 1, to: 5 }], baseFret: 6 },
+    ],
+    "F#7": [
+      { frets: [2, 4, 2, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    ],
+    "Ab7": [
+      { frets: [4, 6, 4, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    ],
+    "Bb7": [
+      { frets: [-1, 1, 3, 1, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    ],
+
+    // ── Sharp/Flat Minor 7 alternatives ───────────────────────
+    "C#m7":[
+      { frets: [-1, 4, 6, 4, 5, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    ],
+    "Ebm7":[
+      { frets: [-1, 6, 8, 6, 7, 6], barres: [{ fret: 6, from: 1, to: 5 }], baseFret: 6 },
+    ],
+    "F#m7":[
+      { frets: [2, 4, 2, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    ],
+    "Abm7":[
+      { frets: [4, 6, 4, 4, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    ],
+    "Bbm7":[
+      { frets: [-1, 1, 3, 1, 2, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    ],
+
+    // ── Sharp/Flat Maj7 alternatives ──────────────────────────
+    "C#maj7":[
+      { frets: [-1, 4, 6, 5, 6, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    ],
+    "C#M7":  [
+      { frets: [-1, 4, 6, 5, 6, 4], barres: [{ fret: 4, from: 1, to: 5 }], baseFret: 4 },
+    ],
+    "Ebmaj7":[
+      { frets: [-1, -1, 1, 3, 3, 3], barres: [{ fret: 3, from: 2, to: 4 }] },
+    ],
+    "EbM7":  [
+      { frets: [-1, -1, 1, 3, 3, 3], barres: [{ fret: 3, from: 2, to: 4 }] },
+    ],
+    "F#maj7":[
+      { frets: [2, 4, 3, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    ],
+    "F#M7":  [
+      { frets: [2, 4, 3, 3, 2, 2], barres: [{ fret: 2, from: 0, to: 5 }] },
+    ],
+    "Abmaj7":[
+      { frets: [4, 6, 5, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    ],
+    "AbM7":  [
+      { frets: [4, 6, 5, 5, 4, 4], barres: [{ fret: 4, from: 0, to: 5 }], baseFret: 4 },
+    ],
+    "Bbmaj7":[
+      { frets: [-1, 1, 3, 2, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    ],
+    "BbM7":  [
+      { frets: [-1, 1, 3, 2, 3, 1], barres: [{ fret: 1, from: 1, to: 5 }] },
+    ],
   },
   cavaquinho: {
     // ── Major alternatives ─────────────────────────────────────

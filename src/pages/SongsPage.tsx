@@ -97,6 +97,7 @@ export default function SongsPage() {
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [librarySetupDismissed, setLibrarySetupDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState<"explore" | "library">("explore");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const { isAdmin } = useUserRole();
 

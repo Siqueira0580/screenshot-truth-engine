@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat } from "lucide-react";
+import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,6 +13,9 @@ import MetronomePulse from "@/components/teleprompter/MetronomePulse";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import { parseChordPro, isChordProFormat } from "@/lib/chordpro-parser";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface TeleprompterSong {
   title: string;
@@ -44,6 +47,7 @@ function makeChordClickable(text: string) {
 const NEAR_END_THRESHOLD = 0.80; // 80% scrolled = near end
 
 export default function Teleprompter({ songs, initialIndex = 0, open, onClose, autoHideControls = true }: TeleprompterProps) {
+  const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(() => {
@@ -832,6 +836,29 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.min(s + 2, 60))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
             <Plus className="h-3 w-3" />
           </Button>
+        </div>
+
+        {/* Instrument selector */}
+        <div className="flex items-center gap-1">
+          <Guitar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <Select
+            value={preferredInstrument}
+            onValueChange={async (value) => {
+              const instrument = value as "guitar" | "cavaquinho" | "ukulele" | "keyboard";
+              await setPreferredInstrument(instrument);
+              toast.success(`Instrumento: ${{ guitar: "Violão", cavaquinho: "Cavaquinho", ukulele: "Ukulele", keyboard: "Teclado" }[instrument]}`);
+            }}
+          >
+            <SelectTrigger className="h-7 w-[100px] text-[10px] sm:text-xs border-border bg-background/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="z-[200]">
+              <SelectItem value="guitar">Violão</SelectItem>
+              <SelectItem value="cavaquinho">Cavaquinho</SelectItem>
+              <SelectItem value="ukulele">Ukulele</SelectItem>
+              <SelectItem value="keyboard">Teclado</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

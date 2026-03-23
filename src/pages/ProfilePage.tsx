@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download, Music, Instagram, Facebook } from "lucide-react";
+import { Camera, Loader2, Save, ShieldCheck, ChevronRight, Crown, CalendarClock, RefreshCw, Download, Music, Instagram, Facebook, Lock, Eye, EyeOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -15,6 +15,8 @@ import { useSubscription } from "@/hooks/useSubscription";
 import DangerZone from "@/components/DangerZone";
 import BackButton from "@/components/ui/BackButton";
 import { usePwaInstall } from "@/hooks/usePwaInstall";
+
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=[\]{};:'",.<>?/\\|`~]).{8,12}$/;
 
 interface Profile {
   id: string;

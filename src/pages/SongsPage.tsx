@@ -1,11 +1,13 @@
 import { useRef, useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText, Mic, MicOff } from "lucide-react";
+import { Plus, Search, Music2, Trash2, Edit, Loader2, FileUp, Link2, FileText, Mic, MicOff, LayoutGrid, List, Music } from "lucide-react";
 import { useVoiceSearch, isVoiceSupported } from "@/hooks/useVoiceSearch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { fetchUserLibrary, removeFromUserLibrary, createSongAndAddToLibrary, findOrCreateArtist } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -94,6 +96,7 @@ export default function SongsPage() {
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [librarySetupDismissed, setLibrarySetupDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState<"explore" | "library">("explore");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const { isAdmin } = useUserRole();
 
@@ -257,6 +260,15 @@ export default function SongsPage() {
     return list;
   }, [songs, search, sortMode, genreFilter]);
 
+  const groupedSongs = useMemo(() => {
+    return filtered.reduce<Record<string, typeof filtered>>((acc, song) => {
+      const genre = song.style?.trim() || "Outros";
+      if (!acc[genre]) acc[genre] = [];
+      acc[genre].push(song);
+      return acc;
+    }, {});
+  }, [filtered]);
+
   return (
     <OnboardingGuard>
       <div className="space-y-4 w-full max-w-full overflow-x-hidden px-0">
@@ -299,56 +311,80 @@ export default function SongsPage() {
               </Button>
             </div>
 
-            <div id="tour-search" className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="relative flex-1 flex items-center gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
-                </div>
-                {isVoiceSupported && (
-                  <div className="relative">
-                    <Button
-                      size="icon"
-                      variant={voiceSearch.isListening ? "destructive" : "outline"}
-                      className={cn(
-                        "shrink-0 h-9 w-9 rounded-full transition-all",
-                        voiceSearch.isListening && "animate-pulse shadow-[0_0_12px_hsl(var(--destructive)/0.4)]"
-                      )}
-                      onClick={voiceSearch.toggle}
-                      title="Buscar por voz"
-                    >
-                      {voiceSearch.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                    </Button>
-                    {voiceSearch.isListening && (
-                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
-                      </span>
-                    )}
+            <div id="tour-search" className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm pb-3 space-y-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="relative flex-1 flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input placeholder="Buscar por título ou artista..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-9 text-sm" />
                   </div>
-                )}
+                  {isVoiceSupported && (
+                    <div className="relative">
+                      <Button
+                        size="icon"
+                        variant={voiceSearch.isListening ? "destructive" : "outline"}
+                        className={cn(
+                          "shrink-0 h-9 w-9 rounded-full transition-all",
+                          voiceSearch.isListening && "animate-pulse shadow-[0_0_12px_hsl(var(--destructive)/0.4)]"
+                        )}
+                        onClick={voiceSearch.toggle}
+                        title="Buscar por voz"
+                      >
+                        {voiceSearch.isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                      </Button>
+                      {voiceSearch.isListening && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-destructive" />
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Select value={genreFilter} onValueChange={setGenreFilter}>
+                    <SelectTrigger className="w-[120px] h-9 text-xs bg-background/50 border-primary/20">
+                      <SelectValue placeholder="Gênero" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GENRES.map((g) => (
+                        <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
+                    <SelectTrigger className="w-[110px] h-9 text-xs bg-background/50 border-primary/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recent">Recentes</SelectItem>
+                      <SelectItem value="oldest">Mais Antigas</SelectItem>
+                      <SelectItem value="az">A-Z</SelectItem>
+                      <SelectItem value="za">Z-A</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="flex items-center rounded-md border border-border overflow-hidden">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-9 w-9 rounded-none", viewMode === "list" && "bg-primary/10 text-primary")}
+                      onClick={() => setViewMode("list")}
+                      title="Modo Lista"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn("h-9 w-9 rounded-none", viewMode === "grid" && "bg-primary/10 text-primary")}
+                      onClick={() => setViewMode("grid")}
+                      title="Modo Grade"
+                    >
+                      <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <Select value={genreFilter} onValueChange={setGenreFilter}>
-                <SelectTrigger className="w-[130px] sm:w-[150px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
-                  <SelectValue placeholder="Gênero" />
-                </SelectTrigger>
-                <SelectContent>
-                  {GENRES.map((g) => (
-                    <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-                <SelectTrigger className="w-[120px] sm:w-[150px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="recent">Recentes</SelectItem>
-                  <SelectItem value="oldest">Mais Antigas</SelectItem>
-                  <SelectItem value="az">A-Z</SelectItem>
-                  <SelectItem value="za">Z-A</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             {isLoading ? (
@@ -364,57 +400,94 @@ export default function SongsPage() {
                 <p className="text-sm mt-1">Importe ou adicione músicas à sua biblioteca pessoal.</p>
               </div>
             ) : (
-              <div className="grid gap-2 w-full max-w-full landscape:grid-cols-2 lg:grid-cols-1">
-                {filtered.map((song, i) => (
-                  <div
-                    key={song.id}
-                    className="group flex items-center justify-between w-full max-w-full gap-3 p-3 rounded-lg border-none bg-card transition-all hover:shadow-[var(--shadow-glow)] animate-fade-in"
-                    style={{ boxShadow: "var(--shadow-card)", animationDelay: `${i * 30}ms` }}
-                  >
-                    <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
-                        {i + 1}
+              <div className="space-y-6">
+                {Object.entries(groupedSongs).sort(([a], [b]) => a.localeCompare(b, "pt")).map(([genre, genreSongs]) => (
+                  <div key={genre} className="space-y-2">
+                    {/* Genre Header */}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Music className="h-4 w-4 text-primary" />
+                        <h3 className="text-base font-bold text-foreground">{genre}</h3>
                       </div>
-                      <div className="min-w-0 flex-1 flex flex-col">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <p className="font-semibold truncate">{song.title}</p>
-                          {(song as any).pdf_url && (
-                            <span className="shrink-0 text-red-500" title="Partitura PDF">
-                              <FileText className="h-3.5 w-3.5" />
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
-                          {song.artist && <span className="truncate">{song.artist}</span>}
-                          {song.musical_key && (
-                            <span className="shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
-                              {song.musical_key}
-                            </span>
-                          )}
-                          {song.bpm && <span className="shrink-0">{song.bpm} BPM</span>}
-                        </div>
-                      </div>
-                    </Link>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-primary"
-                        onClick={() => { setEditingSong(song.id); setFormOpen(true); }}
-                        title="Editar"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteTarget(song.id)}
-                        title="Remover"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <Badge variant="secondary" className="text-xs font-mono">{genreSongs.length}</Badge>
+                      <Separator className="flex-1" />
                     </div>
+
+                    {/* Songs - List or Grid */}
+                    {viewMode === "list" ? (
+                      <div className="grid gap-1.5 w-full">
+                        {genreSongs.map((song, i) => (
+                          <div
+                            key={song.id}
+                            className="group flex items-center justify-between w-full gap-3 p-2.5 rounded-lg bg-card transition-all hover:bg-accent/50 animate-fade-in"
+                            style={{ animationDelay: `${i * 20}ms` }}
+                          >
+                            <Link to={`/songs/${song.id}`} className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-xs font-bold">
+                                {i + 1}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <p className="font-semibold truncate text-sm">{song.title}</p>
+                                  {(song as any).pdf_url && (
+                                    <span className="shrink-0 text-destructive" title="Partitura PDF">
+                                      <FileText className="h-3 w-3" />
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                                  {song.artist && <span className="truncate">{song.artist}</span>}
+                                  {song.musical_key && (
+                                    <span className="shrink-0 rounded bg-secondary px-1 py-0.5 text-[10px] font-mono font-medium text-secondary-foreground">
+                                      {song.musical_key}
+                                    </span>
+                                  )}
+                                  {song.bpm && <span className="shrink-0">{song.bpm} BPM</span>}
+                                </div>
+                              </div>
+                            </Link>
+                            <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary" onClick={() => { setEditingSong(song.id); setFormOpen(true); }} title="Editar">
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => setDeleteTarget(song.id)} title="Remover">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                        {genreSongs.map((song, i) => (
+                          <Link
+                            key={song.id}
+                            to={`/songs/${song.id}`}
+                            className="group flex flex-col gap-2 p-3 rounded-xl bg-card border border-border/50 transition-all hover:border-primary/30 hover:shadow-md animate-fade-in"
+                            style={{ animationDelay: `${i * 20}ms` }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary font-mono text-xs font-bold">
+                                <Music className="h-4 w-4" />
+                              </div>
+                              {song.musical_key && (
+                                <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-mono font-bold text-secondary-foreground">
+                                  {song.musical_key}
+                                </span>
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm truncate">{song.title}</p>
+                              {song.artist && <p className="text-xs text-muted-foreground truncate mt-0.5">{song.artist}</p>}
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-auto">
+                              {song.bpm && <span>{song.bpm} BPM</span>}
+                              {song.style && <span className="truncate">{song.style}</span>}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

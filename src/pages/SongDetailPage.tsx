@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar } from "lucide-react";

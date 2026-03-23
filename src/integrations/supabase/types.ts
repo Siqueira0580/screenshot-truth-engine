@@ -430,6 +430,7 @@ export type Database = {
           chord_preferences: Json | null
           created_at: string
           default_genre: string | null
+          default_instrument: string | null
           email: string | null
           facebook_url: string | null
           favorite_artists: Json | null
@@ -457,6 +458,7 @@ export type Database = {
           chord_preferences?: Json | null
           created_at?: string
           default_genre?: string | null
+          default_instrument?: string | null
           email?: string | null
           facebook_url?: string | null
           favorite_artists?: Json | null
@@ -484,6 +486,7 @@ export type Database = {
           chord_preferences?: Json | null
           created_at?: string
           default_genre?: string | null
+          default_instrument?: string | null
           email?: string | null
           facebook_url?: string | null
           favorite_artists?: Json | null

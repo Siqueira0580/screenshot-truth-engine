@@ -1,13 +1,16 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play } from "lucide-react";
+import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BackButton from "@/components/ui/BackButton";
 import { fetchSong, fetchArtists, incrementAccessCount } from "@/lib/supabase-queries";
 import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+
 import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
 import ShowButton from "@/components/ShowButton";
@@ -37,6 +40,7 @@ export default function SongDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);
   const [generating, setGenerating] = useState(false);
@@ -45,6 +49,14 @@ export default function SongDetailPage() {
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [playerVisible, setPlayerVisible] = useState(false);
   const [linkedVideoId, setLinkedVideoId] = useState<string | null>(null);
+
+  const handleInstrumentChange = async (value: string) => {
+    const instrument = value as "guitar" | "cavaquinho" | "ukulele" | "keyboard";
+    await setPreferredInstrument(instrument);
+    toast.success(`Instrumento alterado para ${
+      { guitar: "Violão", cavaquinho: "Cavaquinho", ukulele: "Ukulele", keyboard: "Teclado" }[instrument]
+    }`);
+  };
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
@@ -250,24 +262,41 @@ export default function SongDetailPage() {
         </div>
       </div>
 
-      {/* Transpose controls */}
+      {/* Transpose + Instrument controls */}
       {song.body_text && (
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">Transpor:</span>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose((t) => t - 1)}>
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-          <span className="font-mono text-sm font-semibold text-foreground w-12 text-center">
-            {transpose > 0 ? `+${transpose}` : transpose}
-          </span>
-          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose((t) => t + 1)}>
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-          {transpose !== 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setTranspose(0)} className="text-xs text-muted-foreground">
-              Original
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-sm text-muted-foreground">Transpor:</span>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose((t) => t - 1)}>
+              <ChevronDown className="h-4 w-4" />
             </Button>
-          )}
+            <span className="font-mono text-sm font-semibold text-foreground w-12 text-center">
+              {transpose > 0 ? `+${transpose}` : transpose}
+            </span>
+            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose((t) => t + 1)}>
+              <ChevronUp className="h-4 w-4" />
+            </Button>
+            {transpose !== 0 && (
+              <Button variant="ghost" size="sm" onClick={() => setTranspose(0)} className="text-xs text-muted-foreground">
+                Original
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Guitar className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Select value={preferredInstrument} onValueChange={handleInstrumentChange}>
+              <SelectTrigger className="h-8 w-[125px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="guitar">Violão</SelectItem>
+                <SelectItem value="cavaquinho">Cavaquinho</SelectItem>
+                <SelectItem value="ukulele">Ukulele</SelectItem>
+                <SelectItem value="keyboard">Teclado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       )}
 

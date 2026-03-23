@@ -41,6 +41,7 @@ export default function SongDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);
@@ -50,6 +51,7 @@ export default function SongDetailPage() {
   const [youtubeModalOpen, setYoutubeModalOpen] = useState(false);
   const [playerVisible, setPlayerVisible] = useState(false);
   const [linkedVideoId, setLinkedVideoId] = useState<string | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const handleInstrumentChange = async (value: string) => {
     const instrument = value as "guitar" | "cavaquinho" | "ukulele" | "keyboard";

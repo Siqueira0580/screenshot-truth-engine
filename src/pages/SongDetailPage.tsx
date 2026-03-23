@@ -207,6 +207,8 @@ export default function SongDetailPage() {
   if (!song) return <p className="text-muted-foreground">Música não encontrada.</p>;
 
   const isOwner = user?.id === song.created_by || user?.id === song.user_id;
+
+  const ytId = linkedVideoId || extractYoutubeId(song.youtube_url);
   const displayKey = transposeKey(song.musical_key, transpose);
   const displayBody = song.body_text ? transposeText(song.body_text, transpose) : null;
 

@@ -22,6 +22,8 @@ function applyPhoneMask(value: string): string {
 }
 
 // --- Zod Schema ---
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};:'",.<>?/\\|`~]).{8,12}$/;
+
 const registerSchema = z.object({
   firstName: z.string().trim().min(1, "O nome é obrigatório").max(50),
   lastName: z.string().trim().min(1, "O sobrenome é obrigatório").max(50),
@@ -33,7 +35,9 @@ const registerSchema = z.object({
   phone: z.string().optional(),
   password: z
     .string()
-    .min(6, "A senha deve ter pelo menos 6 caracteres"),
+    .min(8, "A senha deve ter entre 8 e 12 caracteres")
+    .max(12, "A senha deve ter entre 8 e 12 caracteres")
+    .regex(PASSWORD_REGEX, "A senha deve conter pelo menos 1 letra maiúscula, 1 minúscula, 1 número e 1 caractere especial (!@#$%^&*)"),
 });
 
 type FormErrors = Partial<Record<keyof z.infer<typeof registerSchema>, string>>;

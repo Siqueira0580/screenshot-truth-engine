@@ -222,19 +222,11 @@ export default function RegisterPage() {
               {errors.phone && <p className="text-xs text-destructive">{errors.phone}</p>}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Senha *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
-                placeholder="8-12 chars: Aa1@"
-                autoComplete="new-password"
-                className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
-              />
-              {errors.password && <p className="text-xs text-destructive">{errors.password}</p>}
-            </div>
+            <PasswordFieldWithStrength
+              password={password}
+              setPassword={(v) => { setPassword(v); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+              error={errors.password}
+            />
 
             <Button type="submit" className="w-full landscape:col-span-2" disabled={loading || hasErrors}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

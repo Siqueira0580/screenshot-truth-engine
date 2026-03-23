@@ -328,8 +328,18 @@ export default function SongsPage() {
                   </div>
                 )}
               </div>
+              <Select value={genreFilter} onValueChange={setGenreFilter}>
+                <SelectTrigger className="w-[130px] sm:w-[150px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
+                  <SelectValue placeholder="Gênero" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GENRES.map((g) => (
+                    <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={sortMode} onValueChange={(v) => setSortMode(v as SortMode)}>
-                <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
+                <SelectTrigger className="w-[120px] sm:w-[150px] h-9 text-xs sm:text-sm bg-background/50 border-primary/20">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

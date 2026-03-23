@@ -228,7 +228,7 @@ export default function RegisterPage() {
                 type="password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="8-12 chars: Aa1@"
                 autoComplete="new-password"
                 className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
               />

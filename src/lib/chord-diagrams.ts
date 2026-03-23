@@ -1352,6 +1352,51 @@ const CHORD_ALT_VOICINGS: Record<string, Record<string, ChordVoicing[]>> = {
     Gm6:  [{ frets: [0, 5, 3, 1], baseFret: 3 }],
     Am6:  [{ frets: [0, 2, 1, 1], barres: [{ fret: 1, from: 2, to: 3 }] }],
     Bm6:  [{ frets: [2, 2, 1, 1], barres: [{ fret: 1, from: 2, to: 3 }] }],
+
+    // ── Sharp/Flat Major alternatives (Cavaquinho) ────────────
+    "C#":  [{ frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] }, { frets: [6, 6, 6, 6], barres: [{ fret: 6, from: 0, to: 3 }], baseFret: 6 }],
+    "Db":  [{ frets: [1, 1, 1, 1], barres: [{ fret: 1, from: 0, to: 3 }] }],
+    "Eb":  [{ frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 }],
+    "F#":  [{ frets: [4, 4, 3, 4], baseFret: 2 }, { frets: [2, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 3 }] }],
+    "Gb":  [{ frets: [2, 2, 2, 2], barres: [{ fret: 2, from: 0, to: 3 }] }],
+    "Ab":  [{ frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }] }, { frets: [1, 3, 1, 1], baseFret: 3 }],
+    "G#":  [{ frets: [3, 3, 3, 3], barres: [{ fret: 3, from: 0, to: 3 }] }],
+
+    // ── Sharp/Flat Minor alternatives (Cavaquinho) ────────────
+    "C#m": [{ frets: [1, 1, 0, 1], barres: [{ fret: 1, from: 0, to: 3 }] }],
+    "Ebm": [{ frets: [3, 3, 2, 3], barres: [{ fret: 3, from: 0, to: 3 }], baseFret: 3 }],
+    "F#m": [{ frets: [2, 2, 1, 2], barres: [{ fret: 2, from: 0, to: 3 }] }],
+    "G#m": [{ frets: [1, 1, 0, 1], baseFret: 3 }],
+    "Abm": [{ frets: [1, 1, 0, 1], baseFret: 3 }],
+    "Bbm": [{ frets: [1, 1, 0, 1] }],
+
+    // ── Sharp/Flat Dominant 7 alternatives (Cavaquinho) ───────
+    "C#7": [{ frets: [1, 1, 1, 0] }],
+    "Db7": [{ frets: [1, 1, 1, 0] }],
+    "Eb7": [{ frets: [3, 3, 3, 1], barres: [{ fret: 3, from: 0, to: 2 }], baseFret: 3 }],
+    "F#7": [{ frets: [2, 2, 2, 0], barres: [{ fret: 2, from: 0, to: 2 }] }],
+    "Ab7": [{ frets: [1, 3, 1, 1], baseFret: 3 }],
+    "G#7": [{ frets: [1, 3, 1, 1], baseFret: 3 }],
+    "Bb7": [{ frets: [1, 1, 0, 2] }],
+
+    // ── Sharp/Flat Minor 7 alternatives (Cavaquinho) ──────────
+    "C#m7":[{ frets: [1, 1, 0, 0] }],
+    "Ebm7":[{ frets: [3, 3, 2, 1], baseFret: 3 }],
+    "F#m7":[{ frets: [2, 2, 1, 0] }],
+    "Abm7":[{ frets: [1, 1, 0, 0], baseFret: 3 }],
+    "Bbm7":[{ frets: [1, 1, 0, 0], baseFret: 1 }],
+
+    // ── Sharp/Flat Maj7 alternatives (Cavaquinho) ─────────────
+    "C#maj7":[{ frets: [1, 1, 1, 0] }],
+    "C#M7":  [{ frets: [1, 1, 1, 0] }],
+    "Ebmaj7":[{ frets: [3, 3, 3, 2], baseFret: 3 }],
+    "EbM7":  [{ frets: [3, 3, 3, 2], baseFret: 3 }],
+    "F#maj7":[{ frets: [2, 2, 2, 1] }],
+    "F#M7":  [{ frets: [2, 2, 2, 1] }],
+    "Abmaj7":[{ frets: [3, 3, 3, 2], baseFret: 3 }],
+    "AbM7":  [{ frets: [3, 3, 3, 2], baseFret: 3 }],
+    "Bbmaj7":[{ frets: [1, 1, 1, 0] }],
+    "BbM7":  [{ frets: [1, 1, 1, 0] }],
   },
   ukulele: {
     // ── Major alternatives ─────────────────────────────────────

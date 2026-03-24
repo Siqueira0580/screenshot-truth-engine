@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, PanInfo, useMotionValue } from "framer-motion";
-import { GripHorizontal, Save, X, Undo2, Ruler } from "lucide-react";
+import { GripHorizontal, Save, X, Undo2, Ruler, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import ChordEditPopover from "@/components/visual-editor/ChordEditPopover";
+import ChordLibraryModal from "@/components/visual-editor/ChordLibraryModal";
 
 interface VisualChordEditorProps {
   text: string;
@@ -236,6 +238,55 @@ export default function VisualChordEditor({
     []
   );
 
+  const renameChord = useCallback(
+    (pairIdx: number, tokenIdx: number, newName: string) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        const chords = [...next[pairIdx].chords];
+        chords[tokenIdx] = { ...chords[tokenIdx], chord: newName, id: `p${pairIdx}-r${Date.now()}` };
+        next[pairIdx] = { ...next[pairIdx], chords };
+        return next;
+      });
+    },
+    []
+  );
+
+  const deleteChord = useCallback(
+    (pairIdx: number, tokenIdx: number) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        const chords = [...next[pairIdx].chords];
+        chords.splice(tokenIdx, 1);
+        next[pairIdx] = { ...next[pairIdx], chords };
+        return next;
+      });
+    },
+    []
+  );
+
+  const addChordToFirstLine = useCallback(
+    (chordName: string) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        // Find first non-standalone pair, or use index 0
+        let targetIdx = next.findIndex((p) => !p.standalone || p.chords.length > 0);
+        if (targetIdx < 0) targetIdx = 0;
+        const chords = [...next[targetIdx].chords];
+        chords.push({
+          id: `p${targetIdx}-new-${Date.now()}`,
+          chord: chordName,
+          col: 0,
+        });
+        next[targetIdx] = { ...next[targetIdx], chords, standalone: false };
+        return next;
+      });
+      toast.success(`"${chordName}" adicionado! Arraste para posicionar.`);
+    },
+    []
+  );
+
+  const [libraryOpen, setLibraryOpen] = useState(false);
+
   const transferChord = useCallback(
     (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => {
       setPairs((prev) => {
@@ -257,7 +308,7 @@ export default function VisualChordEditor({
   const maxCols = 80;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 relative">
       <span
         ref={measureRef}
         className="font-mono text-sm whitespace-pre pointer-events-none"
@@ -303,6 +354,8 @@ export default function VisualChordEditor({
               maxCols={maxCols}
               onMoveChord={updateChordCol}
               onTransferChord={transferChord}
+              onRenameChord={renameChord}
+              onDeleteChord={deleteChord}
               totalPairs={pairs.length}
             />
           ))}
@@ -312,6 +365,21 @@ export default function VisualChordEditor({
           Carregando editor visual…
         </div>
       )}
+
+      {/* FAB - Add Chord */}
+      <Button
+        size="icon"
+        className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-50"
+        onClick={() => setLibraryOpen(true)}
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
+
+      <ChordLibraryModal
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        onInsertChord={addChordToFirstLine}
+      />
     </div>
   );
 }
@@ -353,10 +421,10 @@ function PairRow({
   pair,
   pairIdx,
   charWidth,
-  maxCols,
   onMoveChord,
   onTransferChord,
-  totalPairs,
+  onRenameChord,
+  onDeleteChord,
 }: {
   pair: LinePair;
   pairIdx: number;
@@ -364,6 +432,8 @@ function PairRow({
   maxCols: number;
   onMoveChord: (pairIdx: number, tokenIdx: number, newCol: number) => void;
   onTransferChord: (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => void;
+  onRenameChord: (pairIdx: number, tokenIdx: number, newName: string) => void;
+  onDeleteChord: (pairIdx: number, tokenIdx: number) => void;
   totalPairs: number;
 }) {
   if (pair.standalone && pair.chords.length === 0) {
@@ -381,7 +451,6 @@ function PairRow({
 
   return (
     <div className="chord-line-wrapper mb-1" data-line-index={pairIdx}>
-      {/* Chord row */}
       <div
         className="relative select-none"
         style={{ height: 32, minWidth: lineLen * charWidth, touchAction: "none" }}
@@ -396,11 +465,12 @@ function PairRow({
             maxCols={lineLen}
             onMove={(newCol) => onMoveChord(pairIdx, tokenIdx, newCol)}
             onTransfer={onTransferChord}
+            onRename={(newName) => onRenameChord(pairIdx, tokenIdx, newName)}
+            onDelete={() => onDeleteChord(pairIdx, tokenIdx)}
           />
         ))}
       </div>
 
-      {/* Lyric row (clean text, no brackets) */}
       <div
         className="font-mono text-sm text-foreground whitespace-pre leading-6"
         style={{ minWidth: lineLen * charWidth }}
@@ -423,6 +493,8 @@ function DraggableChord({
   maxCols,
   onMove,
   onTransfer,
+  onRename,
+  onDelete,
 }: {
   token: ChordToken;
   pairIdx: number;
@@ -431,6 +503,8 @@ function DraggableChord({
   maxCols: number;
   onMove: (newCol: number) => void;
   onTransfer: (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => void;
+  onRename: (newName: string) => void;
+  onDelete: () => void;
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -439,7 +513,6 @@ function DraggableChord({
     (event: any, info: PanInfo) => {
       const draggedEl = event.target as HTMLElement;
 
-      // Temporarily hide to detect element below
       draggedEl.style.visibility = "hidden";
       const elementBelow = document.elementFromPoint(info.point.x, info.point.y);
       draggedEl.style.visibility = "visible";
@@ -452,14 +525,12 @@ function DraggableChord({
         const newCol = Math.max(0, Math.round((info.point.x - lineRect.left) / charWidth));
 
         if (targetLineIdx >= 0 && targetLineIdx !== pairIdx) {
-          // Transfer chord to another line
           x.set(0);
           y.set(0);
           onTransfer(pairIdx, tokenIdx, targetLineIdx, newCol);
           return;
         }
 
-        // Same line — just update column
         const clampedCol = Math.min(maxCols - token.chord.length, newCol);
         x.set(0);
         y.set(0);
@@ -469,7 +540,6 @@ function DraggableChord({
         return;
       }
 
-      // No valid target — revert
       x.set(0);
       y.set(0);
     },
@@ -477,27 +547,29 @@ function DraggableChord({
   );
 
   return (
-    <motion.div
-      drag
-      dragMomentum={false}
-      dragElastic={0}
-      onDragEnd={handleDragEnd}
-      style={{
-        x,
-        y,
-        position: "absolute",
-        left: token.col * charWidth,
-        top: 2,
-        touchAction: "none",
-        userSelect: "none",
-        WebkitUserSelect: "none",
-      }}
-      whileDrag={{ scale: 1.12, zIndex: 50 }}
-      whileHover={{ scale: 1.05 }}
-      className="font-mono text-sm font-bold text-primary bg-primary/10 border-2 border-primary/40 rounded px-1 py-1 leading-5 cursor-grab active:cursor-grabbing active:bg-primary/25 active:border-primary/60 whitespace-nowrap z-10"
-    >
-      <GripHorizontal className="inline h-3 w-3 mr-0.5 opacity-50" />
-      {token.chord}
-    </motion.div>
+    <ChordEditPopover chordName={token.chord} onRename={onRename} onDelete={onDelete}>
+      <motion.div
+        drag
+        dragMomentum={false}
+        dragElastic={0}
+        onDragEnd={handleDragEnd}
+        style={{
+          x,
+          y,
+          position: "absolute",
+          left: token.col * charWidth,
+          top: 2,
+          touchAction: "none",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+        }}
+        whileDrag={{ scale: 1.12, zIndex: 50 }}
+        whileHover={{ scale: 1.05 }}
+        className="font-mono text-sm font-bold text-primary bg-primary/10 border-2 border-primary/40 rounded px-1 py-1 leading-5 cursor-grab active:cursor-grabbing active:bg-primary/25 active:border-primary/60 whitespace-nowrap z-10"
+      >
+        <GripHorizontal className="inline h-3 w-3 mr-0.5 opacity-50" />
+        {token.chord}
+      </motion.div>
+    </ChordEditPopover>
   );
 }

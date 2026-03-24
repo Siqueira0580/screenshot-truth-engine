@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 import Teleprompter from "@/components/Teleprompter";

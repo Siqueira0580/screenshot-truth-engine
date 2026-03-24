@@ -601,13 +601,23 @@ function DraggableChord({
     [charWidth, maxCols, token.chord.length, token.col, pairIdx, tokenIdx, onMove, onTransfer, x, y]
   );
 
+  const [isDragging, setIsDragging] = useState(false);
+
   return (
     <ChordEditPopover chordName={token.chord} onRename={onRename} onDelete={onDelete}>
       <motion.div
         drag
         dragMomentum={false}
         dragElastic={0}
-        onDragEnd={handleDragEnd}
+        onDragStart={() => setIsDragging(true)}
+        onDragEnd={(event, info) => {
+          setIsDragging(false);
+          handleDragEnd(event, info);
+        }}
+        onPointerDownCapture={(e) => {
+          // Prevent popover from opening during drag
+          e.stopPropagation();
+        }}
         style={{
           x,
           y,
@@ -617,6 +627,7 @@ function DraggableChord({
           touchAction: "none",
           userSelect: "none",
           WebkitUserSelect: "none",
+          pointerEvents: "auto",
         }}
         whileDrag={{ scale: 1.12, zIndex: 50 }}
         whileHover={{ scale: 1.05 }}

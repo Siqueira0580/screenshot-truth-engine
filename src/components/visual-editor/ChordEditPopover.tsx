@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,9 @@ export default function ChordEditPopover({
 
   return (
     <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setValue(chordName); }}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverTrigger asChild>
+        <span style={{ display: "contents" }}>{children}</span>
+      </PopoverTrigger>
       <PopoverContent className="w-56 p-3 space-y-3" side="top" align="start">
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">Editar acorde</label>

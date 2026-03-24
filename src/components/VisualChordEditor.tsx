@@ -13,7 +13,6 @@ interface VisualChordEditorProps {
 interface ChordToken {
   id: string;
   chord: string;
-  /** Column position (0-based, in character units) */
   col: number;
 }
 
@@ -21,9 +20,13 @@ interface LinePair {
   chords: ChordToken[];
   lyric: string;
   standalone?: boolean;
+  /** Whether this pair was parsed from ChordPro inline format */
+  chordpro?: boolean;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────
+// ── Detection ────────────────────────────────────────────────────────
+
+const CHORDPRO_RE = /\[([A-G][#b♯♭]?(?:m(?:aj|in)?|M|maj|min|dim|aug|sus[24]?|add|[º°])?(?:\d{0,2}[M+]?)?(?:(?:[#b♯♭]\d{1,2}|sus[24]?|add\d{1,2}|no\d{1,2}|aug|dim|\+)*)(?:\((?:[#b♯♭+\-]?\d{1,2}[,\/\s]*)+\))?(?:\/[A-G][#b♯♭]?)?)\]/g;
 
 const CHORD_LINE_RE =
   /^[\s]*([A-G][#b♯♭]?(?:m(?:aj|in)?|M|maj|min|dim|aug|sus[24]?|add|[º°])?(?:\d{0,2}[M+]?)?(?:(?:[#b♯♭]\d{1,2}|sus[24]?|add\d{1,2}|no\d{1,2}|aug|dim|\+)*)(?:\((?:[#b♯♭+\-]?\d{1,2}[,\/\s]*)+\))?(?:\/[A-G][#b♯♭]?)?(?:\s+|$))+$/;
@@ -31,10 +34,44 @@ const CHORD_LINE_RE =
 const CHORD_TOKEN_RE =
   /([A-G][#b♯♭]?(?:m(?:aj|in)?|M|maj|min|dim|aug|sus[24]?|add|[º°])?(?:\d{0,2}[M+]?)?(?:(?:[#b♯♭]\d{1,2}|sus[24]?|add\d{1,2}|no\d{1,2}|aug|dim|\+)*)(?:\((?:[#b♯♭+\-]?\d{1,2}[,\/\s]*)+\))?(?:\/[A-G][#b♯♭]?)?)/g;
 
+function hasChordProBrackets(line: string): boolean {
+  CHORDPRO_RE.lastIndex = 0;
+  return CHORDPRO_RE.test(line);
+}
+
 function isChordLine(line: string): boolean {
   if (!line.trim()) return false;
   return CHORD_LINE_RE.test(line);
 }
+
+// ── ChordPro parser ─────────────────────────────────────────────────
+
+function parseChordProLine(line: string, pairIdx: number): LinePair {
+  const chords: ChordToken[] = [];
+  let cleanText = "";
+  let lastEnd = 0;
+  let chordIdx = 0;
+
+  CHORDPRO_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = CHORDPRO_RE.exec(line)) !== null) {
+    // Add text before bracket to cleanText
+    cleanText += line.slice(lastEnd, match.index);
+    const col = cleanText.length;
+    chords.push({
+      id: `p${pairIdx}-cp${chordIdx}-${match[1]}`,
+      chord: match[1],
+      col,
+    });
+    chordIdx++;
+    lastEnd = match.index + match[0].length;
+  }
+  cleanText += line.slice(lastEnd);
+
+  return { chords, lyric: cleanText, chordpro: true };
+}
+
+// ── Traditional parser (chord line + lyric line) ─────────────────────
 
 function extractChordTokens(line: string, pairIdx: number): ChordToken[] {
   const tokens: ChordToken[] = [];
@@ -50,21 +87,34 @@ function extractChordTokens(line: string, pairIdx: number): ChordToken[] {
   return tokens;
 }
 
+// ── Master parser ────────────────────────────────────────────────────
+
 function parseTextToLinePairs(text: string): LinePair[] {
   const rawLines = text.split("\n");
   const pairs: LinePair[] = [];
   let i = 0;
   let pairIdx = 0;
+
   while (i < rawLines.length) {
-    if (isChordLine(rawLines[i])) {
-      const chords = extractChordTokens(rawLines[i], pairIdx);
+    const line = rawLines[i];
+
+    // 1) ChordPro inline format: [Am]Texto [G]mais texto
+    if (hasChordProBrackets(line)) {
+      pairs.push(parseChordProLine(line, pairIdx));
+      i++;
+    }
+    // 2) Traditional: separate chord line above lyric line
+    else if (isChordLine(line)) {
+      const chords = extractChordTokens(line, pairIdx);
       const nextIsLyric =
-        i + 1 < rawLines.length && !isChordLine(rawLines[i + 1]);
+        i + 1 < rawLines.length && !isChordLine(rawLines[i + 1]) && !hasChordProBrackets(rawLines[i + 1]);
       const lyric = nextIsLyric ? rawLines[i + 1] : "";
       pairs.push({ chords, lyric });
       i += nextIsLyric ? 2 : 1;
-    } else {
-      pairs.push({ chords: [], lyric: rawLines[i], standalone: true });
+    }
+    // 3) Plain text line
+    else {
+      pairs.push({ chords: [], lyric: line, standalone: true });
       i++;
     }
     pairIdx++;
@@ -72,13 +122,46 @@ function parseTextToLinePairs(text: string): LinePair[] {
   return pairs;
 }
 
+// ── Rebuild ──────────────────────────────────────────────────────────
+
 function rebuildText(pairs: LinePair[]): string {
   const lines: string[] = [];
+
   for (const pair of pairs) {
+    // Standalone text
     if (pair.standalone && pair.chords.length === 0) {
       lines.push(pair.lyric);
       continue;
     }
+
+    // ChordPro format — rebuild as [Chord]lyric inline
+    if (pair.chordpro) {
+      const sorted = [...pair.chords].sort((a, b) => a.col - b.col);
+      let result = "";
+      let cursor = 0;
+      for (const t of sorted) {
+        const insertAt = Math.max(cursor, t.col);
+        // Pad with spaces if chord moved past current text length
+        while (result.length < insertAt) {
+          if (cursor < pair.lyric.length) {
+            result += pair.lyric[cursor];
+            cursor++;
+          } else {
+            result += " ";
+            cursor++;
+          }
+        }
+        result += `[${t.chord}]`;
+      }
+      // Append remaining lyric text
+      if (cursor < pair.lyric.length) {
+        result += pair.lyric.slice(cursor);
+      }
+      lines.push(result);
+      continue;
+    }
+
+    // Traditional format — chord line + lyric line
     if (pair.chords.length > 0) {
       const sorted = [...pair.chords].sort((a, b) => a.col - b.col);
       let chordLine = "";
@@ -111,25 +194,20 @@ export default function VisualChordEditor({
   const [showRuler, setShowRuler] = useState(true);
   const measureRef = useRef<HTMLSpanElement>(null);
 
-  // Measure monospace character width on mount
   useEffect(() => {
     const measure = () => {
       if (measureRef.current) {
-        const rect = measureRef.current.getBoundingClientRect();
-        const w = rect.width;
+        const w = measureRef.current.getBoundingClientRect().width;
         if (w > 0) {
           setCharWidth(w / 20);
           setReady(true);
         }
       }
     };
-    // Use rAF + fonts.ready for accurate measurement
     const raf = requestAnimationFrame(() => {
       measure();
       if (document.fonts?.ready) {
-        document.fonts.ready.then(() => {
-          measure();
-        });
+        document.fonts.ready.then(measure);
       }
     });
     return () => cancelAnimationFrame(raf);
@@ -162,17 +240,11 @@ export default function VisualChordEditor({
 
   return (
     <div className="space-y-3">
-      {/* Invisible char-width ruler */}
       <span
         ref={measureRef}
         className="font-mono text-sm whitespace-pre pointer-events-none"
         aria-hidden="true"
-        style={{
-          position: "absolute",
-          top: -9999,
-          left: -9999,
-          visibility: "hidden",
-        }}
+        style={{ position: "absolute", top: -9999, left: -9999, visibility: "hidden" }}
       >
         {"XXXXXXXXXXXXXXXXXXXX"}
       </span>
@@ -180,30 +252,15 @@ export default function VisualChordEditor({
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
         <Button size="sm" onClick={handleSave} className="gap-1.5">
-          <Save className="h-4 w-4" /> Salvar Posições
+          <Save className="h-4 w-4" /> Salvar
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleReset}
-          className="gap-1.5"
-        >
+        <Button size="sm" variant="outline" onClick={handleReset} className="gap-1.5">
           <Undo2 className="h-4 w-4" /> Resetar
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setShowRuler(!showRuler)}
-          className="gap-1.5"
-        >
-          <Ruler className="h-4 w-4" /> {showRuler ? "Ocultar Régua" : "Mostrar Régua"}
+        <Button size="sm" variant="outline" onClick={() => setShowRuler(!showRuler)} className="gap-1.5">
+          <Ruler className="h-4 w-4" /> {showRuler ? "Ocultar Régua" : "Régua"}
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onCancel}
-          className="gap-1.5"
-        >
+        <Button size="sm" variant="ghost" onClick={onCancel} className="gap-1.5">
           <X className="h-4 w-4" /> Fechar
         </Button>
         <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">
@@ -211,16 +268,13 @@ export default function VisualChordEditor({
         </span>
       </div>
 
-      {/* Editor canvas */}
+      {/* Canvas */}
       {ready && charWidth > 0 ? (
         <div
           className="rounded-lg border border-border bg-muted/30 p-4 overflow-x-auto"
           style={{ touchAction: "pan-y" }}
         >
-          {/* Column ruler */}
-          {showRuler && (
-            <RulerBar charWidth={charWidth} maxCols={maxCols} />
-          )}
+          {showRuler && <RulerBar charWidth={charWidth} maxCols={maxCols} />}
 
           {pairs.map((pair, pairIdx) => (
             <PairRow
@@ -229,7 +283,6 @@ export default function VisualChordEditor({
               pairIdx={pairIdx}
               charWidth={charWidth}
               maxCols={maxCols}
-              showRuler={showRuler}
               onMoveChord={updateChordCol}
             />
           ))}
@@ -243,7 +296,7 @@ export default function VisualChordEditor({
   );
 }
 
-// ── Ruler Bar ────────────────────────────────────────────────────────
+// ── Ruler ────────────────────────────────────────────────────────────
 
 function RulerBar({ charWidth, maxCols }: { charWidth: number; maxCols: number }) {
   const ticks: number[] = [];
@@ -258,11 +311,7 @@ function RulerBar({ charWidth, maxCols }: { charWidth: number; maxCols: number }
         <span
           key={col}
           className="absolute top-0 text-muted-foreground font-mono"
-          style={{
-            left: col * charWidth,
-            fontSize: 8,
-            lineHeight: "12px",
-          }}
+          style={{ left: col * charWidth, fontSize: 8, lineHeight: "12px" }}
         >
           {col % 10 === 0 ? (
             <>
@@ -278,21 +327,19 @@ function RulerBar({ charWidth, maxCols }: { charWidth: number; maxCols: number }
   );
 }
 
-// ── Pair Row (chord line + lyric line) ───────────────────────────────
+// ── Pair Row ─────────────────────────────────────────────────────────
 
 function PairRow({
   pair,
   pairIdx,
   charWidth,
   maxCols,
-  showRuler,
   onMoveChord,
 }: {
   pair: LinePair;
   pairIdx: number;
   charWidth: number;
   maxCols: number;
-  showRuler: boolean;
   onMoveChord: (pairIdx: number, tokenIdx: number, newCol: number) => void;
 }) {
   if (pair.standalone && pair.chords.length === 0) {
@@ -307,14 +354,10 @@ function PairRow({
 
   return (
     <div className="mb-1">
-      {/* Chord row — positioned container */}
+      {/* Chord row */}
       <div
         className="relative select-none"
-        style={{
-          height: 32,
-          minWidth: lineLen * charWidth,
-          touchAction: "none",
-        }}
+        style={{ height: 32, minWidth: lineLen * charWidth, touchAction: "none" }}
       >
         {pair.chords.map((token, tokenIdx) => (
           <DraggableChord
@@ -327,7 +370,7 @@ function PairRow({
         ))}
       </div>
 
-      {/* Lyric row */}
+      {/* Lyric row (clean text, no brackets) */}
       <div
         className="font-mono text-sm text-foreground whitespace-pre leading-6"
         style={{ minWidth: lineLen * charWidth }}
@@ -335,16 +378,12 @@ function PairRow({
         {pair.lyric || "\u00A0"}
       </div>
 
-      {/* Subtle separator */}
-      <div
-        className="h-px bg-border/30 mb-1"
-        style={{ minWidth: lineLen * charWidth }}
-      />
+      <div className="h-px bg-border/30 mb-1" style={{ minWidth: lineLen * charWidth }} />
     </div>
   );
 }
 
-// ── Draggable Chord Token ────────────────────────────────────────────
+// ── Draggable Chord ──────────────────────────────────────────────────
 
 function DraggableChord({
   token,
@@ -363,11 +402,7 @@ function DraggableChord({
   const handleDragEnd = useCallback(
     (_: any, info: PanInfo) => {
       const colDelta = Math.round(info.offset.x / charWidth);
-      const newCol = Math.max(
-        0,
-        Math.min(maxCols - token.chord.length, token.col + colDelta)
-      );
-      // Reset motion value so position is controlled by state
+      const newCol = Math.max(0, Math.min(maxCols - token.chord.length, token.col + colDelta));
       x.set(0);
       if (newCol !== token.col) {
         onMove(newCol);
@@ -380,11 +415,7 @@ function DraggableChord({
     <div
       ref={constraintRef}
       className="absolute top-0"
-      style={{
-        left: 0,
-        right: 0,
-        height: 32,
-      }}
+      style={{ left: 0, right: 0, height: 32 }}
     >
       <motion.div
         drag="x"

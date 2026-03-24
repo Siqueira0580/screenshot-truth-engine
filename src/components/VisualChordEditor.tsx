@@ -221,10 +221,27 @@ export default function VisualChordEditor({
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const rebuilt = rebuildText(pairs);
-    onSave(rebuilt);
-    toast.success("Posições dos acordes atualizadas!");
+    setSaving(true);
+    try {
+      if (songId) {
+        const { error } = await supabase
+          .from("songs")
+          .update({ body_text: rebuilt })
+          .eq("id", songId);
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["song", songId] });
+        await queryClient.invalidateQueries({ queryKey: ["songs"] });
+      }
+      onSave(rebuilt);
+      toast.success("Posições dos acordes atualizadas!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Erro ao salvar as posições.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReset = () => {

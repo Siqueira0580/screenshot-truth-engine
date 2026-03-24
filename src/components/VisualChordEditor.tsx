@@ -542,14 +542,22 @@ function DraggableChord({
 }) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const dragRef = useRef<HTMLDivElement>(null);
 
   const handleDragEnd = useCallback(
-    (event: any, info: PanInfo) => {
-      const draggedEl = event.target as HTMLElement;
+    (_event: any, info: PanInfo) => {
+      // Use ref to hide the ENTIRE draggable element, not just event.target (which may be a child)
+      const draggedEl = dragRef.current;
+      if (!draggedEl) {
+        x.set(0);
+        y.set(0);
+        return;
+      }
 
+      const prevVisibility = draggedEl.style.visibility;
       draggedEl.style.visibility = "hidden";
       const elementBelow = document.elementFromPoint(info.point.x, info.point.y);
-      draggedEl.style.visibility = "visible";
+      draggedEl.style.visibility = prevVisibility;
 
       const targetLine = elementBelow?.closest(".chord-line-wrapper") as HTMLElement | null;
 
@@ -558,6 +566,8 @@ function DraggableChord({
         const lineRect = targetLine.getBoundingClientRect();
         const newCol = Math.max(0, Math.round((info.point.x - lineRect.left) / charWidth));
 
+        console.log("[DragEnd] from line", pairIdx, "col", token.col, "→ line", targetLineIdx, "col", newCol);
+
         if (targetLineIdx >= 0 && targetLineIdx !== pairIdx) {
           x.set(0);
           y.set(0);
@@ -565,15 +575,16 @@ function DraggableChord({
           return;
         }
 
-        const clampedCol = Math.min(maxCols - token.chord.length, newCol);
+        const clampedCol = Math.max(0, Math.min(maxCols - token.chord.length, newCol));
         x.set(0);
         y.set(0);
-        if (clampedCol !== token.col) {
-          onMove(clampedCol);
-        }
+        // Always update — even if col seems same, push state to be safe
+        onMove(clampedCol);
         return;
       }
 
+      // No target found — snap back
+      console.warn("[DragEnd] No target line found, snapping back");
       x.set(0);
       y.set(0);
     },
@@ -583,6 +594,7 @@ function DraggableChord({
   return (
     <ChordEditPopover chordName={token.chord} onRename={onRename} onDelete={onDelete}>
       <motion.div
+        ref={dragRef}
         drag
         dragMomentum={false}
         dragElastic={0}

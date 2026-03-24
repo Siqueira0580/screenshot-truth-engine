@@ -236,6 +236,24 @@ export default function VisualChordEditor({
     []
   );
 
+  const transferChord = useCallback(
+    (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        // Remove from source
+        const sourceChords = [...next[sourcePairIdx].chords];
+        const [movedChord] = sourceChords.splice(tokenIdx, 1);
+        next[sourcePairIdx] = { ...next[sourcePairIdx], chords: sourceChords };
+        // Add to target
+        const targetChords = [...next[targetPairIdx].chords];
+        targetChords.push({ ...movedChord, col: newCol, id: `p${targetPairIdx}-moved-${Date.now()}` });
+        next[targetPairIdx] = { ...next[targetPairIdx], chords: targetChords, standalone: false };
+        return next;
+      });
+    },
+    []
+  );
+
   const maxCols = 80;
 
   return (

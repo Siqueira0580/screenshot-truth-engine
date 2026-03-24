@@ -355,16 +355,23 @@ function PairRow({
   charWidth,
   maxCols,
   onMoveChord,
+  onTransferChord,
+  totalPairs,
 }: {
   pair: LinePair;
   pairIdx: number;
   charWidth: number;
   maxCols: number;
   onMoveChord: (pairIdx: number, tokenIdx: number, newCol: number) => void;
+  onTransferChord: (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => void;
+  totalPairs: number;
 }) {
   if (pair.standalone && pair.chords.length === 0) {
     return (
-      <div className="font-mono text-sm text-foreground whitespace-pre-wrap leading-6 min-h-[1.5em]">
+      <div
+        className="chord-line-wrapper font-mono text-sm text-foreground whitespace-pre-wrap leading-6 min-h-[1.5em]"
+        data-line-index={pairIdx}
+      >
         {pair.lyric || "\u00A0"}
       </div>
     );
@@ -373,7 +380,7 @@ function PairRow({
   const lineLen = Math.max(pair.lyric.length, 60) + 20;
 
   return (
-    <div className="mb-1">
+    <div className="chord-line-wrapper mb-1" data-line-index={pairIdx}>
       {/* Chord row */}
       <div
         className="relative select-none"
@@ -383,9 +390,12 @@ function PairRow({
           <DraggableChord
             key={`${pairIdx}-${tokenIdx}-${token.chord}`}
             token={token}
+            pairIdx={pairIdx}
+            tokenIdx={tokenIdx}
             charWidth={charWidth}
             maxCols={lineLen}
             onMove={(newCol) => onMoveChord(pairIdx, tokenIdx, newCol)}
+            onTransfer={onTransferChord}
           />
         ))}
       </div>

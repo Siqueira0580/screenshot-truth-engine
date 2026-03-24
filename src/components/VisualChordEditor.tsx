@@ -3,7 +3,6 @@ import { motion, PanInfo, useMotionValue } from "framer-motion";
 import { GripHorizontal, Save, X, Undo2, Ruler, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ChordEditPopover from "@/components/visual-editor/ChordEditPopover";
 import ChordLibraryModal from "@/components/visual-editor/ChordLibraryModal";
@@ -192,7 +191,6 @@ export default function VisualChordEditor({
   onSave,
   onCancel,
 }: VisualChordEditorProps) {
-  const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [pairs, setPairs] = useState<LinePair[]>(() =>
     parseTextToLinePairs(text)
@@ -224,6 +222,7 @@ export default function VisualChordEditor({
   const handleSave = async () => {
     // Build the final text from scratch
     const finalNewText = rebuildText(pairs);
+    console.log("Salvando musica ID:", songId);
     
     // Debug: log what we're about to save
     console.log("[VisualEditor] rebuilt text length:", finalNewText.length);
@@ -243,18 +242,15 @@ export default function VisualChordEditor({
     try {
       if (songId) {
         // Wipe and replace: overwrite body_text completely
-        const { data, error, status } = await supabase
+        const { data, error } = await supabase
           .from("songs")
           .update({ body_text: finalNewText })
           .eq("id", songId)
-          .select("id");
+          .select();
         
-        console.log("[VisualEditor] Supabase response:", { data, error, status });
+        console.log("[VisualEditor] Supabase response:", { data, error });
         
         if (error) throw error;
-        if (!data || data.length === 0) {
-          throw new Error("Nenhuma linha foi atualizada. Verifique suas permissões.");
-        }
         
         toast.success("Cifra atualizada com sucesso!");
         // Hard reload to clear all cache

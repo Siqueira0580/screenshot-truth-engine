@@ -12,6 +12,7 @@ import { fetchSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const KEYS = [
   "C", "C#", "Db", "D", "D#", "Eb", "E", "F",

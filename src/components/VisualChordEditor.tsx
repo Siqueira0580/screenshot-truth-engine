@@ -131,6 +131,31 @@ function parseTextToLinePairs(text: string): LinePair[] {
 function rebuildText(pairs: LinePair[]): string {
   const lines: string[] = [];
 
+  const buildChordProLine = (lyric: string, chords: ChordToken[]) => {
+    let rebuiltLine = lyric;
+
+    [...chords]
+      .map((chord, originalIndex) => ({ chord, originalIndex }))
+      .sort((a, b) => {
+        if (b.chord.col !== a.chord.col) return b.chord.col - a.chord.col;
+        return b.originalIndex - a.originalIndex;
+      })
+      .forEach(({ chord }) => {
+        const insertAt = Math.max(0, chord.col);
+
+        if (insertAt > rebuiltLine.length) {
+          rebuiltLine = rebuiltLine + " ".repeat(insertAt - rebuiltLine.length);
+        }
+
+        rebuiltLine =
+          rebuiltLine.slice(0, insertAt) +
+          `[${chord.chord}]` +
+          rebuiltLine.slice(insertAt);
+      });
+
+    return rebuiltLine;
+  };
+
   for (const pair of pairs) {
     // Standalone text
     if (pair.standalone && pair.chords.length === 0) {
@@ -138,30 +163,9 @@ function rebuildText(pairs: LinePair[]): string {
       continue;
     }
 
-    // ChordPro format — rebuild as [Chord]lyric inline
-    if (pair.chordpro) {
-      const sorted = [...pair.chords].sort((a, b) => a.col - b.col);
-      let result = "";
-      let cursor = 0;
-      for (const t of sorted) {
-        const insertAt = Math.max(cursor, t.col);
-        // Pad with spaces if chord moved past current text length
-        while (result.length < insertAt) {
-          if (cursor < pair.lyric.length) {
-            result += pair.lyric[cursor];
-            cursor++;
-          } else {
-            result += " ";
-            cursor++;
-          }
-        }
-        result += `[${t.chord}]`;
-      }
-      // Append remaining lyric text
-      if (cursor < pair.lyric.length) {
-        result += pair.lyric.slice(cursor);
-      }
-      lines.push(result);
+    // Inline rebuild em ordem reversa para evitar offset bug
+    if (pair.chords.length > 0 && (pair.lyric || pair.chordpro)) {
+      lines.push(buildChordProLine(pair.lyric, pair.chords));
       continue;
     }
 
@@ -559,7 +563,7 @@ function DraggableChord({
 
   const handleDragEnd = useCallback(
     (event: any, info: PanInfo) => {
-      const draggedEl = event.target as HTMLElement;
+      const draggedEl = event.currentTarget as HTMLElement;
 
       draggedEl.style.visibility = "hidden";
       const elementBelow = document.elementFromPoint(info.point.x, info.point.y);
@@ -570,21 +574,24 @@ function DraggableChord({
       if (targetLine) {
         const targetLineIdx = parseInt(targetLine.getAttribute("data-line-index") || "-1", 10);
         const lineRect = targetLine.getBoundingClientRect();
-        const newCol = Math.max(0, Math.round((info.point.x - lineRect.left) / charWidth));
+        const newColIndex = Math.max(0, Math.round((info.point.x - lineRect.left) / charWidth));
 
         if (targetLineIdx >= 0 && targetLineIdx !== pairIdx) {
           x.set(0);
           y.set(0);
-          onTransfer(pairIdx, tokenIdx, targetLineIdx, newCol);
+          onTransfer(
+            pairIdx,
+            tokenIdx,
+            targetLineIdx,
+            Math.min(maxCols - token.chord.length, newColIndex)
+          );
           return;
         }
 
-        const clampedCol = Math.min(maxCols - token.chord.length, newCol);
+        const clampedCol = Math.min(maxCols - token.chord.length, newColIndex);
         x.set(0);
         y.set(0);
-        if (clampedCol !== token.col) {
-          onMove(clampedCol);
-        }
+        onMove(clampedCol);
         return;
       }
 

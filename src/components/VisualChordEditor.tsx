@@ -222,6 +222,11 @@ export default function VisualChordEditor({
   }, []);
 
   const handleSave = async () => {
+    const confirmed = window.confirm(
+      "Atenção: Isto irá substituir completamente a letra e a posição dos acordes antigos por esta nova versão. Deseja continuar?"
+    );
+    if (!confirmed) return;
+
     const rebuilt = rebuildText(pairs);
     setSaving(true);
     try {
@@ -231,8 +236,9 @@ export default function VisualChordEditor({
           .update({ body_text: rebuilt })
           .eq("id", songId);
         if (error) throw error;
-        await queryClient.invalidateQueries({ queryKey: ["song", songId] });
-        await queryClient.invalidateQueries({ queryKey: ["songs"] });
+        toast.success("Posições dos acordes atualizadas!");
+        window.location.href = `/songs/${songId}`;
+        return;
       }
       onSave(rebuilt);
       toast.success("Posições dos acordes atualizadas!");

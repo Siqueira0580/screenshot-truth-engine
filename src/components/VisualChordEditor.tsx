@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, PanInfo, useMotionValue } from "framer-motion";
-import { GripHorizontal, Save, X, Undo2, Ruler, Plus } from "lucide-react";
+import { GripHorizontal, Save, X, Undo2, Ruler, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import ChordEditPopover from "@/components/visual-editor/ChordEditPopover";
 import ChordLibraryModal from "@/components/visual-editor/ChordLibraryModal";
 
 interface VisualChordEditorProps {
   text: string;
+  songId?: string;
   onSave: (updatedText: string) => void;
   onCancel: () => void;
 }

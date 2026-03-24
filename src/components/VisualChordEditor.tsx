@@ -236,6 +236,24 @@ export default function VisualChordEditor({
     []
   );
 
+  const transferChord = useCallback(
+    (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        // Remove from source
+        const sourceChords = [...next[sourcePairIdx].chords];
+        const [movedChord] = sourceChords.splice(tokenIdx, 1);
+        next[sourcePairIdx] = { ...next[sourcePairIdx], chords: sourceChords };
+        // Add to target
+        const targetChords = [...next[targetPairIdx].chords];
+        targetChords.push({ ...movedChord, col: newCol, id: `p${targetPairIdx}-moved-${Date.now()}` });
+        next[targetPairIdx] = { ...next[targetPairIdx], chords: targetChords, standalone: false };
+        return next;
+      });
+    },
+    []
+  );
+
   const maxCols = 80;
 
   return (
@@ -284,6 +302,8 @@ export default function VisualChordEditor({
               charWidth={charWidth}
               maxCols={maxCols}
               onMoveChord={updateChordCol}
+              onTransferChord={transferChord}
+              totalPairs={pairs.length}
             />
           ))}
         </div>
@@ -335,16 +355,23 @@ function PairRow({
   charWidth,
   maxCols,
   onMoveChord,
+  onTransferChord,
+  totalPairs,
 }: {
   pair: LinePair;
   pairIdx: number;
   charWidth: number;
   maxCols: number;
   onMoveChord: (pairIdx: number, tokenIdx: number, newCol: number) => void;
+  onTransferChord: (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => void;
+  totalPairs: number;
 }) {
   if (pair.standalone && pair.chords.length === 0) {
     return (
-      <div className="font-mono text-sm text-foreground whitespace-pre-wrap leading-6 min-h-[1.5em]">
+      <div
+        className="chord-line-wrapper font-mono text-sm text-foreground whitespace-pre-wrap leading-6 min-h-[1.5em]"
+        data-line-index={pairIdx}
+      >
         {pair.lyric || "\u00A0"}
       </div>
     );
@@ -353,7 +380,7 @@ function PairRow({
   const lineLen = Math.max(pair.lyric.length, 60) + 20;
 
   return (
-    <div className="mb-1">
+    <div className="chord-line-wrapper mb-1" data-line-index={pairIdx}>
       {/* Chord row */}
       <div
         className="relative select-none"
@@ -363,9 +390,12 @@ function PairRow({
           <DraggableChord
             key={`${pairIdx}-${tokenIdx}-${token.chord}`}
             token={token}
+            pairIdx={pairIdx}
+            tokenIdx={tokenIdx}
             charWidth={charWidth}
             maxCols={lineLen}
             onMove={(newCol) => onMoveChord(pairIdx, tokenIdx, newCol)}
+            onTransfer={onTransferChord}
           />
         ))}
       </div>
@@ -387,58 +417,87 @@ function PairRow({
 
 function DraggableChord({
   token,
+  pairIdx,
+  tokenIdx,
   charWidth,
   maxCols,
   onMove,
+  onTransfer,
 }: {
   token: ChordToken;
+  pairIdx: number;
+  tokenIdx: number;
   charWidth: number;
   maxCols: number;
   onMove: (newCol: number) => void;
+  onTransfer: (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => void;
 }) {
   const x = useMotionValue(0);
-  const constraintRef = useRef<HTMLDivElement>(null);
+  const y = useMotionValue(0);
 
   const handleDragEnd = useCallback(
-    (_: any, info: PanInfo) => {
-      const colDelta = Math.round(info.offset.x / charWidth);
-      const newCol = Math.max(0, Math.min(maxCols - token.chord.length, token.col + colDelta));
-      x.set(0);
-      if (newCol !== token.col) {
-        onMove(newCol);
+    (event: any, info: PanInfo) => {
+      const draggedEl = event.target as HTMLElement;
+
+      // Temporarily hide to detect element below
+      draggedEl.style.visibility = "hidden";
+      const elementBelow = document.elementFromPoint(info.point.x, info.point.y);
+      draggedEl.style.visibility = "visible";
+
+      const targetLine = elementBelow?.closest(".chord-line-wrapper") as HTMLElement | null;
+
+      if (targetLine) {
+        const targetLineIdx = parseInt(targetLine.getAttribute("data-line-index") || "-1", 10);
+        const lineRect = targetLine.getBoundingClientRect();
+        const newCol = Math.max(0, Math.round((info.point.x - lineRect.left) / charWidth));
+
+        if (targetLineIdx >= 0 && targetLineIdx !== pairIdx) {
+          // Transfer chord to another line
+          x.set(0);
+          y.set(0);
+          onTransfer(pairIdx, tokenIdx, targetLineIdx, newCol);
+          return;
+        }
+
+        // Same line — just update column
+        const clampedCol = Math.min(maxCols - token.chord.length, newCol);
+        x.set(0);
+        y.set(0);
+        if (clampedCol !== token.col) {
+          onMove(clampedCol);
+        }
+        return;
       }
+
+      // No valid target — revert
+      x.set(0);
+      y.set(0);
     },
-    [charWidth, maxCols, token.chord.length, token.col, onMove, x]
+    [charWidth, maxCols, token.chord.length, token.col, pairIdx, tokenIdx, onMove, onTransfer, x, y]
   );
 
   return (
-    <div
-      ref={constraintRef}
-      className="absolute top-0"
-      style={{ left: 0, right: 0, height: 32 }}
+    <motion.div
+      drag
+      dragMomentum={false}
+      dragElastic={0}
+      onDragEnd={handleDragEnd}
+      style={{
+        x,
+        y,
+        position: "absolute",
+        left: token.col * charWidth,
+        top: 2,
+        touchAction: "none",
+        userSelect: "none",
+        WebkitUserSelect: "none",
+      }}
+      whileDrag={{ scale: 1.12, zIndex: 50 }}
+      whileHover={{ scale: 1.05 }}
+      className="font-mono text-sm font-bold text-primary bg-primary/10 border-2 border-primary/40 rounded px-1 py-1 leading-5 cursor-grab active:cursor-grabbing active:bg-primary/25 active:border-primary/60 whitespace-nowrap z-10"
     >
-      <motion.div
-        drag="x"
-        dragMomentum={false}
-        dragElastic={0}
-        dragConstraints={constraintRef}
-        onDragEnd={handleDragEnd}
-        style={{
-          x,
-          position: "absolute",
-          left: token.col * charWidth,
-          top: 2,
-          touchAction: "none",
-          userSelect: "none",
-          WebkitUserSelect: "none",
-        }}
-        whileDrag={{ scale: 1.12, zIndex: 50 }}
-        whileHover={{ scale: 1.05 }}
-        className="font-mono text-sm font-bold text-primary bg-primary/10 border-2 border-primary/40 rounded px-1 py-1 leading-5 cursor-grab active:cursor-grabbing active:bg-primary/25 active:border-primary/60 whitespace-nowrap z-10"
-      >
-        <GripHorizontal className="inline h-3 w-3 mr-0.5 opacity-50" />
-        {token.chord}
-      </motion.div>
-    </div>
+      <GripHorizontal className="inline h-3 w-3 mr-0.5 opacity-50" />
+      {token.chord}
+    </motion.div>
   );
 }

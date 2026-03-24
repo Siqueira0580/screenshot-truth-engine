@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import VisualChordEditor from "@/components/VisualChordEditor";
 
 const KEYS = [
   "C", "C#", "Db", "D", "D#", "Eb", "E", "F",
@@ -42,6 +43,7 @@ export default function EditSongPage() {
   const [bpm, setBpm] = useState("");
   const [bodyText, setBodyText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [visualMode, setVisualMode] = useState(false);
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],
@@ -165,14 +167,38 @@ export default function EditSongPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="body">Letra / Cifra</Label>
-          <Textarea
-            id="body"
-            value={bodyText}
-            onChange={(e) => setBodyText(e.target.value)}
-            placeholder="Cole aqui a letra com cifras..."
-            className="min-h-[300px] font-mono text-sm"
-          />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="body">Letra / Cifra</Label>
+            <Button
+              type="button"
+              size="sm"
+              variant={visualMode ? "default" : "outline"}
+              onClick={() => setVisualMode(!visualMode)}
+              className="gap-1.5"
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {visualMode ? "Modo Texto" : "Ajuste Visual"}
+            </Button>
+          </div>
+
+          {visualMode ? (
+            <VisualChordEditor
+              text={bodyText}
+              onSave={(updated) => {
+                setBodyText(updated);
+                setVisualMode(false);
+              }}
+              onCancel={() => setVisualMode(false)}
+            />
+          ) : (
+            <Textarea
+              id="body"
+              value={bodyText}
+              onChange={(e) => setBodyText(e.target.value)}
+              placeholder="Cole aqui a letra com cifras..."
+              className="min-h-[300px] font-mono text-sm"
+            />
+          )}
         </div>
 
         <Button onClick={handleSave} disabled={saving || !title.trim()} className="w-full gap-2">

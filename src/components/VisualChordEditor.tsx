@@ -302,6 +302,8 @@ export default function VisualChordEditor({
               charWidth={charWidth}
               maxCols={maxCols}
               onMoveChord={updateChordCol}
+              onTransferChord={transferChord}
+              totalPairs={pairs.length}
             />
           ))}
         </div>

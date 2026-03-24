@@ -61,9 +61,10 @@ export default function EditSongPage() {
   }, [song]);
 
   const isOwner = user?.id === song?.created_by || user?.id === song?.user_id;
+  const canManage = isOwner || isAdmin;
 
   const handleSave = async () => {
-    if (!id || !isOwner) return;
+    if (!id || !canManage) return;
     setSaving(true);
     try {
       const { error } = await supabase

@@ -308,7 +308,7 @@ export default function VisualChordEditor({
   const maxCols = 80;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 relative">
       <span
         ref={measureRef}
         className="font-mono text-sm whitespace-pre pointer-events-none"
@@ -354,6 +354,8 @@ export default function VisualChordEditor({
               maxCols={maxCols}
               onMoveChord={updateChordCol}
               onTransferChord={transferChord}
+              onRenameChord={renameChord}
+              onDeleteChord={deleteChord}
               totalPairs={pairs.length}
             />
           ))}
@@ -363,6 +365,21 @@ export default function VisualChordEditor({
           Carregando editor visual…
         </div>
       )}
+
+      {/* FAB - Add Chord */}
+      <Button
+        size="icon"
+        className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-50"
+        onClick={() => setLibraryOpen(true)}
+      >
+        <Plus className="h-6 w-6" />
+      </Button>
+
+      <ChordLibraryModal
+        open={libraryOpen}
+        onOpenChange={setLibraryOpen}
+        onInsertChord={addChordToFirstLine}
+      />
     </div>
   );
 }

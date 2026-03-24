@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { motion, PanInfo } from "framer-motion";
 import { GripHorizontal, Save, X, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -296,56 +297,38 @@ function DraggableChord({
   maxCols: number;
   onMove: (newCol: number) => void;
 }) {
-  const dragging = useRef(false);
-  const startX = useRef(0);
-  const startCol = useRef(0);
+  const baseCol = useRef(token.col);
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dragging.current = true;
-      startX.current = e.clientX;
-      startCol.current = token.col;
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    },
-    [token.col]
-  );
+  useEffect(() => {
+    baseCol.current = token.col;
+  }, [token.col]);
 
-  const handlePointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      if (!dragging.current) return;
-      const dx = e.clientX - startX.current;
-      // Snap: round to nearest character column
-      const colDelta = Math.round(dx / charWidth);
+  const handleDragEnd = useCallback(
+    (_: any, info: PanInfo) => {
+      const colDelta = Math.round(info.offset.x / charWidth);
       const newCol = Math.max(
         0,
-        Math.min(maxCols - token.chord.length, startCol.current + colDelta)
+        Math.min(maxCols - token.chord.length, baseCol.current + colDelta)
       );
-      if (newCol !== token.col) {
-        onMove(newCol);
-      }
+      onMove(newCol);
     },
-    [charWidth, maxCols, token.col, token.chord.length, onMove]
+    [charWidth, maxCols, token.chord.length, onMove]
   );
 
-  const handlePointerUp = useCallback(() => {
-    dragging.current = false;
-  }, []);
-
   return (
-    <span
+    <motion.span
+      drag="x"
+      dragMomentum={false}
+      dragElastic={0}
+      dragConstraints={{ left: -token.col * charWidth, right: (maxCols - token.col - token.chord.length) * charWidth }}
+      onDragEnd={handleDragEnd}
+      // Reset visual position after state update
+      key={`${token.id}-${token.col}`}
       className="absolute top-0 font-mono text-sm font-bold text-primary bg-primary/10 border border-primary/30 rounded-sm px-0.5 py-0.5 leading-5 cursor-grab active:cursor-grabbing active:bg-primary/20 active:border-primary/50 select-none z-10 touch-none whitespace-nowrap"
-      style={{
-        left: token.col * charWidth,
-        transition: dragging.current ? "none" : "left 0.1s ease-out",
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
+      style={{ left: token.col * charWidth }}
+      whileDrag={{ scale: 1.1, zIndex: 50 }}
     >
       {token.chord}
-    </span>
+    </motion.span>
   );
 }

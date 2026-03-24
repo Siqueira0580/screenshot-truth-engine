@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, PanInfo, useMotionValue } from "framer-motion";
-import { GripHorizontal, Save, X, Undo2, Ruler, Plus } from "lucide-react";
+import { GripHorizontal, Save, X, Undo2, Ruler, Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import ChordEditPopover from "@/components/visual-editor/ChordEditPopover";
 import ChordLibraryModal from "@/components/visual-editor/ChordLibraryModal";
 
 interface VisualChordEditorProps {
   text: string;
+  songId?: string;
   onSave: (updatedText: string) => void;
   onCancel: () => void;
 }
@@ -185,9 +188,12 @@ function rebuildText(pairs: LinePair[]): string {
 
 export default function VisualChordEditor({
   text,
+  songId,
   onSave,
   onCancel,
 }: VisualChordEditorProps) {
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
   const [pairs, setPairs] = useState<LinePair[]>(() =>
     parseTextToLinePairs(text)
   );
@@ -215,10 +221,27 @@ export default function VisualChordEditor({
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const rebuilt = rebuildText(pairs);
-    onSave(rebuilt);
-    toast.success("Posições dos acordes atualizadas!");
+    setSaving(true);
+    try {
+      if (songId) {
+        const { error } = await supabase
+          .from("songs")
+          .update({ body_text: rebuilt })
+          .eq("id", songId);
+        if (error) throw error;
+        await queryClient.invalidateQueries({ queryKey: ["song", songId] });
+        await queryClient.invalidateQueries({ queryKey: ["songs"] });
+      }
+      onSave(rebuilt);
+      toast.success("Posições dos acordes atualizadas!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || "Erro ao salvar as posições.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleReset = () => {
@@ -320,8 +343,9 @@ export default function VisualChordEditor({
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Button size="sm" onClick={handleSave} className="gap-1.5">
-          <Save className="h-4 w-4" /> Salvar
+        <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {saving ? "Salvando..." : "Salvar"}
         </Button>
         <Button size="sm" variant="outline" onClick={handleReset} className="gap-1.5">
           <Undo2 className="h-4 w-4" /> Resetar

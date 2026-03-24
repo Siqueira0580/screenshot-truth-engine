@@ -184,6 +184,7 @@ export default function EditSongPage() {
           {visualMode ? (
             <VisualChordEditor
               text={bodyText}
+              songId={id}
               onSave={(updated) => {
                 setBodyText(updated);
                 setVisualMode(false);

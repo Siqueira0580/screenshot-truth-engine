@@ -43,6 +43,7 @@ export default function EditSongPage() {
   const [bpm, setBpm] = useState("");
   const [bodyText, setBodyText] = useState("");
   const [saving, setSaving] = useState(false);
+  const [visualMode, setVisualMode] = useState(false);
 
   const { data: song, isLoading } = useQuery({
     queryKey: ["song", id],

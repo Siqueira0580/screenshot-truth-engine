@@ -188,9 +188,12 @@ function rebuildText(pairs: LinePair[]): string {
 
 export default function VisualChordEditor({
   text,
+  songId,
   onSave,
   onCancel,
 }: VisualChordEditorProps) {
+  const queryClient = useQueryClient();
+  const [saving, setSaving] = useState(false);
   const [pairs, setPairs] = useState<LinePair[]>(() =>
     parseTextToLinePairs(text)
   );

@@ -66,10 +66,10 @@ export default function EditSongPage() {
   const canManage = isOwner || isAdmin;
 
   const handleSave = async () => {
-    if (!id || !canManage) return;
+    if (!id || !title.trim()) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("songs")
         .update({
           title,
@@ -79,16 +79,23 @@ export default function EditSongPage() {
           bpm: bpm ? parseInt(bpm) : null,
           body_text: bodyText || null,
         })
-        .eq("id", id);
+        .eq("id", id)
+        .select("id");
 
-      if (error) throw error;
+      if (error) {
+        toast.error("Erro do Servidor: " + error.message);
+        console.error("[EditSong] Supabase error:", error);
+        return;
+      }
+      if (!data || data.length === 0) {
+        toast.error("Nenhuma linha atualizada. Verifique suas permissões.");
+        return;
+      }
 
-      queryClient.invalidateQueries({ queryKey: ["song", id] });
-      queryClient.invalidateQueries({ queryKey: ["songs"] });
       toast.success("Música atualizada com sucesso!");
-      navigate(`/songs/${id}`);
+      window.location.href = `/songs/${id}`;
     } catch (err: any) {
-      console.error(err);
+      console.error("[EditSong] Save error:", err);
       toast.error(err?.message || "Erro ao salvar a música.");
     } finally {
       setSaving(false);

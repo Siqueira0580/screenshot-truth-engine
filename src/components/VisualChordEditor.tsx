@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { motion, PanInfo } from "framer-motion";
-import { GripHorizontal, Save, X, Undo2 } from "lucide-react";
+import { motion, PanInfo, useMotionValue } from "framer-motion";
+import { GripHorizontal, Save, X, Undo2, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -83,9 +83,7 @@ function rebuildText(pairs: LinePair[]): string {
       const sorted = [...pair.chords].sort((a, b) => a.col - b.col);
       let chordLine = "";
       for (const t of sorted) {
-        // Pad with spaces up to target column
         while (chordLine.length < t.col) chordLine += " ";
-        // If we already passed the col (overlapping chords), add a space
         if (chordLine.length > t.col) chordLine += " ";
         chordLine += t.chord;
       }
@@ -110,27 +108,31 @@ export default function VisualChordEditor({
   );
   const [charWidth, setCharWidth] = useState<number>(0);
   const [ready, setReady] = useState(false);
+  const [showRuler, setShowRuler] = useState(true);
   const measureRef = useRef<HTMLSpanElement>(null);
 
   // Measure monospace character width on mount
   useEffect(() => {
     const measure = () => {
       if (measureRef.current) {
-        const w = measureRef.current.getBoundingClientRect().width;
+        const rect = measureRef.current.getBoundingClientRect();
+        const w = rect.width;
         if (w > 0) {
-          setCharWidth(w / 20); // 20 identical chars
+          setCharWidth(w / 20);
           setReady(true);
         }
       }
     };
-    // Measure after paint
-    requestAnimationFrame(() => {
+    // Use rAF + fonts.ready for accurate measurement
+    const raf = requestAnimationFrame(() => {
       measure();
-      // Fallback: try again after fonts load
       if (document.fonts?.ready) {
-        document.fonts.ready.then(measure);
+        document.fonts.ready.then(() => {
+          measure();
+        });
       }
     });
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   const handleSave = () => {
@@ -143,10 +145,12 @@ export default function VisualChordEditor({
     setPairs(parseTextToLinePairs(text));
   };
 
-  const updateChords = useCallback(
-    (pairIdx: number, chords: ChordToken[]) => {
+  const updateChordCol = useCallback(
+    (pairIdx: number, tokenIdx: number, newCol: number) => {
       setPairs((prev) => {
         const next = [...prev];
+        const chords = [...next[pairIdx].chords];
+        chords[tokenIdx] = { ...chords[tokenIdx], col: newCol };
         next[pairIdx] = { ...next[pairIdx], chords };
         return next;
       });
@@ -154,13 +158,21 @@ export default function VisualChordEditor({
     []
   );
 
+  const maxCols = 80;
+
   return (
     <div className="space-y-3">
-      {/* Invisible char-width ruler — MUST be in normal flow to measure correctly */}
+      {/* Invisible char-width ruler */}
       <span
         ref={measureRef}
-        className="font-mono text-sm block h-0 overflow-hidden whitespace-pre pointer-events-none"
+        className="font-mono text-sm whitespace-pre pointer-events-none"
         aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: -9999,
+          left: -9999,
+          visibility: "hidden",
+        }}
       >
         {"XXXXXXXXXXXXXXXXXXXX"}
       </span>
@@ -180,6 +192,14 @@ export default function VisualChordEditor({
         </Button>
         <Button
           size="sm"
+          variant="outline"
+          onClick={() => setShowRuler(!showRuler)}
+          className="gap-1.5"
+        >
+          <Ruler className="h-4 w-4" /> {showRuler ? "Ocultar Régua" : "Mostrar Régua"}
+        </Button>
+        <Button
+          size="sm"
           variant="ghost"
           onClick={onCancel}
           className="gap-1.5"
@@ -193,13 +213,24 @@ export default function VisualChordEditor({
 
       {/* Editor canvas */}
       {ready && charWidth > 0 ? (
-        <div className="rounded-lg border border-border bg-muted/30 p-4 overflow-x-auto">
+        <div
+          className="rounded-lg border border-border bg-muted/30 p-4 overflow-x-auto"
+          style={{ touchAction: "pan-y" }}
+        >
+          {/* Column ruler */}
+          {showRuler && (
+            <RulerBar charWidth={charWidth} maxCols={maxCols} />
+          )}
+
           {pairs.map((pair, pairIdx) => (
             <PairRow
               key={pairIdx}
               pair={pair}
+              pairIdx={pairIdx}
               charWidth={charWidth}
-              onUpdateChords={(chords) => updateChords(pairIdx, chords)}
+              maxCols={maxCols}
+              showRuler={showRuler}
+              onMoveChord={updateChordCol}
             />
           ))}
         </div>
@@ -212,18 +243,58 @@ export default function VisualChordEditor({
   );
 }
 
+// ── Ruler Bar ────────────────────────────────────────────────────────
+
+function RulerBar({ charWidth, maxCols }: { charWidth: number; maxCols: number }) {
+  const ticks: number[] = [];
+  for (let i = 0; i <= maxCols; i += 5) ticks.push(i);
+
+  return (
+    <div
+      className="relative select-none mb-2 border-b border-border/50"
+      style={{ height: 20, minWidth: maxCols * charWidth }}
+    >
+      {ticks.map((col) => (
+        <span
+          key={col}
+          className="absolute top-0 text-muted-foreground font-mono"
+          style={{
+            left: col * charWidth,
+            fontSize: 8,
+            lineHeight: "12px",
+          }}
+        >
+          {col % 10 === 0 ? (
+            <>
+              <span className="block" style={{ height: 8, width: 1, backgroundColor: "hsl(var(--muted-foreground))" }} />
+              <span style={{ position: "relative", left: -3 }}>{col}</span>
+            </>
+          ) : (
+            <span className="block" style={{ height: 4, width: 1, backgroundColor: "hsl(var(--border))" }} />
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 // ── Pair Row (chord line + lyric line) ───────────────────────────────
 
 function PairRow({
   pair,
+  pairIdx,
   charWidth,
-  onUpdateChords,
+  maxCols,
+  showRuler,
+  onMoveChord,
 }: {
   pair: LinePair;
+  pairIdx: number;
   charWidth: number;
-  onUpdateChords: (chords: ChordToken[]) => void;
+  maxCols: number;
+  showRuler: boolean;
+  onMoveChord: (pairIdx: number, tokenIdx: number, newCol: number) => void;
 }) {
-  // Standalone text line (no chords above)
   if (pair.standalone && pair.chords.length === 0) {
     return (
       <div className="font-mono text-sm text-foreground whitespace-pre-wrap leading-6 min-h-[1.5em]">
@@ -232,54 +303,43 @@ function PairRow({
     );
   }
 
-  const maxLen = Math.max(pair.lyric.length, 60) + 20;
+  const lineLen = Math.max(pair.lyric.length, 60) + 20;
 
   return (
-    <div className="mb-0.5">
+    <div className="mb-1">
       {/* Chord row — positioned container */}
       <div
         className="relative select-none"
         style={{
-          height: 28,
-          minWidth: maxLen * charWidth,
+          height: 32,
+          minWidth: lineLen * charWidth,
+          touchAction: "none",
         }}
       >
         {pair.chords.map((token, tokenIdx) => (
           <DraggableChord
-            key={token.id}
+            key={`${pairIdx}-${tokenIdx}-${token.chord}`}
             token={token}
             charWidth={charWidth}
-            maxCols={maxLen}
-            onMove={(newCol) => {
-              const updated = [...pair.chords];
-              updated[tokenIdx] = { ...token, col: newCol };
-              onUpdateChords(updated);
-            }}
+            maxCols={lineLen}
+            onMove={(newCol) => onMoveChord(pairIdx, tokenIdx, newCol)}
           />
         ))}
       </div>
 
-      {/* Lyric row — character grid reference */}
+      {/* Lyric row */}
       <div
         className="font-mono text-sm text-foreground whitespace-pre leading-6"
-        style={{ minWidth: maxLen * charWidth }}
+        style={{ minWidth: lineLen * charWidth }}
       >
         {pair.lyric || "\u00A0"}
       </div>
 
-      {/* Char ruler (subtle dots every 10 chars) */}
+      {/* Subtle separator */}
       <div
-        className="relative h-px mb-1"
-        style={{ minWidth: maxLen * charWidth }}
-      >
-        {Array.from({ length: Math.floor(maxLen / 10) }, (_, i) => (
-          <span
-            key={i}
-            className="absolute top-0 w-px h-1 bg-border"
-            style={{ left: (i + 1) * 10 * charWidth }}
-          />
-        ))}
-      </div>
+        className="h-px bg-border/30 mb-1"
+        style={{ minWidth: lineLen * charWidth }}
+      />
     </div>
   );
 }
@@ -297,38 +357,57 @@ function DraggableChord({
   maxCols: number;
   onMove: (newCol: number) => void;
 }) {
-  const baseCol = useRef(token.col);
-
-  useEffect(() => {
-    baseCol.current = token.col;
-  }, [token.col]);
+  const x = useMotionValue(0);
+  const constraintRef = useRef<HTMLDivElement>(null);
 
   const handleDragEnd = useCallback(
     (_: any, info: PanInfo) => {
       const colDelta = Math.round(info.offset.x / charWidth);
       const newCol = Math.max(
         0,
-        Math.min(maxCols - token.chord.length, baseCol.current + colDelta)
+        Math.min(maxCols - token.chord.length, token.col + colDelta)
       );
-      onMove(newCol);
+      // Reset motion value so position is controlled by state
+      x.set(0);
+      if (newCol !== token.col) {
+        onMove(newCol);
+      }
     },
-    [charWidth, maxCols, token.chord.length, onMove]
+    [charWidth, maxCols, token.chord.length, token.col, onMove, x]
   );
 
   return (
-    <motion.span
-      drag="x"
-      dragMomentum={false}
-      dragElastic={0}
-      dragConstraints={{ left: -token.col * charWidth, right: (maxCols - token.col - token.chord.length) * charWidth }}
-      onDragEnd={handleDragEnd}
-      // Reset visual position after state update
-      key={`${token.id}-${token.col}`}
-      className="absolute top-0 font-mono text-sm font-bold text-primary bg-primary/10 border border-primary/30 rounded-sm px-0.5 py-0.5 leading-5 cursor-grab active:cursor-grabbing active:bg-primary/20 active:border-primary/50 select-none z-10 touch-none whitespace-nowrap"
-      style={{ left: token.col * charWidth }}
-      whileDrag={{ scale: 1.1, zIndex: 50 }}
+    <div
+      ref={constraintRef}
+      className="absolute top-0"
+      style={{
+        left: 0,
+        right: 0,
+        height: 32,
+      }}
     >
-      {token.chord}
-    </motion.span>
+      <motion.div
+        drag="x"
+        dragMomentum={false}
+        dragElastic={0}
+        dragConstraints={constraintRef}
+        onDragEnd={handleDragEnd}
+        style={{
+          x,
+          position: "absolute",
+          left: token.col * charWidth,
+          top: 2,
+          touchAction: "none",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+        }}
+        whileDrag={{ scale: 1.12, zIndex: 50 }}
+        whileHover={{ scale: 1.05 }}
+        className="font-mono text-sm font-bold text-primary bg-primary/10 border-2 border-primary/40 rounded px-1 py-1 leading-5 cursor-grab active:cursor-grabbing active:bg-primary/25 active:border-primary/60 whitespace-nowrap z-10"
+      >
+        <GripHorizontal className="inline h-3 w-3 mr-0.5 opacity-50" />
+        {token.chord}
+      </motion.div>
+    </div>
   );
 }

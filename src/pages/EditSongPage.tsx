@@ -12,6 +12,7 @@ import { fetchSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const KEYS = [
   "C", "C#", "Db", "D", "D#", "Eb", "E", "F",
@@ -32,6 +33,7 @@ export default function EditSongPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
 
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
@@ -59,9 +61,10 @@ export default function EditSongPage() {
   }, [song]);
 
   const isOwner = user?.id === song?.created_by || user?.id === song?.user_id;
+  const canManage = isOwner || isAdmin;
 
   const handleSave = async () => {
-    if (!id || !isOwner) return;
+    if (!id || !canManage) return;
     setSaving(true);
     try {
       const { error } = await supabase

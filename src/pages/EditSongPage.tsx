@@ -33,7 +33,7 @@ export default function EditSongPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, loading: roleLoading } = useUserRole();
 
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");
@@ -86,7 +86,8 @@ export default function EditSongPage() {
       toast.success("Música atualizada com sucesso!");
       navigate(`/songs/${id}`);
     } catch (err: any) {
-      toast.error(`Erro ao salvar: ${err.message}`);
+      console.error(err);
+      toast.error(err?.message || "Erro ao salvar a música.");
     } finally {
       setSaving(false);
     }
@@ -102,7 +103,15 @@ export default function EditSongPage() {
 
   if (!song) return <p className="text-muted-foreground">Música não encontrada.</p>;
 
-  if (!isOwner) {
+  if (roleLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!canManage) {
     return <p className="text-muted-foreground">Você não tem permissão para editar esta música.</p>;
   }
 

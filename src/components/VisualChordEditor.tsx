@@ -222,28 +222,50 @@ export default function VisualChordEditor({
   }, []);
 
   const handleSave = async () => {
+    // Build the final text from scratch
+    const finalNewText = rebuildText(pairs);
+    
+    // Debug: log what we're about to save
+    console.log("[VisualEditor] rebuilt text length:", finalNewText.length);
+    console.log("[VisualEditor] rebuilt text preview:", finalNewText.substring(0, 200));
+    
+    if (!finalNewText.trim()) {
+      toast.error("O texto reconstruído está vazio. Nada foi salvo.");
+      return;
+    }
+
     const confirmed = window.confirm(
       "Atenção: Isto irá substituir completamente a letra e a posição dos acordes antigos por esta nova versão. Deseja continuar?"
     );
     if (!confirmed) return;
 
-    const rebuilt = rebuildText(pairs);
     setSaving(true);
     try {
       if (songId) {
-        const { error } = await supabase
+        // Wipe and replace: overwrite body_text completely
+        const { data, error, status } = await supabase
           .from("songs")
-          .update({ body_text: rebuilt })
-          .eq("id", songId);
+          .update({ body_text: finalNewText })
+          .eq("id", songId)
+          .select("id");
+        
+        console.log("[VisualEditor] Supabase response:", { data, error, status });
+        
         if (error) throw error;
-        toast.success("Posições dos acordes atualizadas!");
+        if (!data || data.length === 0) {
+          throw new Error("Nenhuma linha foi atualizada. Verifique suas permissões.");
+        }
+        
+        toast.success("Cifra atualizada com sucesso!");
+        // Hard reload to clear all cache
         window.location.href = `/songs/${songId}`;
         return;
       }
-      onSave(rebuilt);
+      // Fallback for usage without songId
+      onSave(finalNewText);
       toast.success("Posições dos acordes atualizadas!");
     } catch (err: any) {
-      console.error(err);
+      console.error("[VisualEditor] Save error:", err);
       toast.error(err?.message || "Erro ao salvar as posições.");
     } finally {
       setSaving(false);

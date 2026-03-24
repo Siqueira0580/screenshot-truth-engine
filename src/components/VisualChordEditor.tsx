@@ -138,30 +138,16 @@ function rebuildText(pairs: LinePair[]): string {
       continue;
     }
 
-    // ChordPro format — rebuild as [Chord]lyric inline
+    // ChordPro format — rebuild by inserting chords RIGHT-TO-LEFT
+    // to avoid offset shifts from prior insertions
     if (pair.chordpro) {
-      const sorted = [...pair.chords].sort((a, b) => a.col - b.col);
-      let result = "";
-      let cursor = 0;
+      const sorted = [...pair.chords].sort((a, b) => b.col - a.col); // DESCENDING
+      let lineText = pair.lyric;
       for (const t of sorted) {
-        const insertAt = Math.max(cursor, t.col);
-        // Pad with spaces if chord moved past current text length
-        while (result.length < insertAt) {
-          if (cursor < pair.lyric.length) {
-            result += pair.lyric[cursor];
-            cursor++;
-          } else {
-            result += " ";
-            cursor++;
-          }
-        }
-        result += `[${t.chord}]`;
+        const col = Math.min(Math.max(0, t.col), lineText.length);
+        lineText = lineText.slice(0, col) + `[${t.chord}]` + lineText.slice(col);
       }
-      // Append remaining lyric text
-      if (cursor < pair.lyric.length) {
-        result += pair.lyric.slice(cursor);
-      }
-      lines.push(result);
+      lines.push(lineText);
       continue;
     }
 

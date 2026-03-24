@@ -230,7 +230,7 @@ export default function SongDetailPage() {
           <div className="flex items-center gap-2">
             <BackButton />
             <h1 className="text-2xl sm:text-4xl landscape:text-xl font-bold tracking-tight">{song.title}</h1>
-            {isOwner && (
+            {canManage && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 ml-1">
@@ -240,7 +240,7 @@ export default function SongDetailPage() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => navigate(`/editar-musica/${song.id}`)}>
                     <Pencil className="h-4 w-4 mr-2" />
-                    Editar Música
+                    {!isOwner && isAdmin ? "Editar (Admin)" : "Editar Música"}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -248,7 +248,7 @@ export default function SongDetailPage() {
                     onClick={() => setConfirmDeleteOpen(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir
+                    {!isOwner && isAdmin ? "Excluir (Admin)" : "Excluir"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

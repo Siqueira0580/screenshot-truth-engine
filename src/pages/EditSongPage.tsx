@@ -33,6 +33,7 @@ export default function EditSongPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
 
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");

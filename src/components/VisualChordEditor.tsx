@@ -206,13 +206,9 @@ export default function VisualChordEditor({
   }, []);
 
   const handleSave = async () => {
-    // Build the final text from scratch
     const finalNewText = rebuildText(pairs);
     console.log("Salvando musica ID:", songId);
-    
-    // Debug: log what we're about to save
-    console.log("[VisualEditor] rebuilt text length:", finalNewText.length);
-    console.log("[VisualEditor] rebuilt text preview:", finalNewText.substring(0, 200));
+    console.log("[VisualEditor] rebuilt text preview:", finalNewText.substring(0, 300));
     
     if (!finalNewText.trim()) {
       toast.error("O texto reconstruído está vazio. Nada foi salvo.");
@@ -227,7 +223,6 @@ export default function VisualChordEditor({
     setSaving(true);
     try {
       if (songId) {
-        // Wipe and replace: overwrite body_text completely
         const { data, error } = await supabase
           .from("songs")
           .update({ body_text: finalNewText })
@@ -239,11 +234,9 @@ export default function VisualChordEditor({
         if (error) throw error;
         
         toast.success("Cifra atualizada com sucesso!");
-        // Hard reload to clear all cache
         window.location.href = `/songs/${songId}`;
         return;
       }
-      // Fallback for usage without songId
       onSave(finalNewText);
       toast.success("Posições dos acordes atualizadas!");
     } catch (err: any) {
@@ -253,6 +246,9 @@ export default function VisualChordEditor({
       setSaving(false);
     }
   };
+
+  /** Returns the current rebuilt text — used by parent to sync textarea */
+  const getCurrentText = useCallback(() => rebuildText(pairs), [pairs]);
 
   const handleReset = () => {
     setPairs(parseTextToLinePairs(text));

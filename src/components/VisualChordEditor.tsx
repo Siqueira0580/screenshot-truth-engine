@@ -238,6 +238,55 @@ export default function VisualChordEditor({
     []
   );
 
+  const renameChord = useCallback(
+    (pairIdx: number, tokenIdx: number, newName: string) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        const chords = [...next[pairIdx].chords];
+        chords[tokenIdx] = { ...chords[tokenIdx], chord: newName, id: `p${pairIdx}-r${Date.now()}` };
+        next[pairIdx] = { ...next[pairIdx], chords };
+        return next;
+      });
+    },
+    []
+  );
+
+  const deleteChord = useCallback(
+    (pairIdx: number, tokenIdx: number) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        const chords = [...next[pairIdx].chords];
+        chords.splice(tokenIdx, 1);
+        next[pairIdx] = { ...next[pairIdx], chords };
+        return next;
+      });
+    },
+    []
+  );
+
+  const addChordToFirstLine = useCallback(
+    (chordName: string) => {
+      setPairs((prev) => {
+        const next = [...prev];
+        // Find first non-standalone pair, or use index 0
+        let targetIdx = next.findIndex((p) => !p.standalone || p.chords.length > 0);
+        if (targetIdx < 0) targetIdx = 0;
+        const chords = [...next[targetIdx].chords];
+        chords.push({
+          id: `p${targetIdx}-new-${Date.now()}`,
+          chord: chordName,
+          col: 0,
+        });
+        next[targetIdx] = { ...next[targetIdx], chords, standalone: false };
+        return next;
+      });
+      toast.success(`"${chordName}" adicionado! Arraste para posicionar.`);
+    },
+    []
+  );
+
+  const [libraryOpen, setLibraryOpen] = useState(false);
+
   const transferChord = useCallback(
     (sourcePairIdx: number, tokenIdx: number, targetPairIdx: number, newCol: number) => {
       setPairs((prev) => {

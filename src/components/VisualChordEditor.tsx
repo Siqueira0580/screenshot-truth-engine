@@ -359,7 +359,7 @@ export default function VisualChordEditor({
         <Button size="sm" variant="outline" onClick={() => setShowRuler(!showRuler)} className="gap-1.5">
           <Ruler className="h-4 w-4" /> {showRuler ? "Ocultar Régua" : "Régua"}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onCancel} className="gap-1.5">
+        <Button size="sm" variant="ghost" onClick={() => { onSave(getCurrentText()); }} className="gap-1.5">
           <X className="h-4 w-4" /> Fechar
         </Button>
         <span className="text-xs text-muted-foreground ml-auto flex items-center gap-1">

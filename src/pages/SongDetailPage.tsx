@@ -50,6 +50,7 @@ export default function SongDetailPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [transpose, setTranspose] = useState(0);

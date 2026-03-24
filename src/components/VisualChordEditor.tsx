@@ -343,8 +343,9 @@ export default function VisualChordEditor({
 
       {/* Toolbar */}
       <div className="flex items-center gap-2 flex-wrap">
-        <Button size="sm" onClick={handleSave} className="gap-1.5">
-          <Save className="h-4 w-4" /> Salvar
+        <Button size="sm" onClick={handleSave} disabled={saving} className="gap-1.5">
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {saving ? "Salvando..." : "Salvar"}
         </Button>
         <Button size="sm" variant="outline" onClick={handleReset} className="gap-1.5">
           <Undo2 className="h-4 w-4" /> Resetar

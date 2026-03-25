@@ -70,6 +70,7 @@ export default function AppLayout() {
   const { defaultGenre, setDefaultGenre } = useUserPreferences();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -79,6 +80,8 @@ export default function AppLayout() {
           setAvatarUrl(data.avatar_url);
           const ini = [data.first_name, data.last_name].filter(Boolean).map(n => n![0]?.toUpperCase()).join("");
           setInitials(ini || "U");
+          const fullName = [data.first_name, data.last_name].filter(Boolean).join(" ");
+          setDisplayName(fullName || null);
         }
       });
   }, [user]);

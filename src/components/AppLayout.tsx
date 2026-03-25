@@ -10,6 +10,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuSub,
@@ -70,6 +71,7 @@ export default function AppLayout() {
   const { defaultGenre, setDefaultGenre } = useUserPreferences();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [initials, setInitials] = useState("U");
+  const [displayName, setDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -79,6 +81,8 @@ export default function AppLayout() {
           setAvatarUrl(data.avatar_url);
           const ini = [data.first_name, data.last_name].filter(Boolean).map(n => n![0]?.toUpperCase()).join("");
           setInitials(ini || "U");
+          const fullName = [data.first_name, data.last_name].filter(Boolean).join(" ");
+          setDisplayName(fullName || null);
         }
       });
   }, [user]);
@@ -241,21 +245,27 @@ export default function AppLayout() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
-                  className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-secondary transition-colors"
+                  className="rounded-full hover:ring-2 hover:ring-primary/30 transition-all"
                   title="Meu Perfil"
                 >
-                  <Avatar className="h-7 w-7">
+                  <Avatar className="h-8 w-8">
                     <AvatarImage src={avatarUrl || undefined} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm text-muted-foreground hidden lg:block">
-                    {user?.email}
-                  </span>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col gap-1">
+                    {displayName && (
+                      <p className="text-sm font-semibold text-foreground truncate">{displayName}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 cursor-pointer">
                   <User className="h-4 w-4" />
                   Meu Perfil

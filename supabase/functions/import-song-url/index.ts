@@ -25,7 +25,6 @@ serve(async (req) => {
   }
 
   try {
-    // ── Authenticate the caller ─────────────────────────────────
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
@@ -57,7 +56,6 @@ serve(async (req) => {
       });
     }
 
-    // ── Validate URL: only HTTPS and allowed hosts ──────────────
     let parsedUrl: URL;
     try {
       parsedUrl = new URL(url);
@@ -82,9 +80,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("VITE_GEMINI_API_KEY is not configured");
     }
 
     // Step A: Scrape the page
@@ -106,14 +104,13 @@ serve(async (req) => {
 
     const html = await pageResp.text();
 
-    // Step A.1: Pre-extract structured metadata from HTML before stripping
+    // Step A.1: Pre-extract structured metadata from HTML
     let youtubeUrl: string | null = null;
     const ytMatch = html.match(/iframe[^>]+src=["']([^"']*youtube\.com\/embed\/[^"']+)["']/i);
     if (ytMatch) {
       const embedUrl = ytMatch[1];
       const videoIdMatch = embedUrl.match(/embed\/([a-zA-Z0-9_-]+)/);
       youtubeUrl = videoIdMatch ? `https://www.youtube.com/watch?v=${videoIdMatch[1]}` : embedUrl;
-      console.log("YouTube URL found:", youtubeUrl);
     }
 
     let htmlMusicalKey: string | null = null;
@@ -153,92 +150,85 @@ serve(async (req) => {
 
     const truncated = stripped.slice(0, 8000);
 
-    // Step B: AI Processing
-    console.log("Sending to AI for ChordPro extraction...");
-    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          {
-            role: "system",
-            content: `Você é um formatador de texto especializado no padrão ChordPro. Eu vou fornecer-lhe o texto bruto extraído de uma página da web de cifras.
+    // Step B: Gemini AI Processing
+    console.log("Sending to Gemini for ChordPro extraction...");
+
+    const systemPrompt = `Você é um formatador de texto especializado no padrão ChordPro. Eu vou fornecer-lhe o texto bruto extraído de uma página da web de cifras.
 A sua ÚNICA tarefa é encontrar a letra e os acordes DENTRO DESTE TEXTO FORNECIDO e formatá-los para ChordPro (ex: [Am]Sílaba).
 
 Extraia também:
 - Título da música
 - Nome do Artista
 - Gênero Musical (ex: Samba, Rock, MPB, Pop, Gospel, Forró, Sertanejo, Bossa Nova)
-- Tom (Key) da música (ex: "G", "Am", "C#m") — procure por indicações como "Tom:", "Key:", ou o tom mencionado no texto
-- Compositor(es) — procure por "Composição:", "Compositor:", "Songwriters:" no texto
+- Tom (Key) da música (ex: "G", "Am", "C#m")
+- Compositor(es)
 - BPM se mencionado
 
 REGRA ABSOLUTA: NÃO invente acordes. NÃO adicione trechos de música que não estejam no texto bruto fornecido. Use APENAS os dados presentes no texto.
 Se um campo não for encontrado no texto, retorne null para ele.
-Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}`,
-          },
-          {
-            role: "user",
-            content: `Extraia a cifra e metadados deste texto de site:\n\n${truncated}`,
-          },
-        ],
-        tools: [
-          {
-            type: "function",
-            function: {
-              name: "extract_song",
-              description: "Extract song data from scraped text into structured ChordPro format with full metadata",
-              parameters: {
-                type: "object",
-                properties: {
-                  title: { type: "string", description: "Song title" },
-                  artist: { type: "string", description: "Artist name" },
-                  genre: { type: "string", description: "Musical genre (e.g. Rock, MPB, Sertanejo)" },
-                  musical_key: { type: ["string", "null"], description: "Musical key/tom (e.g. G, Am, C#m)" },
-                  composer: { type: ["string", "null"], description: "Composer(s) name(s)" },
-                  bpm: { type: ["number", "null"], description: "BPM if found" },
-                  content: { type: "string", description: "Full song in ChordPro format" },
-                },
-                required: ["title", "artist", "genre", "content"],
+Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}`;
+
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const aiResp = await fetch(geminiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{
+          role: "user",
+          parts: [{ text: `Extraia a cifra e metadados deste texto de site:\n\n${truncated}` }],
+        }],
+        tools: [{
+          functionDeclarations: [{
+            name: "extract_song",
+            description: "Extract song data from scraped text into structured ChordPro format with full metadata",
+            parameters: {
+              type: "object",
+              properties: {
+                title: { type: "string", description: "Song title" },
+                artist: { type: "string", description: "Artist name" },
+                genre: { type: "string", description: "Musical genre (e.g. Rock, MPB, Sertanejo)" },
+                musical_key: { type: "string", description: "Musical key/tom (e.g. G, Am, C#m)", nullable: true },
+                composer: { type: "string", description: "Composer(s) name(s)", nullable: true },
+                bpm: { type: "number", description: "BPM if found", nullable: true },
+                content: { type: "string", description: "Full song in ChordPro format" },
               },
+              required: ["title", "artist", "genre", "content"],
             },
+          }],
+        }],
+        toolConfig: {
+          functionCallingConfig: {
+            mode: "ANY",
+            allowedFunctionNames: ["extract_song"],
           },
-        ],
-        tool_choice: { type: "function", function: { name: "extract_song" } },
+        },
+        generationConfig: { temperature: 0.1 },
       }),
     });
 
     if (!aiResp.ok) {
+      const errText = await aiResp.text();
+      console.error("Gemini error:", aiResp.status, errText);
       if (aiResp.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em instantes." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const errText = await aiResp.text();
-      console.error("AI error:", aiResp.status, errText);
       throw new Error("Erro na IA ao processar a cifra");
     }
 
     const aiData = await aiResp.json();
 
     let result: { title: string; artist: string; genre: string; content: string; musical_key?: string | null; composer?: string | null; bpm?: number | null };
-    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-    if (toolCall?.function?.arguments) {
-      result = JSON.parse(toolCall.function.arguments);
+
+    const functionCall = aiData.candidates?.[0]?.content?.parts?.[0]?.functionCall;
+    if (functionCall?.args) {
+      result = functionCall.args;
     } else {
-      const raw = aiData.choices?.[0]?.message?.content || "";
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error("IA não retornou dados estruturados");
       }
@@ -249,13 +239,12 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
     const finalComposer = htmlComposer || result.composer || null;
     const finalYoutubeUrl = youtubeUrl || null;
 
-    console.log("Extracted:", result.title, "-", result.artist, "| Key:", finalMusicalKey, "| Composer:", finalComposer, "| YouTube:", finalYoutubeUrl);
+    console.log("Extracted:", result.title, "-", result.artist, "| Key:", finalMusicalKey);
 
     // Step C: Fetch artist image from Deezer
     let artist_image_url: string | null = null;
     if (result.artist) {
       try {
-        console.log("Fetching artist image from Deezer for:", result.artist);
         const deezerRes = await fetch(
           "https://api.deezer.com/search/artist?q=" + encodeURIComponent(result.artist)
         );
@@ -267,7 +256,6 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
               deezerData.data[0].picture_big ||
               deezerData.data[0].picture_medium ||
               null;
-            console.log("Deezer artist image found:", artist_image_url);
           }
         }
       } catch (deezerErr) {

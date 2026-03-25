@@ -14,7 +14,7 @@ Regras:
 - Para cavaquinho (cavaquinho): 4 cordas, afinação D-G-B-D. O array "frets" deve ter exatamente 4 elementos.
 - Para ukulele (ukulele): 4 cordas, afinação G-C-E-A. O array "frets" deve ter exatamente 4 elementos.
 - Use -1 para corda mutada (não tocada), 0 para corda solta.
-- "baseFret" indica a casa base quando a posição não está na primeira posição (use 1 se estiver na 1ª posição ou omitir).
+- "baseFret" indica a casa base quando a posição não está na primeira posição (use 1 se estiver na 1ª posição).
 - "barres" é um array de pestanas. Cada pestana tem "fret" (casa relativa), "from" (índice da corda inicial, 0-based) e "to" (índice da corda final, 0-based).
 - "fingers" indica qual dedo pressiona cada corda: 0=não pressionado, 1=indicador, 2=médio, 3=anelar, 4=mindinho.
 - Priorize posições confortáveis e comuns usadas por músicos profissionais.
@@ -28,7 +28,6 @@ serve(async (req) => {
   }
 
   try {
-    // ── Authenticate the caller ─────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -45,9 +44,8 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -80,9 +78,9 @@ serve(async (req) => {
       );
     }
 
-    // 2. Call Lovable AI
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    // 2. Call Gemini
+    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
       return new Response(
         JSON.stringify({ error: "AI service is not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -107,37 +105,30 @@ Responda ESTRITAMENTE com um JSON neste formato:
 
 Se não houver pestana, use "barres": [].`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const aiResponse = await fetch(geminiUrl, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.1,
+        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{
+          role: "user",
+          parts: [{ text: userPrompt }],
+        }],
+        generationConfig: { temperature: 0.1 },
       }),
     });
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
       const body = await aiResponse.text();
-      console.error("AI gateway error:", status, body);
+      console.error("Gemini error:", status, body);
 
       if (status === 429) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Try again later." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required for AI service." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -148,9 +139,8 @@ Se não houver pestana, use "barres": [].`;
     }
 
     const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "";
+    const rawContent = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
-    // Extract JSON from response (handle markdown code blocks)
     let jsonStr = rawContent.trim();
     const jsonMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) {
@@ -161,23 +151,21 @@ Se não houver pestana, use "barres": [].`;
     try {
       chordData = JSON.parse(jsonStr);
     } catch {
-      console.error("Failed to parse AI response:", rawContent);
+      console.error("Failed to parse Gemini response:", rawContent);
       return new Response(
         JSON.stringify({ error: "Chord generation failed. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validate structure
     if (!Array.isArray(chordData.frets)) {
-      console.error("AI response missing frets array:", chordData);
+      console.error("Gemini response missing frets array:", chordData);
       return new Response(
         JSON.stringify({ error: "Chord generation failed. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Normalize: convert barres format to match our internal format
     const normalizedData = {
       baseFret: chordData.baseFret || 1,
       frets: chordData.frets,

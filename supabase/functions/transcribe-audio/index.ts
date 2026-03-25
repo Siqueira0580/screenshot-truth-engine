@@ -7,22 +7,19 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("VITE_GEMINI_API_KEY is not configured");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // ── Authenticate the caller ─────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -35,16 +32,15 @@ serve(async (req) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userSupabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
     const { lyrics, song_title, artist, audio_track_id } = await req.json();
 
@@ -55,26 +51,17 @@ serve(async (req) => {
       );
     }
 
-    // ── Prompt para gerar ChordPro ──────────────────────────────
     const systemPrompt = `Você é um processador de cifras musicais estrito. A sua ÚNICA função é receber uma letra de música e posicionar os acordes corretos colados na sílaba exata onde são tocados, usando OBRIGATORIAMENTE o formato ChordPro (ex: [Am]).
 
 REGRAS INQUEBRÁVEIS:
-1. NUNCA duplique acordes. Não crie "resumos" de acordes no início ou no fim das linhas. Cada acorde deve aparecer APENAS UMA VEZ, exatamente colado à palavra/sílaba correspondente.
-2. NUNCA adicione texto conversacional como "Aqui está a cifra", "Espero que ajude", ou qualquer comentário. Retorne APENAS a cifra formatada.
-3. Reconheça e mantenha acordes especiais/complexos sem os simplificar (ex: F7M, Cm7(b5), A7(#9)).
+1. NUNCA duplique acordes. Cada acorde deve aparecer APENAS UMA VEZ, exatamente colado à palavra/sílaba correspondente.
+2. NUNCA adicione texto conversacional. Retorne APENAS a cifra formatada.
+3. Reconheça e mantenha acordes especiais/complexos sem os simplificar.
 4. Mantenha toda a letra original — não omita, resuma ou traduza nada.
 5. Quebre as linhas exatamente como o original.
-6. Se reconhecer a música, use a harmonia real. Se não reconhecer, crie uma harmonização plausível.
-7. NÃO adicione diretivas ChordPro como {title:}, {artist:}, {comment:} etc. Retorne APENAS as linhas de letra com acordes em colchetes.
-8. Use notação cifrada padrão (C, C#, Dm, G7, Am7, Bb, etc.).
-
-EXEMPLO:
-Entrada: É difícil dizer qual de nós tem razão
-Saída: É [F7M]difícil di[Am]zer qual de nós tem ra[Cm]zão
-
-ERRADO (acorde duplicado — NUNCA faça isto):
-[F7M] [Am] [Cm]
-É [F7M]difícil di[Am]zer qual de nós tem ra[Cm]zão`;
+6. Se reconhecer a música, use a harmonia real. Se não, crie uma harmonização plausível.
+7. NÃO adicione diretivas ChordPro como {title:}, {artist:}, etc.
+8. Use notação cifrada padrão (C, C#, Dm, G7, Am7, Bb, etc.).`;
 
     const userPrompt = [
       song_title ? `Título: ${song_title}` : "",
@@ -86,72 +73,59 @@ ERRADO (acorde duplicado — NUNCA faça isto):
       .filter(Boolean)
       .join("\n");
 
-    // ── Chamada ao Lovable AI Gateway ───────────────────────────
-    const aiResponse = await fetch(AI_GATEWAY, {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const aiResponse = await fetch(geminiUrl, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0,
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{
+          role: "user",
+          parts: [{ text: userPrompt }],
+        }],
+        generationConfig: { temperature: 0 },
       }),
     });
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
+      const body = await aiResponse.text();
+      console.error("Gemini error:", status, body);
+
       if (status === 429) {
         return new Response(
           JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      const body = await aiResponse.text();
-      console.error("AI gateway error:", status, body);
-      throw new Error(`AI gateway error [${status}]`);
+      throw new Error(`Gemini error [${status}]`);
     }
 
     const aiData = await aiResponse.json();
     let chordProText: string =
-      aiData.choices?.[0]?.message?.content?.trim() ?? "";
+      aiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
 
-    // ── Post-processing: limpar alucinações ─────────────────────
-    // Remove markdown code fences
+    // Post-processing
     const codeBlockMatch = chordProText.match(/```(?:chordpro|text)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) {
       chordProText = codeBlockMatch[1].trim();
     }
 
-    // Remove conversational preamble/postamble lines
     chordProText = chordProText
       .split("\n")
       .filter((line) => {
         const trimmed = line.trim().toLowerCase();
-        // Remove lines that are purely conversational
         if (/^(aqui está|espero que|segue a|segue abaixo|pronto|claro|com certeza)/i.test(trimmed)) return false;
-        // Remove ChordPro directives
         if (/^\{[^}]+\}$/.test(trimmed)) return false;
-        // Remove lines that are ONLY chords (no lyrics) — the duplicate header pattern
         if (/^\[[\w#b/+°ø()]+\](\s*\[[\w#b/+°ø()]+\])*\s*$/.test(trimmed)) return false;
         return true;
       })
       .join("\n")
       .trim();
 
-    // ── Salvar na tabela audio_tracks (se ID fornecido) ─────────
+    // Save to audio_tracks if ID provided
     if (audio_track_id) {
-      // Use service role to write, but first verify ownership
       const serviceSupabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
       const { data: track, error: fetchError } = await serviceSupabase

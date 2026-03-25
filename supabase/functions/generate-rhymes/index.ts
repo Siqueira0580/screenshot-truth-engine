@@ -12,7 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    // --- Auth Guard ---
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -27,15 +26,13 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    // --- End Auth Guard ---
 
     const { word } = await req.json();
     if (!word || typeof word !== "string") {
@@ -45,27 +42,23 @@ serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("VITE_GEMINI_API_KEY is not configured");
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const response = await fetch(geminiUrl, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: "Você é um dicionário de rimas em português brasileiro. Retorne APENAS um array JSON válido de strings, sem markdown, sem explicações, sem crases.",
-          },
-          {
-            role: "user",
-            content: `Gere uma lista de 20 a 30 palavras em português que rimam perfeitamente com a palavra "${word}". Retorne APENAS um array JSON de strings. Exemplo: ["amor", "dor", "flor"]`,
-          },
-        ],
+        systemInstruction: {
+          parts: [{ text: "Você é um dicionário de rimas em português brasileiro. Retorne APENAS um array JSON válido de strings, sem markdown, sem explicações, sem crases." }],
+        },
+        contents: [{
+          role: "user",
+          parts: [{ text: `Gere uma lista de 20 a 30 palavras em português que rimam perfeitamente com a palavra "${word}". Retorne APENAS um array JSON de strings. Exemplo: ["amor", "dor", "flor"]` }],
+        }],
+        generationConfig: { temperature: 0.5 },
       }),
     });
 
@@ -75,20 +68,14 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (response.status === 402) {
-      return new Response(JSON.stringify({ error: "Payment required" }), {
-        status: 402,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
     if (!response.ok) {
       const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      throw new Error("AI gateway error");
+      console.error("Gemini error:", response.status, t);
+      throw new Error("Gemini API error");
     }
 
     const data = await response.json();
-    let content = data.choices?.[0]?.message?.content?.trim() || "[]";
+    let content = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "[]";
 
     content = content.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
@@ -98,7 +85,7 @@ serve(async (req) => {
       if (!Array.isArray(rhymes)) rhymes = [];
       rhymes = rhymes.filter((r: unknown) => typeof r === "string").slice(0, 40);
     } catch {
-      console.error("Failed to parse AI rhymes response:", content);
+      console.error("Failed to parse Gemini rhymes response:", content);
       rhymes = [];
     }
 

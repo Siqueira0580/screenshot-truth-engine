@@ -7,15 +7,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // ── Auth guard ──────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -30,18 +27,16 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-    // ── End auth guard ──────────────────────────────────────────
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("VITE_GEMINI_API_KEY is not configured");
 
     const { audio_base64, mime_type, style, existing_text } = await req.json();
 
@@ -52,62 +47,49 @@ serve(async (req) => {
       );
     }
 
-    // Determine the MIME type for the audio
     const audioMime = mime_type || "audio/webm";
 
     const systemPrompt = `Você é um transcritor musical profissional especializado em música brasileira.
 O usuário vai enviar um áudio gravado de voz (cantando ou falando uma composição musical).
 Sua tarefa é:
 1. Transcrever EXATAMENTE o que foi dito/cantado no áudio, em português brasileiro.
-2. Se possível, identificar as notas/acordes que estão sendo cantados e adicioná-los no formato ChordPro (ex: [G]palavra [Am]outra).
+2. Se possível, identificar as notas/acordes e adicioná-los no formato ChordPro (ex: [G]palavra [Am]outra).
 3. Se não conseguir identificar acordes com certeza, retorne apenas o texto transcrito SEM colchetes.
 4. Mantenha quebras de linha naturais para versos.
 5. Se o áudio estiver vazio ou inaudível, retorne uma string vazia.
 ${style ? `6. O estilo musical é: ${style}. Use isso como contexto para harmonização.` : ""}
 
 FORMATO DE RESPOSTA OBRIGATÓRIO — responda APENAS com um JSON válido, sem markdown, sem explicações:
-{"transcription": "texto transcrito aqui com [Acordes] se detectados", "detected_key": "tom detectado ou null"}
+{"transcription": "texto transcrito aqui com [Acordes] se detectados", "detected_key": "tom detectado ou null"}`;
 
-Para detected_key: analise a progressão de acordes que você inseriu e deduza o tom real (ex: se usou [G], [Em], [C], [D] → detected_key: "G"). Se não inseriu acordes, retorne null.`;
+    const userText = existing_text
+      ? `Contexto: o compositor já escreveu o seguinte antes desta gravação:\n${existing_text}\n\nAgora transcreva APENAS o novo áudio acima. Não repita o texto existente.`
+      : "Transcreva o áudio acima no formato ChordPro.";
 
-    // Build the user message with inline audio data for Gemini
-    const userContent: any[] = [
-      {
-        type: "image_url",
-        image_url: {
-          url: `data:${audioMime};base64,${audio_base64}`,
-        },
-      },
-      {
-        type: "text",
-        text: existing_text
-          ? `Contexto: o compositor já escreveu o seguinte antes desta gravação:\n${existing_text}\n\nAgora transcreva APENAS o novo áudio acima. Não repita o texto existente.`
-          : "Transcreva o áudio acima no formato ChordPro.",
-      },
-    ];
+    console.log("Sending audio to Gemini, mime:", audioMime, "base64 length:", audio_base64.length);
 
-    console.log("Sending audio to AI gateway, mime:", audioMime, "base64 length:", audio_base64.length);
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-    const aiResponse = await fetch(AI_GATEWAY, {
+    const aiResponse = await fetch(geminiUrl, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        temperature: 0,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userContent },
-        ],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{
+          role: "user",
+          parts: [
+            { inlineData: { mimeType: audioMime, data: audio_base64 } },
+            { text: userText },
+          ],
+        }],
+        generationConfig: { temperature: 0 },
       }),
     });
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
       const body = await aiResponse.text();
-      console.error("AI gateway error:", status, body);
+      console.error("Gemini error:", status, body);
 
       if (status === 429) {
         return new Response(
@@ -115,32 +97,23 @@ Para detected_key: analise a progressão de acordes que você inseriu e deduza o
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Adicione créditos ao workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-      throw new Error("AI transcription service unavailable");
+      throw new Error("Gemini transcription service unavailable");
     }
 
     const aiData = await aiResponse.json();
     const rawContent: string =
-      aiData.choices?.[0]?.message?.content?.trim() ?? "";
+      aiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
 
-    console.log("Raw AI response:", rawContent.substring(0, 200));
+    console.log("Raw Gemini response:", rawContent.substring(0, 200));
 
-    // Parse JSON response from AI
     let transcription = "";
     let detected_key: string | null = null;
     try {
-      // Strip markdown code fences if present
       const cleanJson = rawContent.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
       const parsed = JSON.parse(cleanJson);
       transcription = parsed.transcription?.trim() ?? "";
       detected_key = parsed.detected_key || null;
     } catch {
-      // Fallback: treat entire response as plain transcription text
       console.log("Could not parse JSON, using raw text as transcription");
       transcription = rawContent;
     }

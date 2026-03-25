@@ -7,15 +7,12 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // ── Auth guard ──
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -30,17 +27,16 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("VITE_GEMINI_API_KEY is not configured");
 
     const { prompt, style } = await req.json();
 
@@ -57,25 +53,25 @@ ${style ? `O estilo musical é: ${style}. Adapte o vocabulário e a métrica ao 
 Responda APENAS com um JSON válido, sem markdown:
 {"suggestions": ["verso 1", "verso 2", "verso 3"]}`;
 
-    const aiResponse = await fetch(AI_GATEWAY, {
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+    const aiResponse = await fetch(geminiUrl, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: `Continuação para:\n\n${prompt.slice(-400)}` },
-        ],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{
+          role: "user",
+          parts: [{ text: `Continuação para:\n\n${prompt.slice(-400)}` }],
+        }],
+        generationConfig: { temperature: 0.7 },
       }),
     });
 
     if (!aiResponse.ok) {
       const status = aiResponse.status;
       const body = await aiResponse.text();
-      console.error("AI gateway error:", status, body);
+      console.error("Gemini error:", status, body);
 
       if (status === 429) {
         return new Response(
@@ -83,17 +79,11 @@ Responda APENAS com um JSON válido, sem markdown:
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      if (status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
       throw new Error("AI service unavailable");
     }
 
     const aiData = await aiResponse.json();
-    const rawContent: string = aiData.choices?.[0]?.message?.content?.trim() ?? "";
+    const rawContent: string = aiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
 
     let suggestions: string[] = [];
     try {
@@ -103,7 +93,6 @@ Responda APENAS com um JSON válido, sem markdown:
         ? parsed.suggestions.filter((s: unknown) => typeof s === "string").slice(0, 3)
         : [];
     } catch {
-      // Fallback: split by double newline
       suggestions = rawContent.split(/\n\n+/).filter((s) => s.trim()).slice(0, 3);
     }
 

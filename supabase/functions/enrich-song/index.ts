@@ -14,7 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    // ── Authenticate the caller ─────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -52,7 +51,6 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // ── Verify the caller owns this song via user_library ───────
     const { data: libraryEntry } = await supabase
       .from("user_library")
       .select("id")
@@ -89,7 +87,6 @@ serve(async (req) => {
         console.error("Deezer fetch error:", e);
       }
 
-      // Update artist table photo if found
       if (artistImageUrl) {
         const { data: existingArtist } = await supabase
           .from("artists")
@@ -106,7 +103,7 @@ serve(async (req) => {
       }
     }
 
-    // Step 2: Classify genre, BPM, tone, and composers via AI if missing
+    // Step 2: Classify genre, BPM, tone, and composers via Gemini
     const needsGenre = !current_style && artist;
     const needsBpm = (!current_bpm || current_bpm === 0) && artist && title;
     const needsKey = !current_musical_key && artist && title;
@@ -114,42 +111,35 @@ serve(async (req) => {
 
     if (needsGenre || needsBpm || needsKey || needsComposer) {
       try {
-        const openaiKey = Deno.env.get("LOVABLE_API_KEY");
-        if (openaiKey) {
+        const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
+        if (GEMINI_API_KEY) {
           const fieldDescriptions: string[] = [];
           if (needsGenre) fieldDescriptions.push('"genre": gênero musical em português (ex: Sertanejo, MPB, Pop Rock) ou null se não souber');
           if (needsBpm) fieldDescriptions.push('"bpm": BPM original de estúdio como número inteiro ou null se não souber');
           if (needsKey) fieldDescriptions.push('"tone": tom original da música (ex: C, Am, G#m) ou null se não souber');
           if (needsComposer) fieldDescriptions.push('"composers": nomes dos compositores separados por vírgula ou null se não souber');
 
-          const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+          const aiRes = await fetch(geminiUrl, {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${openaiKey}`,
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash-lite",
-              messages: [
-                {
-                  role: "system",
-                  content:
-                    'You are a music metadata expert. Return ONLY valid JSON with the requested fields. No explanation, no markdown. If you are not sure about a value, return null for that field. Never invent data.',
-                },
-                {
-                  role: "user",
-                  content: `Analise a música "${title || ''}" de "${artist}". Retorne um JSON com: ${fieldDescriptions.join("; ")}. Formato exato: { ${needsGenre ? '"genre": "string|null"' : ''}${needsBpm ? ', "bpm": number|null' : ''}${needsKey ? ', "tone": "string|null"' : ''}${needsComposer ? ', "composers": "string|null"' : ''} }`,
-                },
-              ],
-              max_tokens: 120,
-              temperature: 0.1,
+              systemInstruction: {
+                parts: [{ text: "You are a music metadata expert. Return ONLY valid JSON with the requested fields. No explanation, no markdown. If you are not sure about a value, return null for that field. Never invent data." }],
+              },
+              contents: [{
+                role: "user",
+                parts: [{ text: `Analise a música "${title || ''}" de "${artist}". Retorne um JSON com: ${fieldDescriptions.join("; ")}.` }],
+              }],
+              generationConfig: { temperature: 0.1, maxOutputTokens: 200 },
             }),
           });
 
           if (aiRes.ok) {
             const aiData = await aiRes.json();
-            const raw = aiData.choices?.[0]?.message?.content?.trim();
-            console.log(`AI response for "${title}": ${raw}`);
+            const raw = aiData.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+            console.log(`Gemini response for "${title}": ${raw}`);
             try {
               const parsed = JSON.parse(raw.replace(/```json?\n?/g, '').replace(/```/g, '').trim());
               if (needsGenre && parsed.genre && typeof parsed.genre === "string" && parsed.genre.length < 40) {
@@ -168,7 +158,7 @@ serve(async (req) => {
                 updates.composer = parsed.composers;
               }
             } catch {
-              console.error("Failed to parse AI JSON response");
+              console.error("Failed to parse Gemini JSON response");
             }
           }
         }

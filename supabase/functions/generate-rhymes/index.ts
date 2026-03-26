@@ -45,7 +45,7 @@ serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
     if (!GEMINI_API_KEY) throw new Error("VITE_GEMINI_API_KEY is not configured");
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     const response = await fetch(geminiUrl, {
       method: "POST",

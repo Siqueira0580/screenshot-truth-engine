@@ -105,7 +105,7 @@ Responda ESTRITAMENTE com um JSON neste formato:
 
 Se não houver pestana, use "barres": [].`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     const aiResponse = await fetch(geminiUrl, {
       method: "POST",

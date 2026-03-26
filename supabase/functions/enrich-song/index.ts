@@ -119,7 +119,7 @@ serve(async (req) => {
           if (needsKey) fieldDescriptions.push('"tone": tom original da música (ex: C, Am, G#m) ou null se não souber');
           if (needsComposer) fieldDescriptions.push('"composers": nomes dos compositores separados por vírgula ou null se não souber');
 
-          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
           const aiRes = await fetch(geminiUrl, {
             method: "POST",

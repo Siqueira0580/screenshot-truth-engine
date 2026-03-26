@@ -168,7 +168,7 @@ REGRA ABSOLUTA: NÃO invente acordes. NÃO adicione trechos de música que não 
 Se um campo não for encontrado no texto, retorne null para ele.
 Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     const aiResp = await fetch(geminiUrl, {
       method: "POST",

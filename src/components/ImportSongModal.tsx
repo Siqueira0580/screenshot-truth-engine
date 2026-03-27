@@ -124,11 +124,13 @@ export default function ImportSongModal({
           await addSongToSetlist(setlistId, duplicateId, setlistPosition ?? 999, speed);
           queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
         }
-        toast.info("Música já cadastrada! Adicionada à sua biblioteca.");
+        toast.info(setlistId ? "Música já cadastrada! Adicionada ao repertório." : "Música já cadastrada! Adicionada à sua biblioteca.");
         queryClient.invalidateQueries({ queryKey: ["user-library"] });
         queryClient.invalidateQueries({ queryKey: ["artists"] });
         handleClose();
-        navigate(`/songs/${duplicateId}`);
+        if (!setlistId) {
+          navigate(`/songs/${duplicateId}`);
+        }
         return;
       }
 

@@ -641,9 +641,6 @@ export default function SetlistDetailPage() {
           )}
           {items.length > 0 && (
             <>
-              <Button variant="outline" size="sm" onClick={() => setInviteOpen(true)} className="gap-2">
-                <UserPlus className="h-4 w-4" /><span className="hidden sm:inline">Convidar</span>
-              </Button>
               <Button variant={autoHideControls ? "outline" : "secondary"} size="sm" onClick={() => setAutoHideControls((v) => !v)} className="gap-2">
                 {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Visível"}</span>

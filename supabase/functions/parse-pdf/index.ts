@@ -76,26 +76,27 @@ Deno.serve(async (req) => {
       throw new Error('VITE_GEMINI_API_KEY not configured');
     }
 
-    const systemPrompt = `You are a music sheet parser. Extract structured information from music PDFs (chord sheets, cifras, lyrics).
-Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
+    const systemPrompt = `Você é um extrator e conversor de cifras rigoroso. Sua ÚNICA função é converter a cifra do PDF para o formato ChordPro sem alterar absolutamente NADA do conteúdo.
+
+REGRAS ABSOLUTAS (PENALIDADE SE DESCUMPRIDAS):
+1. FIDELIDADE EXTREMA: NÃO adicione, NÃO remova e NÃO altere nenhum acorde ou palavra da letra original.
+2. POSIÇÃO PRECISA: Se a cifra original estiver no formato tradicional (acordes na linha de cima), você DEVE descer o acorde para a linha de baixo colocando-o entre colchetes ([Acorde]) EXATAMENTE na mesma posição (coluna/sílaba) onde ele estava alinhado originalmente.
+3. ZERO INVENÇÃO: NÃO adicione marcações de [Refrão], [Intro] ou [Verso] se não existirem no PDF fonte. NÃO tente corrigir gramática ou harmonia.
+4. ESPAÇAMENTOS: Mantenha as quebras de linha exatas.
+
+Retorne APENAS um JSON válido (sem markdown, sem code blocks) com esta estrutura:
 {
-  "title": "song title",
-  "artist": "artist/performer name",
-  "composer": "composer(s) name(s)",
-  "musical_key": "musical key (e.g. C, Am, F#m)",
-  "style": "music style/genre if identifiable, or null",
+  "title": "título da música",
+  "artist": "nome do artista/intérprete",
+  "composer": "nome do(s) compositor(es)",
+  "musical_key": "tom (ex: C, Am, F#m)",
+  "style": "gênero musical ou null",
   "bpm": null,
-  "time_signature": "time signature if found, e.g. 4/4, or null",
-  "body_text": "the full lyrics with chord annotations preserved, formatted as plain text with chords above lyrics lines.",
-  "chordpro_text": "the full lyrics in ChordPro format with chords inline in brackets, e.g. [C]Letra da [Am]música"
+  "time_signature": "compasso se encontrado (ex: 4/4) ou null",
+  "body_text": "cifra ChordPro fiel ao original com acordes em colchetes inline",
+  "chordpro_text": "mesmo conteúdo ChordPro acima"
 }
-Rules:
-- For body_text: reconstruct the lyrics with chords ABOVE the corresponding lyrics.
-- For chordpro_text: place each chord in square brackets immediately before the syllable it belongs to.
-- Keep all chord names exactly as they appear.
-- Write lyrics in their original language (Portuguese).
-- If a field is not found, use null.
-- Do NOT include chord diagrams, tablatures, or tuning info in body_text.`;
+Se um campo não for encontrado, use null.`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
@@ -111,7 +112,7 @@ Rules:
             { text: 'Extract all song information from this PDF chord sheet. Return only the JSON object.' },
           ],
         }],
-        generationConfig: { temperature: 0.1 },
+        generationConfig: { temperature: 0.0, topK: 1, topP: 0.1 },
       }),
     });
 

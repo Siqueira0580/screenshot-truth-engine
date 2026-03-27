@@ -153,19 +153,16 @@ serve(async (req) => {
     // Step B: Gemini AI Processing
     console.log("Sending to Gemini for ChordPro extraction...");
 
-    const systemPrompt = `Você é um formatador de texto especializado no padrão ChordPro. Eu vou fornecer-lhe o texto bruto extraído de uma página da web de cifras.
-A sua ÚNICA tarefa é encontrar a letra e os acordes DENTRO DESTE TEXTO FORNECIDO e formatá-los para ChordPro (ex: [Am]Sílaba).
+    const systemPrompt = `Você é um extrator e conversor de cifras rigoroso. Sua ÚNICA função é converter a cifra original para o formato ChordPro sem alterar absolutamente NADA do conteúdo.
 
-Extraia também:
-- Título da música
-- Nome do Artista
-- Gênero Musical (ex: Samba, Rock, MPB, Pop, Gospel, Forró, Sertanejo, Bossa Nova)
-- Tom (Key) da música (ex: "G", "Am", "C#m")
-- Compositor(es)
-- BPM se mencionado
+REGRAS ABSOLUTAS (PENALIDADE SE DESCUMPRIDAS):
+1. FIDELIDADE EXTREMA: NÃO adicione, NÃO remova e NÃO altere nenhum acorde ou palavra da letra original.
+2. POSIÇÃO PRECISA: Se a cifra original estiver no formato tradicional (acordes na linha de cima), você DEVE descer o acorde para a linha de baixo colocando-o entre colchetes ([Acorde]) EXATAMENTE na mesma posição (coluna/sílaba) onde ele estava alinhado originalmente.
+3. ZERO INVENÇÃO: NÃO adicione marcações de [Refrão], [Intro] ou [Verso] se não existirem no texto fonte. NÃO tente corrigir gramática ou harmonia.
+4. ESPAÇAMENTOS: Mantenha as quebras de linha exatas.
 
-REGRA ABSOLUTA: NÃO invente acordes. NÃO adicione trechos de música que não estejam no texto bruto fornecido. Use APENAS os dados presentes no texto.
-Se um campo não for encontrado no texto, retorne null para ele.
+Extraia também: Título, Artista, Gênero Musical, Tom, Compositor(es), BPM (se mencionado).
+Se um campo não for encontrado, retorne null.
 Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -204,7 +201,7 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
             allowedFunctionNames: ["extract_song"],
           },
         },
-        generationConfig: { temperature: 0.1 },
+        generationConfig: { temperature: 0.0, topK: 1, topP: 0.1 },
       }),
     });
 

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock, Mic, MicOff, Link as LinkIcon } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, UserPlus, Share2, Minus, Copy, Link2, Globe, Lock, Mic, MicOff, Link as LinkIcon, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor,
@@ -647,37 +648,43 @@ export default function SetlistDetailPage() {
                 {autoHideControls ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 <span className="hidden sm:inline">{autoHideControls ? "Auto-hide" : "Visível"}</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={handleShareWhatsApp} className="gap-2" title="Compartilhar via WhatsApp">
-                <Share2 className="h-4 w-4" /><span className="hidden sm:inline">WhatsApp</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2"
-                title="Copiar Link Público"
-                onClick={async () => {
-                  try {
-                    const sl = setlist as any;
-                    let token = sl?.public_share_token;
-                    if (!token) {
-                      token = crypto.randomUUID();
-                      const { error } = await supabase
-                        .from("setlists")
-                        .update({ public_share_token: token } as any)
-                        .eq("id", id!);
-                      if (error) throw error;
-                      queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Compartilhar</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleShareWhatsApp}>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    <span>Enviar via WhatsApp</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={async () => {
+                    try {
+                      const sl = setlist as any;
+                      let token = sl?.public_share_token;
+                      if (!token) {
+                        token = crypto.randomUUID();
+                        const { error } = await supabase
+                          .from("setlists")
+                          .update({ public_share_token: token } as any)
+                          .eq("id", id!);
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+                      }
+                      const publicUrl = `${window.location.origin}/share/setlist/${token}`;
+                      await navigator.clipboard.writeText(publicUrl);
+                      toast.success("Link público copiado!");
+                    } catch {
+                      toast.error("Erro ao gerar link público");
                     }
-                    const publicUrl = `${window.location.origin}/share/setlist/${token}`;
-                    await navigator.clipboard.writeText(publicUrl);
-                    toast.success("Link público copiado!");
-                  } catch {
-                    toast.error("Erro ao gerar link público");
-                  }
-                }}
-              >
-                <Share2 className="h-4 w-4" /><span className="hidden sm:inline">Link Público</span>
-              </Button>
+                  }}>
+                    <LinkIcon className="mr-2 h-4 w-4" />
+                    <span>Copiar Link Público</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
             </>
           )}

@@ -916,6 +916,8 @@ export default function SetlistDetailPage() {
                 queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
               }
             }}
+            setlistId={id}
+            setlistPosition={items.length + 1}
           />
 
           <SyncInviteModal open={inviteOpen} onOpenChange={setInviteOpen} setlistId={id!} setlistName={setlist?.name || ""} />

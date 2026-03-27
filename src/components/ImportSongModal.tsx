@@ -124,11 +124,13 @@ export default function ImportSongModal({
           await addSongToSetlist(setlistId, duplicateId, setlistPosition ?? 999, speed);
           queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
         }
-        toast.info("Música já cadastrada! Adicionada à sua biblioteca.");
+        toast.info(setlistId ? "Música já cadastrada! Adicionada ao repertório." : "Música já cadastrada! Adicionada à sua biblioteca.");
         queryClient.invalidateQueries({ queryKey: ["user-library"] });
         queryClient.invalidateQueries({ queryKey: ["artists"] });
         handleClose();
-        navigate(`/songs/${duplicateId}`);
+        if (!setlistId) {
+          navigate(`/songs/${duplicateId}`);
+        }
         return;
       }
 
@@ -185,7 +187,7 @@ export default function ImportSongModal({
           await addSongToSetlist(setlistId, newSong.id, setlistPosition ?? 999, speed);
           queryClient.invalidateQueries({ queryKey: ["setlist-items", setlistId] });
         }
-        toast.success(`"${title}" importada com sucesso!`);
+        toast.success(setlistId ? `"${title}" importada e adicionada ao repertório!` : `"${title}" importada com sucesso!`);
       }
 
       queryClient.invalidateQueries({ queryKey: ["songs"] });
@@ -193,7 +195,9 @@ export default function ImportSongModal({
       queryClient.invalidateQueries({ queryKey: ["artist-songs"] });
       queryClient.invalidateQueries({ queryKey: ["artists"] });
       handleClose();
-      navigate(`/songs/${finalSongId}`);
+      if (!setlistId) {
+        navigate(`/songs/${finalSongId}`);
+      }
     } catch (err: any) {
       console.error("Save error:", err);
       toast.error("Erro ao salvar: " + (err?.message || "Tente novamente."));

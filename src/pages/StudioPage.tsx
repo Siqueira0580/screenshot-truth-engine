@@ -88,6 +88,8 @@ export default function StudioPage() {
 
       const song = await createSong({ title, artist: artist || null });
 
+      if (!user?.id) throw new Error("Utilizador não autenticado.");
+
       const ext = file.name.split(".").pop();
       const path = `${song.id}/full.${ext}`;
       const { error: upErr } = await supabase.storage
@@ -95,12 +97,11 @@ export default function StudioPage() {
         .upload(path, file, { upsert: true, contentType: file.type || "audio/mpeg" });
       if (upErr) throw upErr;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      // Create audio_tracks record first so RLS policy can validate ownership
+      // Create audio_tracks record – user_id MUST match auth.uid() for RLS
       const { error: dbErr } = await supabase.from("audio_tracks").insert({
         song_id: song.id,
         file_full: path,
-        user_id: user?.id || null,
+        user_id: user.id,
       });
       if (dbErr) throw dbErr;
 

@@ -388,7 +388,7 @@ export default function StudioDetailPage() {
                 const path = `${songId}/full.${ext}`;
                 const { error: upErr } = await supabase.storage
                   .from("audio-stems")
-                  .upload(path, f, { upsert: true, contentType: f.type || "audio/mpeg" });
+                  .upload(path, f, { contentType: f.type || "audio/mpeg" });
                 if (upErr) throw upErr;
                 const { data: { user } } = await supabase.auth.getUser();
 

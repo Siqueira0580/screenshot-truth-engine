@@ -376,7 +376,7 @@ export default function StudioDetailPage() {
           <p className="text-sm text-muted-foreground mb-3">Esta música ainda não tem áudio</p>
           <input
             type="file"
-            accept=".mp3,.wav,.ogg,.m4a,.flac"
+            accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac,.wma,.aiff,.opus"
             className="hidden"
             id="upload-existing"
             onChange={async e => {

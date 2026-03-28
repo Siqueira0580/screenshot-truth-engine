@@ -135,7 +135,7 @@ export default function StudioPage() {
         <input
           ref={newAudioRef}
           type="file"
-          accept=".mp3,.wav,.ogg,.m4a,.flac"
+          accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.aac,.wma,.aiff,.opus"
           className="hidden"
           onChange={e => {
             const f = e.target.files?.[0];

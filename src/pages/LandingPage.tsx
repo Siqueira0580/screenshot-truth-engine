@@ -96,17 +96,16 @@ export default function LandingPage() {
         </h1>
 
         {/* Sub-headline */}
-        <motion.p
-          {...fadeUp(0.4)}
+        <p
           className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
         >
           Importe links em segundos, gere repertórios automáticos e leia suas cifras com
           formatação perfeita. Deixe a tecnologia cuidar do papel, para você focar apenas
           na música.
-        </motion.p>
+        </p>
 
         {/* CTAs */}
-        <motion.div {...fadeUp(0.6)} className="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Button
             size="lg"
             className="relative overflow-hidden px-8 text-base font-semibold shadow-lg shadow-primary/20 transition-shadow hover:shadow-primary/40"
@@ -125,7 +124,7 @@ export default function LandingPage() {
           >
             Conheça os Recursos
           </Button>
-        </motion.div>
+        </div>
       </section>
 
       {/* Mockup */}

@@ -235,6 +235,7 @@ export default function SongDetailPage() {
   const ytId = linkedVideoId || extractYoutubeId(song.youtube_url);
   const displayKey = transposeKey(song.musical_key, transpose);
   const displayBody = song.body_text ? transposeText(song.body_text, transpose) : null;
+  const currentFontFamily = PRESENTATION_FONTS.find(f => f.id === presentationFont)?.family;
 
 
   return (

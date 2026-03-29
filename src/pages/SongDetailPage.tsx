@@ -54,8 +54,20 @@ export default function SongDetailPage() {
   const { isAdmin } = useUserRole();
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
-  const [presentationFont, setPresentationFont] = useState<PresentationFontId>("sans");
+  const [presentationFont, setPresentationFont] = useState<PresentationFontId>(() => {
+    const saved = localStorage.getItem("@smartcifra:globalFont");
+    return (saved && PRESENTATION_FONTS.some(f => f.id === saved) ? saved : "sans") as PresentationFontId;
+  });
   const [transpose, setTranspose] = useState(0);
+  const [fontConfirmOpen, setFontConfirmOpen] = useState(false);
+  const [pendingGlobalFont, setPendingGlobalFont] = useState<PresentationFontId | null>(null);
+
+  const handleFontChange = (newFont: PresentationFontId) => {
+    setPresentationFont(newFont);
+    toast.success("Fonte da apresentação alterada!");
+    setPendingGlobalFont(newFont);
+    setFontConfirmOpen(true);
+  };
   const [generating, setGenerating] = useState(false);
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);
   const [confirmSaveAsDefault, setConfirmSaveAsDefault] = useState(false);
@@ -297,7 +309,7 @@ export default function SongDetailPage() {
               </Button>
             )}
             {song.body_text && (
-              <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} />
+              <PresentationFontPicker value={presentationFont} onChange={handleFontChange} />
             )}
             {song.body_text && (
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
@@ -370,7 +382,10 @@ export default function SongDetailPage() {
 
       {/* AI Cipher (priority) */}
       {aiChordPro && (
-        <div className="rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3">
+        <div
+          className="rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3"
+          style={{ fontFamily: currentFontFamily }}
+        >
           <AutoCipherViewer
             chordProText={transposeChordPro(aiChordPro, transpose)}
             onSave={handleSaveChordPro}
@@ -405,11 +420,35 @@ export default function SongDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Font global confirm dialog */}
+      <AlertDialog open={fontConfirmOpen} onOpenChange={setFontConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Definir fonte padrão?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja definir esta fonte como padrão para TODAS as músicas?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingGlobalFont(null)}>Não</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (pendingGlobalFont) {
+                localStorage.setItem("@smartcifra:globalFont", pendingGlobalFont);
+                toast.success("Fonte definida como padrão global!");
+              }
+              setPendingGlobalFont(null);
+            }}>
+              Sim
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (
         <div
           className="rounded-lg border border-border bg-card p-3 sm:p-6"
-          style={{ fontFamily: PRESENTATION_FONTS.find(f => f.id === presentationFont)?.family }}
+          style={{ fontFamily: currentFontFamily }}
         >
           <ChordText
             text={displayBody}

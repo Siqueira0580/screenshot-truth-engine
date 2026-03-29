@@ -99,7 +99,7 @@ export default function LandingPage() {
             Leitura Musical
           </span>{" "}
           no Palco.
-        </motion.h1>
+        </h1>
 
         {/* Sub-headline */}
         <motion.p

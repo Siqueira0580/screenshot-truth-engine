@@ -4,11 +4,6 @@ import { Music, Sparkles, Zap, ListMusic, Import, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import smartCifraLogo from "@/assets/smart-cifra-logo.webp";
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-});
 
 const features = [
   {
@@ -73,22 +68,16 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pt-16 pb-10 text-center sm:pt-24">
         {/* Logo animation */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-8"
-        >
+        <div className="relative mb-8">
           <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
           <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/30 bg-secondary/60 shadow-lg shadow-primary/10 backdrop-blur-sm">
             <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-full" />
           </div>
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -inset-3 rounded-full border border-dashed border-primary/20"
+          <div
+            className="absolute -inset-3 rounded-full border border-dashed border-primary/20 animate-spin"
+            style={{ animationDuration: '20s' }}
           />
-        </motion.div>
+        </div>
 
         {/* Headline */}
         <h1
@@ -102,17 +91,16 @@ export default function LandingPage() {
         </h1>
 
         {/* Sub-headline */}
-        <motion.p
-          {...fadeUp(0.4)}
+        <p
           className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
         >
           Importe links em segundos, gere repertórios automáticos e leia suas cifras com
           formatação perfeita. Deixe a tecnologia cuidar do papel, para você focar apenas
           na música.
-        </motion.p>
+        </p>
 
         {/* CTAs */}
-        <motion.div {...fadeUp(0.6)} className="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
           <Button
             size="lg"
             className="relative overflow-hidden px-8 text-base font-semibold shadow-lg shadow-primary/20 transition-shadow hover:shadow-primary/40"
@@ -131,14 +119,11 @@ export default function LandingPage() {
           >
             Conheça os Recursos
           </Button>
-        </motion.div>
+        </div>
       </section>
 
       {/* Mockup */}
-      <motion.section
-        initial={{ opacity: 0, y: 60 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      <section
         className="relative z-10 mx-auto mt-8 max-w-3xl px-6 sm:mt-14"
       >
         <div className="rounded-2xl border border-border/60 bg-secondary/40 p-1 shadow-2xl shadow-primary/5 backdrop-blur-md">
@@ -158,19 +143,14 @@ export default function LandingPage() {
               <span className="text-xs text-muted-foreground">— Artista Demo</span>
             </div>
             {mockChordLines.map((line, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.1 + i * 0.18 }}
-              >
+              <div key={i}>
                 <div className="text-primary font-bold select-none whitespace-pre">{line.chords}</div>
                 <div className="text-foreground/80 whitespace-pre mb-3">{line.lyrics}</div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Features */}
       <section id="features" className="relative z-10 mx-auto max-w-5xl px-6 py-24">

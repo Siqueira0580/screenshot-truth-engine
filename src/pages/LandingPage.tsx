@@ -128,10 +128,7 @@ export default function LandingPage() {
       </section>
 
       {/* Mockup */}
-      <motion.section
-        initial={{ opacity: 0, y: 60 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
+      <section
         className="relative z-10 mx-auto mt-8 max-w-3xl px-6 sm:mt-14"
       >
         <div className="rounded-2xl border border-border/60 bg-secondary/40 p-1 shadow-2xl shadow-primary/5 backdrop-blur-md">

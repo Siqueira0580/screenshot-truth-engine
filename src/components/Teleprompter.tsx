@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
+import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -59,6 +60,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const [transpose, setTranspose] = useState(0);
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
+  const [presentationFont, setPresentationFont] = useState<PresentationFontId>("mono");
   const [nearEnd, setNearEnd] = useState(false);
   const [songProgress, setSongProgress] = useState(0);
   const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);

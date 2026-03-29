@@ -73,22 +73,16 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-6 pt-16 pb-10 text-center sm:pt-24">
         {/* Logo animation */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.7 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="relative mb-8"
-        >
+        <div className="relative mb-8">
           <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
           <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/30 bg-secondary/60 shadow-lg shadow-primary/10 backdrop-blur-sm">
             <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-full" />
           </div>
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="absolute -inset-3 rounded-full border border-dashed border-primary/20"
+          <div
+            className="absolute -inset-3 rounded-full border border-dashed border-primary/20 animate-spin"
+            style={{ animationDuration: '20s' }}
           />
-        </motion.div>
+        </div>
 
         {/* Headline */}
         <h1

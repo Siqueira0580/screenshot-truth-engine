@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
 import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,6 +54,7 @@ export default function SongDetailPage() {
   const { isAdmin } = useUserRole();
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
+  const [presentationFont, setPresentationFont] = useState<PresentationFontId>("sans");
   const [transpose, setTranspose] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);
@@ -295,6 +297,9 @@ export default function SongDetailPage() {
               </Button>
             )}
             {song.body_text && (
+              <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} />
+            )}
+            {song.body_text && (
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
             )}
           </div>
@@ -402,10 +407,13 @@ export default function SongDetailPage() {
 
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (
-        <div className="rounded-lg border border-border bg-card p-3 sm:p-6">
+        <div
+          className="rounded-lg border border-border bg-card p-3 sm:p-6"
+          style={{ fontFamily: PRESENTATION_FONTS.find(f => f.id === presentationFont)?.family }}
+        >
           <ChordText
             text={displayBody}
-            className="chord-text whitespace-pre-wrap font-mono text-xs sm:text-sm leading-6 sm:leading-7 text-foreground"
+            className="chord-text whitespace-pre-wrap text-xs sm:text-sm leading-6 sm:leading-7 text-foreground"
           />
         </div>
       )}

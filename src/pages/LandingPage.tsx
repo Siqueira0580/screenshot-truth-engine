@@ -4,11 +4,6 @@ import { Music, Sparkles, Zap, ListMusic, Import, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import smartCifraLogo from "@/assets/smart-cifra-logo.webp";
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-});
 
 const features = [
   {

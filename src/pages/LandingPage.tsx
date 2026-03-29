@@ -91,8 +91,7 @@ export default function LandingPage() {
         </motion.div>
 
         {/* Headline */}
-        <motion.h1
-          {...fadeUp(0.2)}
+        <h1
           className="max-w-3xl font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl"
         >
           A Evolução da{" "}

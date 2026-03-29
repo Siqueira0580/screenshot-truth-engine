@@ -594,6 +594,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 md:px-16 lg:px-24 py-6 sm:py-12"
         style={{ scrollBehavior: "auto" }}
         onClick={handleBodyClick}
+        style={{ fontFamily: PRESENTATION_FONTS.find(f => f.id === presentationFont)?.family }}
       >
         {songs.map((s, idx) => {
           const sKey = transposeKey(s.musical_key, transpose);
@@ -839,6 +840,9 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
             <Plus className="h-3 w-3" />
           </Button>
         </div>
+
+        {/* Font picker */}
+        <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} compact />
 
         {/* Instrument selector */}
         <div className="flex items-center gap-1">

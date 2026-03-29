@@ -148,19 +148,14 @@ export default function LandingPage() {
               <span className="text-xs text-muted-foreground">— Artista Demo</span>
             </div>
             {mockChordLines.map((line, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.1 + i * 0.18 }}
-              >
+              <div key={i}>
                 <div className="text-primary font-bold select-none whitespace-pre">{line.chords}</div>
                 <div className="text-foreground/80 whitespace-pre mb-3">{line.lyrics}</div>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* Features */}
       <section id="features" className="relative z-10 mx-auto max-w-5xl px-6 py-24">

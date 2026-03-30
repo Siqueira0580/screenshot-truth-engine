@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
 import FontPreviewModal from "@/components/FontPreviewModal";
 import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -19,6 +20,7 @@ import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
@@ -54,6 +56,7 @@ export default function SongDetailPage() {
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
+  const { isBold, isItalic, toggleBold, toggleItalic, typographyClasses } = useTypographyPrefs();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [presentationFont, setPresentationFont] = useState<PresentationFontId>(() => {
     const saved = localStorage.getItem("@smartcifra:globalFont");
@@ -318,7 +321,7 @@ export default function SongDetailPage() {
               </Button>
             )}
             {song.body_text && (
-              <PresentationFontPicker value={presentationFont} onChange={handleFontChange} />
+              <PresentationFontPicker value={presentationFont} onChange={handleFontChange} isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
             )}
             {song.body_text && (
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
@@ -392,7 +395,7 @@ export default function SongDetailPage() {
       {/* AI Cipher (priority) */}
       {aiChordPro && (
         <div
-          className="rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3"
+          className={cn("rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3", typographyClasses)}
           style={{ fontFamily: currentFontFamily }}
         >
           <AutoCipherViewer
@@ -446,7 +449,7 @@ export default function SongDetailPage() {
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (
         <div
-          className="rounded-lg border border-border bg-card p-3 sm:p-6"
+          className={cn("rounded-lg border border-border bg-card p-3 sm:p-6", typographyClasses)}
           style={{ fontFamily: currentFontFamily }}
         >
           <ChordText

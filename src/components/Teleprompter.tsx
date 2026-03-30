@@ -15,6 +15,7 @@ import ChordModal from "@/components/teleprompter/ChordModal";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import { parseChordPro, isChordProFormat } from "@/lib/chordpro-parser";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
@@ -49,6 +50,7 @@ const NEAR_END_THRESHOLD = 0.80; // 80% scrolled = near end
 
 export default function Teleprompter({ songs, initialIndex = 0, open, onClose, autoHideControls = true }: TeleprompterProps) {
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
+  const { isBold, isItalic, toggleBold, toggleItalic, typographyClasses } = useTypographyPrefs();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(() => {
@@ -591,7 +593,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       {/* Continuous scroll area with all songs */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 md:px-16 lg:px-24 py-6 sm:py-12"
+        className={cn("flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 md:px-16 lg:px-24 py-6 sm:py-12", typographyClasses)}
         style={{ scrollBehavior: "auto", fontFamily: PRESENTATION_FONTS.find(f => f.id === presentationFont)?.family }}
         onClick={handleBodyClick}
       >
@@ -841,7 +843,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         </div>
 
         {/* Font picker */}
-        <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} compact />
+        <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} compact isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
 
         {/* Instrument selector */}
         <div className="flex items-center gap-1">

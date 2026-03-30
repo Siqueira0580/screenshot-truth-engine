@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
+import FontPreviewModal from "@/components/FontPreviewModal";
 import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -428,29 +429,19 @@ export default function SongDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Font global confirm dialog */}
-      <AlertDialog open={fontConfirmOpen} onOpenChange={setFontConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Definir fonte padrão?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Deseja definir esta fonte como padrão para TODAS as músicas?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPendingGlobalFont(null)}>Não</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (pendingGlobalFont) {
-                localStorage.setItem("@smartcifra:globalFont", pendingGlobalFont);
-                toast.success("Fonte definida como padrão global!");
-              }
-              setPendingGlobalFont(null);
-            }}>
-              Sim
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Font preview modal */}
+      <FontPreviewModal
+        open={isPreviewModalOpen}
+        onOpenChange={setIsPreviewModalOpen}
+        previewFont={previewFont}
+        sampleText={(() => {
+          const text = song.body_text || "";
+          const lines = text.split("\n").filter(l => l.trim().length > 0);
+          return lines.slice(0, 5).join("\n");
+        })()}
+        onApplyLocal={handleApplyLocal}
+        onApplyGlobal={handleApplyGlobal}
+      />
 
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (

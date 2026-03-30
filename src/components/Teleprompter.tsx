@@ -15,6 +15,7 @@ import ChordModal from "@/components/teleprompter/ChordModal";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import { parseChordPro, isChordProFormat } from "@/lib/chordpro-parser";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 

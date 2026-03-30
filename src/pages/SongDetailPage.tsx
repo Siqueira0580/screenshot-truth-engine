@@ -55,6 +55,7 @@ export default function SongDetailPage() {
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
+  const { isBold, isItalic, toggleBold, toggleItalic, typographyClasses } = useTypographyPrefs();
   const [teleprompterOpen, setTeleprompterOpen] = useState(false);
   const [presentationFont, setPresentationFont] = useState<PresentationFontId>(() => {
     const saved = localStorage.getItem("@smartcifra:globalFont");

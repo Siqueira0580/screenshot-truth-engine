@@ -843,7 +843,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         </div>
 
         {/* Font picker */}
-        <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} compact />
+        <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} compact isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
 
         {/* Instrument selector */}
         <div className="flex items-center gap-1">

@@ -21,6 +21,10 @@ interface Props {
   value: PresentationFontId;
   onChange: (id: PresentationFontId) => void;
   compact?: boolean;
+  isBold?: boolean;
+  isItalic?: boolean;
+  onToggleBold?: () => void;
+  onToggleItalic?: () => void;
 }
 
 export default function PresentationFontPicker({ value, onChange, compact }: Props) {

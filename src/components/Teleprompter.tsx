@@ -593,7 +593,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
       {/* Continuous scroll area with all songs */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 md:px-16 lg:px-24 py-6 sm:py-12"
+        className={cn("flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-6 md:px-16 lg:px-24 py-6 sm:py-12", typographyClasses)}
         style={{ scrollBehavior: "auto", fontFamily: PRESENTATION_FONTS.find(f => f.id === presentationFont)?.family }}
         onClick={handleBodyClick}
       >

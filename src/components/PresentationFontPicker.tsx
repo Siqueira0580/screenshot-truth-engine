@@ -1,6 +1,8 @@
 import { Type } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 export const PRESENTATION_FONTS = [
@@ -24,20 +26,31 @@ export default function PresentationFontPicker({ value, onChange, compact }: Pro
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="ghost"
-          size={compact ? "icon" : "sm"}
-          className={cn(
-            "gap-1.5 shrink-0",
-            compact ? "h-7 w-7 sm:h-8 sm:w-8" : "h-8 text-xs sm:text-sm"
-          )}
-          title="Fonte de apresentação"
-        >
-          <Type className="h-3.5 w-3.5" />
-          {!compact && <span className="hidden sm:inline">{current.label}</span>}
-        </Button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "gap-1.5 shrink-0",
+                compact ? "h-7 sm:h-8 px-2" : "h-8 text-xs sm:text-sm"
+              )}
+            >
+              <Type className="h-3.5 w-3.5" />
+              <Badge
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0 h-4 font-medium leading-none"
+              >
+                {current.label}
+              </Badge>
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs">
+          Fonte: <strong>{current.label}</strong>
+        </TooltipContent>
+      </Tooltip>
       <PopoverContent className="w-48 p-1.5 z-[200]" align="center" side="bottom">
         <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5 px-2">
           Tipografia

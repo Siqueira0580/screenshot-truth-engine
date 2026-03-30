@@ -50,6 +50,7 @@ const NEAR_END_THRESHOLD = 0.80; // 80% scrolled = near end
 
 export default function Teleprompter({ songs, initialIndex = 0, open, onClose, autoHideControls = true }: TeleprompterProps) {
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
+  const { isBold, isItalic, toggleBold, toggleItalic, typographyClasses } = useTypographyPrefs();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(() => {

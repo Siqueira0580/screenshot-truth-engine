@@ -448,7 +448,7 @@ export default function SongDetailPage() {
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (
         <div
-          className="rounded-lg border border-border bg-card p-3 sm:p-6"
+          className={cn("rounded-lg border border-border bg-card p-3 sm:p-6", typographyClasses)}
           style={{ fontFamily: currentFontFamily }}
         >
           <ChordText

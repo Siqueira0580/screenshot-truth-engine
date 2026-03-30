@@ -59,14 +59,21 @@ export default function SongDetailPage() {
     return (saved && PRESENTATION_FONTS.some(f => f.id === saved) ? saved : "sans") as PresentationFontId;
   });
   const [transpose, setTranspose] = useState(0);
-  const [fontConfirmOpen, setFontConfirmOpen] = useState(false);
-  const [pendingGlobalFont, setPendingGlobalFont] = useState<PresentationFontId | null>(null);
+  const [previewFont, setPreviewFont] = useState<PresentationFontId | null>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const handleFontChange = (newFont: PresentationFontId) => {
-    setPresentationFont(newFont);
-    toast.success("Fonte da apresentação alterada!");
-    setPendingGlobalFont(newFont);
-    setFontConfirmOpen(true);
+    setPreviewFont(newFont);
+    setIsPreviewModalOpen(true);
+  };
+
+  const handleApplyLocal = (font: PresentationFontId) => {
+    setPresentationFont(font);
+  };
+
+  const handleApplyGlobal = (font: PresentationFontId) => {
+    setPresentationFont(font);
+    localStorage.setItem("@smartcifra:globalFont", font);
   };
   const [generating, setGenerating] = useState(false);
   const [aiChordPro, setAiChordPro] = useState<string | null>(null);

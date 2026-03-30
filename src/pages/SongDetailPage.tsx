@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
 import FontPreviewModal from "@/components/FontPreviewModal";
 import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {

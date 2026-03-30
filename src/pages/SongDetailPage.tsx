@@ -394,7 +394,7 @@ export default function SongDetailPage() {
       {/* AI Cipher (priority) */}
       {aiChordPro && (
         <div
-          className="rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3"
+          className={cn("rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3", typographyClasses)}
           style={{ fontFamily: currentFontFamily }}
         >
           <AutoCipherViewer

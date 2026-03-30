@@ -19,6 +19,7 @@ import { transposeText, transposeKey, transposeChordPro } from "@/lib/transpose"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";

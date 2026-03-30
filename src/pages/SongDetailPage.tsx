@@ -320,7 +320,7 @@ export default function SongDetailPage() {
               </Button>
             )}
             {song.body_text && (
-              <PresentationFontPicker value={presentationFont} onChange={handleFontChange} />
+              <PresentationFontPicker value={presentationFont} onChange={handleFontChange} isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
             )}
             {song.body_text && (
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />

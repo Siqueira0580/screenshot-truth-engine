@@ -287,6 +287,11 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
                   </div>
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">{post.content}</p>
+                {post.image_url && (
+                  <div className="rounded-lg overflow-hidden border border-border animate-fade-in">
+                    <img src={post.image_url} alt="Imagem do post" className="w-full max-h-96 object-cover" loading="lazy" />
+                  </div>
+                )}
                 {post.setlist_id && post.setlist && (
                   <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} />
                 )}

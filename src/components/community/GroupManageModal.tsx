@@ -86,6 +86,15 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
         .from("community_group_members")
         .insert({ group_id: groupId, user_id: userToAdd.id });
       if (error) throw error;
+
+      // Create notification for the invited user
+      await supabase.from("notifications").insert({
+        user_id: userToAdd.id,
+        type: "group_invite",
+        title: `Você foi adicionado ao grupo "${groupName}"`,
+        body: "Acesse a aba Meus Grupos na Comunidade para ver as publicações.",
+        metadata: { group_id: groupId },
+      } as any);
     },
     onSuccess: () => {
       setEmail("");

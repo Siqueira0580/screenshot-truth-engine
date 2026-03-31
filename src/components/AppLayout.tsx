@@ -232,6 +232,7 @@ export default function AppLayout() {
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
+            <NotificationBell />
             <Button
               variant="ghost"
               size="icon"

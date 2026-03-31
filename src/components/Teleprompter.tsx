@@ -479,11 +479,21 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 <h2 className="text-base font-bold text-foreground truncate">{song.title}</h2>
                 <p className="text-xs text-muted-foreground truncate">
                   {song.artist}
-                  {displayKey && ` · Tom: ${displayKey}`}
                   {song.bpm && ` · ${song.bpm} BPM`}
                   {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                 </p>
               </div>
+              {/* Prominent key display - desktop center */}
+              {displayKey && (
+                <div className="shrink-0 flex flex-col items-center ml-2">
+                  <span className="text-3xl font-black text-primary font-mono leading-none">{displayKey}</span>
+                  {originalKey && displayKey !== originalKey && (
+                    <span className="text-[10px] text-muted-foreground font-mono leading-tight mt-0.5">
+                      Orig: {originalKey}
+                    </span>
+                  )}
+                </div>
+              )}
               <Popover>
                 <PopoverTrigger asChild>
                   <button className={cn(

@@ -268,6 +268,7 @@ export type Database = {
           group_id: string | null
           id: string
           instagram_url: string | null
+          setlist_id: string | null
           updated_at: string | null
           user_id: string | null
           youtube_url: string | null
@@ -279,6 +280,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           instagram_url?: string | null
+          setlist_id?: string | null
           updated_at?: string | null
           user_id?: string | null
           youtube_url?: string | null
@@ -290,6 +292,7 @@ export type Database = {
           group_id?: string | null
           id?: string
           instagram_url?: string | null
+          setlist_id?: string | null
           updated_at?: string | null
           user_id?: string | null
           youtube_url?: string | null
@@ -300,6 +303,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "community_posts_setlist_id_fkey"
+            columns: ["setlist_id"]
+            isOneToOne: false
+            referencedRelation: "setlists"
             referencedColumns: ["id"]
           },
           {

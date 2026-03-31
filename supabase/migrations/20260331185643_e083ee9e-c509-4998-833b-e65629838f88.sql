@@ -1,0 +1,1 @@
+ALTER TABLE public.community_posts ADD COLUMN setlist_id uuid REFERENCES public.setlists(id) ON DELETE SET NULL DEFAULT NULL;

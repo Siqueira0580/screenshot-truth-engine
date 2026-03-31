@@ -1,5 +1,5 @@
 import { useNotifications } from "@/hooks/useNotifications";
-import { Bell, Check, Users } from "lucide-react";
+import { Bell, Check, Users, MessageSquare, Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {

@@ -25,6 +25,7 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: members = [] } = useQuery({
     queryKey: ["group-members", groupId],
@@ -142,6 +143,23 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     onError: () => toast.error("Erro ao sair do grupo"),
   });
 
+  const deleteGroupMutation = useMutation({
+    mutationFn: async () => {
+      // Delete members first, then posts, then the group
+      await supabase.from("community_group_members").delete().eq("group_id", groupId);
+      await supabase.from("community_posts").delete().eq("group_id", groupId);
+      const { error } = await supabase.from("community_groups").delete().eq("id", groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Grupo excluído com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["my-community-groups"] });
+      onOpenChange(false);
+      onLeave?.();
+    },
+    onError: () => toast.error("Erro ao excluir grupo"),
+  });
+
   const getInitials = (p: any) => {
     if (!p) return "?";
     return [p.first_name, p.last_name].filter(Boolean).map((n: string) => n[0]?.toUpperCase()).join("") || "?";
@@ -232,6 +250,20 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
               {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
             </Button>
           )}
+
+          {/* Delete group button for creator */}
+          {isCreator && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full gap-1.5"
+              disabled={deleteGroupMutation.isPending}
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleteGroupMutation.isPending ? "Excluindo..." : "Excluir grupo"}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -252,6 +284,27 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
             onClick={() => leaveMutation.mutate()}
           >
             Sair do grupo
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Confirm delete group dialog */}
+    <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir grupo?</AlertDialogTitle>
+          <AlertDialogDescription>
+            O grupo <strong>{groupName}</strong> será excluído permanentemente, incluindo todas as publicações e membros. Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => deleteGroupMutation.mutate()}
+          >
+            Excluir grupo
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

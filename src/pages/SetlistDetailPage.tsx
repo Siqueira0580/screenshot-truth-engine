@@ -849,10 +849,7 @@ export default function SetlistDetailPage() {
                     try {
                       if (isPublic) {
                         // Already public — create a community post with rich card
-                        const setlistUrl = `${window.location.origin}/setlists/${id}`;
-                        const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
-                        const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
-                        const content = `🎵 ${myName} compartilhou o repertório "${(setlist as any)?.name}"\n${setlistUrl}`;
+                        const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
                         const { error } = await supabase.from("community_posts").insert({
                           user_id: user!.id,
                           content,

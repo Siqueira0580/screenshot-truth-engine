@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
-import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
+import { X, Play, Pause, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
+import { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
+import TextToolsPopover from "@/components/TextToolsPopover";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,6 +18,7 @@ import { parseChordPro, isChordProFormat } from "@/lib/chordpro-parser";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface TeleprompterSong {

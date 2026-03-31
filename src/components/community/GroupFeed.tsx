@@ -62,7 +62,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_posts")
-        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, image_url, setlist_id, profiles:user_id(first_name, last_name, avatar_url), setlist:setlist_id(id, name, show_date, start_time, setlist_items(id))")
+        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, image_url, setlist_id, profiles:user_id(first_name, last_name, avatar_url), setlist:setlist_id(id, name, show_date, start_time, user_id, setlist_items(id))")
         .eq("group_id", groupId)
         .order("created_at", { ascending: false })
         .limit(100);

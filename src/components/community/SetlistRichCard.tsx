@@ -17,6 +17,7 @@ interface Props {
   showDate?: string | null;
   showTime?: string | null;
   ownerId?: string | null;
+  ownerName?: string | null;
 }
 
 export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime, ownerId }: Props) {

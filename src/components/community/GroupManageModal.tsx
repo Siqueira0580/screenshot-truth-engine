@@ -288,6 +288,27 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    {/* Confirm delete group dialog */}
+    <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir grupo?</AlertDialogTitle>
+          <AlertDialogDescription>
+            O grupo <strong>{groupName}</strong> será excluído permanentemente, incluindo todas as publicações e membros. Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => deleteGroupMutation.mutate()}
+          >
+            Excluir grupo
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }

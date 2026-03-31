@@ -206,6 +206,20 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
               ))}
             </div>
           </div>
+
+          {/* Leave group button for non-creators */}
+          {!isCreator && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full gap-1.5"
+              disabled={leaveMutation.isPending}
+              onClick={() => leaveMutation.mutate()}
+            >
+              <LogOut className="h-4 w-4" />
+              {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

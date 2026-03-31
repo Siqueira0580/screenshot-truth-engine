@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ListMusic, ExternalLink, Music2, CalendarDays, Clock, Copy } from "lucide-react";
+import { ListMusic, ExternalLink, Music2, CalendarDays, Clock, Copy, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";

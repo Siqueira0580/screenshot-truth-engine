@@ -28,6 +28,7 @@ import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import PaywallModal from "@/components/PaywallModal";
 import GlobalBanner from "@/components/GlobalBanner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import NotificationBell from "@/components/NotificationBell";
 
 const GENRE_OPTIONS = [
   { value: "todos", label: "🎵 Todos" },
@@ -231,6 +232,7 @@ export default function AppLayout() {
             >
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
+            <NotificationBell />
             <Button
               variant="ghost"
               size="icon"

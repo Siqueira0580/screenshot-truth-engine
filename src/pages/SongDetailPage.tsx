@@ -64,6 +64,10 @@ export default function SongDetailPage() {
     return (saved && PRESENTATION_FONTS.some(f => f.id === saved) ? saved : "sans") as PresentationFontId;
   });
   const [transpose, setTranspose] = useState(0);
+  const [songFontSize, setSongFontSize] = useState(() => {
+    const saved = localStorage.getItem("@smartcifra:fontSize");
+    return saved ? parseInt(saved, 10) : 16;
+  });
   const [previewFont, setPreviewFont] = useState<PresentationFontId | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 

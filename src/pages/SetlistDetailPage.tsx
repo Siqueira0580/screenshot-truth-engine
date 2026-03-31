@@ -295,6 +295,21 @@ export default function SetlistDetailPage() {
         }));
         const { error: linkError } = await supabase.from("setlist_items").insert(newLinks);
         if (linkError) throw linkError;
+
+        // Step D: Add songs to user's personal library (skip duplicates)
+        const songIds = [...new Set(originalItems.map((item: any) => item.song_id as string))];
+        const { data: existing } = await supabase
+          .from("user_library")
+          .select("song_id")
+          .eq("user_id", user.id)
+          .in("song_id", songIds);
+        const existingSet = new Set((existing || []).map((e: any) => e.song_id));
+        const newLibrary = songIds
+          .filter((sid) => !existingSet.has(sid))
+          .map((sid) => ({ user_id: user.id, song_id: sid }));
+        if (newLibrary.length > 0) {
+          await supabase.from("user_library").insert(newLibrary);
+        }
       }
 
       queryClient.invalidateQueries({ queryKey: ["setlists"] });

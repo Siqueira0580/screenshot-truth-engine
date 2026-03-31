@@ -281,6 +281,12 @@ export default function SetlistDetailPage() {
   // Share setlist to group mutation
   const shareToGroupMutation = useMutation({
     mutationFn: async () => {
+      // Ensure setlist is public so group members can see the Rich Card
+      if (!(setlist as any)?.is_public) {
+        await supabase.from("setlists").update({ is_public: true } as any).eq("id", id!);
+        queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+      }
+
       const setlistUrl = `${window.location.origin}/setlists/${id}`;
       const content = shareGroupMessage.trim()
         ? `${shareGroupMessage.trim()}\n\n🎵 Repertório: ${(setlist as any)?.name || "Sem nome"}\n${setlistUrl}`

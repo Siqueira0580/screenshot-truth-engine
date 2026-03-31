@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ListMusic, ExternalLink, Music2, CalendarDays } from "lucide-react";
+import { ListMusic, ExternalLink, Music2, CalendarDays, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -10,9 +10,10 @@ interface Props {
   setlistName: string;
   songCount?: number;
   showDate?: string | null;
+  showTime?: string | null;
 }
 
-export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate }: Props) {
+export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime }: Props) {
   const formattedDate = showDate
     ? format(new Date(showDate), "dd/MM/yyyy", { locale: ptBR })
     : null;
@@ -40,6 +41,12 @@ export default function SetlistRichCard({ setlistId, setlistName, songCount, sho
                   <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                     <CalendarDays className="h-3.5 w-3.5" />
                     {formattedDate}
+                  </span>
+                )}
+                {showTime && (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    {showTime}
                   </span>
                 )}
               </div>

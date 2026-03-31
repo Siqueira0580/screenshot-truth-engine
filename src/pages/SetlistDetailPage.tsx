@@ -720,59 +720,6 @@ export default function SetlistDetailPage() {
         )}
       </SetlistHeader>
 
-      {/* ── Sharing Toggle (Owner Only) ── */}
-      {isOwner && (
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              {isPublic ? <Globe className="h-4 w-4 text-primary" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-              <div>
-                <p className="text-sm font-semibold">Publicar na Comunidade</p>
-                <p className="text-xs text-muted-foreground">
-                  {isPublic ? "Visível para todos na aba Explorar e via link" : "Apenas você pode ver este repertório"}
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={isPublic}
-              onCheckedChange={async (checked) => {
-                try {
-                  const { error } = await supabase
-                    .from("setlists")
-                    .update({ is_public: checked } as any)
-                    .eq("id", id!);
-                  if (error) throw error;
-                  queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-                  toast.success(checked ? "Repertório público! Link disponível." : "Repertório privado.");
-                } catch {
-                  toast.error("Erro ao alterar visibilidade");
-                }
-              }}
-            />
-          </div>
-          {isPublic && (
-            <div className="flex items-center gap-2">
-              <Input
-                readOnly
-                value={`${window.location.origin}/setlists/${id}`}
-                className="flex-1 text-xs bg-muted/50"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1.5"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(`${window.location.origin}/setlists/${id}`);
-                  toast.success("Link copiado!");
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copiar
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Owner Action Buttons ── */}
       {isOwner && (

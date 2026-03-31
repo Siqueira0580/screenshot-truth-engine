@@ -43,7 +43,16 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
   const [postInstagram, setPostInstagram] = useState("");
   const [postFacebook, setPostFacebook] = useState("");
   const [manageOpen, setManageOpen] = useState(false);
-  const [showMediaInputs, setShowMediaInputs] = useState(false);
+  const [activeMediaInputs, setActiveMediaInputs] = useState<Set<string>>(new Set());
+
+  const toggleMediaInput = (key: string) => {
+    setActiveMediaInputs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["group-posts", groupId],

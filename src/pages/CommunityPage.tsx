@@ -471,34 +471,81 @@ export default function CommunityPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {/* Media URL Inputs - Collapsible */}
-                <div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowMediaInputs(!showMediaInputs)}
-                    className="gap-2 text-muted-foreground hover:text-foreground"
-                  >
-                    <LinkIcon className="h-4 w-4" />
-                    Adicionar Links (YouTube, Insta, FB)
-                  </Button>
-                  {showMediaInputs && (
-                    <div className="grid gap-2 sm:grid-cols-3 mt-2">
-                      <div className="relative">
+                {/* Media URL Icons */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-4">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => toggleMediaInput("youtube")}
+                          className={cn(
+                            "p-2 rounded-full transition-all duration-200",
+                            activeMediaInputs.has("youtube")
+                              ? "bg-red-500/15 text-red-500 scale-110"
+                              : "text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                          )}
+                        >
+                          <Youtube className="h-5 w-5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>YouTube</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => toggleMediaInput("instagram")}
+                          className={cn(
+                            "p-2 rounded-full transition-all duration-200",
+                            activeMediaInputs.has("instagram")
+                              ? "bg-pink-500/15 text-pink-500 scale-110"
+                              : "text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10"
+                          )}
+                        >
+                          <Instagram className="h-5 w-5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Instagram</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          onClick={() => toggleMediaInput("facebook")}
+                          className={cn(
+                            "p-2 rounded-full transition-all duration-200",
+                            activeMediaInputs.has("facebook")
+                              ? "bg-blue-500/15 text-blue-500 scale-110"
+                              : "text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10"
+                          )}
+                        >
+                          <Facebook className="h-5 w-5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Facebook</TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="grid gap-2">
+                    {activeMediaInputs.has("youtube") && (
+                      <div className="relative animate-fade-in">
                         <Youtube className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
-                        <Input placeholder="Link YouTube" value={postYoutube} onChange={(e) => setPostYoutube(e.target.value)} className="pl-9 text-xs h-9" />
+                        <Input placeholder="Cole o link do YouTube" value={postYoutube} onChange={(e) => setPostYoutube(e.target.value)} className="pl-9 text-xs h-9" />
                       </div>
-                      <div className="relative">
+                    )}
+                    {activeMediaInputs.has("instagram") && (
+                      <div className="relative animate-fade-in">
                         <Instagram className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
-                        <Input placeholder="Link Instagram" value={postInstagram} onChange={(e) => setPostInstagram(e.target.value)} className="pl-9 text-xs h-9" />
+                        <Input placeholder="Cole o link do Instagram" value={postInstagram} onChange={(e) => setPostInstagram(e.target.value)} className="pl-9 text-xs h-9" />
                       </div>
-                      <div className="relative">
+                    )}
+                    {activeMediaInputs.has("facebook") && (
+                      <div className="relative animate-fade-in">
                         <Facebook className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500" />
-                        <Input placeholder="Link Facebook" value={postFacebook} onChange={(e) => setPostFacebook(e.target.value)} className="pl-9 text-xs h-9" />
+                        <Input placeholder="Cole o link do Facebook" value={postFacebook} onChange={(e) => setPostFacebook(e.target.value)} className="pl-9 text-xs h-9" />
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>

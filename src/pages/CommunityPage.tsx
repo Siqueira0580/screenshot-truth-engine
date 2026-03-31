@@ -734,6 +734,12 @@ export default function CommunityPage() {
                           {post.content}
                         </p>
 
+                        {post.image_url && (
+                          <div className="rounded-lg overflow-hidden border border-border animate-fade-in">
+                            <img src={post.image_url} alt="Imagem do post" className="w-full max-h-96 object-cover" loading="lazy" />
+                          </div>
+                        )}
+
                         {post.setlist_id && post.setlist && (
                           <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} />
                         )}

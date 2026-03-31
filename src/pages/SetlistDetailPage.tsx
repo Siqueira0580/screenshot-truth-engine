@@ -3,9 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Lock, Mic, MicOff, Link as LinkIcon, MessageCircle, Users } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Mic, MicOff, Link as LinkIcon, MessageCircle, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -720,59 +719,6 @@ export default function SetlistDetailPage() {
         )}
       </SetlistHeader>
 
-      {/* ── Sharing Toggle (Owner Only) ── */}
-      {isOwner && (
-        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              {isPublic ? <Globe className="h-4 w-4 text-primary" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-              <div>
-                <p className="text-sm font-semibold">Publicar na Comunidade</p>
-                <p className="text-xs text-muted-foreground">
-                  {isPublic ? "Visível para todos na aba Explorar e via link" : "Apenas você pode ver este repertório"}
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={isPublic}
-              onCheckedChange={async (checked) => {
-                try {
-                  const { error } = await supabase
-                    .from("setlists")
-                    .update({ is_public: checked } as any)
-                    .eq("id", id!);
-                  if (error) throw error;
-                  queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-                  toast.success(checked ? "Repertório público! Link disponível." : "Repertório privado.");
-                } catch {
-                  toast.error("Erro ao alterar visibilidade");
-                }
-              }}
-            />
-          </div>
-          {isPublic && (
-            <div className="flex items-center gap-2">
-              <Input
-                readOnly
-                value={`${window.location.origin}/setlists/${id}`}
-                className="flex-1 text-xs bg-muted/50"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                className="shrink-0 gap-1.5"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(`${window.location.origin}/setlists/${id}`);
-                  toast.success("Link copiado!");
-                }}
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copiar
-              </Button>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Owner Action Buttons ── */}
       {isOwner && (
@@ -847,37 +793,25 @@ export default function SetlistDetailPage() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={async () => {
                     try {
-                      if (isPublic) {
-                        // Already public — create a community post with rich card
-                        const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
-                        const { error } = await supabase.from("community_posts").insert({
-                          user_id: user!.id,
-                          content,
-                          group_id: null,
-                          setlist_id: id,
-                        });
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-                        toast.success("Repertório publicado na comunidade!");
-                      } else {
-                        // Make public first, then post
+                      // Always ensure setlist is public so the Rich Card is visible
+                      if (!(setlist as any)?.is_public) {
                         const { error: pubErr } = await supabase
                           .from("setlists")
                           .update({ is_public: true } as any)
                           .eq("id", id!);
                         if (pubErr) throw pubErr;
                         queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-                        const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
-                        const { error } = await supabase.from("community_posts").insert({
-                          user_id: user!.id,
-                          content,
-                          group_id: null,
-                          setlist_id: id,
-                        });
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-                        toast.success("Repertório tornado público e publicado na comunidade!");
                       }
+                      const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
+                      const { error } = await supabase.from("community_posts").insert({
+                        user_id: user!.id,
+                        content,
+                        group_id: null,
+                        setlist_id: id,
+                      });
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+                      toast.success("Repertório publicado na comunidade!");
                     } catch {
                       toast.error("Erro ao publicar na comunidade");
                     }

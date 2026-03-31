@@ -8,12 +8,22 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, Megaphone, Settings, Youtube, Instagram, Facebook, ImagePlus, X } from "lucide-react";
+import {
+  ArrowLeft, Megaphone, Settings, Youtube, Instagram, Facebook,
+  ImagePlus, X, MoreHorizontal, Pencil, Trash2,
+} from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import GroupManageModal from "./GroupManageModal";
 import SetlistRichCard from "./SetlistRichCard";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 interface Props {
   groupId: string;
@@ -47,6 +57,14 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
   const [postImageFile, setPostImageFile] = useState<File | null>(null);
   const [postImagePreview, setPostImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Edit / Delete state
+  const [editPost, setEditPost] = useState<any | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editYoutube, setEditYoutube] = useState("");
+  const [editInstagram, setEditInstagram] = useState("");
+  const [editFacebook, setEditFacebook] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
   const toggleMediaInput = (key: string) => {
     setActiveMediaInputs(prev => {
@@ -110,6 +128,38 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
     onError: () => toast.error("Erro ao publicar"),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (payload: { id: string; content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string }) => {
+      const { error } = await supabase.from("community_posts").update({
+        content: payload.content,
+        youtube_url: payload.youtube_url || null,
+        instagram_url: payload.instagram_url || null,
+        facebook_url: payload.facebook_url || null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", payload.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setEditPost(null);
+      toast.success("Publicação atualizada!");
+      queryClient.invalidateQueries({ queryKey: ["group-posts", groupId] });
+    },
+    onError: () => toast.error("Erro ao atualizar"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (postId: string) => {
+      const { error } = await supabase.from("community_posts").delete().eq("id", postId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setDeleteTargetId(null);
+      toast.success("Publicação removida");
+      queryClient.invalidateQueries({ queryKey: ["group-posts", groupId] });
+    },
+    onError: () => toast.error("Erro ao remover"),
+  });
+
   const handlePublish = async () => {
     if (!postText.trim()) return;
     let imageUrl: string | null = null;
@@ -130,6 +180,28 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
       setUploadingImage(false);
     }
     createMutation.mutate(imageUrl);
+  };
+
+  const openEditModal = (post: any) => {
+    setEditPost(post);
+    setEditText(post.content);
+    setEditYoutube(post.youtube_url || "");
+    setEditInstagram(post.instagram_url || "");
+    setEditFacebook(post.facebook_url || "");
+  };
+
+  const handleSaveEdit = () => {
+    if (!editPost) return;
+    const trimmed = editText.trim();
+    if (!trimmed) return;
+    if (trimmed.length > 1000) { toast.error("Máximo de 1000 caracteres"); return; }
+    updateMutation.mutate({
+      id: editPost.id,
+      content: trimmed,
+      youtube_url: editYoutube.trim() || undefined,
+      instagram_url: editInstagram.trim() || undefined,
+      facebook_url: editFacebook.trim() || undefined,
+    });
   };
 
   return (
@@ -159,54 +231,16 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
           {/* Media URL Icons */}
           <div className="space-y-2">
             <div className="flex items-center gap-4">
-              <button
-                type="button"
-                onClick={() => toggleMediaInput("youtube")}
-                className={cn(
-                  "p-2 rounded-full transition-all duration-200",
-                  activeMediaInputs.has("youtube")
-                    ? "bg-red-500/15 text-red-500 scale-110"
-                    : "text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                )}
-                title="YouTube"
-              >
+              <button type="button" onClick={() => toggleMediaInput("youtube")} className={cn("p-2 rounded-full transition-all duration-200", activeMediaInputs.has("youtube") ? "bg-red-500/15 text-red-500 scale-110" : "text-muted-foreground hover:text-red-500 hover:bg-red-500/10")} title="YouTube">
                 <Youtube className="h-5 w-5" />
               </button>
-              <button
-                type="button"
-                onClick={() => toggleMediaInput("instagram")}
-                className={cn(
-                  "p-2 rounded-full transition-all duration-200",
-                  activeMediaInputs.has("instagram")
-                    ? "bg-pink-500/15 text-pink-500 scale-110"
-                    : "text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10"
-                )}
-                title="Instagram"
-              >
+              <button type="button" onClick={() => toggleMediaInput("instagram")} className={cn("p-2 rounded-full transition-all duration-200", activeMediaInputs.has("instagram") ? "bg-pink-500/15 text-pink-500 scale-110" : "text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10")} title="Instagram">
                 <Instagram className="h-5 w-5" />
               </button>
-              <button
-                type="button"
-                onClick={() => toggleMediaInput("facebook")}
-                className={cn(
-                  "p-2 rounded-full transition-all duration-200",
-                  activeMediaInputs.has("facebook")
-                    ? "bg-blue-500/15 text-blue-500 scale-110"
-                    : "text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10"
-                )}
-                title="Facebook"
-              >
+              <button type="button" onClick={() => toggleMediaInput("facebook")} className={cn("p-2 rounded-full transition-all duration-200", activeMediaInputs.has("facebook") ? "bg-blue-500/15 text-blue-500 scale-110" : "text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10")} title="Facebook">
                 <Facebook className="h-5 w-5" />
               </button>
-              <label
-                className={cn(
-                  "p-2 rounded-full transition-all duration-200 cursor-pointer",
-                  postImagePreview
-                    ? "bg-emerald-500/15 text-emerald-500 scale-110"
-                    : "text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
-                )}
-                title="Anexar Imagem"
-              >
+              <label className={cn("p-2 rounded-full transition-all duration-200 cursor-pointer", postImagePreview ? "bg-emerald-500/15 text-emerald-500 scale-110" : "text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10")} title="Anexar Imagem">
                 <ImagePlus className="h-5 w-5" />
                 <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
               </label>
@@ -231,15 +265,10 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
                 </div>
               )}
             </div>
-            {/* Image preview */}
             {postImagePreview && (
               <div className="relative animate-fade-in inline-block">
                 <img src={postImagePreview} alt="Preview" className="max-h-40 rounded-lg border border-border object-cover" />
-                <button
-                  type="button"
-                  onClick={() => { setPostImageFile(null); setPostImagePreview(null); }}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs shadow-md"
-                >
+                <button type="button" onClick={() => { setPostImageFile(null); setPostImagePreview(null); }} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs shadow-md">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -247,12 +276,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
-            <Button
-              size="sm"
-              disabled={!postText.trim() || createMutation.isPending || uploadingImage}
-              onClick={handlePublish}
-              className="gap-1.5"
-            >
+            <Button size="sm" disabled={!postText.trim() || createMutation.isPending || uploadingImage} onClick={handlePublish} className="gap-1.5">
               <Megaphone className="h-4 w-4" />
               {(createMutation.isPending || uploadingImage) ? "Publicando..." : "Publicar"}
             </Button>
@@ -272,6 +296,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
         <div className="space-y-3">
           {posts.map((post: any) => {
             const ytId = post.youtube_url ? extractYouTubeId(post.youtube_url) : null;
+            const isPostOwner = user?.id === post.user_id;
             return (
               <div key={post.id} className="rounded-xl border border-border bg-card p-4 space-y-3">
                 <div className="flex items-center gap-3">
@@ -279,12 +304,30 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
                     <AvatarImage src={post.profiles?.avatar_url || undefined} />
                     <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">{getInitials(post.profiles)}</AvatarFallback>
                   </Avatar>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold">{getAuthorName(post.profiles)}</p>
                     <p className="text-[11px] text-muted-foreground">
                       {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })}
+                      {post.updated_at && post.updated_at !== post.created_at && " (editado)"}
                     </p>
                   </div>
+                  {isPostOwner && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditModal(post)} className="gap-2">
+                          <Pencil className="h-3.5 w-3.5" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setDeleteTargetId(post.id)} className="gap-2 text-destructive focus:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">{post.content}</p>
                 {post.image_url && (
@@ -323,6 +366,36 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
           })}
         </div>
       )}
+
+      {/* Edit Modal */}
+      <Dialog open={!!editPost} onOpenChange={(open) => { if (!open) setEditPost(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar publicação</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea value={editText} onChange={(e) => setEditText(e.target.value)} maxLength={1000} rows={4} className="resize-none" />
+            <Input placeholder="Link do YouTube (opcional)" value={editYoutube} onChange={(e) => setEditYoutube(e.target.value)} className="text-xs h-9" />
+            <Input placeholder="Link do Instagram (opcional)" value={editInstagram} onChange={(e) => setEditInstagram(e.target.value)} className="text-xs h-9" />
+            <Input placeholder="Link do Facebook (opcional)" value={editFacebook} onChange={(e) => setEditFacebook(e.target.value)} className="text-xs h-9" />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditPost(null)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} disabled={!editText.trim() || updateMutation.isPending}>
+              {updateMutation.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirm */}
+      <ConfirmDeleteModal
+        open={!!deleteTargetId}
+        onOpenChange={(open) => { if (!open) setDeleteTargetId(null); }}
+        onConfirm={() => { if (deleteTargetId) deleteMutation.mutate(deleteTargetId); }}
+        title="Excluir publicação"
+        description="Tem a certeza de que deseja excluir esta publicação? Esta ação não pode ser desfeita."
+      />
 
       <GroupManageModal
         open={manageOpen}

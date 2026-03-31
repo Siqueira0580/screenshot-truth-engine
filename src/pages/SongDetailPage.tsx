@@ -326,7 +326,19 @@ export default function SongDetailPage() {
               </Button>
             )}
             {song.body_text && (
-              <PresentationFontPicker value={presentationFont} onChange={handleFontChange} isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
+              <TextToolsPopover
+                font={presentationFont}
+                onFontChange={handleFontChange}
+                fontSize={songFontSize}
+                onFontSizeChange={(size) => {
+                  setSongFontSize(size);
+                  localStorage.setItem("@smartcifra:fontSize", String(size));
+                }}
+                isBold={isBold}
+                isItalic={isItalic}
+                onToggleBold={toggleBold}
+                onToggleItalic={toggleItalic}
+              />
             )}
             {song.body_text && (
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />

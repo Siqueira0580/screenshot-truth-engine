@@ -839,6 +839,53 @@ export default function SetlistDetailPage() {
                       </DropdownMenuItem>
                     </>
                   )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={async () => {
+                    try {
+                      if (isPublic) {
+                        // Already public — create a community post with rich card
+                        const setlistUrl = `${window.location.origin}/setlists/${id}`;
+                        const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
+                        const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
+                        const content = `🎵 ${myName} compartilhou o repertório "${(setlist as any)?.name}"\n${setlistUrl}`;
+                        const { error } = await supabase.from("community_posts").insert({
+                          user_id: user!.id,
+                          content,
+                          group_id: null,
+                          setlist_id: id,
+                        });
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+                        toast.success("Repertório publicado na comunidade!");
+                      } else {
+                        // Make public first, then post
+                        const { error: pubErr } = await supabase
+                          .from("setlists")
+                          .update({ is_public: true } as any)
+                          .eq("id", id!);
+                        if (pubErr) throw pubErr;
+                        queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+                        const setlistUrl = `${window.location.origin}/setlists/${id}`;
+                        const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
+                        const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
+                        const content = `🎵 ${myName} compartilhou o repertório "${(setlist as any)?.name}"\n${setlistUrl}`;
+                        const { error } = await supabase.from("community_posts").insert({
+                          user_id: user!.id,
+                          content,
+                          group_id: null,
+                          setlist_id: id,
+                        });
+                        if (error) throw error;
+                        queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+                        toast.success("Repertório tornado público e publicado na comunidade!");
+                      }
+                    } catch {
+                      toast.error("Erro ao publicar na comunidade");
+                    }
+                  }}>
+                    <Globe className="mr-2 h-4 w-4" />
+                    <span>Publicar na Comunidade</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />

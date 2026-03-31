@@ -1,4 +1,6 @@
-import { useNotifications } from "@/hooks/useNotifications";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { Bell, Check, Users, MessageSquare, Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +19,37 @@ const iconMap: Record<string, React.ElementType> = {
   setlist_like: Heart,
 };
 
+function getNotificationRoute(n: Notification): string | null {
+  const meta = n.metadata as Record<string, string> | null;
+  switch (n.type) {
+    case "direct_message":
+      return meta?.sender_id ? `/chat/${meta.sender_id}` : null;
+    case "setlist_comment":
+    case "setlist_like":
+      return meta?.setlist_id ? `/setlists/${meta.setlist_id}` : null;
+    case "group_invite":
+      return "/community";
+    default:
+      return null;
+  }
+}
+
 export default function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const handleClick = (n: Notification) => {
+    if (!n.is_read) markAsRead.mutate(n.id);
+    const route = getNotificationRoute(n);
+    if (route) {
+      setOpen(false);
+      navigate(route);
+    }
+  };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
           <Bell className="h-4 w-4" />
@@ -56,13 +84,15 @@ export default function NotificationBell() {
             <div className="divide-y divide-border">
               {notifications.map((n) => {
                 const Icon = iconMap[n.type] || Bell;
+                const hasRoute = !!getNotificationRoute(n);
                 return (
                   <button
                     key={n.id}
-                    onClick={() => { if (!n.is_read) markAsRead.mutate(n.id); }}
+                    onClick={() => handleClick(n)}
                     className={cn(
                       "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-secondary/50",
-                      !n.is_read && "bg-primary/5"
+                      !n.is_read && "bg-primary/5",
+                      hasRoute && "cursor-pointer"
                     )}
                   >
                     <div className={cn("mt-0.5 rounded-full p-1.5", !n.is_read ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>

@@ -93,7 +93,24 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   }, [currentIndex, songs]);
 
   const song = songs[currentIndex];
+  const originalKey = song?.musical_key;
   const displayKey = transposeKey(song?.musical_key, transpose);
+  const keyChanged = originalKey && displayKey && displayKey !== originalKey;
+
+  // Save transposed key to setlist_items when transpose changes
+  useEffect(() => {
+    if (!song?.setlist_item_id || transpose === 0) return;
+    const newKey = transposeKey(song.musical_key, transpose);
+    if (!newKey) return;
+    const timeout = setTimeout(async () => {
+      await supabase
+        .from("setlist_items")
+        .update({ transposed_key: newKey })
+        .eq("id", song.setlist_item_id!);
+      onTransposeChange?.(currentIndex, newKey, song.setlist_item_id!);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [transpose, currentIndex, song?.setlist_item_id, song?.musical_key, onTransposeChange]);
 
   // Build all songs' display bodies (use transposeChordPro for ChordPro-formatted text)
   const displayBodies = useMemo(() =>

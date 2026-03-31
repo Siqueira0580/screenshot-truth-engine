@@ -219,16 +219,31 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
 
           {/* Leave group button for non-creators */}
           {!isCreator && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="w-full gap-1.5"
-              disabled={leaveMutation.isPending}
-              onClick={() => leaveMutation.mutate()}
-            >
-              <LogOut className="h-4 w-4" />
-              {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
-            </Button>
+            <AlertDialog>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full gap-1.5"
+                disabled={leaveMutation.isPending}
+                asChild
+              >
+                <AlertDialogAction className="bg-transparent hover:bg-transparent p-0 h-auto" onClick={(e) => e.preventDefault()}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="w-full gap-1.5"
+                    disabled={leaveMutation.isPending}
+                    onClick={() => {
+                      const trigger = document.getElementById("leave-group-trigger");
+                      trigger?.click();
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
+                  </Button>
+                </AlertDialogAction>
+              </Button>
+            </AlertDialog>
           )}
         </div>
       </DialogContent>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ListMusic, ExternalLink, Music2, CalendarDays, Clock, Copy } from "lucide-react";
+import { ListMusic, ExternalLink, Music2, CalendarDays, Clock, Copy, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -17,9 +17,10 @@ interface Props {
   showDate?: string | null;
   showTime?: string | null;
   ownerId?: string | null;
+  ownerName?: string | null;
 }
 
-export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime, ownerId }: Props) {
+export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime, ownerId, ownerName }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -138,6 +139,12 @@ export default function SetlistRichCard({ setlistId, setlistName, songCount, sho
                   <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                     <Clock className="h-3.5 w-3.5" />
                     {showTime}
+                  </span>
+                )}
+                {ownerName && (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <User className="h-3.5 w-3.5" />
+                    {ownerName}
                   </span>
                 )}
               </div>

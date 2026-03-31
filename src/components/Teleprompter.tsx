@@ -64,7 +64,22 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   });
   const [fontSize, setFontSize] = useState(18);
   const [showControls, setShowControls] = useState(true);
-  const [transpose, setTranspose] = useState(0);
+  const [transpose, setTranspose] = useState(() => {
+    // If first song has a saved transposed_key, compute initial transpose
+    const s = songs[initialIndex];
+    if (s?.transposed_key && s?.musical_key) {
+      const origRoot = s.musical_key.match(/^([A-G][#b]?)/)?.[1];
+      const transRoot = s.transposed_key.match(/^([A-G][#b]?)/)?.[1];
+      if (origRoot && transRoot) {
+        const origIdx = ALL_KEYS.indexOf(origRoot);
+        const transIdx = ALL_KEYS.indexOf(transRoot);
+        if (origIdx >= 0 && transIdx >= 0) {
+          return ((transIdx - origIdx) % 12 + 12) % 12;
+        }
+      }
+    }
+    return 0;
+  });
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
   const [presentationFont, setPresentationFont] = useState<PresentationFontId>("mono");

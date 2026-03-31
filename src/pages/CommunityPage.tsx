@@ -66,7 +66,7 @@ interface CommunityPost {
   image_url: string | null;
   group_id: string | null;
   setlist_id: string | null;
-  setlist: { id: string; name: string; show_date?: string | null; setlist_items?: { id: string }[] } | null;
+  setlist: { id: string; name: string; show_date?: string | null; start_time?: string | null; setlist_items?: { id: string }[] } | null;
   profiles: {
     first_name: string | null;
     last_name: string | null;

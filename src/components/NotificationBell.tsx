@@ -1,4 +1,6 @@
-import { useNotifications } from "@/hooks/useNotifications";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useNotifications, Notification } from "@/hooks/useNotifications";
 import { Bell, Check, Users, MessageSquare, Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

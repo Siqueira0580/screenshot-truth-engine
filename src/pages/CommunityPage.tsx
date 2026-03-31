@@ -102,7 +102,16 @@ export default function CommunityPage() {
   const [postInstagram, setPostInstagram] = useState("");
   const [postFacebook, setPostFacebook] = useState("");
   const [postDestination, setPostDestination] = useState("general");
-  const [showMediaInputs, setShowMediaInputs] = useState(false);
+  const [activeMediaInputs, setActiveMediaInputs] = useState<Set<string>>(new Set());
+
+  const toggleMediaInput = (key: string) => {
+    setActiveMediaInputs(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
 
   // Edit modal state
   const [editPost, setEditPost] = useState<CommunityPost | null>(null);

@@ -353,8 +353,13 @@ export default function SongDetailPage() {
             </span>
           )}
           {displayKey && (
-            <span className="rounded bg-primary/10 px-2 py-0.5 font-mono font-semibold text-primary text-xs">
-              Tom: {displayKey}
+            <span className="inline-flex flex-col items-start rounded bg-primary/10 px-2 py-0.5 font-mono">
+              <span className="text-lg font-black text-primary leading-tight">{displayKey}</span>
+              {song.musical_key && displayKey !== song.musical_key && (
+                <span className="text-[10px] text-muted-foreground leading-tight">
+                  Original: {song.musical_key}
+                </span>
+              )}
             </span>
           )}
           {song.bpm && <span>{song.bpm} BPM</span>}

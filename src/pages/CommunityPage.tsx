@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Globe, Music2, CalendarDays, Search, Heart, MessageCircle, Send,
   Instagram, Facebook, Megaphone, MoreHorizontal, Pencil, Trash2,
-  ShieldAlert, Ban, Youtube, Users, Link as LinkIcon,
+  ShieldAlert, Ban, Youtube, Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

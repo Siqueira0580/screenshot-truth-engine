@@ -289,7 +289,8 @@ export default function SetlistDetailPage() {
         user_id: user!.id,
         group_id: shareGroupId,
         content,
-      });
+        setlist_id: id,
+      } as any);
       if (error) throw error;
 
       // Notify all group members (except the sender)

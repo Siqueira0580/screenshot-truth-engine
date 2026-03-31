@@ -111,6 +111,25 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     onError: () => toast.error("Erro ao remover membro"),
   });
 
+  const leaveMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("community_group_members")
+        .delete()
+        .eq("group_id", groupId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Você saiu do grupo");
+      queryClient.invalidateQueries({ queryKey: ["my-community-groups"] });
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+      onOpenChange(false);
+      onLeave?.();
+    },
+    onError: () => toast.error("Erro ao sair do grupo"),
+  });
+
   const getInitials = (p: any) => {
     if (!p) return "?";
     return [p.first_name, p.last_name].filter(Boolean).map((n: string) => n[0]?.toUpperCase()).join("") || "?";

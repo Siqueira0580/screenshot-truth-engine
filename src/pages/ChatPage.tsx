@@ -165,9 +165,6 @@ export default function ChatPage() {
       // Send notification to receiver
       const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user.id).single();
       const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
-      // We need our own name for the notification
-      const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user.id).single();
-      const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
       await supabase.from("notifications").insert({
         user_id: userId,
         type: "direct_message",

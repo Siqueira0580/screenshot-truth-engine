@@ -1109,10 +1109,15 @@ export default function SetlistDetailPage() {
           loop_count: item.loop_count ?? item.songs?.loop_count,
           auto_next: item.songs?.auto_next,
           speed: item.speed ?? item.songs?.default_speed ?? 250,
+          setlist_item_id: item.id,
+          transposed_key: item.transposed_key,
         }))}
         open={teleprompterOpen}
         onClose={() => setTeleprompterOpen(false)}
         autoHideControls={autoHideControls}
+        onTransposeChange={(songIndex, newKey, setlistItemId) => {
+          queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+        }}
       />
 
       <RepertoireWizard

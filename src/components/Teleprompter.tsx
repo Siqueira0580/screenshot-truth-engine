@@ -95,7 +95,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const song = songs[currentIndex];
   const originalKey = song?.musical_key;
   const displayKey = transposeKey(song?.musical_key, transpose);
-  const keyChanged = originalKey && displayKey && displayKey !== originalKey;
+  
 
   // Save transposed key to setlist_items when transpose changes
   useEffect(() => {

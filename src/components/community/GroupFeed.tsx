@@ -293,7 +293,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
                   </div>
                 )}
                 {post.setlist_id && post.setlist && (
-                  <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} songCount={post.setlist.setlist_items?.length} showDate={post.setlist.show_date} showTime={post.setlist.start_time} ownerId={post.setlist.user_id} />
+                  <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} songCount={post.setlist.setlist_items?.length} showDate={post.setlist.show_date} showTime={post.setlist.start_time} ownerId={post.setlist.user_id} ownerName={getAuthorName(post.profiles)} />
                 )}
                 {ytId && (
                   <div className="rounded-lg overflow-hidden border border-border">

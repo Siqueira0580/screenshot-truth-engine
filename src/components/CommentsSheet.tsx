@@ -59,6 +59,20 @@ export default function CommentsSheet({ open, onOpenChange, setlistId, setlistNa
         .from("setlist_comments")
         .insert({ setlist_id: setlistId, user_id: user!.id, content });
       if (error) throw error;
+
+      // Notify setlist owner
+      const { data: setlist } = await supabase.from("setlists").select("user_id").eq("id", setlistId).single();
+      if (setlist && setlist.user_id && setlist.user_id !== user!.id) {
+        const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
+        const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
+        await supabase.from("notifications").insert({
+          user_id: setlist.user_id,
+          type: "setlist_comment",
+          title: `${myName} comentou em "${setlistName}"`,
+          body: content.length > 80 ? content.slice(0, 80) + "…" : content,
+          metadata: { setlist_id: setlistId },
+        } as any);
+      }
     },
     onSuccess: () => {
       setNewComment("");

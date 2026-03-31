@@ -219,6 +219,62 @@ export default function SetlistDetailPage() {
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const { hasSeenRepertoireWizard, markRepertoireWizardSeen, loading: prefsLoading } = useUserPreferences();
   const [showRepertoireWizard, setShowRepertoireWizard] = useState(false);
+  const [isCloning, setIsCloning] = useState(false);
+
+  const handleClone = useCallback(async () => {
+    if (!user || !setlist || !id) return;
+    setIsCloning(true);
+    try {
+      // Step A: Clone the setlist "cover"
+      const { data: newRep, error: repError } = await supabase
+        .from("setlists")
+        .insert({
+          name: (setlist as any).name + " (Cópia)",
+          user_id: user.id,
+          show_date: (setlist as any).show_date,
+          start_time: (setlist as any).start_time,
+          end_time: (setlist as any).end_time,
+          interval_duration: (setlist as any).interval_duration,
+          show_duration: (setlist as any).show_duration,
+          musicians: (setlist as any).musicians,
+        } as any)
+        .select()
+        .single();
+      if (repError) throw repError;
+
+      // Step B: Fetch original items
+      const { data: originalItems, error: itemsError } = await supabase
+        .from("setlist_items")
+        .select("*")
+        .eq("setlist_id", id)
+        .order("position");
+      if (itemsError) throw itemsError;
+
+      // Step C: Clone items
+      if (originalItems && originalItems.length > 0) {
+        const newLinks = originalItems.map((item: any) => ({
+          setlist_id: (newRep as any).id,
+          song_id: item.song_id,
+          position: item.position,
+          loop_count: item.loop_count,
+          speed: item.speed,
+          bpm: item.bpm,
+          transposed_key: item.transposed_key,
+        }));
+        const { error: linkError } = await supabase.from("setlist_items").insert(newLinks);
+        if (linkError) throw linkError;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["setlists"] });
+      toast.success("Repertório clonado com sucesso!");
+      navigate(`/setlists/${(newRep as any).id}`);
+    } catch (err) {
+      console.error("Clone error:", err);
+      toast.error("Erro ao clonar repertório");
+    } finally {
+      setIsCloning(false);
+    }
+  }, [user, setlist, id, queryClient, navigate]);
 
   useEffect(() => {
     if (!prefsLoading && !hasSeenRepertoireWizard) {

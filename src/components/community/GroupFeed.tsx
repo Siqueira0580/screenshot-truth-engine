@@ -44,6 +44,9 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
   const [postFacebook, setPostFacebook] = useState("");
   const [manageOpen, setManageOpen] = useState(false);
   const [activeMediaInputs, setActiveMediaInputs] = useState<Set<string>>(new Set());
+  const [postImageFile, setPostImageFile] = useState<File | null>(null);
+  const [postImagePreview, setPostImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const toggleMediaInput = (key: string) => {
     setActiveMediaInputs(prev => {

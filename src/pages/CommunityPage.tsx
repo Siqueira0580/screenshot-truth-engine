@@ -565,6 +565,22 @@ export default function CommunityPage() {
                       </TooltipTrigger>
                       <TooltipContent>Facebook</TooltipContent>
                     </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <label
+                          className={cn(
+                            "p-2 rounded-full transition-all duration-200 cursor-pointer",
+                            postImagePreview
+                              ? "bg-emerald-500/15 text-emerald-500 scale-110"
+                              : "text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+                          )}
+                        >
+                          <ImagePlus className="h-5 w-5" />
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+                        </label>
+                      </TooltipTrigger>
+                      <TooltipContent>Anexar Imagem</TooltipContent>
+                    </Tooltip>
                   </div>
                   <div className="grid gap-2">
                     {activeMediaInputs.has("youtube") && (
@@ -586,6 +602,19 @@ export default function CommunityPage() {
                       </div>
                     )}
                   </div>
+                  {/* Image preview */}
+                  {postImagePreview && (
+                    <div className="relative animate-fade-in inline-block">
+                      <img src={postImagePreview} alt="Preview" className="max-h-40 rounded-lg border border-border object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => { setPostImageFile(null); setPostImagePreview(null); }}
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs shadow-md"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>

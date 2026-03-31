@@ -220,34 +220,41 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
 
           {/* Leave group button for non-creators */}
           {!isCreator && (
-            <AlertDialog>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="w-full gap-1.5"
-                disabled={leaveMutation.isPending}
-                asChild
-              >
-                <AlertDialogAction className="bg-transparent hover:bg-transparent p-0 h-auto" onClick={(e) => e.preventDefault()}>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="w-full gap-1.5"
-                    disabled={leaveMutation.isPending}
-                    onClick={() => {
-                      const trigger = document.getElementById("leave-group-trigger");
-                      trigger?.click();
-                    }}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
-                  </Button>
-                </AlertDialogAction>
-              </Button>
-            </AlertDialog>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full gap-1.5"
+              disabled={leaveMutation.isPending}
+              onClick={() => setConfirmLeave(true)}
+            >
+              <LogOut className="h-4 w-4" />
+              {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
+            </Button>
           )}
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Confirm leave dialog */}
+    <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você vai sair do grupo <strong>{groupName}</strong>. Para voltar, será necessário um novo convite do criador.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => leaveMutation.mutate()}
+          >
+            Sair do grupo
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

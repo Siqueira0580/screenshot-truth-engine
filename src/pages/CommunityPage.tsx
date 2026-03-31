@@ -362,17 +362,46 @@ export default function CommunityPage() {
   const filteredSetlists = setlists.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
   const filteredPosts = posts.filter((p) => p.content.toLowerCase().includes(search.toLowerCase()));
 
-  const handlePublishPost = () => {
+  const handlePublishPost = async () => {
     const trimmed = postText.trim();
     if (!trimmed) return;
     if (trimmed.length > 1000) { toast.error("Máximo de 1000 caracteres"); return; }
+
+    let imageUrl: string | null = null;
+    if (postImageFile) {
+      setUploadingImage(true);
+      try {
+        const ext = postImageFile.name.split(".").pop() || "jpg";
+        const path = `${user!.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("community-images").upload(path, postImageFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("community-images").getPublicUrl(path);
+        imageUrl = urlData.publicUrl;
+      } catch {
+        toast.error("Erro ao enviar imagem");
+        setUploadingImage(false);
+        return;
+      }
+      setUploadingImage(false);
+    }
+
     createPostMutation.mutate({
       content: trimmed,
       youtube_url: postYoutube.trim() || undefined,
       instagram_url: postInstagram.trim() || undefined,
       facebook_url: postFacebook.trim() || undefined,
       group_id: postDestination === "general" ? null : postDestination,
+      image_url: imageUrl,
     });
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Apenas imagens são permitidas"); return; }
+    setPostImageFile(file);
+    setPostImagePreview(URL.createObjectURL(file));
   };
 
   const openEditModal = (post: CommunityPost) => {

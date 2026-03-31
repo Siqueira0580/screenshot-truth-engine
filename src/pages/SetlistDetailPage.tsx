@@ -1111,6 +1111,56 @@ export default function SetlistDetailPage() {
           markRepertoireWizardSeen();
         }}
       />
+
+      {/* Share to Group Modal */}
+      <Dialog open={shareGroupOpen} onOpenChange={setShareGroupOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Compartilhar no Grupo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Selecione o grupo</label>
+              <Select value={shareGroupId} onValueChange={setShareGroupId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um grupo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {myGroups.map((g: any) => (
+                    <SelectItem key={g.id} value={g.id}>
+                      <span className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5" /> {g.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mensagem (opcional)</label>
+              <Textarea
+                value={shareGroupMessage}
+                onChange={(e) => setShareGroupMessage(e.target.value)}
+                placeholder="Escreva uma mensagem para a banda..."
+                rows={3}
+                maxLength={500}
+                className="resize-none"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShareGroupOpen(false)}>Cancelar</Button>
+              <Button
+                disabled={!shareGroupId || shareToGroupMutation.isPending}
+                onClick={() => shareToGroupMutation.mutate()}
+                className="gap-1.5"
+              >
+                <Share2 className="h-4 w-4" />
+                {shareToGroupMutation.isPending ? "Enviando..." : "Publicar"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

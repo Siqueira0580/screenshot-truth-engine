@@ -224,6 +224,50 @@ export default function SetlistDetailPage() {
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareGroupMessage, setShareGroupMessage] = useState("");
 
+  // Fetch user's community groups for sharing
+  const { data: myGroups = [] } = useQuery({
+    queryKey: ["my-community-groups", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data: memberships } = await supabase
+        .from("community_group_members")
+        .select("group_id")
+        .eq("user_id", user!.id);
+      const groupIds = (memberships || []).map((m: any) => m.group_id);
+      if (groupIds.length === 0) return [];
+      const { data: groups } = await supabase
+        .from("community_groups")
+        .select("id, name, created_by")
+        .in("id", groupIds)
+        .order("created_at", { ascending: false });
+      return groups || [];
+    },
+  });
+
+  // Share setlist to group mutation
+  const shareToGroupMutation = useMutation({
+    mutationFn: async () => {
+      const setlistUrl = `${window.location.origin}/setlists/${id}`;
+      const content = shareGroupMessage.trim()
+        ? `${shareGroupMessage.trim()}\n\n🎵 Repertório: ${(setlist as any)?.name || "Sem nome"}\n${setlistUrl}`
+        : `🎵 Repertório compartilhado: ${(setlist as any)?.name || "Sem nome"}\n${setlistUrl}`;
+      const { error } = await supabase.from("community_posts").insert({
+        user_id: user!.id,
+        group_id: shareGroupId,
+        content,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Repertório publicado no grupo!");
+      setShareGroupOpen(false);
+      setShareGroupId("");
+      setShareGroupMessage("");
+      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["group-posts"] });
+    },
+    onError: () => toast.error("Erro ao compartilhar no grupo"),
+  });
 
   useEffect(() => {
     if (!prefsLoading && !hasSeenRepertoireWizard) {

@@ -163,9 +163,8 @@ export default function ChatPage() {
       toast.error("Erro ao enviar mensagem");
     } else {
       // Send notification to receiver
-      const senderName = otherProfile
-        ? [otherProfile.first_name, otherProfile.last_name].filter(Boolean).join(" ") || "Alguém"
-        : "Alguém";
+      const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user.id).single();
+      const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
       // We need our own name for the notification
       const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user.id).single();
       const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";

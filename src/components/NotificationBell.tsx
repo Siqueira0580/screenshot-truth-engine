@@ -12,6 +12,9 @@ import { cn } from "@/lib/utils";
 
 const iconMap: Record<string, React.ElementType> = {
   group_invite: Users,
+  direct_message: MessageSquare,
+  setlist_comment: MessageCircle,
+  setlist_like: Heart,
 };
 
 export default function NotificationBell() {

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import GroupManageModal from "./GroupManageModal";
+import SetlistRichCard from "./SetlistRichCard";
 
 interface Props {
   groupId: string;

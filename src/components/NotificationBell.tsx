@@ -30,6 +30,8 @@ function getNotificationRoute(n: Notification): string | null {
       return meta?.setlist_id ? `/setlists/${meta.setlist_id}` : null;
     case "group_invite":
       return "/community";
+    case "group_share":
+      return meta?.setlist_id ? `/setlists/${meta.setlist_id}` : "/community";
     default:
       return null;
   }

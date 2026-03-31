@@ -287,7 +287,7 @@ export default function CommunityPage() {
 
   /* ── Create post mutation ── */
   const createPostMutation = useMutation({
-    mutationFn: async (payload: { content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string; group_id?: string | null }) => {
+    mutationFn: async (payload: { content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string; group_id?: string | null; image_url?: string | null }) => {
       const { error } = await supabase.from("community_posts").insert({
         user_id: user!.id,
         content: payload.content,
@@ -295,11 +295,13 @@ export default function CommunityPage() {
         instagram_url: payload.instagram_url || null,
         facebook_url: payload.facebook_url || null,
         group_id: payload.group_id || null,
+        image_url: payload.image_url || null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setPostText(""); setPostYoutube(""); setPostInstagram(""); setPostFacebook(""); setPostDestination("general");
+      setPostImageFile(null); setPostImagePreview(null);
       toast.success("Postagem publicada!");
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
       queryClient.invalidateQueries({ queryKey: ["group-posts"] });

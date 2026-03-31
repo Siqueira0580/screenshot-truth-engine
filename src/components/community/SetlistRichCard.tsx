@@ -141,6 +141,12 @@ export default function SetlistRichCard({ setlistId, setlistName, songCount, sho
                     {showTime}
                   </span>
                 )}
+                {ownerName && (
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <User className="h-3.5 w-3.5" />
+                    {ownerName}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex flex-col items-end gap-1 shrink-0">

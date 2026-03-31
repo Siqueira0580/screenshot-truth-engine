@@ -210,11 +210,62 @@ export type Database = {
         }
         Relationships: []
       }
+      community_group_members: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       community_posts: {
         Row: {
           content: string
           created_at: string
           facebook_url: string | null
+          group_id: string | null
           id: string
           instagram_url: string | null
           updated_at: string | null
@@ -225,6 +276,7 @@ export type Database = {
           content: string
           created_at?: string
           facebook_url?: string | null
+          group_id?: string | null
           id?: string
           instagram_url?: string | null
           updated_at?: string | null
@@ -235,6 +287,7 @@ export type Database = {
           content?: string
           created_at?: string
           facebook_url?: string | null
+          group_id?: string | null
           id?: string
           instagram_url?: string | null
           updated_at?: string | null
@@ -242,6 +295,13 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "community_posts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "community_posts_user_id_fkey"
             columns: ["user_id"]

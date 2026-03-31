@@ -143,6 +143,23 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     onError: () => toast.error("Erro ao sair do grupo"),
   });
 
+  const deleteGroupMutation = useMutation({
+    mutationFn: async () => {
+      // Delete members first, then posts, then the group
+      await supabase.from("community_group_members").delete().eq("group_id", groupId);
+      await supabase.from("community_posts").delete().eq("group_id", groupId);
+      const { error } = await supabase.from("community_groups").delete().eq("id", groupId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Grupo excluído com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["my-community-groups"] });
+      onOpenChange(false);
+      onLeave?.();
+    },
+    onError: () => toast.error("Erro ao excluir grupo"),
+  });
+
   const getInitials = (p: any) => {
     if (!p) return "?";
     return [p.first_name, p.last_name].filter(Boolean).map((n: string) => n[0]?.toUpperCase()).join("") || "?";

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
+  const [confirmLeave, setConfirmLeave] = useState(false);
 
   const { data: members = [] } = useQuery({
     queryKey: ["group-members", groupId],
@@ -151,6 +153,7 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -223,7 +226,7 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
               size="sm"
               className="w-full gap-1.5"
               disabled={leaveMutation.isPending}
-              onClick={() => leaveMutation.mutate()}
+              onClick={() => setConfirmLeave(true)}
             >
               <LogOut className="h-4 w-4" />
               {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
@@ -232,5 +235,27 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
         </div>
       </DialogContent>
     </Dialog>
+
+    {/* Confirm leave dialog */}
+    <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Você vai sair do grupo <strong>{groupName}</strong>. Para voltar, será necessário um novo convite do criador.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={() => leaveMutation.mutate()}
+          >
+            Sair do grupo
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

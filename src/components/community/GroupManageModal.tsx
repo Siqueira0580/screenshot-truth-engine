@@ -250,6 +250,20 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
               {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
             </Button>
           )}
+
+          {/* Delete group button for creator */}
+          {isCreator && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full gap-1.5"
+              disabled={deleteGroupMutation.isPending}
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleteGroupMutation.isPending ? "Excluindo..." : "Excluir grupo"}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

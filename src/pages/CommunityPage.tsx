@@ -63,6 +63,7 @@ interface CommunityPost {
   youtube_url: string | null;
   instagram_url: string | null;
   facebook_url: string | null;
+  image_url: string | null;
   group_id: string | null;
   setlist_id: string | null;
   setlist: { id: string; name: string } | null;

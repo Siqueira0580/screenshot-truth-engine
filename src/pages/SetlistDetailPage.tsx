@@ -220,6 +220,9 @@ export default function SetlistDetailPage() {
   const [globalSearchOpen, setGlobalSearchOpen] = useState(false);
   const { hasSeenRepertoireWizard, markRepertoireWizardSeen, loading: prefsLoading } = useUserPreferences();
   const [showRepertoireWizard, setShowRepertoireWizard] = useState(false);
+  const [shareGroupOpen, setShareGroupOpen] = useState(false);
+  const [shareGroupId, setShareGroupId] = useState("");
+  const [shareGroupMessage, setShareGroupMessage] = useState("");
 
 
   useEffect(() => {

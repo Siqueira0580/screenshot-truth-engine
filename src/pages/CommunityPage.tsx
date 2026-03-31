@@ -620,7 +620,7 @@ export default function CommunityPage() {
                   <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
                   <Button
                     size="sm"
-                    disabled={!postText.trim() || createPostMutation.isPending}
+                    disabled={!postText.trim() || createPostMutation.isPending || uploadingImage}
                     onClick={handlePublishPost}
                     className="gap-1.5"
                   >

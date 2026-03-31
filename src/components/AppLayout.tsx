@@ -28,6 +28,7 @@ import { useGlobalSettings } from "@/hooks/useGlobalSettings";
 import PaywallModal from "@/components/PaywallModal";
 import GlobalBanner from "@/components/GlobalBanner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import NotificationBell from "@/components/NotificationBell";
 
 const GENRE_OPTIONS = [
   { value: "todos", label: "🎵 Todos" },

@@ -25,6 +25,7 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const { data: members = [] } = useQuery({
     queryKey: ["group-members", groupId],

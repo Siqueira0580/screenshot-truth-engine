@@ -61,7 +61,7 @@ export default function NotificationBell() {
                 return (
                   <button
                     key={n.id}
-                    onClick={() => { if (!n.is_read) markAsRead.mutate(n.id); }}
+                    onClick={() => handleClick(n)}
                     className={cn(
                       "w-full flex items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-secondary/50",
                       !n.is_read && "bg-primary/5"

@@ -287,10 +287,9 @@ export default function SetlistDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["setlist", id] });
       }
 
-      const setlistUrl = `${window.location.origin}/setlists/${id}`;
       const content = shareGroupMessage.trim()
-        ? `${shareGroupMessage.trim()}\n\n🎵 Repertório: ${(setlist as any)?.name || "Sem nome"}\n${setlistUrl}`
-        : `🎵 Repertório compartilhado: ${(setlist as any)?.name || "Sem nome"}\n${setlistUrl}`;
+        ? shareGroupMessage.trim()
+        : `🎵 Compartilhou o repertório "${(setlist as any)?.name || "Sem nome"}"`;
       const { error } = await supabase.from("community_posts").insert({
         user_id: user!.id,
         group_id: shareGroupId,

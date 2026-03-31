@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Globe, Music2, CalendarDays, Search, Heart, MessageCircle, Send,
   Instagram, Facebook, Megaphone, MoreHorizontal, Pencil, Trash2,
-  ShieldAlert, Ban, Youtube,
+  ShieldAlert, Ban, Youtube, Users,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,13 +23,17 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import CommentsSheet from "@/components/CommentsSheet";
 import CommunityRulesModal from "@/components/CommunityRulesModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
-
+import CreateGroupModal from "@/components/community/CreateGroupModal";
+import GroupFeed from "@/components/community/GroupFeed";
 
 /* ─── Types ─── */
 interface PublicSetlist {
@@ -57,6 +61,7 @@ interface CommunityPost {
   youtube_url: string | null;
   instagram_url: string | null;
   facebook_url: string | null;
+  group_id: string | null;
   profiles: {
     first_name: string | null;
     last_name: string | null;
@@ -89,12 +94,14 @@ export default function CommunityPage() {
   const [search, setSearch] = useState("");
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [activeSetlist, setActiveSetlist] = useState<{ id: string; name: string } | null>(null);
+  const [mainTab, setMainTab] = useState("geral");
 
   // Post composer state
   const [postText, setPostText] = useState("");
   const [postYoutube, setPostYoutube] = useState("");
   const [postInstagram, setPostInstagram] = useState("");
   const [postFacebook, setPostFacebook] = useState("");
+  const [postDestination, setPostDestination] = useState("general");
 
   // Edit modal state
   const [editPost, setEditPost] = useState<CommunityPost | null>(null);
@@ -105,6 +112,9 @@ export default function CommunityPage() {
 
   // Delete confirm state
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; isAdmin?: boolean } | null>(null);
+
+  // Group feed state
+  const [activeGroup, setActiveGroup] = useState<{ id: string; name: string; isCreator: boolean } | null>(null);
 
   /* ── Fetch current user profile (is_banned, is_admin) ── */
   const { data: currentProfile } = useQuery({
@@ -118,6 +128,33 @@ export default function CommunityPage() {
 
   const isBanned = currentProfile?.is_banned === true;
   const isAdmin = currentProfile?.is_admin === true;
+
+  /* ── Fetch user's groups ── */
+  const { data: myGroups = [] } = useQuery({
+    queryKey: ["my-community-groups", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      // Groups where user is member
+      const { data: memberships } = await supabase
+        .from("community_group_members")
+        .select("group_id")
+        .eq("user_id", user!.id);
+
+      const groupIds = (memberships || []).map((m: any) => m.group_id);
+      if (groupIds.length === 0) return [];
+
+      const { data: groups } = await supabase
+        .from("community_groups")
+        .select("id, name, created_by, created_at")
+        .in("id", groupIds)
+        .order("created_at", { ascending: false });
+
+      return (groups || []).map((g: any) => ({
+        ...g,
+        isCreator: g.created_by === user!.id,
+      }));
+    },
+  });
 
   /* ── Fetch public setlists ── */
   const { data: setlists = [], isLoading: loadingSetlists } = useQuery({
@@ -151,13 +188,14 @@ export default function CommunityPage() {
     },
   });
 
-  /* ── Fetch community posts ── */
+  /* ── Fetch community posts (general only, group_id IS NULL) ── */
   const { data: posts = [], isLoading: loadingPosts } = useQuery({
     queryKey: ["community-posts"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_posts")
-        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, profiles:user_id(first_name, last_name, avatar_url)")
+        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, group_id, profiles:user_id(first_name, last_name, avatar_url)")
+        .is("group_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
       if (error) throw error;
@@ -217,20 +255,22 @@ export default function CommunityPage() {
 
   /* ── Create post mutation ── */
   const createPostMutation = useMutation({
-    mutationFn: async (payload: { content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string }) => {
+    mutationFn: async (payload: { content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string; group_id?: string | null }) => {
       const { error } = await supabase.from("community_posts").insert({
         user_id: user!.id,
         content: payload.content,
         youtube_url: payload.youtube_url || null,
         instagram_url: payload.instagram_url || null,
         facebook_url: payload.facebook_url || null,
+        group_id: payload.group_id || null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      setPostText(""); setPostYoutube(""); setPostInstagram(""); setPostFacebook("");
+      setPostText(""); setPostYoutube(""); setPostInstagram(""); setPostFacebook(""); setPostDestination("general");
       toast.success("Postagem publicada!");
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["group-posts"] });
     },
     onError: () => toast.error("Erro ao publicar postagem"),
   });
@@ -297,6 +337,7 @@ export default function CommunityPage() {
       youtube_url: postYoutube.trim() || undefined,
       instagram_url: postInstagram.trim() || undefined,
       facebook_url: postFacebook.trim() || undefined,
+      group_id: postDestination === "general" ? null : postDestination,
     });
   };
 
@@ -322,6 +363,20 @@ export default function CommunityPage() {
     });
   };
 
+  // If viewing a specific group feed
+  if (activeGroup) {
+    return (
+      <div className="max-w-4xl mx-auto animate-fade-in">
+        <GroupFeed
+          groupId={activeGroup.id}
+          groupName={activeGroup.name}
+          isCreator={activeGroup.isCreator}
+          onBack={() => setActiveGroup(null)}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-5 animate-fade-in">
       {/* Header */}
@@ -338,281 +393,360 @@ export default function CommunityPage() {
         <CommunityRulesModal />
       </div>
 
-      {/* Post Composer or Banned Message */}
-      {user && (
-        isBanned ? (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-center">
-            <Ban className="h-6 w-6 mx-auto text-destructive mb-2" />
-            <p className="text-sm text-destructive font-medium">
-              A sua conta foi suspensa da comunidade por violar as regras.
-            </p>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-            <Textarea
-              value={postText}
-              onChange={(e) => setPostText(e.target.value)}
-              placeholder="O que você quer compartilhar com os músicos? (Busca de banda, aulas, dicas...)"
-              maxLength={1000}
-              rows={3}
-              className="resize-none bg-background"
-            />
-            {/* Media URL Inputs */}
-            <div className="grid gap-2 sm:grid-cols-3">
-              <div className="relative">
-                <Youtube className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
-                <Input placeholder="Link YouTube" value={postYoutube} onChange={(e) => setPostYoutube(e.target.value)} className="pl-9 text-xs h-9" />
-              </div>
-              <div className="relative">
-                <Instagram className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
-                <Input placeholder="Link Instagram" value={postInstagram} onChange={(e) => setPostInstagram(e.target.value)} className="pl-9 text-xs h-9" />
-              </div>
-              <div className="relative">
-                <Facebook className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500" />
-                <Input placeholder="Link Facebook" value={postFacebook} onChange={(e) => setPostFacebook(e.target.value)} className="pl-9 text-xs h-9" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
-              <Button
-                size="sm"
-                disabled={!postText.trim() || createPostMutation.isPending}
-                onClick={handlePublishPost}
-                className="gap-1.5"
-              >
-                {createPostMutation.isPending ? (
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : (
-                  <Megaphone className="h-4 w-4" />
-                )}
-                Publicar
-              </Button>
-            </div>
-          </div>
-        )
-      )}
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
-      </div>
-
-      {/* Tabs */}
-      <Tabs defaultValue="posts" className="w-full">
+      {/* Main Tabs: Geral / Meus Grupos */}
+      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
         <TabsList className="w-full grid grid-cols-2">
-          <TabsTrigger value="posts" className="gap-1.5">
-            <Megaphone className="h-4 w-4" />
-            Avisos
-            {posts.length > 0 && <Badge variant="secondary" className="text-[10px] h-5 ml-1">{posts.length}</Badge>}
+          <TabsTrigger value="geral" className="gap-1.5">
+            <Globe className="h-4 w-4" />
+            Geral
           </TabsTrigger>
-          <TabsTrigger value="repertoires" className="gap-1.5">
-            <Music2 className="h-4 w-4" />
-            Repertórios
-            {setlists.length > 0 && <Badge variant="secondary" className="text-[10px] h-5 ml-1">{setlists.length}</Badge>}
+          <TabsTrigger value="grupos" className="gap-1.5">
+            <Users className="h-4 w-4" />
+            Meus Grupos
+            {myGroups.length > 0 && <Badge variant="secondary" className="text-[10px] h-5 ml-1">{myGroups.length}</Badge>}
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Posts Tab ── */}
-        <TabsContent value="posts" className="mt-4">
-          {loadingPosts ? (
-            <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
-          ) : filteredPosts.length === 0 ? (
-            <div className="text-center py-12 space-y-2">
-              <Megaphone className="h-10 w-10 mx-auto text-muted-foreground/40" />
-              <p className="text-muted-foreground text-sm">{search ? "Nenhuma postagem encontrada." : "Nenhuma postagem ainda. Seja o primeiro!"}</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {filteredPosts.map((post) => {
-                const ytId = post.youtube_url ? extractYouTubeId(post.youtube_url) : null;
-                const isOwner = user?.id === post.user_id;
-                const wasEdited = !!post.updated_at && post.updated_at !== post.created_at;
-
-                return (
-                  <div key={post.id} className="rounded-xl border border-border bg-card p-4 space-y-3 transition-all hover:border-primary/20">
-                    {/* Author + Actions */}
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9 border border-border">
-                        <AvatarImage src={post.profiles?.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">{getInitials(post.profiles)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-foreground truncate">{getAuthorName(post.profiles)}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })}
-                          {wasEdited && <span className="ml-1 italic">(editado)</span>}
-                        </p>
-                      </div>
-                      {/* Dropdown menu for owner / admin */}
-                      {(isOwner || isAdmin) && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            {isOwner && (
-                              <>
-                                <DropdownMenuItem onClick={() => openEditModal(post)} className="gap-2">
-                                  <Pencil className="h-4 w-4" /> Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setDeleteTarget({ id: post.id })} className="gap-2 text-destructive focus:text-destructive">
-                                  <Trash2 className="h-4 w-4" /> Excluir
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {isAdmin && !isOwner && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setDeleteTarget({ id: post.id, isAdmin: true })} className="gap-2 text-destructive focus:text-destructive">
-                                  <ShieldAlert className="h-4 w-4" /> 🛡️ Excluir (Admin)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => banUserMutation.mutate(post.user_id)} className="gap-2 text-destructive focus:text-destructive">
-                                  <Ban className="h-4 w-4" /> 🔨 Banir Usuário
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                            {isAdmin && isOwner && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem disabled className="gap-2 text-muted-foreground text-xs">
-                                  <ShieldAlert className="h-4 w-4" /> Você é o autor
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
-                      {post.content}
-                    </p>
-
-                    {/* YouTube Embed */}
-                    {ytId && (
-                      <div className="rounded-lg overflow-hidden border border-border">
-                        <iframe
-                          className="w-full aspect-video"
-                          src={`https://www.youtube.com/embed/${ytId}?rel=0`}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          title="YouTube"
-                        />
-                      </div>
-                    )}
-
-                    {/* Social Links */}
-                    {(post.instagram_url || post.facebook_url) && (
-                      <div className="flex items-center gap-2">
-                        {post.instagram_url && (
-                          <a href={post.instagram_url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs text-pink-500 border-pink-500/30 hover:bg-pink-500/10">
-                              <Instagram className="h-3.5 w-3.5" /> Instagram
-                            </Button>
-                          </a>
-                        )}
-                        {post.facebook_url && (
-                          <a href={post.facebook_url} target="_blank" rel="noopener noreferrer">
-                            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
-                              <Facebook className="h-3.5 w-3.5" /> Facebook
-                            </Button>
-                          </a>
-                        )}
-                      </div>
-                    )}
+        {/* ══════ GERAL TAB ══════ */}
+        <TabsContent value="geral" className="mt-4 space-y-5">
+          {/* Post Composer or Banned Message */}
+          {user && (
+            isBanned ? (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-center">
+                <Ban className="h-6 w-6 mx-auto text-destructive mb-2" />
+                <p className="text-sm text-destructive font-medium">
+                  A sua conta foi suspensa da comunidade por violar as regras.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <Textarea
+                  value={postText}
+                  onChange={(e) => setPostText(e.target.value)}
+                  placeholder="O que você quer compartilhar com os músicos? (Busca de banda, aulas, dicas...)"
+                  maxLength={1000}
+                  rows={3}
+                  className="resize-none bg-background"
+                />
+                {/* Destination selector */}
+                <Select value={postDestination} onValueChange={setPostDestination}>
+                  <SelectTrigger className="w-full sm:w-64 h-9 text-xs">
+                    <SelectValue placeholder="Onde deseja publicar?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="general">
+                      <span className="flex items-center gap-1.5">
+                        <Globe className="h-3.5 w-3.5" /> Comunidade Geral
+                      </span>
+                    </SelectItem>
+                    {myGroups.map((g: any) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        <span className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5" /> {g.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {/* Media URL Inputs */}
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="relative">
+                    <Youtube className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-red-500" />
+                    <Input placeholder="Link YouTube" value={postYoutube} onChange={(e) => setPostYoutube(e.target.value)} className="pl-9 text-xs h-9" />
                   </div>
-                );
-              })}
-            </div>
+                  <div className="relative">
+                    <Instagram className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-500" />
+                    <Input placeholder="Link Instagram" value={postInstagram} onChange={(e) => setPostInstagram(e.target.value)} className="pl-9 text-xs h-9" />
+                  </div>
+                  <div className="relative">
+                    <Facebook className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500" />
+                    <Input placeholder="Link Facebook" value={postFacebook} onChange={(e) => setPostFacebook(e.target.value)} className="pl-9 text-xs h-9" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
+                  <Button
+                    size="sm"
+                    disabled={!postText.trim() || createPostMutation.isPending}
+                    onClick={handlePublishPost}
+                    className="gap-1.5"
+                  >
+                    {createPostMutation.isPending ? (
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <Megaphone className="h-4 w-4" />
+                    )}
+                    Publicar
+                  </Button>
+                </div>
+              </div>
+            )
           )}
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+          </div>
+
+          {/* Sub-tabs: Avisos / Repertórios */}
+          <Tabs defaultValue="posts" className="w-full">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="posts" className="gap-1.5">
+                <Megaphone className="h-4 w-4" />
+                Avisos
+                {posts.length > 0 && <Badge variant="secondary" className="text-[10px] h-5 ml-1">{posts.length}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="repertoires" className="gap-1.5">
+                <Music2 className="h-4 w-4" />
+                Repertórios
+                {setlists.length > 0 && <Badge variant="secondary" className="text-[10px] h-5 ml-1">{setlists.length}</Badge>}
+              </TabsTrigger>
+            </TabsList>
+
+            {/* ── Posts Tab ── */}
+            <TabsContent value="posts" className="mt-4">
+              {loadingPosts ? (
+                <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
+              ) : filteredPosts.length === 0 ? (
+                <div className="text-center py-12 space-y-2">
+                  <Megaphone className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                  <p className="text-muted-foreground text-sm">{search ? "Nenhuma postagem encontrada." : "Nenhuma postagem ainda. Seja o primeiro!"}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredPosts.map((post) => {
+                    const ytId = post.youtube_url ? extractYouTubeId(post.youtube_url) : null;
+                    const isOwner = user?.id === post.user_id;
+                    const wasEdited = !!post.updated_at && post.updated_at !== post.created_at;
+
+                    return (
+                      <div key={post.id} className="rounded-xl border border-border bg-card p-4 space-y-3 transition-all hover:border-primary/20">
+                        {/* Author + Actions */}
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9 border border-border">
+                            <AvatarImage src={post.profiles?.avatar_url || undefined} />
+                            <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">{getInitials(post.profiles)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-foreground truncate">{getAuthorName(post.profiles)}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ptBR })}
+                              {wasEdited && <span className="ml-1 italic">(editado)</span>}
+                            </p>
+                          </div>
+                          {(isOwner || isAdmin) && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                {isOwner && (
+                                  <>
+                                    <DropdownMenuItem onClick={() => openEditModal(post)} className="gap-2">
+                                      <Pencil className="h-4 w-4" /> Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setDeleteTarget({ id: post.id })} className="gap-2 text-destructive focus:text-destructive">
+                                      <Trash2 className="h-4 w-4" /> Excluir
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {isAdmin && !isOwner && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setDeleteTarget({ id: post.id, isAdmin: true })} className="gap-2 text-destructive focus:text-destructive">
+                                      <ShieldAlert className="h-4 w-4" /> 🛡️ Excluir (Admin)
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => banUserMutation.mutate(post.user_id)} className="gap-2 text-destructive focus:text-destructive">
+                                      <Ban className="h-4 w-4" /> 🔨 Banir Usuário
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {isAdmin && isOwner && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem disabled className="gap-2 text-muted-foreground text-xs">
+                                      <ShieldAlert className="h-4 w-4" /> Você é o autor
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+
+                        <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
+                          {post.content}
+                        </p>
+
+                        {ytId && (
+                          <div className="rounded-lg overflow-hidden border border-border">
+                            <iframe
+                              className="w-full aspect-video"
+                              src={`https://www.youtube.com/embed/${ytId}?rel=0`}
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                              title="YouTube"
+                            />
+                          </div>
+                        )}
+
+                        {(post.instagram_url || post.facebook_url) && (
+                          <div className="flex items-center gap-2">
+                            {post.instagram_url && (
+                              <a href={post.instagram_url} target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs text-pink-500 border-pink-500/30 hover:bg-pink-500/10">
+                                  <Instagram className="h-3.5 w-3.5" /> Instagram
+                                </Button>
+                              </a>
+                            )}
+                            {post.facebook_url && (
+                              <a href={post.facebook_url} target="_blank" rel="noopener noreferrer">
+                                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs text-blue-500 border-blue-500/30 hover:bg-blue-500/10">
+                                  <Facebook className="h-3.5 w-3.5" /> Facebook
+                                </Button>
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* ── Repertoires Tab ── */}
+            <TabsContent value="repertoires" className="mt-4">
+              {loadingSetlists ? (
+                <div className="grid gap-4 sm:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-52 rounded-xl" />)}</div>
+              ) : filteredSetlists.length === 0 ? (
+                <div className="text-center py-12 space-y-2">
+                  <Globe className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                  <p className="text-muted-foreground text-sm">{search ? "Nenhum repertório encontrado." : "Nenhum repertório publicado ainda."}</p>
+                </div>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {filteredSetlists.map((setlist) => {
+                    const { count: likeCount, isLiked } = getLikeInfo(setlist.id);
+                    const commentCount = commentsCountData?.[setlist.id] || 0;
+
+                    return (
+                      <div key={setlist.id} className="rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
+                        <div className="flex items-center gap-3 px-5 pt-5 pb-3">
+                          <Avatar className="h-10 w-10 border border-border">
+                            <AvatarImage src={setlist.profiles?.avatar_url || undefined} />
+                            <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">{getInitials(setlist.profiles)}</AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-foreground truncate">{getAuthorName(setlist.profiles)}</p>
+                            <p className="text-[11px] text-muted-foreground">{format(new Date(setlist.created_at), "dd/MM/yyyy")}</p>
+                          </div>
+                          <Badge variant="secondary" className="shrink-0 text-[10px] gap-1"><Globe className="h-3 w-3" />Público</Badge>
+                        </div>
+
+                        <Link to={`/setlists/${setlist.id}`} className="block px-5 pb-3 group">
+                          <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors truncate">{setlist.name}</h3>
+                          <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                            {setlist.item_count > 0 && (
+                              <span className="flex items-center gap-1"><Music2 className="h-3.5 w-3.5" />{setlist.item_count} música{setlist.item_count !== 1 ? "s" : ""}</span>
+                            )}
+                            {setlist.show_date && (
+                              <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{format(new Date(setlist.show_date), "dd/MM/yyyy")}</span>
+                            )}
+                          </div>
+                        </Link>
+
+                        <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost" size="sm"
+                              className={`h-8 gap-1.5 px-2 ${isLiked ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-red-500"}`}
+                              onClick={() => { if (!user) { toast.info("Faça login para curtir"); return; } likeMutation.mutate({ setlistId: setlist.id, isLiked }); }}
+                            >
+                              <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
+                              {likeCount > 0 && <span className="text-xs font-medium">{likeCount}</span>}
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-primary" onClick={() => { setActiveSetlist({ id: setlist.id, name: setlist.name }); setCommentsOpen(true); }}>
+                              <MessageCircle className="h-4 w-4" />
+                              {commentCount > 0 && <span className="text-xs font-medium">{commentCount}</span>}
+                            </Button>
+                            {user && setlist.user_id !== user.id && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-primary" onClick={() => navigate(`/mensagens/${setlist.user_id}`)}>
+                                    <Send className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Enviar mensagem</TooltipContent>
+                              </Tooltip>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {setlist.profiles?.instagram_url && (
+                              <Tooltip><TooltipTrigger asChild>
+                                <a href={setlist.profiles.instagram_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10 transition-colors"><Instagram className="h-4 w-4" /></a>
+                              </TooltipTrigger><TooltipContent>Instagram</TooltipContent></Tooltip>
+                            )}
+                            {setlist.profiles?.facebook_url && (
+                              <Tooltip><TooltipTrigger asChild>
+                                <a href={setlist.profiles.facebook_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 transition-colors"><Facebook className="h-4 w-4" /></a>
+                              </TooltipTrigger><TooltipContent>Facebook</TooltipContent></Tooltip>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
-        {/* ── Repertoires Tab ── */}
-        <TabsContent value="repertoires" className="mt-4">
-          {loadingSetlists ? (
-            <div className="grid gap-4 sm:grid-cols-2">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-52 rounded-xl" />)}</div>
-          ) : filteredSetlists.length === 0 ? (
-            <div className="text-center py-12 space-y-2">
-              <Globe className="h-10 w-10 mx-auto text-muted-foreground/40" />
-              <p className="text-muted-foreground text-sm">{search ? "Nenhum repertório encontrado." : "Nenhum repertório publicado ainda."}</p>
-            </div>
+        {/* ══════ MEUS GRUPOS TAB ══════ */}
+        <TabsContent value="grupos" className="mt-4 space-y-4">
+          {user ? (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">Grupos dos quais você participa</p>
+                <CreateGroupModal />
+              </div>
+
+              {myGroups.length === 0 ? (
+                <div className="text-center py-12 space-y-2">
+                  <Users className="h-10 w-10 mx-auto text-muted-foreground/40" />
+                  <p className="text-muted-foreground text-sm">Você ainda não faz parte de nenhum grupo.</p>
+                  <p className="text-muted-foreground text-xs">Crie um grupo ou peça para ser convidado.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {myGroups.map((g: any) => (
+                    <button
+                      key={g.id}
+                      onClick={() => setActiveGroup({ id: g.id, name: g.name, isCreator: g.isCreator })}
+                      className="w-full flex items-center gap-3 rounded-xl border border-border bg-card p-4 text-left transition-all hover:border-primary/40 hover:shadow-sm"
+                    >
+                      <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                        <Users className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{g.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {g.isCreator ? "Criado por você" : "Membro"}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {filteredSetlists.map((setlist) => {
-                const { count: likeCount, isLiked } = getLikeInfo(setlist.id);
-                const commentCount = commentsCountData?.[setlist.id] || 0;
-
-                return (
-                  <div key={setlist.id} className="rounded-xl border border-border bg-card overflow-hidden transition-all hover:border-primary/40 hover:shadow-md hover:shadow-primary/5">
-                    <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-                      <Avatar className="h-10 w-10 border border-border">
-                        <AvatarImage src={setlist.profiles?.avatar_url || undefined} />
-                        <AvatarFallback className="text-xs bg-primary/10 text-primary font-bold">{getInitials(setlist.profiles)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-foreground truncate">{getAuthorName(setlist.profiles)}</p>
-                        <p className="text-[11px] text-muted-foreground">{format(new Date(setlist.created_at), "dd/MM/yyyy")}</p>
-                      </div>
-                      <Badge variant="secondary" className="shrink-0 text-[10px] gap-1"><Globe className="h-3 w-3" />Público</Badge>
-                    </div>
-
-                    <Link to={`/setlists/${setlist.id}`} className="block px-5 pb-3 group">
-                      <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors truncate">{setlist.name}</h3>
-                      <div className="flex items-center gap-3 mt-1.5 text-xs text-muted-foreground">
-                        {setlist.item_count > 0 && (
-                          <span className="flex items-center gap-1"><Music2 className="h-3.5 w-3.5" />{setlist.item_count} música{setlist.item_count !== 1 ? "s" : ""}</span>
-                        )}
-                        {setlist.show_date && (
-                          <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{format(new Date(setlist.show_date), "dd/MM/yyyy")}</span>
-                        )}
-                      </div>
-                    </Link>
-
-                    <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost" size="sm"
-                          className={`h-8 gap-1.5 px-2 ${isLiked ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-red-500"}`}
-                          onClick={() => { if (!user) { toast.info("Faça login para curtir"); return; } likeMutation.mutate({ setlistId: setlist.id, isLiked }); }}
-                        >
-                          <Heart className={`h-4 w-4 ${isLiked ? "fill-current" : ""}`} />
-                          {likeCount > 0 && <span className="text-xs font-medium">{likeCount}</span>}
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-primary" onClick={() => { setActiveSetlist({ id: setlist.id, name: setlist.name }); setCommentsOpen(true); }}>
-                          <MessageCircle className="h-4 w-4" />
-                          {commentCount > 0 && <span className="text-xs font-medium">{commentCount}</span>}
-                        </Button>
-                        {user && setlist.user_id !== user.id && (
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-primary" onClick={() => navigate(`/mensagens/${setlist.user_id}`)}>
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>Enviar mensagem</TooltipContent>
-                          </Tooltip>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {setlist.profiles?.instagram_url && (
-                          <Tooltip><TooltipTrigger asChild>
-                            <a href={setlist.profiles.instagram_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-pink-500 hover:bg-pink-500/10 transition-colors"><Instagram className="h-4 w-4" /></a>
-                          </TooltipTrigger><TooltipContent>Instagram</TooltipContent></Tooltip>
-                        )}
-                        {setlist.profiles?.facebook_url && (
-                          <Tooltip><TooltipTrigger asChild>
-                            <a href={setlist.profiles.facebook_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 transition-colors"><Facebook className="h-4 w-4" /></a>
-                          </TooltipTrigger><TooltipContent>Facebook</TooltipContent></Tooltip>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="text-center py-12 space-y-2">
+              <Users className="h-10 w-10 mx-auto text-muted-foreground/40" />
+              <p className="text-muted-foreground text-sm">Faça login para ver seus grupos.</p>
             </div>
           )}
         </TabsContent>

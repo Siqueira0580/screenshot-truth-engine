@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail } from "lucide-react";
+import { UserPlus, Trash2, Mail, LogOut } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -16,9 +16,10 @@ interface Props {
   groupId: string;
   groupName: string;
   isCreator: boolean;
+  onLeave?: () => void;
 }
 
-export default function GroupManageModal({ open, onOpenChange, groupId, groupName, isCreator }: Props) {
+export default function GroupManageModal({ open, onOpenChange, groupId, groupName, isCreator, onLeave }: Props) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
@@ -111,6 +112,25 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     onError: () => toast.error("Erro ao remover membro"),
   });
 
+  const leaveMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("community_group_members")
+        .delete()
+        .eq("group_id", groupId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Você saiu do grupo");
+      queryClient.invalidateQueries({ queryKey: ["my-community-groups"] });
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+      onOpenChange(false);
+      onLeave?.();
+    },
+    onError: () => toast.error("Erro ao sair do grupo"),
+  });
+
   const getInitials = (p: any) => {
     if (!p) return "?";
     return [p.first_name, p.last_name].filter(Boolean).map((n: string) => n[0]?.toUpperCase()).join("") || "?";
@@ -186,6 +206,20 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
               ))}
             </div>
           </div>
+
+          {/* Leave group button for non-creators */}
+          {!isCreator && (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full gap-1.5"
+              disabled={leaveMutation.isPending}
+              onClick={() => leaveMutation.mutate()}
+            >
+              <LogOut className="h-4 w-4" />
+              {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

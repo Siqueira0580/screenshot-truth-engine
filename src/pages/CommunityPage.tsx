@@ -102,6 +102,7 @@ export default function CommunityPage() {
   const [postInstagram, setPostInstagram] = useState("");
   const [postFacebook, setPostFacebook] = useState("");
   const [postDestination, setPostDestination] = useState("general");
+  const [showMediaInputs, setShowMediaInputs] = useState(false);
 
   // Edit modal state
   const [editPost, setEditPost] = useState<CommunityPost | null>(null);

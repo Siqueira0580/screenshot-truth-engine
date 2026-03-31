@@ -35,6 +35,7 @@ import CommunityRulesModal from "@/components/CommunityRulesModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import CreateGroupModal from "@/components/community/CreateGroupModal";
 import GroupFeed from "@/components/community/GroupFeed";
+import SetlistRichCard from "@/components/community/SetlistRichCard";
 
 /* ─── Types ─── */
 interface PublicSetlist {

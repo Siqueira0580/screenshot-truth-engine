@@ -225,6 +225,9 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
                   </div>
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">{post.content}</p>
+                {post.setlist_id && post.setlist && (
+                  <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} />
+                )}
                 {ytId && (
                   <div className="rounded-lg overflow-hidden border border-border">
                     <iframe className="w-full aspect-video" src={`https://www.youtube.com/embed/${ytId}?rel=0`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen title="YouTube" />

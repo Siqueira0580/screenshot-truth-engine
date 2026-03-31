@@ -794,37 +794,25 @@ export default function SetlistDetailPage() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={async () => {
                     try {
-                      if (isPublic) {
-                        // Already public — create a community post with rich card
-                        const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
-                        const { error } = await supabase.from("community_posts").insert({
-                          user_id: user!.id,
-                          content,
-                          group_id: null,
-                          setlist_id: id,
-                        });
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-                        toast.success("Repertório publicado na comunidade!");
-                      } else {
-                        // Make public first, then post
+                      // Always ensure setlist is public so the Rich Card is visible
+                      if (!(setlist as any)?.is_public) {
                         const { error: pubErr } = await supabase
                           .from("setlists")
                           .update({ is_public: true } as any)
                           .eq("id", id!);
                         if (pubErr) throw pubErr;
                         queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-                        const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
-                        const { error } = await supabase.from("community_posts").insert({
-                          user_id: user!.id,
-                          content,
-                          group_id: null,
-                          setlist_id: id,
-                        });
-                        if (error) throw error;
-                        queryClient.invalidateQueries({ queryKey: ["community-posts"] });
-                        toast.success("Repertório tornado público e publicado na comunidade!");
                       }
+                      const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
+                      const { error } = await supabase.from("community_posts").insert({
+                        user_id: user!.id,
+                        content,
+                        group_id: null,
+                        setlist_id: id,
+                      });
+                      if (error) throw error;
+                      queryClient.invalidateQueries({ queryKey: ["community-posts"] });
+                      toast.success("Repertório publicado na comunidade!");
                     } catch {
                       toast.error("Erro ao publicar na comunidade");
                     }

@@ -716,10 +716,20 @@ export default function SetlistDetailPage() {
         </div>
       )}
 
-      {/* ── Read-only: only teleprompter for visitors ── */}
+      {/* ── Read-only: teleprompter + clone for visitors ── */}
       {!isOwner && items.length > 0 && (
         <div className="flex items-center gap-2">
           <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+          {user && (
+            <Button
+              onClick={handleClone}
+              disabled={isCloning}
+              className="gap-2"
+            >
+              <Copy className="h-4 w-4" />
+              {isCloning ? "Clonando..." : "Clonar para meu perfil"}
+            </Button>
+          )}
         </div>
       )}
 

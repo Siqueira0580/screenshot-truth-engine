@@ -29,6 +29,7 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import CommentsSheet from "@/components/CommentsSheet";
 import CommunityRulesModal from "@/components/CommunityRulesModal";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";

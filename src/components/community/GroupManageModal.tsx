@@ -153,6 +153,7 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>

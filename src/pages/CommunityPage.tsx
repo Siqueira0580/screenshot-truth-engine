@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Globe, Music2, CalendarDays, Search, Heart, MessageCircle, Send,
   Instagram, Facebook, Megaphone, MoreHorizontal, Pencil, Trash2,
-  ShieldAlert, Ban, Youtube, Users,
+  ShieldAlert, Ban, Youtube, Users, ImagePlus, X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,6 +63,7 @@ interface CommunityPost {
   youtube_url: string | null;
   instagram_url: string | null;
   facebook_url: string | null;
+  image_url: string | null;
   group_id: string | null;
   setlist_id: string | null;
   setlist: { id: string; name: string } | null;
@@ -107,6 +108,9 @@ export default function CommunityPage() {
   const [postFacebook, setPostFacebook] = useState("");
   const [postDestination, setPostDestination] = useState("general");
   const [activeMediaInputs, setActiveMediaInputs] = useState<Set<string>>(new Set());
+  const [postImageFile, setPostImageFile] = useState<File | null>(null);
+  const [postImagePreview, setPostImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const toggleMediaInput = (key: string) => {
     setActiveMediaInputs(prev => {
@@ -208,7 +212,7 @@ export default function CommunityPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_posts")
-        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, group_id, setlist_id, profiles:user_id(first_name, last_name, avatar_url), setlist:setlist_id(id, name)")
+        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, image_url, group_id, setlist_id, profiles:user_id(first_name, last_name, avatar_url), setlist:setlist_id(id, name)")
         .is("group_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -283,7 +287,7 @@ export default function CommunityPage() {
 
   /* ── Create post mutation ── */
   const createPostMutation = useMutation({
-    mutationFn: async (payload: { content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string; group_id?: string | null }) => {
+    mutationFn: async (payload: { content: string; youtube_url?: string; instagram_url?: string; facebook_url?: string; group_id?: string | null; image_url?: string | null }) => {
       const { error } = await supabase.from("community_posts").insert({
         user_id: user!.id,
         content: payload.content,
@@ -291,11 +295,13 @@ export default function CommunityPage() {
         instagram_url: payload.instagram_url || null,
         facebook_url: payload.facebook_url || null,
         group_id: payload.group_id || null,
+        image_url: payload.image_url || null,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setPostText(""); setPostYoutube(""); setPostInstagram(""); setPostFacebook(""); setPostDestination("general");
+      setPostImageFile(null); setPostImagePreview(null);
       toast.success("Postagem publicada!");
       queryClient.invalidateQueries({ queryKey: ["community-posts"] });
       queryClient.invalidateQueries({ queryKey: ["group-posts"] });
@@ -356,17 +362,46 @@ export default function CommunityPage() {
   const filteredSetlists = setlists.filter((s) => s.name.toLowerCase().includes(search.toLowerCase()));
   const filteredPosts = posts.filter((p) => p.content.toLowerCase().includes(search.toLowerCase()));
 
-  const handlePublishPost = () => {
+  const handlePublishPost = async () => {
     const trimmed = postText.trim();
     if (!trimmed) return;
     if (trimmed.length > 1000) { toast.error("Máximo de 1000 caracteres"); return; }
+
+    let imageUrl: string | null = null;
+    if (postImageFile) {
+      setUploadingImage(true);
+      try {
+        const ext = postImageFile.name.split(".").pop() || "jpg";
+        const path = `${user!.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("community-images").upload(path, postImageFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("community-images").getPublicUrl(path);
+        imageUrl = urlData.publicUrl;
+      } catch {
+        toast.error("Erro ao enviar imagem");
+        setUploadingImage(false);
+        return;
+      }
+      setUploadingImage(false);
+    }
+
     createPostMutation.mutate({
       content: trimmed,
       youtube_url: postYoutube.trim() || undefined,
       instagram_url: postInstagram.trim() || undefined,
       facebook_url: postFacebook.trim() || undefined,
       group_id: postDestination === "general" ? null : postDestination,
+      image_url: imageUrl,
     });
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Apenas imagens são permitidas"); return; }
+    setPostImageFile(file);
+    setPostImagePreview(URL.createObjectURL(file));
   };
 
   const openEditModal = (post: CommunityPost) => {
@@ -530,6 +565,22 @@ export default function CommunityPage() {
                       </TooltipTrigger>
                       <TooltipContent>Facebook</TooltipContent>
                     </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <label
+                          className={cn(
+                            "p-2 rounded-full transition-all duration-200 cursor-pointer",
+                            postImagePreview
+                              ? "bg-emerald-500/15 text-emerald-500 scale-110"
+                              : "text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+                          )}
+                        >
+                          <ImagePlus className="h-5 w-5" />
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+                        </label>
+                      </TooltipTrigger>
+                      <TooltipContent>Anexar Imagem</TooltipContent>
+                    </Tooltip>
                   </div>
                   <div className="grid gap-2">
                     {activeMediaInputs.has("youtube") && (
@@ -551,12 +602,25 @@ export default function CommunityPage() {
                       </div>
                     )}
                   </div>
+                  {/* Image preview */}
+                  {postImagePreview && (
+                    <div className="relative animate-fade-in inline-block">
+                      <img src={postImagePreview} alt="Preview" className="max-h-40 rounded-lg border border-border object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => { setPostImageFile(null); setPostImagePreview(null); }}
+                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs shadow-md"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
                   <Button
                     size="sm"
-                    disabled={!postText.trim() || createPostMutation.isPending}
+                    disabled={!postText.trim() || createPostMutation.isPending || uploadingImage}
                     onClick={handlePublishPost}
                     className="gap-1.5"
                   >
@@ -669,6 +733,12 @@ export default function CommunityPage() {
                         <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">
                           {post.content}
                         </p>
+
+                        {post.image_url && (
+                          <div className="rounded-lg overflow-hidden border border-border animate-fade-in">
+                            <img src={post.image_url} alt="Imagem do post" className="w-full max-h-96 object-cover" loading="lazy" />
+                          </div>
+                        )}
 
                         {post.setlist_id && post.setlist && (
                           <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} />

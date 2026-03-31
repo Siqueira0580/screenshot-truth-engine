@@ -267,6 +267,7 @@ export type Database = {
           facebook_url: string | null
           group_id: string | null
           id: string
+          image_url: string | null
           instagram_url: string | null
           setlist_id: string | null
           updated_at: string | null
@@ -279,6 +280,7 @@ export type Database = {
           facebook_url?: string | null
           group_id?: string | null
           id?: string
+          image_url?: string | null
           instagram_url?: string | null
           setlist_id?: string | null
           updated_at?: string | null
@@ -291,6 +293,7 @@ export type Database = {
           facebook_url?: string | null
           group_id?: string | null
           id?: string
+          image_url?: string | null
           instagram_url?: string | null
           setlist_id?: string | null
           updated_at?: string | null

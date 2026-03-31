@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { ArrowLeft, Megaphone, Settings, Youtube, Instagram, Facebook } from "lucide-react";
+import { ArrowLeft, Megaphone, Settings, Youtube, Instagram, Facebook, ImagePlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -44,6 +44,9 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
   const [postFacebook, setPostFacebook] = useState("");
   const [manageOpen, setManageOpen] = useState(false);
   const [activeMediaInputs, setActiveMediaInputs] = useState<Set<string>>(new Set());
+  const [postImageFile, setPostImageFile] = useState<File | null>(null);
+  const [postImagePreview, setPostImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const toggleMediaInput = (key: string) => {
     setActiveMediaInputs(prev => {
@@ -59,7 +62,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_posts")
-        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, setlist_id, profiles:user_id(first_name, last_name, avatar_url), setlist:setlist_id(id, name)")
+        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, image_url, setlist_id, profiles:user_id(first_name, last_name, avatar_url), setlist:setlist_id(id, name)")
         .eq("group_id", groupId)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -72,8 +75,17 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
     },
   });
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Apenas imagens são permitidas"); return; }
+    setPostImageFile(file);
+    setPostImagePreview(URL.createObjectURL(file));
+  };
+
   const createMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (imageUrl: string | null) => {
       const { error } = await supabase.from("community_posts").insert({
         user_id: user!.id,
         content: postText.trim(),
@@ -81,6 +93,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
         youtube_url: postYoutube.trim() || null,
         instagram_url: postInstagram.trim() || null,
         facebook_url: postFacebook.trim() || null,
+        image_url: imageUrl,
       });
       if (error) throw error;
     },
@@ -89,11 +102,35 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
       setPostYoutube("");
       setPostInstagram("");
       setPostFacebook("");
+      setPostImageFile(null);
+      setPostImagePreview(null);
       toast.success("Publicação no grupo!");
       queryClient.invalidateQueries({ queryKey: ["group-posts", groupId] });
     },
     onError: () => toast.error("Erro ao publicar"),
   });
+
+  const handlePublish = async () => {
+    if (!postText.trim()) return;
+    let imageUrl: string | null = null;
+    if (postImageFile) {
+      setUploadingImage(true);
+      try {
+        const ext = postImageFile.name.split(".").pop() || "jpg";
+        const path = `${user!.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("community-images").upload(path, postImageFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("community-images").getPublicUrl(path);
+        imageUrl = urlData.publicUrl;
+      } catch {
+        toast.error("Erro ao enviar imagem");
+        setUploadingImage(false);
+        return;
+      }
+      setUploadingImage(false);
+    }
+    createMutation.mutate(imageUrl);
+  };
 
   return (
     <div className="space-y-4">
@@ -161,6 +198,18 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
               >
                 <Facebook className="h-5 w-5" />
               </button>
+              <label
+                className={cn(
+                  "p-2 rounded-full transition-all duration-200 cursor-pointer",
+                  postImagePreview
+                    ? "bg-emerald-500/15 text-emerald-500 scale-110"
+                    : "text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10"
+                )}
+                title="Anexar Imagem"
+              >
+                <ImagePlus className="h-5 w-5" />
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+              </label>
             </div>
             <div className="grid gap-2">
               {activeMediaInputs.has("youtube") && (
@@ -182,17 +231,30 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
                 </div>
               )}
             </div>
+            {/* Image preview */}
+            {postImagePreview && (
+              <div className="relative animate-fade-in inline-block">
+                <img src={postImagePreview} alt="Preview" className="max-h-40 rounded-lg border border-border object-cover" />
+                <button
+                  type="button"
+                  onClick={() => { setPostImageFile(null); setPostImagePreview(null); }}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center text-xs shadow-md"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">{postText.length}/1000</span>
             <Button
               size="sm"
-              disabled={!postText.trim() || createMutation.isPending}
-              onClick={() => createMutation.mutate()}
+              disabled={!postText.trim() || createMutation.isPending || uploadingImage}
+              onClick={handlePublish}
               className="gap-1.5"
             >
               <Megaphone className="h-4 w-4" />
-              {createMutation.isPending ? "Publicando..." : "Publicar"}
+              {(createMutation.isPending || uploadingImage) ? "Publicando..." : "Publicar"}
             </Button>
           </div>
         </div>
@@ -225,6 +287,11 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
                   </div>
                 </div>
                 <p className="text-sm text-foreground/90 whitespace-pre-wrap break-words leading-relaxed">{post.content}</p>
+                {post.image_url && (
+                  <div className="rounded-lg overflow-hidden border border-border animate-fade-in">
+                    <img src={post.image_url} alt="Imagem do post" className="w-full max-h-96 object-cover" loading="lazy" />
+                  </div>
+                )}
                 {post.setlist_id && post.setlist && (
                   <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} />
                 )}

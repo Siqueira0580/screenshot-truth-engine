@@ -197,6 +197,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
         groupId={groupId}
         groupName={groupName}
         isCreator={isCreator}
+        onLeave={onBack}
       />
     </div>
   );

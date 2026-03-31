@@ -799,6 +799,15 @@ export default function SetlistDetailPage() {
                     <LinkIcon className="mr-2 h-4 w-4" />
                     <span>Copiar Link Público</span>
                   </DropdownMenuItem>
+                  {myGroups.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShareGroupOpen(true)}>
+                        <Users className="mr-2 h-4 w-4" />
+                        <span>Compartilhar num Grupo</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />

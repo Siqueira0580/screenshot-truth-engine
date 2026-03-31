@@ -291,6 +291,36 @@ export default function SetlistDetailPage() {
         content,
       });
       if (error) throw error;
+
+      // Notify all group members (except the sender)
+      const { data: members } = await supabase
+        .from("community_group_members")
+        .select("user_id")
+        .eq("group_id", shareGroupId)
+        .neq("user_id", user!.id);
+
+      // Also notify the group creator if not the sender
+      const selectedGroup = myGroups.find((g: any) => g.id === shareGroupId);
+      const memberIds = new Set((members || []).map((m: any) => m.user_id as string));
+      if (selectedGroup && selectedGroup.created_by !== user!.id) {
+        memberIds.add(selectedGroup.created_by);
+      }
+
+      if (memberIds.size > 0) {
+        const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
+        const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
+        const groupName = selectedGroup?.name || "grupo";
+
+        const notifications = Array.from(memberIds).map((uid) => ({
+          user_id: uid,
+          type: "group_share",
+          title: `${myName} compartilhou um repertório em "${groupName}"`,
+          body: (setlist as any)?.name || "Repertório",
+          metadata: { setlist_id: id, group_id: shareGroupId },
+        }));
+
+        await supabase.from("notifications").insert(notifications as any);
+      }
     },
     onSuccess: () => {
       toast.success("Repertório publicado no grupo!");

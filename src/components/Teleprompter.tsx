@@ -871,19 +871,18 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           </Button>
         </div>
 
-        {/* Font size */}
-        <div className="flex items-center gap-0.5 sm:gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.max(s - 2, 14))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
-            <Minus className="h-3 w-3" />
-          </Button>
-          <span className="text-[10px] sm:text-xs text-foreground font-mono w-6 sm:w-8 text-center">{fontSize}</span>
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.min(s + 2, 60))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-
-        {/* Font picker */}
-        <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} compact isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
+        {/* Text tools popover */}
+        <TextToolsPopover
+          font={presentationFont}
+          onFontChange={setPresentationFont}
+          fontSize={fontSize}
+          onFontSizeChange={setFontSize}
+          isBold={isBold}
+          isItalic={isItalic}
+          onToggleBold={toggleBold}
+          onToggleItalic={toggleItalic}
+          compact
+        />
 
         {/* Instrument selector */}
         <div className="flex items-center gap-1">

@@ -17,6 +17,7 @@ const iconMap: Record<string, React.ElementType> = {
   direct_message: MessageSquare,
   setlist_comment: MessageCircle,
   setlist_like: Heart,
+  group_share: Share2,
 };
 
 function getNotificationRoute(n: Notification): string | null {

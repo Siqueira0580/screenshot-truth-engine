@@ -237,6 +237,19 @@ export default function CommunityPage() {
       } else {
         const { error } = await supabase.from("setlist_likes").insert({ setlist_id: setlistId, user_id: user!.id });
         if (error) throw error;
+
+        // Notify setlist owner
+        const setlist = setlists.find((s) => s.id === setlistId);
+        if (setlist && setlist.user_id !== user!.id) {
+          const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
+          const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
+          await supabase.from("notifications").insert({
+            user_id: setlist.user_id,
+            type: "setlist_like",
+            title: `${myName} curtiu "${setlist.name}"`,
+            metadata: { setlist_id: setlistId },
+          } as any);
+        }
       }
     },
     onMutate: async ({ setlistId, isLiked }) => {

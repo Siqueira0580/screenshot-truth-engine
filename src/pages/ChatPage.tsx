@@ -161,6 +161,17 @@ export default function ChatPage() {
       // Rollback optimistic
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
       toast.error("Erro ao enviar mensagem");
+    } else {
+      // Send notification to receiver
+      const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user.id).single();
+      const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
+      await supabase.from("notifications").insert({
+        user_id: userId,
+        type: "direct_message",
+        title: `Nova mensagem de ${myName}`,
+        body: trimmed.length > 80 ? trimmed.slice(0, 80) + "…" : trimmed,
+        metadata: { sender_id: user.id },
+      } as any);
     }
     setSending(false);
   };

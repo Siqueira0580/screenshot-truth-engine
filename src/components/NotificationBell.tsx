@@ -1,5 +1,5 @@
 import { useNotifications } from "@/hooks/useNotifications";
-import { Bell, Check, Users } from "lucide-react";
+import { Bell, Check, Users, MessageSquare, Heart, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,6 +12,9 @@ import { cn } from "@/lib/utils";
 
 const iconMap: Record<string, React.ElementType> = {
   group_invite: Users,
+  direct_message: MessageSquare,
+  setlist_comment: MessageCircle,
+  setlist_like: Heart,
 };
 
 export default function NotificationBell() {

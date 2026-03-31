@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { X, Play, Pause, Minus, Plus, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
-import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
+import { X, Play, Pause, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
+import { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
+import TextToolsPopover from "@/components/TextToolsPopover";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,6 +18,7 @@ import { parseChordPro, isChordProFormat } from "@/lib/chordpro-parser";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface TeleprompterSong {
@@ -29,6 +31,8 @@ interface TeleprompterSong {
   loop_count?: number | null;
   auto_next?: boolean | null;
   speed?: number | null; // percentage value e.g. 250 = 2.5x
+  setlist_item_id?: string | null; // for saving transposition
+  transposed_key?: string | null; // pre-saved transposition from setlist
 }
 
 interface TeleprompterProps {
@@ -37,6 +41,7 @@ interface TeleprompterProps {
   open: boolean;
   onClose: () => void;
   autoHideControls?: boolean;
+  onTransposeChange?: (songIndex: number, newKey: string, setlistItemId: string) => void;
 }
 
 function makeChordClickable(text: string) {
@@ -48,7 +53,7 @@ function makeChordClickable(text: string) {
 
 const NEAR_END_THRESHOLD = 0.80; // 80% scrolled = near end
 
-export default function Teleprompter({ songs, initialIndex = 0, open, onClose, autoHideControls = true }: TeleprompterProps) {
+export default function Teleprompter({ songs, initialIndex = 0, open, onClose, autoHideControls = true, onTransposeChange }: TeleprompterProps) {
   const { preferredInstrument, setPreferredInstrument } = useUserPreferences();
   const { isBold, isItalic, toggleBold, toggleItalic, typographyClasses } = useTypographyPrefs();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -59,7 +64,22 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   });
   const [fontSize, setFontSize] = useState(18);
   const [showControls, setShowControls] = useState(true);
-  const [transpose, setTranspose] = useState(0);
+  const [transpose, setTranspose] = useState(() => {
+    // If first song has a saved transposed_key, compute initial transpose
+    const s = songs[initialIndex];
+    if (s?.transposed_key && s?.musical_key) {
+      const origRoot = s.musical_key.match(/^([A-G][#b]?)/)?.[1];
+      const transRoot = s.transposed_key.match(/^([A-G][#b]?)/)?.[1];
+      if (origRoot && transRoot) {
+        const origIdx = ALL_KEYS.indexOf(origRoot);
+        const transIdx = ALL_KEYS.indexOf(transRoot);
+        if (origIdx >= 0 && transIdx >= 0) {
+          return ((transIdx - origIdx) % 12 + 12) % 12;
+        }
+      }
+    }
+    return 0;
+  });
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
   const [presentationFont, setPresentationFont] = useState<PresentationFontId>("mono");
@@ -88,7 +108,24 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   }, [currentIndex, songs]);
 
   const song = songs[currentIndex];
+  const originalKey = song?.musical_key;
   const displayKey = transposeKey(song?.musical_key, transpose);
+  
+
+  // Save transposed key to setlist_items when transpose changes
+  useEffect(() => {
+    if (!song?.setlist_item_id || transpose === 0) return;
+    const newKey = transposeKey(song.musical_key, transpose);
+    if (!newKey) return;
+    const timeout = setTimeout(async () => {
+      await supabase
+        .from("setlist_items")
+        .update({ transposed_key: newKey })
+        .eq("id", song.setlist_item_id!);
+      onTransposeChange?.(currentIndex, newKey, song.setlist_item_id!);
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [transpose, currentIndex, song?.setlist_item_id, song?.musical_key, onTransposeChange]);
 
   // Build all songs' display bodies (use transposeChordPro for ChordPro-formatted text)
   const displayBodies = useMemo(() =>
@@ -355,16 +392,24 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 )}
                 <div className="min-w-0 flex-1 flex flex-col justify-center">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-extrabold leading-tight text-foreground truncate">{song.title}</h2>
-                    {displayKey && (
-                      <span className="shrink-0 text-lg font-black text-primary font-mono">{displayKey}</span>
-                    )}
+                    <h2 className="text-lg font-extrabold leading-tight text-foreground truncate">{song.title}</h2>
                   </div>
-                  <p className="text-base text-muted-foreground truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {song.artist}
                     {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                   </p>
                 </div>
+                {/* Prominent key display - mobile */}
+                {displayKey && (
+                  <div className="shrink-0 flex flex-col items-center">
+                    <span className="text-2xl font-black text-primary font-mono leading-none">{displayKey}</span>
+                    {originalKey && displayKey !== originalKey && (
+                      <span className="text-[10px] text-muted-foreground font-mono leading-tight mt-0.5">
+                        Orig: {originalKey}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className={cn(
@@ -449,11 +494,21 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 <h2 className="text-base font-bold text-foreground truncate">{song.title}</h2>
                 <p className="text-xs text-muted-foreground truncate">
                   {song.artist}
-                  {displayKey && ` · Tom: ${displayKey}`}
                   {song.bpm && ` · ${song.bpm} BPM`}
                   {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                 </p>
               </div>
+              {/* Prominent key display - desktop center */}
+              {displayKey && (
+                <div className="shrink-0 flex flex-col items-center ml-2">
+                  <span className="text-3xl font-black text-primary font-mono leading-none">{displayKey}</span>
+                  {originalKey && displayKey !== originalKey && (
+                    <span className="text-[10px] text-muted-foreground font-mono leading-tight mt-0.5">
+                      Orig: {originalKey}
+                    </span>
+                  )}
+                </div>
+              )}
               <Popover>
                 <PopoverTrigger asChild>
                   <button className={cn(
@@ -831,19 +886,18 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
           </Button>
         </div>
 
-        {/* Font size */}
-        <div className="flex items-center gap-0.5 sm:gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.max(s - 2, 14))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
-            <Minus className="h-3 w-3" />
-          </Button>
-          <span className="text-[10px] sm:text-xs text-foreground font-mono w-6 sm:w-8 text-center">{fontSize}</span>
-          <Button variant="ghost" size="icon" onClick={() => setFontSize((s) => Math.min(s + 2, 60))} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
-            <Plus className="h-3 w-3" />
-          </Button>
-        </div>
-
-        {/* Font picker */}
-        <PresentationFontPicker value={presentationFont} onChange={setPresentationFont} compact isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
+        {/* Text tools popover */}
+        <TextToolsPopover
+          font={presentationFont}
+          onFontChange={setPresentationFont}
+          fontSize={fontSize}
+          onFontSizeChange={setFontSize}
+          isBold={isBold}
+          isItalic={isItalic}
+          onToggleBold={toggleBold}
+          onToggleItalic={toggleItalic}
+          compact
+        />
 
         {/* Instrument selector */}
         <div className="flex items-center gap-1">

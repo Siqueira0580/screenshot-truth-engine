@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import PresentationFontPicker, { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
+import { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
+import TextToolsPopover from "@/components/TextToolsPopover";
 import FontPreviewModal from "@/components/FontPreviewModal";
 import { Music2, ChevronUp, ChevronDown, Wand2, Loader2, Youtube, Play, Guitar, Pencil, Trash2, Save, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -63,6 +64,10 @@ export default function SongDetailPage() {
     return (saved && PRESENTATION_FONTS.some(f => f.id === saved) ? saved : "sans") as PresentationFontId;
   });
   const [transpose, setTranspose] = useState(0);
+  const [songFontSize, setSongFontSize] = useState(() => {
+    const saved = localStorage.getItem("@smartcifra:fontSize");
+    return saved ? parseInt(saved, 10) : 16;
+  });
   const [previewFont, setPreviewFont] = useState<PresentationFontId | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
@@ -321,7 +326,19 @@ export default function SongDetailPage() {
               </Button>
             )}
             {song.body_text && (
-              <PresentationFontPicker value={presentationFont} onChange={handleFontChange} isBold={isBold} isItalic={isItalic} onToggleBold={toggleBold} onToggleItalic={toggleItalic} />
+              <TextToolsPopover
+                font={presentationFont}
+                onFontChange={handleFontChange}
+                fontSize={songFontSize}
+                onFontSizeChange={(size) => {
+                  setSongFontSize(size);
+                  localStorage.setItem("@smartcifra:fontSize", String(size));
+                }}
+                isBold={isBold}
+                isItalic={isItalic}
+                onToggleBold={toggleBold}
+                onToggleItalic={toggleItalic}
+              />
             )}
             {song.body_text && (
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
@@ -336,8 +353,13 @@ export default function SongDetailPage() {
             </span>
           )}
           {displayKey && (
-            <span className="rounded bg-primary/10 px-2 py-0.5 font-mono font-semibold text-primary text-xs">
-              Tom: {displayKey}
+            <span className="inline-flex flex-col items-start rounded bg-primary/10 px-2 py-0.5 font-mono">
+              <span className="text-lg font-black text-primary leading-tight">{displayKey}</span>
+              {song.musical_key && displayKey !== song.musical_key && (
+                <span className="text-[10px] text-muted-foreground leading-tight">
+                  Original: {song.musical_key}
+                </span>
+              )}
             </span>
           )}
           {song.bpm && <span>{song.bpm} BPM</span>}

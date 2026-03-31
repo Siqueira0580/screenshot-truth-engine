@@ -19,7 +19,7 @@ interface Props {
   onLeave?: () => void;
 }
 
-export default function GroupManageModal({ open, onOpenChange, groupId, groupName, isCreator }: Props) {
+export default function GroupManageModal({ open, onOpenChange, groupId, groupName, isCreator, onLeave }: Props) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");

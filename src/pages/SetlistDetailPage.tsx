@@ -287,10 +287,9 @@ export default function SetlistDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["setlist", id] });
       }
 
-      const setlistUrl = `${window.location.origin}/setlists/${id}`;
       const content = shareGroupMessage.trim()
-        ? `${shareGroupMessage.trim()}\n\n🎵 Repertório: ${(setlist as any)?.name || "Sem nome"}\n${setlistUrl}`
-        : `🎵 Repertório compartilhado: ${(setlist as any)?.name || "Sem nome"}\n${setlistUrl}`;
+        ? shareGroupMessage.trim()
+        : `🎵 Compartilhou o repertório "${(setlist as any)?.name || "Sem nome"}"`;
       const { error } = await supabase.from("community_posts").insert({
         user_id: user!.id,
         group_id: shareGroupId,
@@ -850,10 +849,7 @@ export default function SetlistDetailPage() {
                     try {
                       if (isPublic) {
                         // Already public — create a community post with rich card
-                        const setlistUrl = `${window.location.origin}/setlists/${id}`;
-                        const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
-                        const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
-                        const content = `🎵 ${myName} compartilhou o repertório "${(setlist as any)?.name}"\n${setlistUrl}`;
+                        const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
                         const { error } = await supabase.from("community_posts").insert({
                           user_id: user!.id,
                           content,
@@ -871,10 +867,7 @@ export default function SetlistDetailPage() {
                           .eq("id", id!);
                         if (pubErr) throw pubErr;
                         queryClient.invalidateQueries({ queryKey: ["setlist", id] });
-                        const setlistUrl = `${window.location.origin}/setlists/${id}`;
-                        const { data: myProfile } = await supabase.from("profiles").select("first_name, last_name").eq("id", user!.id).single();
-                        const myName = myProfile ? [myProfile.first_name, myProfile.last_name].filter(Boolean).join(" ") || "Alguém" : "Alguém";
-                        const content = `🎵 ${myName} compartilhou o repertório "${(setlist as any)?.name}"\n${setlistUrl}`;
+                        const content = `🎵 Compartilhou o repertório "${(setlist as any)?.name}"`;
                         const { error } = await supabase.from("community_posts").insert({
                           user_id: user!.id,
                           content,

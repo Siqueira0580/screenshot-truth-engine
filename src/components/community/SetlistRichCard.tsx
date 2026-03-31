@@ -20,7 +20,7 @@ interface Props {
   ownerName?: string | null;
 }
 
-export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime, ownerId }: Props) {
+export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime, ownerId, ownerName }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();

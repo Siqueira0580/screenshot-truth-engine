@@ -75,8 +75,17 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
     },
   });
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Apenas imagens são permitidas"); return; }
+    setPostImageFile(file);
+    setPostImagePreview(URL.createObjectURL(file));
+  };
+
   const createMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (imageUrl: string | null) => {
       const { error } = await supabase.from("community_posts").insert({
         user_id: user!.id,
         content: postText.trim(),
@@ -84,6 +93,7 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
         youtube_url: postYoutube.trim() || null,
         instagram_url: postInstagram.trim() || null,
         facebook_url: postFacebook.trim() || null,
+        image_url: imageUrl,
       });
       if (error) throw error;
     },
@@ -92,11 +102,35 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
       setPostYoutube("");
       setPostInstagram("");
       setPostFacebook("");
+      setPostImageFile(null);
+      setPostImagePreview(null);
       toast.success("Publicação no grupo!");
       queryClient.invalidateQueries({ queryKey: ["group-posts", groupId] });
     },
     onError: () => toast.error("Erro ao publicar"),
   });
+
+  const handlePublish = async () => {
+    if (!postText.trim()) return;
+    let imageUrl: string | null = null;
+    if (postImageFile) {
+      setUploadingImage(true);
+      try {
+        const ext = postImageFile.name.split(".").pop() || "jpg";
+        const path = `${user!.id}/${crypto.randomUUID()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("community-images").upload(path, postImageFile);
+        if (upErr) throw upErr;
+        const { data: urlData } = supabase.storage.from("community-images").getPublicUrl(path);
+        imageUrl = urlData.publicUrl;
+      } catch {
+        toast.error("Erro ao enviar imagem");
+        setUploadingImage(false);
+        return;
+      }
+      setUploadingImage(false);
+    }
+    createMutation.mutate(imageUrl);
+  };
 
   return (
     <div className="space-y-4">

@@ -16,6 +16,7 @@ interface Props {
   groupId: string;
   groupName: string;
   isCreator: boolean;
+  onLeave?: () => void;
 }
 
 export default function GroupManageModal({ open, onOpenChange, groupId, groupName, isCreator }: Props) {

@@ -670,6 +670,10 @@ export default function CommunityPage() {
                           {post.content}
                         </p>
 
+                        {post.setlist_id && post.setlist && (
+                          <SetlistRichCard setlistId={post.setlist.id} setlistName={post.setlist.name} />
+                        )}
+
                         {ytId && (
                           <div className="rounded-lg overflow-hidden border border-border">
                             <iframe

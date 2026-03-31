@@ -207,7 +207,7 @@ export default function CommunityPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_posts")
-        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, group_id, profiles:user_id(first_name, last_name, avatar_url)")
+        .select("id, user_id, content, created_at, updated_at, youtube_url, instagram_url, facebook_url, group_id, setlist_id, profiles:user_id(first_name, last_name, avatar_url), setlist:setlist_id(id, name)")
         .is("group_id", null)
         .order("created_at", { ascending: false })
         .limit(100);
@@ -215,6 +215,7 @@ export default function CommunityPage() {
       return (data || []).map((p: any) => ({
         ...p,
         profiles: Array.isArray(p.profiles) ? p.profiles[0] || null : p.profiles,
+        setlist: Array.isArray(p.setlist) ? p.setlist[0] || null : p.setlist,
       })) as CommunityPost[];
     },
   });

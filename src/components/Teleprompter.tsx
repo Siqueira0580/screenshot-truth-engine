@@ -377,16 +377,24 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 )}
                 <div className="min-w-0 flex-1 flex flex-col justify-center">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-xl font-extrabold leading-tight text-foreground truncate">{song.title}</h2>
-                    {displayKey && (
-                      <span className="shrink-0 text-lg font-black text-primary font-mono">{displayKey}</span>
-                    )}
+                    <h2 className="text-lg font-extrabold leading-tight text-foreground truncate">{song.title}</h2>
                   </div>
-                  <p className="text-base text-muted-foreground truncate">
+                  <p className="text-xs text-muted-foreground truncate">
                     {song.artist}
                     {songs.length > 1 && ` · ${currentIndex + 1}/${songs.length}`}
                   </p>
                 </div>
+                {/* Prominent key display - mobile */}
+                {displayKey && (
+                  <div className="shrink-0 flex flex-col items-center">
+                    <span className="text-2xl font-black text-primary font-mono leading-none">{displayKey}</span>
+                    {originalKey && displayKey !== originalKey && (
+                      <span className="text-[10px] text-muted-foreground font-mono leading-tight mt-0.5">
+                        Orig: {originalKey}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <Popover>
                   <PopoverTrigger asChild>
                     <button className={cn(

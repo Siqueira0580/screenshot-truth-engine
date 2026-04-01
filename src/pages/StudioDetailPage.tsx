@@ -17,7 +17,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { resolveAudioUrl } from "@/lib/audio-url";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface AudioTrack {
   id: string;

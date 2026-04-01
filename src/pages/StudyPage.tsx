@@ -206,6 +206,7 @@ export default function StudyPage() {
     const loadStems = async () => {
       const stemMap: Record<StemType, string | null> = {
         vocals: audioTrack.file_vocals,
+        backing_vocal: (audioTrack as any).file_backing_vocal ?? null,
         percussion: audioTrack.file_percussion, harmony: audioTrack.file_harmony,
         guitar: audioTrack.file_guitar,
       };

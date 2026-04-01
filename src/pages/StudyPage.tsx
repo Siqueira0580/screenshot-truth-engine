@@ -150,9 +150,9 @@ export default function StudyPage() {
   const [duration, setDuration] = useState(0);
   const [loading, setLoading] = useState(false);
   const [masterVol, setMasterVol] = useState(80);
-  const [stemVols, setStemVols] = useState<Record<StemType, number>>({ vocals: 100, percussion: 100, harmony: 100, guitar: 100 });
-  const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({ vocals: false, percussion: false, harmony: false, guitar: false });
-  const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({ vocals: false, percussion: false, harmony: false, guitar: false });
+  const [stemVols, setStemVols] = useState<Record<StemType, number>>({ vocals: 100, backing_vocal: 100, percussion: 100, harmony: 100, guitar: 100 });
+  const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({ vocals: false, backing_vocal: false, percussion: false, harmony: false, guitar: false });
+  const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({ vocals: false, backing_vocal: false, percussion: false, harmony: false, guitar: false });
   const [transpose, setTranspose] = useState(0);
   const [scrollSpeed, setScrollSpeed] = useState(2);
   const [isScrolling, setIsScrolling] = useState(false);

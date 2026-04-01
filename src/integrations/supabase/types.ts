@@ -69,6 +69,7 @@ export type Database = {
         Row: {
           ai_chordpro_text: string | null
           created_at: string
+          file_backing_vocal: string | null
           file_full: string | null
           file_guitar: string | null
           file_harmony: string | null
@@ -82,6 +83,7 @@ export type Database = {
         Insert: {
           ai_chordpro_text?: string | null
           created_at?: string
+          file_backing_vocal?: string | null
           file_full?: string | null
           file_guitar?: string | null
           file_harmony?: string | null
@@ -95,6 +97,7 @@ export type Database = {
         Update: {
           ai_chordpro_text?: string | null
           created_at?: string
+          file_backing_vocal?: string | null
           file_full?: string | null
           file_guitar?: string | null
           file_harmony?: string | null

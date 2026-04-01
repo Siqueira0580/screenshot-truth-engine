@@ -1,0 +1,1 @@
+ALTER TABLE public.audio_tracks ADD COLUMN IF NOT EXISTS file_backing_vocal text;

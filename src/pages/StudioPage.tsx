@@ -95,7 +95,7 @@ export default function StudioPage() {
       const path = `${song.id}/full.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("audio-stems")
-        .upload(path, file, { contentType: file.type || "audio/mpeg" });
+        .upload(path, file, { contentType: file.type || "audio/mpeg", upsert: true });
       if (upErr) throw upErr;
 
       // Create audio_tracks record – user_id MUST match auth.uid() for RLS

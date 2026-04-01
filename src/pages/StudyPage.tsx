@@ -486,7 +486,6 @@ export default function StudyPage() {
                 const colMap: Record<StemType, string> = {
                   vocals: "file_vocals", backing_vocal: "file_backing_vocal", percussion: "file_percussion", harmony: "file_harmony", guitar: "file_guitar",
                 };
-                };
                 const hasFile = audioTrack && audioTrack[colMap[type]];
                 if (!hasFile) return null;
 

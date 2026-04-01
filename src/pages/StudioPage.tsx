@@ -1,12 +1,13 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music2, Upload, Plus, Loader2 } from "lucide-react";
+import { Music2, Upload, Plus, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchArtists, createSong, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { cn } from "@/lib/utils";
 import GuidedTour from "@/components/GuidedTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";

@@ -53,7 +53,6 @@ export default function StudioDetailPage() {
   const { songId } = useParams<{ songId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
   const engineRef = useRef<MultitrackEngine | null>(null);
 
   const [isPlaying, setIsPlaying] = useState(false);

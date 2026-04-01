@@ -483,8 +483,9 @@ export default function StudyPage() {
                 )}
               </div>
               {STEM_DISPLAY.map(({ type, label, icon: Icon, color }) => {
-                const colMap: Record<StemType, keyof AudioTrack> = {
-                  vocals: "file_vocals", percussion: "file_percussion", harmony: "file_harmony", guitar: "file_guitar",
+                const colMap: Record<StemType, string> = {
+                  vocals: "file_vocals", backing_vocal: "file_backing_vocal", percussion: "file_percussion", harmony: "file_harmony", guitar: "file_guitar",
+                };
                 };
                 const hasFile = audioTrack && audioTrack[colMap[type]];
                 if (!hasFile) return null;

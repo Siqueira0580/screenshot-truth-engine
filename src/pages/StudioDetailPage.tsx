@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Play, Pause, Square, Upload, Music2, Mic2, Drum, Piano, Guitar,
-  Volume2, VolumeX, ChevronUp, ChevronDown, Loader2, Scissors, Star, ScanSearch, BookOpen, AudioLines,
+  Volume2, ChevronUp, ChevronDown, Loader2, Scissors, ScanSearch, BookOpen, Trash2, MicVocal,
 } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import { Progress } from "@/components/ui/progress";
@@ -16,19 +16,25 @@ import { analyzeAudio, getTransposedKey } from "@/lib/key-detection";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { resolveAudioUrl } from "@/lib/audio-url";
+import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 interface AudioTrack {
   id: string;
   song_id: string;
+  user_id: string | null;
   file_full: string | null;
   file_vocals: string | null;
   file_percussion: string | null;
   file_harmony: string | null;
   file_guitar: string | null;
+  file_backing_vocal: string | null;
 }
 
+const ALL_STEMS: StemType[] = ["vocals", "backing_vocal", "percussion", "harmony", "guitar"];
+
 const STEM_DISPLAY: { type: StemType; label: string; icon: typeof Music2; color: string }[] = [
-  { type: "vocals", label: "Voz", icon: Mic2, color: "text-blue-400" },
+  { type: "vocals", label: "Voz Principal", icon: Mic2, color: "text-blue-400" },
+  { type: "backing_vocal", label: "Backup Vocal", icon: MicVocal, color: "text-violet-400" },
   { type: "percussion", label: "Percussão", icon: Drum, color: "text-orange-400" },
   { type: "harmony", label: "Harmonia", icon: Piano, color: "text-emerald-400" },
   { type: "guitar", label: "Guitarra", icon: Guitar, color: "text-rose-400" },
@@ -39,6 +45,9 @@ function formatTime(s: number) {
   const sec = Math.floor(s % 60);
   return `${m}:${sec.toString().padStart(2, "0")}`;
 }
+
+const defaultStems = (): Record<StemType, number> => ({ vocals: 100, backing_vocal: 100, percussion: 100, harmony: 100, guitar: 100 });
+const defaultBoolStems = (): Record<StemType, boolean> => ({ vocals: false, backing_vocal: false, percussion: false, harmony: false, guitar: false });
 
 export default function StudioDetailPage() {
   const { songId } = useParams<{ songId: string }>();
@@ -52,22 +61,16 @@ export default function StudioDetailPage() {
   const [loading, setLoading] = useState(false);
   const [pitch, setPitch] = useState(0);
   const [masterVol, setMasterVol] = useState(80);
-  const [stemVols, setStemVols] = useState<Record<StemType, number>>({
-    vocals: 100, percussion: 100, harmony: 100, guitar: 100,
-  });
-  const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({
-    vocals: false, percussion: false, harmony: false, guitar: false,
-  });
-  const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({
-    vocals: false, percussion: false, harmony: false, guitar: false,
-  });
-  const [gateStems, setGateStems] = useState<Record<StemType, boolean>>({
-    vocals: false, percussion: false, harmony: false, guitar: false,
-  });
+  const [stemVols, setStemVols] = useState<Record<StemType, number>>(defaultStems());
+  const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>(defaultBoolStems());
+  const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>(defaultBoolStems());
+  const [gateStems, setGateStems] = useState<Record<StemType, boolean>>(defaultBoolStems());
   const [uploadingNew, setUploadingNew] = useState(false);
   const [separating, setSeparating] = useState(false);
   const [separationProgress, setSeparationProgress] = useState({ percent: 0, label: "" });
   const [detectingKey, setDetectingKey] = useState(false);
+  const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
+  const [deleteStemTarget, setDeleteStemTarget] = useState<StemType | null>(null);
 
   const { data: song, refetch: refetchSong } = useQuery({
     queryKey: ["song", songId],
@@ -112,6 +115,7 @@ export default function StudioDetailPage() {
     const loadStems = async () => {
       const stemMap: Record<StemType, string | null> = {
         vocals: audioTrack.file_vocals,
+        backing_vocal: audioTrack.file_backing_vocal,
         percussion: audioTrack.file_percussion,
         harmony: audioTrack.file_harmony,
         guitar: audioTrack.file_guitar,
@@ -164,9 +168,7 @@ export default function StudioDetailPage() {
       await updateSong(songId, { musical_key: keyValue, bpm: result.bpm });
       refetchSong();
       queryClient.invalidateQueries({ queryKey: ["songs"] });
-      toast.success(
-        `Tom: ${result.key.display} · BPM: ${result.bpm}`
-      );
+      toast.success(`Tom: ${result.key.display} · BPM: ${result.bpm}`);
     } catch (err: any) {
       toast.error(`Erro na análise: ${err.message}`);
     } finally {
@@ -176,35 +178,27 @@ export default function StudioDetailPage() {
 
   const handleSeparateStems = async () => {
     if (!audioTrack?.file_full || !songId) return;
-
     setSeparating(true);
     setSeparationProgress({ percent: 5, label: "Iniciando separação..." });
     const toastId = toast.loading("Iniciando separação de stems...");
-
     try {
       const audioUrl = await resolveAudioUrl(audioTrack.file_full);
       if (!audioUrl) throw new Error("Não foi possível acessar o áudio");
       const { data: startData, error: startError } = await supabase.functions.invoke("separate-stems", {
         body: { action: "start", audio_url: audioUrl, song_id: songId },
       });
-
       if (startError) throw startError;
       if (!startData?.prediction_id) throw new Error(startData?.error || "Falha ao iniciar");
-
       const predictionId = startData.prediction_id;
       setSeparationProgress({ percent: 15, label: "Enviado para IA..." });
       toast.loading("Processando IA... Isso pode levar 3-5 minutos.", { id: toastId });
-
       const maxPolls = 60;
       for (let i = 0; i < maxPolls; i++) {
         await new Promise(r => setTimeout(r, 10000));
-
         const { data: pollData, error: pollError } = await supabase.functions.invoke("separate-stems", {
           body: { action: "poll", prediction_id: predictionId, song_id: songId },
         });
-
         if (pollError) throw pollError;
-
         const status = pollData?.status;
         if (status === "processing" || status === "starting") {
           const pct = Math.min(15 + Math.round((i / maxPolls) * 75), 90);
@@ -212,19 +206,16 @@ export default function StudioDetailPage() {
           toast.loading(`Processando IA... (${(i + 1) * 10}s)`, { id: toastId });
           continue;
         }
-
         if (status === "succeeded") {
           setSeparationProgress({ percent: 100, label: "Stems prontos!" });
           toast.success(`Stems separados com sucesso! (${pollData.stems?.length || 0} faixas)`, { id: toastId });
           refetchTrack();
           return;
         }
-
         if (status === "failed" || status === "canceled") {
           throw new Error(pollData?.error || `Separação ${status}`);
         }
       }
-
       throw new Error("Timeout: separação demorou mais de 10 minutos");
     } catch (err: any) {
       toast.error(`Erro na separação: ${err.message}`, { id: toastId });
@@ -234,20 +225,93 @@ export default function StudioDetailPage() {
     }
   };
 
+  // Delete entire project (song + audio_tracks + storage files)
+  const handleDeleteProject = async () => {
+    if (!songId || !audioTrack) return;
+    try {
+      // Remove storage files
+      const filesToRemove: string[] = [];
+      for (const key of ["file_full", "file_vocals", "file_percussion", "file_harmony", "file_guitar", "file_backing_vocal"] as const) {
+        const val = (audioTrack as any)[key];
+        if (val && typeof val === "string") filesToRemove.push(val);
+      }
+      if (filesToRemove.length > 0) {
+        await supabase.storage.from("audio-stems").remove(filesToRemove);
+      }
+      // Delete audio track record
+      await supabase.from("audio_tracks").delete().eq("id", audioTrack.id);
+      // Delete song record
+      await supabase.from("songs").delete().eq("id", songId);
+      queryClient.invalidateQueries({ queryKey: ["studio-songs"] });
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      toast.success("Projeto excluído com sucesso.");
+      navigate("/studio");
+    } catch (err: any) {
+      toast.error(`Erro ao excluir: ${err.message}`);
+    }
+  };
+
+  // Delete a single stem
+  const handleDeleteStem = async () => {
+    if (!deleteStemTarget || !audioTrack) return;
+    const colMap: Record<StemType, string> = {
+      vocals: "file_vocals", backing_vocal: "file_backing_vocal",
+      percussion: "file_percussion", harmony: "file_harmony", guitar: "file_guitar",
+    };
+    const col = colMap[deleteStemTarget];
+    const filePath = (audioTrack as any)[col];
+    try {
+      if (filePath) {
+        await supabase.storage.from("audio-stems").remove([filePath]);
+      }
+      await supabase.from("audio_tracks").update({ [col]: null } as any).eq("id", audioTrack.id);
+      refetchTrack();
+      toast.success("Faixa removida.");
+    } catch (err: any) {
+      toast.error(`Erro ao remover faixa: ${err.message}`);
+    } finally {
+      setDeleteStemTarget(null);
+    }
+  };
+
+  // Upload a stem file for a specific type
+  const handleUploadStem = async (file: File, stemType: StemType) => {
+    if (!songId || !audioTrack) return;
+    setUploadingNew(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${songId}/${stemType}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("audio-stems")
+        .upload(path, file, { contentType: file.type || "audio/mpeg", upsert: true });
+      if (upErr) throw upErr;
+      const colMap: Record<StemType, string> = {
+        vocals: "file_vocals", backing_vocal: "file_backing_vocal",
+        percussion: "file_percussion", harmony: "file_harmony", guitar: "file_guitar",
+      };
+      await supabase.from("audio_tracks").update({ [colMap[stemType]]: path } as any).eq("id", audioTrack.id);
+      refetchTrack();
+      toast.success(`Faixa "${STEM_DISPLAY.find(s => s.type === stemType)?.label}" enviada!`);
+    } catch (err: any) {
+      toast.error(`Erro no upload: ${err.message}`);
+    } finally {
+      setUploadingNew(false);
+    }
+  };
+
   const artistPhoto = song?.artist
     ? artists.find(a => a.name.toLowerCase() === song.artist!.toLowerCase())?.photo_url
     : null;
 
   const hasAnyStem = audioTrack && (
     audioTrack.file_vocals || audioTrack.file_percussion ||
-    audioTrack.file_harmony || audioTrack.file_guitar
+    audioTrack.file_harmony || audioTrack.file_guitar || audioTrack.file_backing_vocal
   );
 
   const hasSeparatedStems = audioTrack && (
     audioTrack.file_vocals || audioTrack.file_percussion || audioTrack.file_harmony || audioTrack.file_guitar
   );
 
-  // Parse original key for transposition display
   const originalKey = song?.musical_key;
   const originalKeyNote = originalKey ? originalKey.replace("m", "").replace("#", "#") : null;
   const isMinor = originalKey?.endsWith("m") || false;
@@ -260,18 +324,25 @@ export default function StudioDetailPage() {
 
   return (
     <div className="space-y-5 w-full max-w-[100vw] overflow-x-hidden">
-      {/* Back button + title */}
+      {/* Back button + title + delete */}
       <div className="flex flex-wrap items-center gap-3">
         <BackButton />
         <div className="flex-1 min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{song?.title || "Carregando..."}</h1>
           {song?.artist && <p className="text-muted-foreground text-sm">{song.artist}</p>}
         </div>
-        {song?.body_text && (
-          <Button variant="outline" className="gap-2 shrink-0" onClick={() => navigate(`/study/${songId}`)}>
-            <BookOpen className="h-4 w-4" /> Modo Estudo
-          </Button>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {song?.body_text && (
+            <Button variant="outline" className="gap-2" onClick={() => navigate(`/study/${songId}`)}>
+              <BookOpen className="h-4 w-4" /> <span className="hidden sm:inline">Modo Estudo</span>
+            </Button>
+          )}
+          {audioTrack && (
+            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteProjectOpen(true)} title="Excluir projeto">
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Now playing header */}
@@ -290,7 +361,7 @@ export default function StudioDetailPage() {
           </div>
         </div>
 
-        {/* Key + BPM + actions row */}
+        {/* Key + BPM + actions */}
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {(originalKey || song?.bpm) ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -300,9 +371,7 @@ export default function StudioDetailPage() {
                     {pitch !== 0 && transposedKeyDisplay ? transposedKeyDisplay : originalKey}
                   </span>
                   {pitch !== 0 && transposedKeyDisplay && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">
-                      orig: {originalKey}
-                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">orig: {originalKey}</p>
                   )}
                   <p className="text-[10px] text-muted-foreground mt-0.5">Tom</p>
                 </div>
@@ -322,18 +391,8 @@ export default function StudioDetailPage() {
               )}
             </div>
           ) : audioTrack?.file_full ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={handleAnalyzeAudio}
-              disabled={detectingKey}
-            >
-              {detectingKey ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <ScanSearch className="h-3.5 w-3.5" />
-              )}
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={handleAnalyzeAudio} disabled={detectingKey}>
+              {detectingKey ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ScanSearch className="h-3.5 w-3.5" />}
               {detectingKey ? "Analisando..." : "Analisar Áudio"}
             </Button>
           ) : null}
@@ -390,23 +449,17 @@ export default function StudioDetailPage() {
                   .from("audio-stems")
                   .upload(path, f, { contentType: f.type || "audio/mpeg" });
                 if (upErr) throw upErr;
-                const { data: { user } } = await supabase.auth.getUser();
-
+                const { data: { user: authUser } } = await supabase.auth.getUser();
                 if (audioTrack) {
-                  const { error: dbErr } = await supabase.from("audio_tracks").update({ file_full: path }).eq("id", audioTrack.id);
-                  if (dbErr) throw dbErr;
+                  await supabase.from("audio_tracks").update({ file_full: path }).eq("id", audioTrack.id);
                 } else {
-                  const { error: dbErr } = await supabase.from("audio_tracks").insert({
-                    song_id: songId,
-                    file_full: path,
-                    user_id: user?.id || null,
+                  await supabase.from("audio_tracks").insert({
+                    song_id: songId, file_full: path, user_id: authUser?.id || null,
                   });
-                  if (dbErr) throw dbErr;
                 }
                 await refetchTrack();
                 toast.success("Mix completo enviado!");
               } catch (err: any) {
-                console.error("Upload error:", err);
                 toast.error(`Erro: ${err.message}`);
               } finally {
                 setUploadingNew(false);
@@ -474,31 +527,54 @@ export default function StudioDetailPage() {
         </div>
       )}
 
-      {/* Mixer faders */}
+      {/* ═══════════ MIXER ═══════════ */}
       {hasAnyStem && (
         <div className="p-4 rounded-xl bg-card border border-border">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Mixer — Stems</h3>
-            {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean) || Object.values(gateStems).some(Boolean)) && (
-              <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
-                setMutedStems({ vocals: false, percussion: false, harmony: false, guitar: false });
-                setSoloStems({ vocals: false, percussion: false, harmony: false, guitar: false });
-                setGateStems({ vocals: false, percussion: false, harmony: false, guitar: false });
-                // Disable all gates on engine
-                (["vocals", "percussion", "harmony", "guitar"] as StemType[]).forEach(t => engineRef.current?.setGateEnabled(t, false));
-              }}>
-                Reset
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {(Object.values(mutedStems).some(Boolean) || Object.values(soloStems).some(Boolean) || Object.values(gateStems).some(Boolean)) && (
+                <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={() => {
+                  setMutedStems(defaultBoolStems());
+                  setSoloStems(defaultBoolStems());
+                  setGateStems(defaultBoolStems());
+                  ALL_STEMS.forEach(t => engineRef.current?.setGateEnabled(t, false));
+                }}>
+                  Reset
+                </Button>
+              )}
+            </div>
           </div>
-          <div className={cn("grid gap-4 w-full", hasSeparatedStems ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 max-w-xs")}>
+
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {STEM_DISPLAY.map(({ type, label, icon: Icon, color }) => {
               const colMap: Record<StemType, keyof AudioTrack> = {
-                vocals: "file_vocals", percussion: "file_percussion",
-                harmony: "file_harmony", guitar: "file_guitar",
+                vocals: "file_vocals", backing_vocal: "file_backing_vocal",
+                percussion: "file_percussion", harmony: "file_harmony", guitar: "file_guitar",
               };
               const hasFile = audioTrack && audioTrack[colMap[type]];
-              if (!hasFile) return null;
+
+              // Show upload slot for stems without files (only if we have at least the full mix)
+              if (!hasFile) {
+                if (!audioTrack?.file_full) return null;
+                return (
+                  <div key={type} className="rounded-lg border border-dashed border-border p-3 flex flex-col items-center justify-center gap-2 min-h-[120px] opacity-60 hover:opacity-100 transition-opacity">
+                    <Icon className={cn("h-5 w-5", color)} />
+                    <span className="text-xs font-medium text-muted-foreground">{label}</span>
+                    <input type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac" className="hidden" id={`upload-stem-${type}`}
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUploadStem(f, type);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1" disabled={uploadingNew}
+                      onClick={() => document.getElementById(`upload-stem-${type}`)?.click()}>
+                      <Upload className="h-3 w-3" /> Enviar
+                    </Button>
+                  </div>
+                );
+              }
 
               const isMuted = mutedStems[type];
               const isSoloed = soloStems[type];
@@ -507,45 +583,52 @@ export default function StudioDetailPage() {
 
               return (
                 <div key={type} className={cn(
-                  "rounded-lg border p-3 space-y-3 transition-all w-full",
+                  "rounded-lg border p-3 space-y-3 transition-all",
                   isEffectivelyMuted ? "border-border bg-muted/30 opacity-50" : "border-border bg-secondary/30",
                   isSoloed && "border-primary/50 bg-primary/5 opacity-100 ring-1 ring-primary/20"
                 )}>
-                  <div className="flex flex-col sm:flex-row w-full gap-3 sm:items-center">
-                    <div className="flex flex-wrap items-center gap-2 sm:w-40 sm:shrink-0">
-                      <Icon className={cn("h-4 w-4", color)} />
-                      <span className="text-xs font-medium">{label}</span>
-                      <div className="ml-auto flex flex-wrap gap-1.5">
-                        <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
-                          onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}>
-                          <VolumeX className="h-3 w-3 mr-1" /> M
-                        </Button>
-                        <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-7 px-2 text-[10px] font-bold"
-                          onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
-                          <Star className="h-3 w-3 mr-1" /> S
-                        </Button>
-                        <Button
-                          variant={gateStems[type] ? "default" : "outline"}
-                          size="sm"
-                          className="h-7 px-2 text-[10px] font-bold"
-                          title="Limpar Ruído (Noise Gate)"
-                          onClick={() => {
-                            const next = !gateStems[type];
-                            setGateStems(prev => ({ ...prev, [type]: next }));
-                            engineRef.current?.setGateEnabled(type, next);
-                          }}
-                        >
-                          <AudioLines className="h-3 w-3 mr-1" /> G
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="w-full">
-                      <Slider value={[stemVols[type]]} max={100} step={1}
-                        onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
-                        disabled={isEffectivelyMuted}
-                        className="w-full" />
-                      <p className="text-[10px] text-muted-foreground text-center font-mono mt-1">{stemVols[type]}%</p>
-                    </div>
+                  {/* Channel header */}
+                  <div className="flex items-center gap-2">
+                    <Icon className={cn("h-4 w-4 shrink-0", color)} />
+                    <span className="text-xs font-semibold flex-1 truncate">{label}</span>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive/70 hover:text-destructive hover:bg-destructive/10 shrink-0"
+                      onClick={() => setDeleteStemTarget(type)} title="Remover faixa">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+
+                  {/* M / S / G buttons */}
+                  <div className="flex items-center gap-1.5 justify-center">
+                    <Button variant={isMuted ? "default" : "outline"} size="sm" className="h-7 w-9 text-[10px] font-bold px-0"
+                      onClick={() => setMutedStems(prev => ({ ...prev, [type]: !prev[type] }))}>
+                      M
+                    </Button>
+                    <Button variant={isSoloed ? "default" : "outline"} size="sm" className="h-7 w-9 text-[10px] font-bold px-0"
+                      onClick={() => setSoloStems(prev => ({ ...prev, [type]: !prev[type] }))}>
+                      S
+                    </Button>
+                    <Button
+                      variant={gateStems[type] ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 w-9 text-[10px] font-bold px-0"
+                      title="Noise Gate"
+                      onClick={() => {
+                        const next = !gateStems[type];
+                        setGateStems(prev => ({ ...prev, [type]: next }));
+                        engineRef.current?.setGateEnabled(type, next);
+                      }}
+                    >
+                      G
+                    </Button>
+                  </div>
+
+                  {/* Volume slider */}
+                  <div className="space-y-1">
+                    <Slider value={[stemVols[type]]} max={100} step={1}
+                      onValueChange={v => setStemVols(prev => ({ ...prev, [type]: v[0] }))}
+                      disabled={isEffectivelyMuted}
+                      className="w-full" />
+                    <p className="text-[10px] text-muted-foreground text-center font-mono">{stemVols[type]}%</p>
                   </div>
                 </div>
               );
@@ -553,6 +636,24 @@ export default function StudioDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Delete project modal */}
+      <ConfirmDeleteModal
+        open={deleteProjectOpen}
+        onOpenChange={setDeleteProjectOpen}
+        onConfirm={handleDeleteProject}
+        title="Excluir projeto do estúdio"
+        description="Tem a certeza que deseja excluir esta mixagem e todas as faixas? Esta ação não pode ser desfeita."
+      />
+
+      {/* Delete stem modal */}
+      <ConfirmDeleteModal
+        open={!!deleteStemTarget}
+        onOpenChange={open => { if (!open) setDeleteStemTarget(null); }}
+        onConfirm={handleDeleteStem}
+        title="Remover faixa"
+        description={`Deseja remover a faixa "${STEM_DISPLAY.find(s => s.type === deleteStemTarget)?.label || ""}"? O ficheiro de áudio será eliminado permanentemente.`}
+      />
     </div>
   );
 }

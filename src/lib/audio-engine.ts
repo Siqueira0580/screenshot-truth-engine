@@ -4,7 +4,7 @@
  */
 import * as Tone from "tone";
 
-export type StemType = "vocals" | "percussion" | "harmony" | "guitar";
+export type StemType = "vocals" | "percussion" | "harmony" | "guitar" | "backing_vocal";
 
 interface StemChannel {
   player: Tone.Player;

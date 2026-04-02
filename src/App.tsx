@@ -39,6 +39,7 @@ import PricingPage from "@/pages/PricingPage";
 import CommunityPage from "@/pages/CommunityPage";
 import MessagesPage from "@/pages/MessagesPage";
 import ChatPage from "@/pages/ChatPage";
+import InvitePage from "@/pages/InvitePage";
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
 import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";

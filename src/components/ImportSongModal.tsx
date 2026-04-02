@@ -225,16 +225,30 @@ export default function ImportSongModal({
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Cole o link da cifra</Label>
-              <Input
-                type="url"
-                placeholder="https://cifraclub.com.br/artista/musica"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") { e.preventDefault(); handleSearch(); }
-                }}
-                disabled={isSearching}
-              />
+              <div className="relative">
+                <Input
+                  type="url"
+                  placeholder="https://cifraclub.com.br/artista/musica"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { e.preventDefault(); handleSearch(); }
+                  }}
+                  disabled={isSearching}
+                  className="pr-9"
+                />
+                {input.trim() && !isSearching && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-foreground"
+                    onClick={() => setInput("")}
+                    type="button"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 Funciona com Cifra Club, Letras.mus.br, Ultimate Guitar e outros sites de cifras.
               </p>

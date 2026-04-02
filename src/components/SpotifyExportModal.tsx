@@ -7,6 +7,7 @@ import {
   getSpotifyToken,
   clearSpotifyToken,
   startSpotifyAuth,
+  ensureValidToken,
   getSpotifyUserId,
   searchSpotifyTrack,
   createSpotifyPlaylist,

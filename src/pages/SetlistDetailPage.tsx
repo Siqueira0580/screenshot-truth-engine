@@ -863,6 +863,25 @@ export default function SetlistDetailPage() {
                   <span className="sm:hidden">▶ Playlist</span>
                 </Button>
               )}
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={fillingYouTube}
+                onClick={async () => {
+                  if (!id) return;
+                  setFillingYouTube(true);
+                  await autoFillMissingYouTubeLinks(id, () => {
+                    queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+                    queryClient.invalidateQueries({ queryKey: ["songs"] });
+                  });
+                  setFillingYouTube(false);
+                }}
+                className="gap-1.5"
+                title="Preencher links do YouTube automaticamente"
+              >
+                {fillingYouTube ? <Loader2 className="h-4 w-4 animate-spin" /> : <Youtube className="h-4 w-4" />}
+                <span className="hidden sm:inline">{fillingYouTube ? "Buscando..." : "Preencher YouTube"}</span>
+              </Button>
             </>
           )}
           <Button onClick={() => setAddOpen(true)}>

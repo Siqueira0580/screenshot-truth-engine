@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchSetlists, createSetlist, deleteSetlist } from "@/lib/supabase-queries";
+import { autoFillMissingYouTubeLinks } from "@/lib/youtube-autofill";
 import { toast } from "sonner";
 import { format, differenceInDays, differenceInHours, isAfter, subDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";

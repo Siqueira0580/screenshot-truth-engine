@@ -149,6 +149,9 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
       toast.success(`Repertório gerado com ${selected.length} músicas!`);
       onOpenChange(false);
       onCreated(newSetlist.id);
+
+      // Background: auto-fill missing YouTube links
+      autoFillMissingYouTubeLinks(newSetlist.id);
     } catch (err: any) {
       toast.error(err.message || "Erro ao gerar repertório");
     } finally {

@@ -571,6 +571,11 @@ export default function SetlistDetailPage() {
     setGlobalSelectedSongs(new Set());
     toast.success(`Repertório "${name}" criado com ${allItems.length} música(s)!`);
     navigate(`/setlists/${newSetlist.id}`);
+
+    // Background: auto-fill missing YouTube links
+    autoFillMissingYouTubeLinks(newSetlist.id, () => {
+      queryClient.invalidateQueries({ queryKey: ["setlist-items"] });
+    });
   }, [items, selectedSongs, globalSelectedSongs, localOverrides, navigate]);
 
   // Drag and drop

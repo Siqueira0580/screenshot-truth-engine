@@ -1,6 +1,6 @@
 const SPOTIFY_CLIENT_ID = "85638dde0472442cb6f7e4be8bec56d2";
 const SPOTIFY_REDIRECT_URI = `${window.location.origin}/spotify-callback`;
-const SPOTIFY_SCOPES = "playlist-modify-public playlist-modify-private";
+const SPOTIFY_SCOPES = "user-read-private user-read-email playlist-modify-public playlist-modify-private";
 
 // PKCE helpers
 function generateRandomString(length: number): string {

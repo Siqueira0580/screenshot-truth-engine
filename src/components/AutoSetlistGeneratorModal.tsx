@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Music } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createSetlist } from "@/lib/supabase-queries";
+import { autoFillMissingYouTubeLinks } from "@/lib/youtube-autofill";
 import { toast } from "sonner";
 
 const STYLES = ["Samba", "Rock", "MPB", "Pop", "Gospel", "Sertanejo", "Forró", "Jazz", "Blues", "Reggae"];

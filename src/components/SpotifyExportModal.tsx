@@ -42,8 +42,10 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
   const [playlistUrl, setPlaylistUrl] = useState<string | null>(null);
 
   const handleExport = async () => {
-    const token = getSpotifyToken();
-    if (!token) {
+    // Try to get a valid (non-expired) token, refreshing if needed
+    const validToken = await ensureValidToken();
+    if (!validToken) {
+      // No valid token — redirect to Spotify login
       startSpotifyAuth();
       return;
     }

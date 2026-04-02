@@ -131,6 +131,15 @@ export function getSpotifyToken(): string | null {
   return sessionStorage.getItem("spotify_access_token");
 }
 
+export async function ensureValidToken(): Promise<string | null> {
+  try {
+    return await getValidToken();
+  } catch {
+    clearSpotifyToken();
+    return null;
+  }
+}
+
 export function clearSpotifyToken() {
   sessionStorage.removeItem("spotify_access_token");
   sessionStorage.removeItem("spotify_refresh_token");

@@ -7,6 +7,7 @@ import {
   getSpotifyToken,
   clearSpotifyToken,
   startSpotifyAuth,
+  ensureValidToken,
   getSpotifyUserId,
   searchSpotifyTrack,
   createSpotifyPlaylist,
@@ -41,8 +42,10 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
   const [playlistUrl, setPlaylistUrl] = useState<string | null>(null);
 
   const handleExport = async () => {
-    const token = getSpotifyToken();
-    if (!token) {
+    // Try to get a valid (non-expired) token, refreshing if needed
+    const validToken = await ensureValidToken();
+    if (!validToken) {
+      // No valid token — redirect to Spotify login
       startSpotifyAuth();
       return;
     }
@@ -72,9 +75,9 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
           }
         } catch (err: any) {
           if (err.message === "SPOTIFY_EXPIRED" || err.message === "SPOTIFY_FORBIDDEN") {
-            toast.error("Sessão do Spotify expirou ou sem permissões. Reconecte ao Spotify.");
-            setStep("idle");
-            setIsExporting(false);
+            toast.info("Sessão expirou. Redirecionando para login do Spotify...");
+            clearSpotifyToken();
+            setTimeout(() => startSpotifyAuth(), 1000);
             return;
           }
           trackResults[i] = { ...trackResults[i], status: "not_found" };
@@ -101,8 +104,10 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
       toast.success(`Playlist "${setlistName}" criada com ${foundUris.length} músicas no seu Spotify!`);
     } catch (err: any) {
       if (err.message === "SPOTIFY_EXPIRED" || err.message === "SPOTIFY_FORBIDDEN") {
-        toast.error("Sessão do Spotify expirou ou sem permissões. Reconecte ao Spotify.");
-        setStep("idle");
+        toast.info("Sessão expirou. Redirecionando para login do Spotify...");
+        clearSpotifyToken();
+        setTimeout(() => startSpotifyAuth(), 1000);
+        return;
       } else {
         toast.error("Erro ao exportar: " + err.message);
         setStep("idle");

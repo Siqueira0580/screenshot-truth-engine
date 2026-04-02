@@ -26,6 +26,31 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   const [email, setEmail] = useState("");
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const generateInviteLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await supabase
+        .from("group_invites")
+        .insert({ group_id: groupId, created_by: user!.id } as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+      const url = `${window.location.origin}/invite/${data.id}`;
+      setInviteLink(url);
+    } catch {
+      toast.error("Erro ao gerar link de convite");
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Link copiado!");
+  };
 
   const { data: members = [] } = useQuery({
     queryKey: ["group-members", groupId],

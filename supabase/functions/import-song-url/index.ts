@@ -153,13 +153,19 @@ serve(async (req) => {
     // Step B: Gemini AI Processing
     console.log("Sending to Gemini for ChordPro extraction...");
 
-    const systemPrompt = `Você é um extrator e conversor de cifras rigoroso. Sua ÚNICA função é converter a cifra original para o formato ChordPro sem alterar absolutamente NADA do conteúdo.
+    const systemPrompt = `Você é um extrator rigoroso de cifras musicais. Converta o texto/HTML fornecido para o formato ChordPro estruturado.
 
 REGRAS ABSOLUTAS (PENALIDADE SE DESCUMPRIDAS):
-1. FIDELIDADE EXTREMA: NÃO adicione, NÃO remova e NÃO altere nenhum acorde ou palavra da letra original.
-2. POSIÇÃO PRECISA: Se a cifra original estiver no formato tradicional (acordes na linha de cima), você DEVE descer o acorde para a linha de baixo colocando-o entre colchetes ([Acorde]) EXATAMENTE na mesma posição (coluna/sílaba) onde ele estava alinhado originalmente.
-3. ZERO INVENÇÃO: NÃO adicione marcações de [Refrão], [Intro] ou [Verso] se não existirem no texto fonte. NÃO tente corrigir gramática ou harmonia.
-4. ESPAÇAMENTOS: Mantenha as quebras de linha exatas.
+
+1. TOM (KEY): Procure no início do documento qual é o Tom/Tonalidade original da música (ex: Tom: G, Key: F#m) e coloque EXATAMENTE esse valor na chave 'musical_key'. Se não achar explicitamente, tente deduzir pelo primeiro/último acorde, mas SEMPRE preencha a chave.
+
+2. INTRODUÇÕES E SOLOS: Se houver uma linha apenas com acordes (como na Introdução ou Solo), VOCÊ DEVE PRESERVAR TODOS OS ESPAÇOS EM BRANCO entre eles. Exemplo: Se no original for 'C      F      G', você DEVE retornar '[C]      [F]      [G]'. NÃO comprima os espaços, eles representam o tempo da música.
+
+3. SEÇÕES: Preserve TODOS os marcadores de estrutura da música que encontrar, como 'Intro:', '[Refrão]', 'Solo:', '[Verso]', 'Ponte:', etc. NÃO OS APAGUE. Se existirem no texto fonte, mantenha-os integralmente.
+
+4. ALINHAMENTO COM A LETRA: Desça os acordes da linha de cima para a linha de baixo (formato ChordPro). O acorde entre colchetes [Acorde] DEVE ser inserido na coluna EXATA onde estava posicionado. Se o acorde estiver posicionado antes da primeira palavra da linha, adicione espaços em branco antes da palavra para manter o alinhamento físico.
+
+5. FIDELIDADE EXTREMA: NÃO adicione, NÃO remova e NÃO altere nenhum acorde ou palavra da letra original. NÃO tente corrigir gramática ou harmonia.
 
 Extraia também: Título, Artista, Gênero Musical, Tom, Compositor(es), BPM (se mencionado).
 Se um campo não for encontrado, retorne null.

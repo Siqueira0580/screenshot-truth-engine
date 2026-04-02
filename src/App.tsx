@@ -113,6 +113,7 @@ const App = () => (
                   <Route path="/planos" element={<PricingPage />} />
                 </Route>
                 <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+                <Route path="/invite/:token" element={<InvitePage />} />
                 
                 <Route element={<PublicLayout />}>
                   <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />

@@ -222,6 +222,7 @@ export default function SetlistDetailPage() {
   const [shareGroupOpen, setShareGroupOpen] = useState(false);
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareGroupMessage, setShareGroupMessage] = useState("");
+  const [playlistOpen, setPlaylistOpen] = useState(false);
 
 
   useEffect(() => {

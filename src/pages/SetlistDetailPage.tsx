@@ -428,6 +428,7 @@ export default function SetlistDetailPage() {
     }
   }, [id, items, queryClient]);
 
+  const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
 
   const artistPhotoMap = Object.fromEntries(
     artists.filter(a => a.photo_url).map(a => [a.name.toLowerCase(), a.photo_url])

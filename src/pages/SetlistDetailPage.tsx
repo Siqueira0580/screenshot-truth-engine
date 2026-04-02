@@ -415,7 +415,19 @@ export default function SetlistDetailPage() {
     enabled: !!id,
   });
 
-  const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
+  // Auto-fill missing YouTube links once when page loads with items
+  const autoFillRanRef = useRef(false);
+  useEffect(() => {
+    if (!id || items.length === 0 || autoFillRanRef.current) return;
+    const hasMissing = items.some((item: any) => !item.songs?.youtube_url);
+    if (hasMissing) {
+      autoFillRanRef.current = true;
+      autoFillMissingYouTubeLinks(id, () => {
+        queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
+      });
+    }
+  }, [id, items, queryClient]);
+
 
   const artistPhotoMap = Object.fromEntries(
     artists.filter(a => a.photo_url).map(a => [a.name.toLowerCase(), a.photo_url])

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Sparkles, Music } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { createSetlist } from "@/lib/supabase-queries";
+import { autoFillMissingYouTubeLinks } from "@/lib/youtube-autofill";
 import { toast } from "sonner";
 
 const STYLES = ["Samba", "Rock", "MPB", "Pop", "Gospel", "Sertanejo", "Forró", "Jazz", "Blues", "Reggae"];
@@ -149,6 +150,9 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
       toast.success(`Repertório gerado com ${selected.length} músicas!`);
       onOpenChange(false);
       onCreated(newSetlist.id);
+
+      // Background: auto-fill missing YouTube links
+      autoFillMissingYouTubeLinks(newSetlist.id);
     } catch (err: any) {
       toast.error(err.message || "Erro ao gerar repertório");
     } finally {

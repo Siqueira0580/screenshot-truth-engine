@@ -38,6 +38,7 @@ import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { useOfflineCache } from "@/hooks/useOfflineCache";
 import ShowButton from "@/components/ShowButton";
 import ImportSongModal from "@/components/ImportSongModal";
+import { autoFillMissingYouTubeLinks } from "@/lib/youtube-autofill";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format } from "date-fns";
@@ -571,6 +572,11 @@ export default function SetlistDetailPage() {
     setGlobalSelectedSongs(new Set());
     toast.success(`Repertório "${name}" criado com ${allItems.length} música(s)!`);
     navigate(`/setlists/${newSetlist.id}`);
+
+    // Background: auto-fill missing YouTube links
+    autoFillMissingYouTubeLinks(newSetlist.id, () => {
+      queryClient.invalidateQueries({ queryKey: ["setlist-items"] });
+    });
   }, [items, selectedSongs, globalSelectedSongs, localOverrides, navigate]);
 
   // Drag and drop

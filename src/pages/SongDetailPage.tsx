@@ -30,6 +30,7 @@ import Teleprompter from "@/components/Teleprompter";
 import ChordText from "@/components/ChordText";
 import ShowButton from "@/components/ShowButton";
 import SongChordsFAB from "@/components/SongChordsFAB";
+import SongEditHistory from "@/components/SongEditHistory";
 import AutoCipherViewer from "@/components/AutoCipherViewer";
 import YouTubeSearchModal from "@/components/YouTubeSearchModal";
 import YouTubeMiniPlayer from "@/components/YouTubeMiniPlayer";
@@ -483,6 +484,10 @@ export default function SongDetailPage() {
           />
         </div>
       )}
+
+      {/* Edit History */}
+      <SongEditHistory songId={id!} />
+
       <Teleprompter
         songs={[{ ...song, body_text: displayBody, musical_key: displayKey, artist_photo_url: artistPhoto, speed: song.default_speed ?? 250 }]}
         open={teleprompterOpen}

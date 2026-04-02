@@ -21,9 +21,20 @@ function base64urlencode(buffer: ArrayBuffer): string {
   return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+// ─── Token Storage ──────────────────────────────────────────────
+function saveTokenData(data: { access_token: string; refresh_token?: string; expires_in?: number }) {
+  sessionStorage.setItem("spotify_access_token", data.access_token);
+  if (data.refresh_token) {
+    sessionStorage.setItem("spotify_refresh_token", data.refresh_token);
+  }
+  if (data.expires_in) {
+    const expiresAt = Date.now() + data.expires_in * 1000 - 60_000; // 1 min buffer
+    sessionStorage.setItem("spotify_expires_at", String(expiresAt));
+  }
+}
+
 // ─── Auth ───────────────────────────────────────────────────────
 export async function startSpotifyAuth() {
-  // Clear any old token so we get fresh scopes
   clearSpotifyToken();
 
   const codeVerifier = generateRandomString(128);
@@ -68,10 +79,52 @@ export async function exchangeSpotifyCode(code: string): Promise<string> {
   }
 
   const data = await res.json();
-  sessionStorage.setItem("spotify_access_token", data.access_token);
+  saveTokenData(data);
   sessionStorage.removeItem("spotify_code_verifier");
   console.log("[Spotify] Token obtained successfully, scopes:", data.scope);
   return data.access_token;
+}
+
+// ─── Refresh Token ──────────────────────────────────────────────
+async function refreshAccessToken(): Promise<string> {
+  const refreshToken = sessionStorage.getItem("spotify_refresh_token");
+  if (!refreshToken) {
+    throw new Error("SPOTIFY_EXPIRED");
+  }
+
+  console.log("[Spotify] Refreshing access token...");
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: SPOTIFY_CLIENT_ID,
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+    }),
+  });
+
+  if (!res.ok) {
+    console.error("[Spotify] Refresh failed, clearing tokens");
+    clearSpotifyToken();
+    throw new Error("SPOTIFY_EXPIRED");
+  }
+
+  const data = await res.json();
+  saveTokenData(data);
+  console.log("[Spotify] Token refreshed successfully");
+  return data.access_token;
+}
+
+async function getValidToken(): Promise<string> {
+  const expiresAt = sessionStorage.getItem("spotify_expires_at");
+  const token = sessionStorage.getItem("spotify_access_token");
+
+  if (token && expiresAt && Date.now() < Number(expiresAt)) {
+    return token;
+  }
+
+  // Token expired or missing — try refresh
+  return refreshAccessToken();
 }
 
 export function getSpotifyToken(): string | null {
@@ -80,17 +133,18 @@ export function getSpotifyToken(): string | null {
 
 export function clearSpotifyToken() {
   sessionStorage.removeItem("spotify_access_token");
+  sessionStorage.removeItem("spotify_refresh_token");
+  sessionStorage.removeItem("spotify_expires_at");
 }
 
 // ─── Core API caller ────────────────────────────────────────────
 async function spotifyFetch(endpoint: string, options: RequestInit = {}) {
-  const token = getSpotifyToken();
-  if (!token) throw new Error("Not authenticated with Spotify");
+  let token = await getValidToken();
 
   const url = `https://api.spotify.com/v1${endpoint}`;
   console.log(`[Spotify API] ${options.method || "GET"} ${url}`);
 
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,
@@ -99,13 +153,31 @@ async function spotifyFetch(endpoint: string, options: RequestInit = {}) {
     },
   });
 
+  // If 401, try one refresh and retry
+  if (res.status === 401) {
+    try {
+      token = await refreshAccessToken();
+      res = await fetch(url, {
+        ...options,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          ...(options.headers || {}),
+        },
+      });
+    } catch {
+      clearSpotifyToken();
+      throw new Error("SPOTIFY_EXPIRED");
+    }
+  }
+
   if (res.status === 401) {
     clearSpotifyToken();
     throw new Error("SPOTIFY_EXPIRED");
   }
 
   if (res.status === 403) {
-    console.error("[Spotify API] 403 Forbidden – token may lack required scopes. Re-auth needed.");
+    console.error("[Spotify API] 403 Forbidden – re-auth needed.");
     clearSpotifyToken();
     throw new Error("SPOTIFY_FORBIDDEN");
   }

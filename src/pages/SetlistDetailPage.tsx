@@ -1207,6 +1207,16 @@ export default function SetlistDetailPage() {
         }}
       />
 
+      <SpotifyExportModal
+        open={spotifyExportOpen}
+        onOpenChange={setSpotifyExportOpen}
+        setlistName={(setlist as any)?.name || "Repertório"}
+        songs={processedItems.map((item: any) => ({
+          title: item.songs?.title || "",
+          artist: item.songs?.artist || null,
+        }))}
+      />
+
       {/* Share to Group Modal */}
       <Dialog open={shareGroupOpen} onOpenChange={setShareGroupOpen}>
         <DialogContent className="sm:max-w-md">

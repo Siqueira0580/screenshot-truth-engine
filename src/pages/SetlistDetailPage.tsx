@@ -880,6 +880,12 @@ export default function SetlistDetailPage() {
       {!isOwner && items.length > 0 && (
         <div className="flex items-center gap-2">
           <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+          {youtubeIds.length > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => setPlaylistOpen(true)} className="gap-1.5">
+              <PlayCircle className="h-4 w-4" />
+              Ouvir Playlist
+            </Button>
+          )}
           {user && (
             <Button
               onClick={handleClone}

@@ -70,8 +70,8 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
             trackResults[i] = { ...trackResults[i], status: "not_found" };
           }
         } catch (err: any) {
-          if (err.message === "SPOTIFY_EXPIRED") {
-            toast.error("Sessão do Spotify expirou. Por favor, tente novamente.");
+          if (err.message === "SPOTIFY_EXPIRED" || err.message === "SPOTIFY_FORBIDDEN") {
+            toast.error("Sessão do Spotify expirou ou sem permissões. Reconecte ao Spotify.");
             setStep("idle");
             setIsExporting(false);
             return;
@@ -97,10 +97,10 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
 
       setPlaylistUrl(`https://open.spotify.com/playlist/${playlistId}`);
       setStep("done");
-      toast.success(`Playlist criada com ${foundUris.length} música(s)!`);
+      toast.success(`Playlist "${setlistName}" criada com ${foundUris.length} músicas no seu Spotify!`);
     } catch (err: any) {
-      if (err.message === "SPOTIFY_EXPIRED") {
-        toast.error("Sessão do Spotify expirou. Por favor, tente novamente.");
+      if (err.message === "SPOTIFY_EXPIRED" || err.message === "SPOTIFY_FORBIDDEN") {
+        toast.error("Sessão do Spotify expirou ou sem permissões. Reconecte ao Spotify.");
         setStep("idle");
       } else {
         toast.error("Erro ao exportar: " + err.message);

@@ -23,6 +23,9 @@ function base64urlencode(buffer: ArrayBuffer): string {
 
 // ─── Auth ───────────────────────────────────────────────────────
 export async function startSpotifyAuth() {
+  // Clear any old token so we get fresh scopes
+  clearSpotifyToken();
+
   const codeVerifier = generateRandomString(128);
   const hashed = await sha256(codeVerifier);
   const codeChallenge = base64urlencode(hashed);
@@ -59,13 +62,15 @@ export async function exchangeSpotifyCode(code: string): Promise<string> {
   });
 
   if (!res.ok) {
-    const err = await res.json();
+    const err = await res.json().catch(() => ({}));
+    console.error("[Spotify] Token exchange failed:", err);
     throw new Error(err.error_description || "Failed to exchange code");
   }
 
   const data = await res.json();
   sessionStorage.setItem("spotify_access_token", data.access_token);
   sessionStorage.removeItem("spotify_code_verifier");
+  console.log("[Spotify] Token obtained successfully, scopes:", data.scope);
   return data.access_token;
 }
 
@@ -77,17 +82,20 @@ export function clearSpotifyToken() {
   sessionStorage.removeItem("spotify_access_token");
 }
 
-// ─── API helpers ────────────────────────────────────────────────
+// ─── Core API caller ────────────────────────────────────────────
 async function spotifyFetch(endpoint: string, options: RequestInit = {}) {
   const token = getSpotifyToken();
   if (!token) throw new Error("Not authenticated with Spotify");
 
-  const res = await fetch(`https://api.spotify.com/v1${endpoint}`, {
+  const url = `https://api.spotify.com/v1${endpoint}`;
+  console.log(`[Spotify API] ${options.method || "GET"} ${url}`);
+
+  const res = await fetch(url, {
     ...options,
     headers: {
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers || {}),
     },
   });
 
@@ -96,27 +104,52 @@ async function spotifyFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error("SPOTIFY_EXPIRED");
   }
 
+  if (res.status === 403) {
+    console.error("[Spotify API] 403 Forbidden – token may lack required scopes. Re-auth needed.");
+    clearSpotifyToken();
+    throw new Error("SPOTIFY_FORBIDDEN");
+  }
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    console.error(`[Spotify API] Error ${res.status}:`, err);
     throw new Error(err.error?.message || `Spotify API error ${res.status}`);
   }
 
-  // Some endpoints return 201 with body
   if (res.status === 204) return null;
   return res.json();
 }
 
+// ─── Step 1: Get User ID ────────────────────────────────────────
 export async function getSpotifyUserId(): Promise<string> {
+  console.log("[Spotify] PASSO 1: Obtendo perfil do utilizador...");
   const data = await spotifyFetch("/me");
+  if (!data?.id) {
+    throw new Error("Não foi possível obter o perfil do utilizador do Spotify.");
+  }
+  console.log(`[Spotify] User ID: ${data.id}, Display: ${data.display_name}`);
   return data.id;
 }
 
-export interface SpotifySearchResult {
-  uri: string;
-  name: string;
-  artist: string;
+// ─── Step 2: Create Playlist ────────────────────────────────────
+export async function createSpotifyPlaylist(userId: string, name: string, description?: string): Promise<string> {
+  console.log(`[Spotify] PASSO 2: Criando playlist "${name}" para user ${userId}...`);
+  const data = await spotifyFetch(`/users/${userId}/playlists`, {
+    method: "POST",
+    body: JSON.stringify({
+      name,
+      description: description || "Gerado automaticamente pelo SmartCifra",
+      public: false,
+    }),
+  });
+  if (!data?.id) {
+    throw new Error("Não foi possível criar a playlist no seu perfil.");
+  }
+  console.log(`[Spotify] Playlist criada: ${data.id} (${data.external_urls?.spotify})`);
+  return data.id;
 }
 
+// ─── Step 3: Search tracks ──────────────────────────────────────
 export function sanitizeSearchQuery(text: string): string {
   return text
     .replace(/\(.*?\)|\[.*?\]/g, "")
@@ -125,16 +158,26 @@ export function sanitizeSearchQuery(text: string): string {
     .trim();
 }
 
+export interface SpotifySearchResult {
+  uri: string;
+  name: string;
+  artist: string;
+}
+
 export async function searchSpotifyTrack(title: string, artist?: string): Promise<SpotifySearchResult | null> {
   const cleanTitle = sanitizeSearchQuery(title);
   const cleanArtist = artist ? sanitizeSearchQuery(artist) : "";
   const q = (cleanTitle + (cleanArtist ? " " + cleanArtist : "")).trim();
 
-  console.log(`[Spotify Search] Buscando: "${q}" (original: "${title}" / "${artist || ""}")`);
+  console.log(`[Spotify] PASSO 3 – Buscando: "${q}" (original: "${title}" / "${artist || ""}")`);
 
   const data = await spotifyFetch(`/search?q=${encodeURIComponent(q)}&type=track&limit=1`);
   const track = data?.tracks?.items?.[0];
-  if (!track) return null;
+  if (!track) {
+    console.log(`[Spotify] Nenhum resultado para: "${q}"`);
+    return null;
+  }
+  console.log(`[Spotify] Encontrado: ${track.name} – ${track.artists?.[0]?.name} (${track.uri})`);
   return {
     uri: track.uri,
     name: track.name,
@@ -142,19 +185,9 @@ export async function searchSpotifyTrack(title: string, artist?: string): Promis
   };
 }
 
-export async function createSpotifyPlaylist(userId: string, name: string, description?: string): Promise<string> {
-  const data = await spotifyFetch(`/users/${userId}/playlists`, {
-    method: "POST",
-    body: JSON.stringify({
-      name,
-      description: description || "Criado pelo SmartCifra",
-      public: false,
-    }),
-  });
-  return data.id;
-}
-
+// ─── Step 4: Add tracks to playlist ─────────────────────────────
 export async function addTracksToPlaylist(playlistId: string, uris: string[]) {
+  console.log(`[Spotify] PASSO 4: Adicionando ${uris.length} faixa(s) à playlist ${playlistId}...`);
   // Spotify allows max 100 per request
   for (let i = 0; i < uris.length; i += 100) {
     const batch = uris.slice(i, i + 100);
@@ -162,5 +195,6 @@ export async function addTracksToPlaylist(playlistId: string, uris: string[]) {
       method: "POST",
       body: JSON.stringify({ uris: batch }),
     });
+    console.log(`[Spotify] Batch ${Math.floor(i / 100) + 1} adicionado (${batch.length} faixas)`);
   }
 }

@@ -26,10 +26,17 @@ import {
 } from "@/components/ui/accordion";
 import { createSong, updateSong, fetchSong, findOrCreateArtist, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
-import { FileUp, Loader2, Settings2, Search } from "lucide-react";
+import { FileUp, Loader2, Settings2, Search, CheckCircle2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import DialogTour, { type DialogTourStep } from "@/components/DialogTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+
+const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:(?:www|m)\.)?(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:[&?].*)?$/;
+
+function extractYouTubeId(url: string): string | null {
+  const match = url.match(YOUTUBE_URL_REGEX);
+  return match ? match[1] : null;
+}
 
 const STUDIO_TOUR_STEPS: DialogTourStep[] = [
   {
@@ -279,6 +286,9 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           onSubmit={(e) => {
             e.preventDefault();
             if (!form.title.trim()) return toast.error("Título é obrigatório");
+            if (form.youtube_url.trim() && !extractYouTubeId(form.youtube_url.trim())) {
+              return toast.error("O link do YouTube é inválido. Corrija ou remova antes de salvar.");
+            }
             mutation.mutate();
           }}
           className="space-y-4"
@@ -402,7 +412,34 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           {/* YouTube */}
           <div className="space-y-2">
             <Label>YouTube URL</Label>
-            <Input value={form.youtube_url} onChange={(e) => setForm({ ...form, youtube_url: e.target.value })} placeholder="https://youtube.com/..." />
+            <div className="relative">
+              <Input
+                value={form.youtube_url}
+                onChange={(e) => setForm({ ...form, youtube_url: e.target.value })}
+                placeholder="https://youtube.com/watch?v=..."
+                className={
+                  form.youtube_url.trim()
+                    ? extractYouTubeId(form.youtube_url.trim())
+                      ? "pr-9 border-green-500/50 focus-visible:ring-green-500/30"
+                      : "pr-9 border-destructive/50 focus-visible:ring-destructive/30"
+                    : ""
+                }
+              />
+              {form.youtube_url.trim() && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {extractYouTubeId(form.youtube_url.trim()) ? (
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                  )}
+                </span>
+              )}
+            </div>
+            {form.youtube_url.trim() && !extractYouTubeId(form.youtube_url.trim()) && (
+              <p className="text-xs text-destructive">
+                Link inválido. Use um formato como: youtube.com/watch?v=... ou youtu.be/...
+              </p>
+            )}
           </div>
 
           {/* Configurações do Teleprompter */}

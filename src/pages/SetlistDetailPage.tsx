@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Mic, MicOff, Link as LinkIcon, MessageCircle, Users } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Mic, MicOff, Link as LinkIcon, MessageCircle, Users, PlayCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
@@ -222,6 +222,7 @@ export default function SetlistDetailPage() {
   const [shareGroupOpen, setShareGroupOpen] = useState(false);
   const [shareGroupId, setShareGroupId] = useState("");
   const [shareGroupMessage, setShareGroupMessage] = useState("");
+  const [playlistOpen, setPlaylistOpen] = useState(false);
 
 
   useEffect(() => {
@@ -453,6 +454,19 @@ export default function SetlistDetailPage() {
     }
     return result;
   }, [items, filterKey, sortBy]);
+
+  // Extract YouTube IDs from setlist songs for playlist playback
+  const youtubeIds = useMemo(() => {
+    const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+    return processedItems
+      .map((item: any) => {
+        const url = item.songs?.youtube_url;
+        if (!url) return null;
+        const match = url.match(regex);
+        return match ? match[1] : null;
+      })
+      .filter(Boolean) as string[];
+  }, [processedItems]);
 
   // When sort changes (artist/key), persist the new order to DB
   const sortAppliedRef = useRef<SortBy>("manual");
@@ -822,6 +836,13 @@ export default function SetlistDetailPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+              {youtubeIds.length > 0 && (
+                <Button variant="secondary" size="sm" onClick={() => setPlaylistOpen(true)} className="gap-1.5">
+                  <PlayCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">Ouvir Playlist</span>
+                  <span className="sm:hidden">▶ Playlist</span>
+                </Button>
+              )}
             </>
           )}
           <Button onClick={() => setAddOpen(true)}>
@@ -859,6 +880,12 @@ export default function SetlistDetailPage() {
       {!isOwner && items.length > 0 && (
         <div className="flex items-center gap-2">
           <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
+          {youtubeIds.length > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => setPlaylistOpen(true)} className="gap-1.5">
+              <PlayCircle className="h-4 w-4" />
+              Ouvir Playlist
+            </Button>
+          )}
           {user && (
             <Button
               onClick={handleClone}
@@ -1174,6 +1201,34 @@ export default function SetlistDetailPage() {
                 {shareToGroupMutation.isPending ? "Enviando..." : "Publicar"}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* YouTube Playlist Player Modal */}
+      <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              <PlayCircle className="h-5 w-5 text-primary" />
+              Playlist do Repertório
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4 pt-2">
+            {youtubeIds.length > 0 && playlistOpen && (
+              <div className="aspect-video w-full rounded-md overflow-hidden bg-black">
+                <iframe
+                  className="w-full h-full"
+                  src={`https://www.youtube.com/embed/${youtubeIds[0]}?playlist=${youtubeIds.slice(1).join(",")}&autoplay=1&rel=0`}
+                  title="Playlist do Repertório"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              {youtubeIds.length} {youtubeIds.length === 1 ? "vídeo" : "vídeos"} na playlist
+            </p>
           </div>
         </DialogContent>
       </Dialog>

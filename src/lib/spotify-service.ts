@@ -117,8 +117,21 @@ export interface SpotifySearchResult {
   artist: string;
 }
 
+export function sanitizeSearchQuery(text: string): string {
+  return text
+    .replace(/\(.*?\)|\[.*?\]/g, "")
+    .replace(/-/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 export async function searchSpotifyTrack(title: string, artist?: string): Promise<SpotifySearchResult | null> {
-  const q = artist ? `track:${title} artist:${artist}` : title;
+  const cleanTitle = sanitizeSearchQuery(title);
+  const cleanArtist = artist ? sanitizeSearchQuery(artist) : "";
+  const q = (cleanTitle + (cleanArtist ? " " + cleanArtist : "")).trim();
+
+  console.log(`[Spotify Search] Buscando: "${q}" (original: "${title}" / "${artist || ""}")`);
+
   const data = await spotifyFetch(`/search?q=${encodeURIComponent(q)}&type=track&limit=1`);
   const track = data?.tracks?.items?.[0];
   if (!track) return null;

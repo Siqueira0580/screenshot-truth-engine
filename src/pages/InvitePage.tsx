@@ -39,6 +39,14 @@ export default function InvitePage() {
         return;
       }
 
+      // Check if invite has expired
+      const expiresAt = (data as any).expires_at;
+      if (expiresAt && new Date(expiresAt) < new Date()) {
+        setExpired(true);
+        setLoading(false);
+        return;
+      }
+
       setInvite(data);
       const group = data.community_groups as any;
       setGroupName(group?.name || "Grupo");

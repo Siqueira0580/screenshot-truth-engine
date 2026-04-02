@@ -455,6 +455,19 @@ export default function SetlistDetailPage() {
     return result;
   }, [items, filterKey, sortBy]);
 
+  // Extract YouTube IDs from setlist songs for playlist playback
+  const youtubeIds = useMemo(() => {
+    const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+    return processedItems
+      .map((item: any) => {
+        const url = item.songs?.youtube_url;
+        if (!url) return null;
+        const match = url.match(regex);
+        return match ? match[1] : null;
+      })
+      .filter(Boolean) as string[];
+  }, [processedItems]);
+
   // When sort changes (artist/key), persist the new order to DB
   const sortAppliedRef = useRef<SortBy>("manual");
   useEffect(() => {

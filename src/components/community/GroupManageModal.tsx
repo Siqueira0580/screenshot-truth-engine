@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail, LogOut } from "lucide-react";
+import { UserPlus, Trash2, Mail, LogOut, Link2, Copy, MessageCircle, MailIcon, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;

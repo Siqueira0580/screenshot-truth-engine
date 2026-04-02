@@ -1204,6 +1204,34 @@ export default function SetlistDetailPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* YouTube Playlist Player Modal */}
+      <Dialog open={playlistOpen} onOpenChange={setPlaylistOpen}>
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 pb-0">
+            <DialogTitle className="flex items-center gap-2">
+              <PlayCircle className="h-5 w-5 text-primary" />
+              Playlist do Repertório
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-4 pt-2">
+            {youtubeIds.length > 0 && playlistOpen && (
+              <div className="aspect-video w-full rounded-md overflow-hidden bg-black">
+                <iframe
+                  className="w-full h-full"
+                  src={`https://www.youtube.com/embed/${youtubeIds[0]}?playlist=${youtubeIds.slice(1).join(",")}&autoplay=1&rel=0`}
+                  title="Playlist do Repertório"
+                  allow="autoplay; encrypted-media; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              {youtubeIds.length} {youtubeIds.length === 1 ? "vídeo" : "vídeos"} na playlist
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

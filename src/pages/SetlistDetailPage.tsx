@@ -836,7 +836,13 @@ export default function SetlistDetailPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
               <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
-            </>
+              {youtubeIds.length > 0 && (
+                <Button variant="secondary" size="sm" onClick={() => setPlaylistOpen(true)} className="gap-1.5">
+                  <PlayCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline">Ouvir Playlist</span>
+                  <span className="sm:hidden">▶ Playlist</span>
+                </Button>
+              )}
           )}
           <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" /><span className="hidden sm:inline ml-1">Adicionar</span>

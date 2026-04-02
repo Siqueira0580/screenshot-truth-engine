@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Save, Loader2, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { fetchSong } from "@/lib/supabase-queries";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useUserRole } from "@/hooks/useUserRole"; // kept for roleLoading guard
 import VisualChordEditor from "@/components/VisualChordEditor";
 
 const KEYS = [
@@ -31,10 +31,8 @@ const GENRES = [
 
 export default function EditSongPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { isAdmin, loading: roleLoading } = useUserRole();
+  const { loading: roleLoading } = useUserRole();
 
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("");

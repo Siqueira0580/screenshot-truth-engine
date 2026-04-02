@@ -75,9 +75,9 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
           }
         } catch (err: any) {
           if (err.message === "SPOTIFY_EXPIRED" || err.message === "SPOTIFY_FORBIDDEN") {
-            toast.error("Sessão do Spotify expirou ou sem permissões. Reconecte ao Spotify.");
-            setStep("idle");
-            setIsExporting(false);
+            toast.info("Sessão expirou. Redirecionando para login do Spotify...");
+            clearSpotifyToken();
+            setTimeout(() => startSpotifyAuth(), 1000);
             return;
           }
           trackResults[i] = { ...trackResults[i], status: "not_found" };

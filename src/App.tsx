@@ -39,6 +39,7 @@ import PricingPage from "@/pages/PricingPage";
 import CommunityPage from "@/pages/CommunityPage";
 import MessagesPage from "@/pages/MessagesPage";
 import ChatPage from "@/pages/ChatPage";
+import InvitePage from "@/pages/InvitePage";
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
 import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";
@@ -112,6 +113,7 @@ const App = () => (
                   <Route path="/planos" element={<PricingPage />} />
                 </Route>
                 <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+                <Route path="/invite/:token" element={<InvitePage />} />
                 
                 <Route element={<PublicLayout />}>
                   <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />

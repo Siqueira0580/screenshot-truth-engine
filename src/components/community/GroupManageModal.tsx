@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail, LogOut } from "lucide-react";
+import { UserPlus, Trash2, Mail, LogOut, Link2, Loader2 } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -26,6 +26,31 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   const [email, setEmail] = useState("");
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const generateInviteLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const { data, error } = await supabase
+        .from("group_invites")
+        .insert({ group_id: groupId, created_by: user!.id } as any)
+        .select("id")
+        .single();
+      if (error) throw error;
+      const url = `${window.location.origin}/invite/${data.id}`;
+      setInviteLink(url);
+    } catch {
+      toast.error("Erro ao gerar link de convite");
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(inviteLink);
+    toast.success("Link copiado!");
+  };
 
   const { data: members = [] } = useQuery({
     queryKey: ["group-members", groupId],
@@ -207,7 +232,63 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
             </div>
           )}
 
-          {/* Members list */}
+          {/* Invite link generator - only for creator */}
+          {isCreator && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <Link2 className="h-4 w-4" /> Convidar por Link
+              </Label>
+              {!inviteLink ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2"
+                  disabled={generatingLink}
+                  onClick={generateInviteLink}
+                >
+                  {generatingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                  Gerar Link de Convite
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input value={inviteLink} readOnly className="text-xs" />
+                    <Button variant="outline" size="sm" onClick={copyLink}>Copiar</Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5"
+                      asChild
+                    >
+                      <a
+                        href={`https://wa.me/?text=${encodeURIComponent(`Fui convidado para entrar no nosso grupo de música! Clique aqui para aceitar: ${inviteLink}`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        WhatsApp
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1.5"
+                      asChild
+                    >
+                      <a
+                        href={`mailto:?subject=${encodeURIComponent(`Convite para o Grupo Musical`)}&body=${encodeURIComponent(`Você foi convidado para entrar no grupo "${groupName}". Clique no link para aceitar ou recusar: ${inviteLink}`)}`}
+                      >
+                        <Mail className="h-4 w-4" /> E-mail
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+
           <div className="space-y-2">
             <Label>Membros ({members.length})</Label>
             <div className="space-y-2 max-h-60 overflow-y-auto">

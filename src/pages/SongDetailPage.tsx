@@ -246,7 +246,6 @@ export default function SongDetailPage() {
   if (!song) return <p className="text-muted-foreground">Música não encontrada.</p>;
 
   const isOwner = user?.id === song.created_by || user?.id === song.user_id;
-  const canManage = isOwner || isAdmin;
 
   const ytId = linkedVideoId || extractYoutubeId(song.youtube_url);
   const displayKey = transposeKey(song.musical_key, transpose);
@@ -261,7 +260,7 @@ export default function SongDetailPage() {
           <div className="flex items-center gap-2">
             <BackButton />
             <h1 className="text-2xl sm:text-4xl landscape:text-xl font-bold tracking-tight">{song.title}</h1>
-            {canManage && (
+            {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="h-8 w-8 ml-1">
@@ -271,16 +270,20 @@ export default function SongDetailPage() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => navigate(`/editar-musica/${song.id}`)}>
                     <Pencil className="h-4 w-4 mr-2" />
-                    {!isOwner && isAdmin ? "Editar (Admin)" : "Editar Música"}
+                    Editar Música
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => setConfirmDeleteOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    {!isOwner && isAdmin ? "Excluir (Admin)" : "Excluir"}
-                  </DropdownMenuItem>
+                  {(isOwner || isAdmin) && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setConfirmDeleteOpen(true)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        {!isOwner && isAdmin ? "Excluir (Admin)" : "Excluir"}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

@@ -62,8 +62,8 @@ export default function EditSongPage() {
     }
   }, [song]);
 
-  const isOwner = user?.id === song?.created_by || user?.id === song?.user_id;
-  const canManage = isOwner || isAdmin;
+  // Collaborative editing: any authenticated user can edit
+  const canManage = !!user;
 
   const handleSave = async () => {
     if (!id || !title.trim()) return;

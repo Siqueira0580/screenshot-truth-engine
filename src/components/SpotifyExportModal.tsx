@@ -5,6 +5,7 @@ import { Loader2, CheckCircle2, XCircle, Music2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getSpotifyToken,
+  clearSpotifyToken,
   startSpotifyAuth,
   getSpotifyUserId,
   searchSpotifyTrack,
@@ -150,6 +151,19 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
               <Music2 className="h-4 w-4" />
               {getSpotifyToken() ? "Exportar Agora" : "Conectar ao Spotify e Exportar"}
             </Button>
+            {getSpotifyToken() && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs text-muted-foreground"
+                onClick={() => {
+                  clearSpotifyToken();
+                  toast.info("Desconectado do Spotify. Clique em exportar para reconectar.");
+                }}
+              >
+                Desconectar do Spotify
+              </Button>
+            )}
           </div>
         )}
 

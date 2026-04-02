@@ -92,6 +92,15 @@ export default function EditSongPage() {
         return;
       }
 
+      // Log the edit in song_edits
+      if (user) {
+        await supabase.from("song_edits").insert({
+          song_id: id,
+          user_id: user.id,
+          summary: "Editou a cifra",
+        });
+      }
+
       toast.success("Música atualizada com sucesso!");
       window.location.href = `/songs/${id}`;
     } catch (err: any) {

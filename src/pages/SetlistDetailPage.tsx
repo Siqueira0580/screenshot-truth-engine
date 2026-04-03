@@ -1287,7 +1287,7 @@ export default function SetlistDetailPage() {
                 <iframe
                   key={playlistKey}
                   className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${youtubeIds[0]}?playlist=${youtubeIds.slice(1).join(",")}&autoplay=1&rel=0`}
+                  src={`https://www.youtube.com/embed/${youtubeIds[0]}?playlist=${youtubeIds.join(",")}&autoplay=1&rel=0&loop=0`}
                   title="Playlist do Repertório"
                   allow="autoplay; encrypted-media; picture-in-picture"
                   allowFullScreen

@@ -40,7 +40,7 @@ import CommunityPage from "@/pages/CommunityPage";
 import MessagesPage from "@/pages/MessagesPage";
 import ChatPage from "@/pages/ChatPage";
 import InvitePage from "@/pages/InvitePage";
-import SpotifyCallbackPage from "@/pages/SpotifyCallbackPage";
+
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
 import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";
@@ -115,7 +115,7 @@ const App = () => (
                 </Route>
                 <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
                 <Route path="/invite/:token" element={<InvitePage />} />
-                <Route path="/spotify-callback" element={<SpotifyCallbackPage />} />
+                
                 
                 <Route element={<PublicLayout />}>
                   <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />

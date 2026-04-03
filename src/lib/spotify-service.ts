@@ -270,21 +270,46 @@ export interface SpotifySearchResult {
 export async function searchSpotifyTrack(title: string, artist?: string): Promise<SpotifySearchResult | null> {
   const cleanTitle = sanitizeSearchQuery(title);
   const cleanArtist = artist ? sanitizeSearchQuery(artist) : "";
-  const q = (cleanTitle + (cleanArtist ? " " + cleanArtist : "")).trim();
 
-  console.log(`[Spotify] PASSO 3 – Buscando: "${q}" (original: "${title}" / "${artist || ""}")`);
+  // Try with field filters first for better precision
+  const fieldQuery = cleanArtist
+    ? `track:${cleanTitle} artist:${cleanArtist}`
+    : `track:${cleanTitle}`;
 
-  const data = await spotifyFetch(`/search?q=${encodeURIComponent(q)}&type=track&limit=1`);
-  const track = data?.tracks?.items?.[0];
-  if (!track) {
-    console.log(`[Spotify] Nenhum resultado para: "${q}"`);
+  console.log(`[Spotify] PASSO 3 – Buscando: "${fieldQuery}" (original: "${title}" / "${artist || ""}")`);
+
+  try {
+    const data = await spotifyFetch(`/search?q=${encodeURIComponent(fieldQuery)}&type=track&limit=5&market=BR`);
+    const track = data?.tracks?.items?.[0];
+    if (track) {
+      console.log(`[Spotify] Encontrado (filtro): ${track.name} – ${track.artists?.[0]?.name} (${track.uri})`);
+      return {
+        uri: track.uri,
+        name: track.name,
+        artist: track.artists?.map((a: any) => a.name).join(", ") || "",
+      };
+    }
+  } catch (err: any) {
+    console.warn(`[Spotify] Busca com filtro falhou: ${err.message}`);
+    // If it's an auth error, re-throw immediately
+    if (err.message === "SPOTIFY_EXPIRED" || err.message === "SPOTIFY_FORBIDDEN") throw err;
+  }
+
+  // Fallback: simple text search without field filters
+  const fallbackQuery = (cleanTitle + (cleanArtist ? " " + cleanArtist : "")).trim();
+  console.log(`[Spotify] Fallback – Buscando: "${fallbackQuery}"`);
+
+  const data2 = await spotifyFetch(`/search?q=${encodeURIComponent(fallbackQuery)}&type=track&limit=5&market=BR`);
+  const track2 = data2?.tracks?.items?.[0];
+  if (!track2) {
+    console.log(`[Spotify] Nenhum resultado para: "${fallbackQuery}"`);
     return null;
   }
-  console.log(`[Spotify] Encontrado: ${track.name} – ${track.artists?.[0]?.name} (${track.uri})`);
+  console.log(`[Spotify] Encontrado (fallback): ${track2.name} – ${track2.artists?.[0]?.name} (${track2.uri})`);
   return {
-    uri: track.uri,
-    name: track.name,
-    artist: track.artists?.map((a: any) => a.name).join(", ") || "",
+    uri: track2.uri,
+    name: track2.name,
+    artist: track2.artists?.map((a: any) => a.name).join(", ") || "",
   };
 }
 

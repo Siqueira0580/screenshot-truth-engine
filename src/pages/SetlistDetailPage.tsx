@@ -226,7 +226,7 @@ export default function SetlistDetailPage() {
   const [shareGroupMessage, setShareGroupMessage] = useState("");
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [fillingYouTube, setFillingYouTube] = useState(false);
-  const [spotifyExportOpen, setSpotifyExportOpen] = useState(false);
+  
 
   useEffect(() => {
     if (!prefsLoading && !hasSeenRepertoireWizard) {

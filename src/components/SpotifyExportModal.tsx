@@ -63,7 +63,7 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
     setResults([...trackResults]);
 
     try {
-      // Search all tracks
+      // Search all tracks — individual search failures should NOT abort the whole export
       for (let i = 0; i < trackResults.length; i++) {
         const { title, artist } = trackResults[i];
         try {
@@ -74,15 +74,22 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
             trackResults[i] = { ...trackResults[i], status: "not_found" };
           }
         } catch (err: any) {
-          if (err.message === "SPOTIFY_EXPIRED" || err.message === "SPOTIFY_FORBIDDEN") {
+          // Only abort on true auth expiration (token cleared by service)
+          if (err.message === "SPOTIFY_EXPIRED") {
             toast.info("Sessão expirou. Redirecionando para login do Spotify...");
             clearSpotifyToken();
             setTimeout(() => startSpotifyAuth(), 1000);
             return;
           }
+          // Any other error (403 on search, network, etc) → mark as not found, continue
+          console.warn(`[SpotifyExport] Falha ao buscar "${title}":`, err.message);
           trackResults[i] = { ...trackResults[i], status: "not_found" };
         }
         setResults([...trackResults]);
+        // Small delay between searches to avoid rate limiting
+        if (i < trackResults.length - 1) {
+          await new Promise((r) => setTimeout(r, 200));
+        }
       }
 
       const foundUris = trackResults.filter((t) => t.status === "found").map((t) => t.uri!);

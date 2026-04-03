@@ -147,33 +147,30 @@ export function clearSpotifyToken() {
 }
 
 // ─── Core API caller ────────────────────────────────────────────
-async function spotifyFetch(endpoint: string, options: RequestInit = {}) {
+async function spotifyFetch(endpoint: string, options: RequestInit = {}, retryCount = 0): Promise<any> {
   let token = await getValidToken();
 
   const url = `https://api.spotify.com/v1${endpoint}`;
   console.log(`[Spotify API] ${options.method || "GET"} ${url}`);
 
-  let res = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  const doFetch = (t: string) =>
+    fetch(url, {
+      ...options,
+      headers: {
+        Authorization: `Bearer ${t}`,
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+
+  let res = await doFetch(token);
 
   // If 401, try one refresh and retry
   if (res.status === 401) {
+    console.warn("[Spotify API] 401 – tentando refresh...");
     try {
       token = await refreshAccessToken();
-      res = await fetch(url, {
-        ...options,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          ...(options.headers || {}),
-        },
-      });
+      res = await doFetch(token);
     } catch {
       clearSpotifyToken();
       throw new Error("SPOTIFY_EXPIRED");
@@ -185,10 +182,26 @@ async function spotifyFetch(endpoint: string, options: RequestInit = {}) {
     throw new Error("SPOTIFY_EXPIRED");
   }
 
+  // Handle rate limiting (429) with retry
+  if (res.status === 429 && retryCount < 3) {
+    const retryAfter = parseInt(res.headers.get("Retry-After") || "2", 10);
+    console.warn(`[Spotify API] 429 Rate limited – aguardando ${retryAfter}s (tentativa ${retryCount + 1}/3)`);
+    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+    return spotifyFetch(endpoint, options, retryCount + 1);
+  }
+
+  // 403 on /me means auth issue; on other endpoints it may be permissions on that specific resource
   if (res.status === 403) {
-    console.error("[Spotify API] 403 Forbidden – re-auth needed.");
-    clearSpotifyToken();
-    throw new Error("SPOTIFY_FORBIDDEN");
+    // Only treat as auth failure for profile/playlist-creation endpoints
+    const isAuthCritical = endpoint === "/me" || (options.method === "POST" && endpoint.includes("/playlists"));
+    if (isAuthCritical) {
+      console.error("[Spotify API] 403 Forbidden on critical endpoint – re-auth needed.");
+      clearSpotifyToken();
+      throw new Error("SPOTIFY_FORBIDDEN");
+    }
+    // For search/other endpoints, just throw a regular error (don't clear token)
+    console.warn(`[Spotify API] 403 on ${endpoint} – skipping (non-fatal).`);
+    throw new Error(`Spotify 403 on ${endpoint}`);
   }
 
   if (!res.ok) {

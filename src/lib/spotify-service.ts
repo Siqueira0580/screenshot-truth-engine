@@ -131,6 +131,15 @@ export function getSpotifyToken(): string | null {
   return sessionStorage.getItem("spotify_access_token");
 }
 
+export function getSpotifyTokenStatus(): { connected: boolean; expiresAt: number | null; remainingMs: number | null } {
+  const token = sessionStorage.getItem("spotify_access_token");
+  const expiresAtStr = sessionStorage.getItem("spotify_expires_at");
+  if (!token) return { connected: false, expiresAt: null, remainingMs: null };
+  const expiresAt = expiresAtStr ? Number(expiresAtStr) : null;
+  const remainingMs = expiresAt ? Math.max(0, expiresAt - Date.now()) : null;
+  return { connected: true, expiresAt, remainingMs };
+}
+
 export async function ensureValidToken(): Promise<string | null> {
   try {
     return await getValidToken();

@@ -41,6 +41,27 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
   const [results, setResults] = useState<TrackResult[]>([]);
   const [step, setStep] = useState<"idle" | "searching" | "creating" | "done">("idle");
   const [playlistUrl, setPlaylistUrl] = useState<string | null>(null);
+  const [tokenRemaining, setTokenRemaining] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const status = getSpotifyTokenStatus();
+      setIsConnected(status.connected);
+      if (status.connected && status.remainingMs !== null) {
+        const totalSec = Math.floor(status.remainingMs / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        setTokenRemaining(`${min}:${sec.toString().padStart(2, "0")}`);
+      } else {
+        setTokenRemaining(null);
+      }
+    };
+    update();
+    const iv = setInterval(update, 1000);
+    return () => clearInterval(iv);
+  }, [open]);
 
   const handleExport = async () => {
     // Try to get a valid (non-expired) token, refreshing if needed

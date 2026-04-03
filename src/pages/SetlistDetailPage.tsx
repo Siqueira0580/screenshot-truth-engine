@@ -472,9 +472,11 @@ export default function SetlistDetailPage() {
   }, [items, filterKey, sortBy]);
 
   // Extract YouTube IDs from setlist songs for playlist playback
+  // Uses raw `items` (ordered by position from DB) so playlist always
+  // respects the configured order and reacts to drag-and-drop changes.
   const youtubeIds = useMemo(() => {
     const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
-    return processedItems
+    return items
       .map((item: any) => {
         const url = item.songs?.youtube_url;
         if (!url) return null;
@@ -482,7 +484,10 @@ export default function SetlistDetailPage() {
         return match ? match[1] : null;
       })
       .filter(Boolean) as string[];
-  }, [processedItems]);
+  }, [items]);
+
+  // Key to force iframe re-mount when playlist order/content changes
+  const playlistKey = useMemo(() => youtubeIds.join(","), [youtubeIds]);
 
   // When sort changes (artist/key), persist the new order to DB
   const sortAppliedRef = useRef<SortBy>("manual");

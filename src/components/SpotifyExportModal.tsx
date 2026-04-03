@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2, XCircle, Music2 } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Music2, Wifi, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import {
   getSpotifyToken,
@@ -12,6 +12,7 @@ import {
   searchSpotifyTrack,
   createSpotifyPlaylist,
   addTracksToPlaylist,
+  getSpotifyTokenStatus,
 } from "@/lib/spotify-service";
 
 interface SongItem {

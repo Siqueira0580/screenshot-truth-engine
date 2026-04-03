@@ -40,7 +40,7 @@ import CommunityPage from "@/pages/CommunityPage";
 import MessagesPage from "@/pages/MessagesPage";
 import ChatPage from "@/pages/ChatPage";
 import InvitePage from "@/pages/InvitePage";
-import SpotifyCallbackPage from "@/pages/SpotifyCallbackPage";
+
 import TermsInterceptor from "@/components/TermsInterceptor";
 import MaintenanceInterceptor from "@/components/MaintenanceInterceptor";
 import VipMaintenanceGuard from "@/components/VipMaintenanceGuard";

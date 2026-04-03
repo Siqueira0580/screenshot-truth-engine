@@ -1,10 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, CheckCircle2, XCircle, Music2 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  getSpotifyToken,
   clearSpotifyToken,
   startSpotifyAuth,
   ensureValidToken,
@@ -12,6 +11,7 @@ import {
   searchSpotifyTrack,
   createSpotifyPlaylist,
   addTracksToPlaylist,
+  getSpotifyTokenStatus,
 } from "@/lib/spotify-service";
 
 interface SongItem {
@@ -40,6 +40,27 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
   const [results, setResults] = useState<TrackResult[]>([]);
   const [step, setStep] = useState<"idle" | "searching" | "creating" | "done">("idle");
   const [playlistUrl, setPlaylistUrl] = useState<string | null>(null);
+  const [tokenRemaining, setTokenRemaining] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      const status = getSpotifyTokenStatus();
+      setIsConnected(status.connected);
+      if (status.connected && status.remainingMs !== null) {
+        const totalSec = Math.floor(status.remainingMs / 1000);
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        setTokenRemaining(`${min}:${sec.toString().padStart(2, "0")}`);
+      } else {
+        setTokenRemaining(null);
+      }
+    };
+    update();
+    const iv = setInterval(update, 1000);
+    return () => clearInterval(iv);
+  }, [open]);
 
   const handleExport = async () => {
     // Try to get a valid (non-expired) token, refreshing if needed
@@ -153,6 +174,20 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
 
         {step === "idle" && (
           <div className="space-y-4 py-2">
+            {/* Connection status indicator */}
+            <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${
+              isConnected
+                ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                : "bg-muted text-muted-foreground border border-border"
+            }`}>
+              <span className={`h-2 w-2 rounded-full shrink-0 ${isConnected ? "bg-green-500 animate-pulse" : "bg-muted-foreground/50"}`} />
+              {isConnected ? (
+                <span>Conectado ao Spotify {tokenRemaining && <span className="opacity-70">• expira em {tokenRemaining}</span>}</span>
+              ) : (
+                <span>Desconectado do Spotify</span>
+              )}
+            </div>
+
             <p className="text-sm text-muted-foreground">
               Exporta o repertório "<strong>{setlistName}</strong>" com {songs.length} música(s) como uma playlist no Spotify.
             </p>
@@ -161,15 +196,17 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
             </p>
             <Button onClick={handleExport} className="w-full gap-2">
               <Music2 className="h-4 w-4" />
-              {getSpotifyToken() ? "Exportar Agora" : "Conectar ao Spotify e Exportar"}
+              {isConnected ? "Exportar Agora" : "Conectar ao Spotify e Exportar"}
             </Button>
-            {getSpotifyToken() && (
+            {isConnected && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="w-full text-xs text-muted-foreground"
                 onClick={() => {
                   clearSpotifyToken();
+                  setIsConnected(false);
+                  setTokenRemaining(null);
                   toast.info("Desconectado do Spotify. Clique em exportar para reconectar.");
                 }}
               >

@@ -1285,6 +1285,7 @@ export default function SetlistDetailPage() {
             {youtubeIds.length > 0 && playlistOpen && (
               <div className="aspect-video w-full rounded-md overflow-hidden bg-black">
                 <iframe
+                  key={playlistKey}
                   className="w-full h-full"
                   src={`https://www.youtube.com/embed/${youtubeIds[0]}?playlist=${youtubeIds.slice(1).join(",")}&autoplay=1&rel=0`}
                   title="Playlist do Repertório"

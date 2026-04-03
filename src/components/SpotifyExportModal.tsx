@@ -175,6 +175,20 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
 
         {step === "idle" && (
           <div className="space-y-4 py-2">
+            {/* Connection status indicator */}
+            <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium ${
+              isConnected
+                ? "bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20"
+                : "bg-muted text-muted-foreground border border-border"
+            }`}>
+              <span className={`h-2 w-2 rounded-full shrink-0 ${isConnected ? "bg-green-500 animate-pulse" : "bg-muted-foreground/50"}`} />
+              {isConnected ? (
+                <span>Conectado ao Spotify {tokenRemaining && <span className="opacity-70">• expira em {tokenRemaining}</span>}</span>
+              ) : (
+                <span>Desconectado do Spotify</span>
+              )}
+            </div>
+
             <p className="text-sm text-muted-foreground">
               Exporta o repertório "<strong>{setlistName}</strong>" com {songs.length} música(s) como uma playlist no Spotify.
             </p>
@@ -183,15 +197,17 @@ export default function SpotifyExportModal({ open, onOpenChange, setlistName, so
             </p>
             <Button onClick={handleExport} className="w-full gap-2">
               <Music2 className="h-4 w-4" />
-              {getSpotifyToken() ? "Exportar Agora" : "Conectar ao Spotify e Exportar"}
+              {isConnected ? "Exportar Agora" : "Conectar ao Spotify e Exportar"}
             </Button>
-            {getSpotifyToken() && (
+            {isConnected && (
               <Button
                 variant="ghost"
                 size="sm"
                 className="w-full text-xs text-muted-foreground"
                 onClick={() => {
                   clearSpotifyToken();
+                  setIsConnected(false);
+                  setTokenRemaining(null);
                   toast.info("Desconectado do Spotify. Clique em exportar para reconectar.");
                 }}
               >

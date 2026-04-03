@@ -115,7 +115,7 @@ const App = () => (
                 </Route>
                 <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
                 <Route path="/invite/:token" element={<InvitePage />} />
-                <Route path="/spotify-callback" element={<SpotifyCallbackPage />} />
+                
                 
                 <Route element={<PublicLayout />}>
                   <Route path="/share/setlist/:token" element={<PublicSetlistPage />} />

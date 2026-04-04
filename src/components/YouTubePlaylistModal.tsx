@@ -65,10 +65,34 @@ export default function YouTubePlaylistModal({
   const handleStateChange = useCallback((event: YouTubeEvent) => {
     const player = event.target;
     if (!player?.getPlaylistIndex) return;
+
+    // Repeat-one: when video ends, replay it
+    if (repeatMode === "one" && event.data === 0) {
+      player.seekTo(0, true);
+      player.playVideo();
+      return;
+    }
+
+    // Repeat-all: when last video ends, jump back to first
+    if (repeatMode === "all" && event.data === 0) {
+      const idx = player.getPlaylistIndex();
+      if (idx === youtubeIds.length - 1) {
+        player.playVideoAt(0);
+        setCurrentIndex(0);
+        return;
+      }
+    }
+
     const idx = player.getPlaylistIndex();
     if (typeof idx === "number" && idx >= 0) {
       setCurrentIndex(idx);
     }
+  }, [repeatMode, youtubeIds.length]);
+
+  const cycleRepeatMode = useCallback(() => {
+    setRepeatMode((prev) =>
+      prev === "off" ? "all" : prev === "all" ? "one" : "off"
+    );
   }, []);
 
   const handleReady = useCallback((event: YouTubeEvent) => {

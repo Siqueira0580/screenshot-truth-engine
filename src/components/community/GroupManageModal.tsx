@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail, LogOut, Link2, Loader2 } from "lucide-react";
+import { UserPlus, Trash2, Mail, LogOut, Link2, Loader2, MoreHorizontal, ShieldBan, ShieldCheck, Ban } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -26,8 +28,26 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
   const [email, setEmail] = useState("");
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmKick, setConfirmKick] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState("");
   const [generatingLink, setGeneratingLink] = useState(false);
+
+  // Check if current user is group admin
+  const { data: currentMember } = useQuery({
+    queryKey: ["group-my-membership", groupId],
+    enabled: open && !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("community_group_members")
+        .select("id, role, status")
+        .eq("group_id", groupId)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isAdmin = isCreator || currentMember?.role === "admin";
 
   const generateInviteLink = async () => {
     setGeneratingLink(true);
@@ -58,11 +78,10 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_group_members")
-        .select("id, user_id, created_at")
+        .select("id, user_id, role, status, created_at")
         .eq("group_id", groupId);
       if (error) throw error;
 
-      // Fetch profiles for members
       const userIds = (data || []).map((m: any) => m.user_id);
       if (userIds.length === 0) return [];
 
@@ -81,41 +100,43 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     },
   });
 
+  const activeMembers = members.filter((m: any) => m.status !== "blocked" && m.user_id !== user?.id);
+  const blockedMembers = members.filter((m: any) => m.status === "blocked");
+
   const inviteMutation = useMutation({
     mutationFn: async (inviteEmail: string) => {
-      // Find user by email
       const { data: userToAdd, error: findError } = await supabase
         .from("profiles")
         .select("id")
         .eq("email", inviteEmail)
         .single();
 
-      if (findError || !userToAdd) {
-        throw new Error("NOT_FOUND");
-      }
+      if (findError || !userToAdd) throw new Error("NOT_FOUND");
+      if (userToAdd.id === user!.id) throw new Error("SELF");
 
-      if (userToAdd.id === user!.id) {
-        throw new Error("SELF");
-      }
-
-      // Check if already member
       const { data: existing } = await supabase
         .from("community_group_members")
-        .select("id")
+        .select("id, status")
         .eq("group_id", groupId)
         .eq("user_id", userToAdd.id)
         .maybeSingle();
 
-      if (existing) {
-        throw new Error("ALREADY_MEMBER");
+      if (existing && existing.status === "active") throw new Error("ALREADY_MEMBER");
+
+      // If blocked, reactivate
+      if (existing && existing.status === "blocked") {
+        const { error } = await supabase
+          .from("community_group_members")
+          .update({ status: "active" } as any)
+          .eq("id", existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("community_group_members")
+          .insert({ group_id: groupId, user_id: userToAdd.id, role: "member", status: "active" } as any);
+        if (error) throw error;
       }
 
-      const { error } = await supabase
-        .from("community_group_members")
-        .insert({ group_id: groupId, user_id: userToAdd.id });
-      if (error) throw error;
-
-      // Create notification for the invited user
       await supabase.from("notifications").insert({
         user_id: userToAdd.id,
         type: "group_invite",
@@ -137,16 +158,47 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     },
   });
 
-  const removeMutation = useMutation({
+  const kickMutation = useMutation({
     mutationFn: async (memberId: string) => {
       const { error } = await supabase.from("community_group_members").delete().eq("id", memberId);
       if (error) throw error;
     },
     onSuccess: () => {
+      setConfirmKick(null);
       toast.success("Membro removido");
       queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
     },
     onError: () => toast.error("Erro ao remover membro"),
+  });
+
+  const banMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("community_group_members")
+        .update({ status: "blocked" } as any)
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Membro bloqueado");
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+    },
+    onError: () => toast.error("Erro ao bloquear membro"),
+  });
+
+  const unbanMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("community_group_members")
+        .update({ status: "active" } as any)
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Membro desbloqueado");
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+    },
+    onError: () => toast.error("Erro ao desbloquear membro"),
   });
 
   const leaveMutation = useMutation({
@@ -170,7 +222,6 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
 
   const deleteGroupMutation = useMutation({
     mutationFn: async () => {
-      // Delete members first, then posts, then the group
       await supabase.from("community_group_members").delete().eq("group_id", groupId);
       await supabase.from("community_posts").delete().eq("group_id", groupId);
       const { error } = await supabase.from("community_groups").delete().eq("id", groupId);
@@ -197,199 +248,284 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
 
   return (
     <>
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{groupName}</DialogTitle>
-        </DialogHeader>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{groupName}</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Invite form - only for creator */}
-          {isCreator && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <UserPlus className="h-4 w-4" /> Convidar Membro
-              </Label>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@exemplo.com"
-                    className="pl-9"
-                    type="email"
-                  />
-                </div>
-                <Button
-                  size="sm"
-                  disabled={!email.trim() || inviteMutation.isPending}
-                  onClick={() => { if (email.trim()) inviteMutation.mutate(email.trim()); }}
-                >
-                  {inviteMutation.isPending ? "..." : "Adicionar"}
-                </Button>
-              </div>
-            </div>
-          )}
+          {isAdmin ? (
+            <Tabs defaultValue="invites" className="w-full">
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="invites">Convites</TabsTrigger>
+                <TabsTrigger value="members">
+                  Membros ({activeMembers.length + (user ? 1 : 0)})
+                </TabsTrigger>
+              </TabsList>
 
-          {/* Invite link generator - only for creator */}
-          {isCreator && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <Link2 className="h-4 w-4" /> Convidar por Link
-              </Label>
-              {!inviteLink ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full gap-2"
-                  disabled={generatingLink}
-                  onClick={generateInviteLink}
-                >
-                  {generatingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-                  Gerar Link de Convite
-                </Button>
-              ) : (
+              {/* === TAB: CONVITES === */}
+              <TabsContent value="invites" className="space-y-4 mt-4">
+                {/* Invite by email */}
                 <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <UserPlus className="h-4 w-4" /> Convidar por E-mail
+                  </Label>
                   <div className="flex gap-2">
-                    <Input value={inviteLink} readOnly className="text-xs" />
-                    <Button variant="outline" size="sm" onClick={copyLink}>Copiar</Button>
-                  </div>
-                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="email@exemplo.com"
+                        className="pl-9"
+                        type="email"
+                      />
+                    </div>
                     <Button
-                      variant="outline"
                       size="sm"
-                      className="flex-1 gap-1.5"
-                      asChild
+                      disabled={!email.trim() || inviteMutation.isPending}
+                      onClick={() => { if (email.trim()) inviteMutation.mutate(email.trim()); }}
                     >
-                      <a
-                        href={`https://wa.me/?text=${encodeURIComponent(`Fui convidado para entrar no nosso grupo de música! Clique aqui para aceitar: ${inviteLink}`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        WhatsApp
-                      </a>
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 gap-1.5"
-                      asChild
-                    >
-                      <a
-                        href={`mailto:?subject=${encodeURIComponent(`Convite para o Grupo Musical`)}&body=${encodeURIComponent(`Você foi convidado para entrar no grupo "${groupName}". Clique no link para aceitar ou recusar: ${inviteLink}`)}`}
-                      >
-                        <Mail className="h-4 w-4" /> E-mail
-                      </a>
+                      {inviteMutation.isPending ? "..." : "Adicionar"}
                     </Button>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-
-          <div className="space-y-2">
-            <Label>Membros ({members.length})</Label>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {members.map((m: any) => (
-                <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border p-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                      {getInitials(m.profile)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{getName(m.profile)}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{m.profile?.email}</p>
-                  </div>
-                  {isCreator && m.user_id !== user?.id && (
+                {/* Invite by link */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Link2 className="h-4 w-4" /> Convidar por Link
+                  </Label>
+                  {!inviteLink ? (
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                      onClick={() => removeMutation.mutate(m.id)}
+                      className="w-full gap-2"
+                      disabled={generatingLink}
+                      onClick={generateInviteLink}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {generatingLink ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+                      Gerar Link de Convite
                     </Button>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input value={inviteLink} readOnly className="text-xs" />
+                        <Button variant="outline" size="sm" onClick={copyLink}>Copiar</Button>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 gap-1.5" asChild>
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Fui convidado para entrar no nosso grupo de música! Clique aqui para aceitar: ${inviteLink}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            WhatsApp
+                          </a>
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 gap-1.5" asChild>
+                          <a href={`mailto:?subject=${encodeURIComponent(`Convite para o Grupo Musical`)}&body=${encodeURIComponent(`Você foi convidado para entrar no grupo "${groupName}". Clique no link para aceitar ou recusar: ${inviteLink}`)}`}>
+                            <Mail className="h-4 w-4" /> E-mail
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
-              ))}
+
+                {/* Delete group */}
+                {isCreator && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="w-full gap-1.5 mt-4"
+                    disabled={deleteGroupMutation.isPending}
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    {deleteGroupMutation.isPending ? "Excluindo..." : "Excluir grupo"}
+                  </Button>
+                )}
+              </TabsContent>
+
+              {/* === TAB: MEMBROS === */}
+              <TabsContent value="members" className="space-y-4 mt-4">
+                {/* Active members */}
+                <div className="space-y-2">
+                  <Label>Membros Ativos</Label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {activeMembers.length === 0 && (
+                      <p className="text-xs text-muted-foreground text-center py-3">Nenhum membro além de você.</p>
+                    )}
+                    {activeMembers.map((m: any) => (
+                      <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border p-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            {getInitials(m.profile)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{getName(m.profile)}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {m.role === "admin" ? "Admin" : "Membro"} · {m.profile?.email}
+                          </p>
+                        </div>
+                        {m.role !== "admin" && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                                <MoreHorizontal className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setConfirmKick(m.id)} className="gap-2">
+                                <Trash2 className="h-3.5 w-3.5" /> Remover
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => banMutation.mutate(m.id)} className="gap-2 text-destructive focus:text-destructive">
+                                <Ban className="h-3.5 w-3.5" /> Bloquear
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Blocked members */}
+                {blockedMembers.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5 text-destructive">
+                      <ShieldBan className="h-4 w-4" /> Membros Bloqueados ({blockedMembers.length})
+                    </Label>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {blockedMembers.map((m: any) => (
+                        <div key={m.id} className="flex items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-2">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs bg-destructive/10 text-destructive">
+                              {getInitials(m.profile)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{getName(m.profile)}</p>
+                            <p className="text-[11px] text-muted-foreground truncate">{m.profile?.email}</p>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 text-xs"
+                            disabled={unbanMutation.isPending}
+                            onClick={() => unbanMutation.mutate(m.id)}
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5" /> Desbloquear
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          ) : (
+            /* Non-admin view: just member list + leave */
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Membros ({members.length})</Label>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {members.filter((m: any) => m.status !== "blocked").map((m: any) => (
+                    <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border p-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                          {getInitials(m.profile)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{getName(m.profile)}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {m.role === "admin" ? "Admin" : "Membro"}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full gap-1.5"
+                disabled={leaveMutation.isPending}
+                onClick={() => setConfirmLeave(true)}
+              >
+                <LogOut className="h-4 w-4" />
+                {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
+              </Button>
             </div>
-          </div>
-
-          {/* Leave group button for non-creators */}
-          {!isCreator && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="w-full gap-1.5"
-              disabled={leaveMutation.isPending}
-              onClick={() => setConfirmLeave(true)}
-            >
-              <LogOut className="h-4 w-4" />
-              {leaveMutation.isPending ? "Saindo..." : "Sair do grupo"}
-            </Button>
           )}
+        </DialogContent>
+      </Dialog>
 
-          {/* Delete group button for creator */}
-          {isCreator && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="w-full gap-1.5"
-              disabled={deleteGroupMutation.isPending}
-              onClick={() => setConfirmDelete(true)}
+      {/* Confirm kick */}
+      <AlertDialog open={!!confirmKick} onOpenChange={(o) => { if (!o) setConfirmKick(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover membro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O membro será removido do grupo. Ele poderá ser convidado novamente no futuro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (confirmKick) kickMutation.mutate(confirmKick); }}
             >
-              <Trash2 className="h-4 w-4" />
-              {deleteGroupMutation.isPending ? "Excluindo..." : "Excluir grupo"}
-            </Button>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-    {/* Confirm leave dialog */}
-    <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Você vai sair do grupo <strong>{groupName}</strong>. Para voltar, será necessário um novo convite do criador.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={() => leaveMutation.mutate()}
-          >
-            Sair do grupo
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      {/* Confirm leave */}
+      <AlertDialog open={confirmLeave} onOpenChange={setConfirmLeave}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Você vai sair do grupo <strong>{groupName}</strong>. Para voltar, será necessário um novo convite.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => leaveMutation.mutate()}
+            >
+              Sair do grupo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-    {/* Confirm delete group dialog */}
-    <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Excluir grupo?</AlertDialogTitle>
-          <AlertDialogDescription>
-            O grupo <strong>{groupName}</strong> será excluído permanentemente, incluindo todas as publicações e membros. Esta ação não pode ser desfeita.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            onClick={() => deleteGroupMutation.mutate()}
-          >
-            Excluir grupo
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      {/* Confirm delete group */}
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir grupo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              O grupo <strong>{groupName}</strong> será excluído permanentemente, incluindo todas as publicações e membros. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => deleteGroupMutation.mutate()}
+            >
+              Excluir grupo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

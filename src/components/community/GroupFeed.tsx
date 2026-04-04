@@ -66,6 +66,23 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
   const [editFacebook, setEditFacebook] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
+  // Check if current user is blocked in this group
+  const { data: myMembership } = useQuery({
+    queryKey: ["group-my-membership", groupId],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("community_group_members")
+        .select("id, role, status")
+        .eq("group_id", groupId)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isBlocked = myMembership?.status === "blocked";
+
   const toggleMediaInput = (key: string) => {
     setActiveMediaInputs(prev => {
       const next = new Set(prev);
@@ -203,6 +220,26 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
       facebook_url: editFacebook.trim() || undefined,
     });
   };
+
+  if (isBlocked) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-semibold flex-1 truncate">{groupName}</h2>
+        </div>
+        <div className="text-center py-16 space-y-3">
+          <div className="h-14 w-14 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+            <span className="text-2xl">🚫</span>
+          </div>
+          <p className="text-sm text-destructive font-medium">Você foi banido deste grupo pelo administrador.</p>
+          <p className="text-xs text-muted-foreground">Não é possível ver as publicações nem interagir.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

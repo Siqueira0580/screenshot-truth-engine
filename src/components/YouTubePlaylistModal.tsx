@@ -130,6 +130,7 @@ export default function YouTubePlaylistModal({
       setAutoScroll(false);
       setTransposeMap({});
       setRepeatMode("off");
+      setShowLyrics(true);
     }
   }, [open]);
 

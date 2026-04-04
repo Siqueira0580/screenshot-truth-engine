@@ -33,8 +33,8 @@ export default function YouTubePlaylistModal({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [autoScroll, setAutoScroll] = useState(false);
   const [transposeMap, setTransposeMap] = useState<Record<number, number>>({});
-  // "off" | "one" | "all"
   const [repeatMode, setRepeatMode] = useState<"off" | "one" | "all">("off");
+  const [showLyrics, setShowLyrics] = useState(true);
   const lyricsRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval>>();
   const playerRef = useRef<any>(null);

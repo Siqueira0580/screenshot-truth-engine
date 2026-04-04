@@ -3,7 +3,7 @@ import YouTube, { type YouTubeEvent } from "react-youtube";
 import ChordText from "@/components/ChordText";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, ArrowDown, Pause, Music2, ChevronUp, ChevronDown, Repeat, Repeat1 } from "lucide-react";
+import { PlayCircle, ArrowDown, Pause, Music2, ChevronUp, ChevronDown, Repeat, Repeat1, PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { transposeText, transposeChordPro, transposeKey } from "@/lib/transpose";
@@ -33,8 +33,8 @@ export default function YouTubePlaylistModal({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [autoScroll, setAutoScroll] = useState(false);
   const [transposeMap, setTransposeMap] = useState<Record<number, number>>({});
-  // "off" | "one" | "all"
   const [repeatMode, setRepeatMode] = useState<"off" | "one" | "all">("off");
+  const [showLyrics, setShowLyrics] = useState(true);
   const lyricsRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval>>();
   const playerRef = useRef<any>(null);
@@ -130,6 +130,7 @@ export default function YouTubePlaylistModal({
       setAutoScroll(false);
       setTransposeMap({});
       setRepeatMode("off");
+      setShowLyrics(true);
     }
   }, [open]);
 
@@ -160,9 +161,18 @@ export default function YouTubePlaylistModal({
           <DialogTitle className="flex items-center gap-2 text-base">
             <PlayCircle className="h-5 w-5 text-primary" />
             Playlist do Repertório
-            <span className="text-xs text-muted-foreground font-normal ml-auto">
+            <span className="text-xs text-muted-foreground font-normal ml-auto mr-2">
               {currentIndex + 1}/{youtubeIds.length}
             </span>
+            <Button
+              variant={showLyrics ? "default" : "outline"}
+              size="icon"
+              className="h-7 w-7 shrink-0"
+              onClick={() => setShowLyrics((v) => !v)}
+              title={showLyrics ? "Ocultar cifra" : "Mostrar cifra"}
+            >
+              {showLyrics ? <PanelRightClose className="h-3.5 w-3.5" /> : <PanelRightOpen className="h-3.5 w-3.5" />}
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -176,7 +186,7 @@ export default function YouTubePlaylistModal({
           <div
             className={cn(
               "bg-black flex-shrink-0",
-              isMobile ? "w-full aspect-video" : "w-1/2",
+              isMobile ? "w-full aspect-video" : showLyrics ? "w-1/2" : "w-full h-full",
             )}
           >
             {open && (
@@ -192,107 +202,109 @@ export default function YouTubePlaylistModal({
           </div>
 
           {/* Side B — Lyrics / Chords */}
-          <div
-            className={cn(
-              "flex flex-col min-h-0",
-              isMobile ? "flex-1" : "w-1/2",
-            )}
-          >
-            {/* Song header + controls */}
-            <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/40 shrink-0">
-              <Music2 className="h-4 w-4 text-primary shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">
-                  {currentSong?.title ?? "—"}
-                </p>
-                {currentSong?.artist && (
-                  <p className="text-xs text-muted-foreground truncate">
-                    {currentSong.artist}
+          {showLyrics && (
+            <div
+              className={cn(
+                "flex flex-col min-h-0",
+                isMobile ? "flex-1" : "w-1/2",
+              )}
+            >
+              {/* Song header + controls */}
+              <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/40 shrink-0">
+                <Music2 className="h-4 w-4 text-primary shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate">
+                    {currentSong?.title ?? "—"}
                   </p>
+                  {currentSong?.artist && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {currentSong.artist}
+                    </p>
+                  )}
+                </div>
+
+                {/* Transpose controls */}
+                {currentSong?.body_text && (
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleTranspose(-1)}
+                      title="Tom abaixo"
+                    >
+                      <ChevronDown className="h-3.5 w-3.5" />
+                    </Button>
+                    <span className="text-xs font-bold text-primary min-w-[2rem] text-center">
+                      {displayKey ?? (currentSemitones !== 0 ? `${currentSemitones > 0 ? "+" : ""}${currentSemitones}` : "Tom")}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => handleTranspose(1)}
+                      title="Tom acima"
+                    >
+                      <ChevronUp className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 )}
+
+                <Button
+                  variant={repeatMode !== "off" ? "default" : "outline"}
+                  size="sm"
+                  className="gap-1 shrink-0 text-xs h-7"
+                  onClick={cycleRepeatMode}
+                  title={
+                    repeatMode === "off"
+                      ? "Repetir desligado"
+                      : repeatMode === "one"
+                        ? "Repetindo música"
+                        : "Repetindo repertório"
+                  }
+                >
+                  {repeatMode === "one" ? (
+                    <Repeat1 className="h-3 w-3" />
+                  ) : (
+                    <Repeat className="h-3 w-3" />
+                  )}
+                  {repeatMode === "off" ? "" : repeatMode === "one" ? "1" : "∞"}
+                </Button>
+
+                <Button
+                  variant={autoScroll ? "default" : "outline"}
+                  size="sm"
+                  className="gap-1.5 shrink-0 text-xs h-7"
+                  onClick={() => setAutoScroll((v) => !v)}
+                >
+                  {autoScroll ? (
+                    <Pause className="h-3 w-3" />
+                  ) : (
+                    <ArrowDown className="h-3 w-3" />
+                  )}
+                  Auto-Scroll
+                </Button>
               </div>
 
-              {/* Transpose controls */}
-              {currentSong?.body_text && (
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => handleTranspose(-1)}
-                    title="Tom abaixo"
-                  >
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </Button>
-                  <span className="text-xs font-bold text-primary min-w-[2rem] text-center">
-                    {displayKey ?? (currentSemitones !== 0 ? `${currentSemitones > 0 ? "+" : ""}${currentSemitones}` : "Tom")}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => handleTranspose(1)}
-                    title="Tom acima"
-                  >
-                    <ChevronUp className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              )}
-
-              <Button
-                variant={repeatMode !== "off" ? "default" : "outline"}
-                size="sm"
-                className="gap-1 shrink-0 text-xs h-7"
-                onClick={cycleRepeatMode}
-                title={
-                  repeatMode === "off"
-                    ? "Repetir desligado"
-                    : repeatMode === "one"
-                      ? "Repetindo música"
-                      : "Repetindo repertório"
-                }
+              {/* Lyrics body */}
+              <div
+                ref={lyricsRef}
+                className="flex-1 overflow-y-auto p-4"
               >
-                {repeatMode === "one" ? (
-                  <Repeat1 className="h-3 w-3" />
+                {transposedBody ? (
+                  <ChordText
+                    text={transposedBody}
+                    className="text-sm sm:text-base leading-relaxed"
+                  />
                 ) : (
-                  <Repeat className="h-3 w-3" />
+                  <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
+                    <Music2 className="h-10 w-10 opacity-40" />
+                    <p className="text-sm">Nenhuma cifra disponível para esta música.</p>
+                  </div>
                 )}
-                {repeatMode === "off" ? "" : repeatMode === "one" ? "1" : "∞"}
-              </Button>
-
-              <Button
-                variant={autoScroll ? "default" : "outline"}
-                size="sm"
-                className="gap-1.5 shrink-0 text-xs h-7"
-                onClick={() => setAutoScroll((v) => !v)}
-              >
-                {autoScroll ? (
-                  <Pause className="h-3 w-3" />
-                ) : (
-                  <ArrowDown className="h-3 w-3" />
-                )}
-                Auto-Scroll
-              </Button>
+              </div>
             </div>
-
-            {/* Lyrics body */}
-            <div
-              ref={lyricsRef}
-              className="flex-1 overflow-y-auto p-4"
-            >
-              {transposedBody ? (
-                <ChordText
-                  text={transposedBody}
-                  className="text-sm sm:text-base leading-relaxed"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-                  <Music2 className="h-10 w-10 opacity-40" />
-                  <p className="text-sm">Nenhuma cifra disponível para esta música.</p>
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

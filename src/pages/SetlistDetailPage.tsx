@@ -502,6 +502,7 @@ export default function SetlistDetailPage() {
         title: item.songs?.title ?? "Sem título",
         artist: item.songs?.artist ?? null,
         body_text: item.songs?.body_text ?? null,
+        musical_key: item.songs?.musical_key ?? null,
       }));
   }, [items]);
 

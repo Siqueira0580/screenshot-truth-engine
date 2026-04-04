@@ -39,6 +39,7 @@ import { useOfflineCache } from "@/hooks/useOfflineCache";
 import ShowButton from "@/components/ShowButton";
 import ImportSongModal from "@/components/ImportSongModal";
 import { autoFillMissingYouTubeLinks } from "@/lib/youtube-autofill";
+import YouTubePlaylistModal from "@/components/YouTubePlaylistModal";
 
 
 import { useIsMobile } from "@/hooks/use-mobile";

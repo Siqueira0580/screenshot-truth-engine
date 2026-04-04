@@ -221,6 +221,26 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
     });
   };
 
+  if (isBlocked) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-lg font-semibold flex-1 truncate">{groupName}</h2>
+        </div>
+        <div className="text-center py-16 space-y-3">
+          <div className="h-14 w-14 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+            <span className="text-2xl">🚫</span>
+          </div>
+          <p className="text-sm text-destructive font-medium">Você foi banido deste grupo pelo administrador.</p>
+          <p className="text-xs text-muted-foreground">Não é possível ver as publicações nem interagir.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}

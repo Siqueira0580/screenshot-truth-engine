@@ -490,6 +490,21 @@ export default function SetlistDetailPage() {
   // Key to force iframe re-mount when playlist order/content changes
   const playlistKey = useMemo(() => youtubeIds.join(","), [youtubeIds]);
 
+  // Songs that have a YouTube URL, in playlist order (matching youtubeIds)
+  const playlistSongs = useMemo(() => {
+    const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+    return items
+      .filter((item: any) => {
+        const url = item.songs?.youtube_url;
+        return url && regex.test(url);
+      })
+      .map((item: any) => ({
+        title: item.songs?.title ?? "Sem título",
+        artist: item.songs?.artist ?? null,
+        body_text: item.songs?.body_text ?? null,
+      }));
+  }, [items]);
+
   // When sort changes (artist/key), persist the new order to DB
   const sortAppliedRef = useRef<SortBy>("manual");
   useEffect(() => {

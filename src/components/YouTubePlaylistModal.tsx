@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import YouTube, { type YouTubeEvent } from "react-youtube";
+import ChordText from "@/components/ChordText";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";

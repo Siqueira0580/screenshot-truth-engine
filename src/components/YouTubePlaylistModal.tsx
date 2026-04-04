@@ -3,7 +3,7 @@ import YouTube, { type YouTubeEvent } from "react-youtube";
 import ChordText from "@/components/ChordText";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, ArrowDown, Pause, Music2, ChevronUp, ChevronDown } from "lucide-react";
+import { PlayCircle, ArrowDown, Pause, Music2, ChevronUp, ChevronDown, Repeat, Repeat1 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { transposeText, transposeChordPro, transposeKey } from "@/lib/transpose";
@@ -33,6 +33,8 @@ export default function YouTubePlaylistModal({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [autoScroll, setAutoScroll] = useState(false);
   const [transposeMap, setTransposeMap] = useState<Record<number, number>>({});
+  // "off" | "one" | "all"
+  const [repeatMode, setRepeatMode] = useState<"off" | "one" | "all">("off");
   const lyricsRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval>>();
   const playerRef = useRef<any>(null);
@@ -63,10 +65,34 @@ export default function YouTubePlaylistModal({
   const handleStateChange = useCallback((event: YouTubeEvent) => {
     const player = event.target;
     if (!player?.getPlaylistIndex) return;
+
+    // Repeat-one: when video ends, replay it
+    if (repeatMode === "one" && event.data === 0) {
+      player.seekTo(0, true);
+      player.playVideo();
+      return;
+    }
+
+    // Repeat-all: when last video ends, jump back to first
+    if (repeatMode === "all" && event.data === 0) {
+      const idx = player.getPlaylistIndex();
+      if (idx === youtubeIds.length - 1) {
+        player.playVideoAt(0);
+        setCurrentIndex(0);
+        return;
+      }
+    }
+
     const idx = player.getPlaylistIndex();
     if (typeof idx === "number" && idx >= 0) {
       setCurrentIndex(idx);
     }
+  }, [repeatMode, youtubeIds.length]);
+
+  const cycleRepeatMode = useCallback(() => {
+    setRepeatMode((prev) =>
+      prev === "off" ? "all" : prev === "all" ? "one" : "off"
+    );
   }, []);
 
   const handleReady = useCallback((event: YouTubeEvent) => {
@@ -103,6 +129,7 @@ export default function YouTubePlaylistModal({
       setCurrentIndex(0);
       setAutoScroll(false);
       setTransposeMap({});
+      setRepeatMode("off");
     }
   }, [open]);
 
@@ -211,6 +238,27 @@ export default function YouTubePlaylistModal({
                   </Button>
                 </div>
               )}
+
+              <Button
+                variant={repeatMode !== "off" ? "default" : "outline"}
+                size="sm"
+                className="gap-1 shrink-0 text-xs h-7"
+                onClick={cycleRepeatMode}
+                title={
+                  repeatMode === "off"
+                    ? "Repetir desligado"
+                    : repeatMode === "one"
+                      ? "Repetindo música"
+                      : "Repetindo repertório"
+                }
+              >
+                {repeatMode === "one" ? (
+                  <Repeat1 className="h-3 w-3" />
+                ) : (
+                  <Repeat className="h-3 w-3" />
+                )}
+                {repeatMode === "off" ? "" : repeatMode === "one" ? "1" : "∞"}
+              </Button>
 
               <Button
                 variant={autoScroll ? "default" : "outline"}

@@ -186,7 +186,7 @@ export default function YouTubePlaylistModal({
           <div
             className={cn(
               "bg-black flex-shrink-0",
-              isMobile ? "w-full aspect-video" : "w-1/2",
+              isMobile ? "w-full aspect-video" : showLyrics ? "w-1/2" : "w-full h-full",
             )}
           >
             {open && (

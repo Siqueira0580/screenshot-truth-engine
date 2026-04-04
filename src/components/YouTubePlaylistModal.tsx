@@ -240,6 +240,27 @@ export default function YouTubePlaylistModal({
               )}
 
               <Button
+                variant={repeatMode !== "off" ? "default" : "outline"}
+                size="sm"
+                className="gap-1 shrink-0 text-xs h-7"
+                onClick={cycleRepeatMode}
+                title={
+                  repeatMode === "off"
+                    ? "Repetir desligado"
+                    : repeatMode === "one"
+                      ? "Repetindo música"
+                      : "Repetindo repertório"
+                }
+              >
+                {repeatMode === "one" ? (
+                  <Repeat1 className="h-3 w-3" />
+                ) : (
+                  <Repeat className="h-3 w-3" />
+                )}
+                {repeatMode === "off" ? "" : repeatMode === "one" ? "1" : "∞"}
+              </Button>
+
+              <Button
                 variant={autoScroll ? "default" : "outline"}
                 size="sm"
                 className="gap-1.5 shrink-0 text-xs h-7"

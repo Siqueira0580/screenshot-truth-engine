@@ -66,6 +66,23 @@ export default function GroupFeed({ groupId, groupName, isCreator, onBack }: Pro
   const [editFacebook, setEditFacebook] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
+  // Check if current user is blocked in this group
+  const { data: myMembership } = useQuery({
+    queryKey: ["group-my-membership", groupId],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("community_group_members")
+        .select("id, role, status")
+        .eq("group_id", groupId)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const isBlocked = myMembership?.status === "blocked";
+
   const toggleMediaInput = (key: string) => {
     setActiveMediaInputs(prev => {
       const next = new Set(prev);

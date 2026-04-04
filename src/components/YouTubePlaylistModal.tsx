@@ -129,6 +129,7 @@ export default function YouTubePlaylistModal({
       setCurrentIndex(0);
       setAutoScroll(false);
       setTransposeMap({});
+      setRepeatMode("off");
     }
   }, [open]);
 

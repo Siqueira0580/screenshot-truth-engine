@@ -1,17 +1,19 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import YouTube, { type YouTubeEvent } from "react-youtube";
 import ChordText from "@/components/ChordText";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, ArrowDown, Pause, Music2 } from "lucide-react";
+import { PlayCircle, ArrowDown, Pause, Music2, ChevronUp, ChevronDown } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { transposeText, transposeChordPro, transposeKey } from "@/lib/transpose";
+import { isChordProFormat } from "@/lib/chordpro-parser";
 
 interface PlaylistSong {
   title: string;
   artist?: string | null;
   body_text?: string | null;
+  musical_key?: string | null;
 }
 
 interface YouTubePlaylistModalProps {
@@ -30,24 +32,42 @@ export default function YouTubePlaylistModal({
   const isMobile = useIsMobile();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [autoScroll, setAutoScroll] = useState(false);
+  const [transposeMap, setTransposeMap] = useState<Record<number, number>>({});
   const lyricsRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval>>();
   const playerRef = useRef<any>(null);
 
   const currentSong = playlistSongs[currentIndex] ?? null;
+  const currentSemitones = transposeMap[currentIndex] ?? 0;
+
+  const transposedBody = useMemo(() => {
+    if (!currentSong?.body_text || currentSemitones === 0) return currentSong?.body_text ?? null;
+    const text = currentSong.body_text;
+    return isChordProFormat(text)
+      ? transposeChordPro(text, currentSemitones)
+      : transposeText(text, currentSemitones);
+  }, [currentSong?.body_text, currentSemitones]);
+
+  const displayKey = useMemo(() => {
+    return transposeKey(currentSong?.musical_key, currentSemitones);
+  }, [currentSong?.musical_key, currentSemitones]);
+
+  const handleTranspose = useCallback((delta: number) => {
+    setTransposeMap((prev) => ({
+      ...prev,
+      [currentIndex]: ((prev[currentIndex] ?? 0) + delta + 12) % 12,
+    }));
+  }, [currentIndex]);
 
   // Track playlist index via YouTube IFrame API
-  const handleStateChange = useCallback(
-    (event: YouTubeEvent) => {
-      const player = event.target;
-      if (!player?.getPlaylistIndex) return;
-      const idx = player.getPlaylistIndex();
-      if (typeof idx === "number" && idx >= 0) {
-        setCurrentIndex(idx);
-      }
-    },
-    [],
-  );
+  const handleStateChange = useCallback((event: YouTubeEvent) => {
+    const player = event.target;
+    if (!player?.getPlaylistIndex) return;
+    const idx = player.getPlaylistIndex();
+    if (typeof idx === "number" && idx >= 0) {
+      setCurrentIndex(idx);
+    }
+  }, []);
 
   const handleReady = useCallback((event: YouTubeEvent) => {
     playerRef.current = event.target;
@@ -82,6 +102,7 @@ export default function YouTubePlaylistModal({
     if (open) {
       setCurrentIndex(0);
       setAutoScroll(false);
+      setTransposeMap({});
     }
   }, [open]);
 
@@ -150,7 +171,7 @@ export default function YouTubePlaylistModal({
               isMobile ? "flex-1" : "w-1/2",
             )}
           >
-            {/* Song header + auto-scroll toggle */}
+            {/* Song header + controls */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/40 shrink-0">
               <Music2 className="h-4 w-4 text-primary shrink-0" />
               <div className="flex-1 min-w-0">
@@ -163,6 +184,34 @@ export default function YouTubePlaylistModal({
                   </p>
                 )}
               </div>
+
+              {/* Transpose controls */}
+              {currentSong?.body_text && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => handleTranspose(-1)}
+                    title="Tom abaixo"
+                  >
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                  <span className="text-xs font-bold text-primary min-w-[2rem] text-center">
+                    {displayKey ?? (currentSemitones !== 0 ? `${currentSemitones > 0 ? "+" : ""}${currentSemitones}` : "Tom")}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => handleTranspose(1)}
+                    title="Tom acima"
+                  >
+                    <ChevronUp className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
+
               <Button
                 variant={autoScroll ? "default" : "outline"}
                 size="sm"
@@ -183,9 +232,9 @@ export default function YouTubePlaylistModal({
               ref={lyricsRef}
               className="flex-1 overflow-y-auto p-4"
             >
-              {currentSong?.body_text ? (
+              {transposedBody ? (
                 <ChordText
-                  text={currentSong.body_text}
+                  text={transposedBody}
                   className="text-sm sm:text-base leading-relaxed"
                 />
               ) : (

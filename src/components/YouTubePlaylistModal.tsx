@@ -184,9 +184,10 @@ export default function YouTubePlaylistModal({
               className="flex-1 overflow-y-auto p-4"
             >
               {currentSong?.body_text ? (
-                <pre className="whitespace-pre-wrap font-mono text-sm sm:text-base leading-relaxed text-foreground">
-                  {currentSong.body_text}
-                </pre>
+                <ChordText
+                  text={currentSong.body_text}
+                  className="text-sm sm:text-base leading-relaxed"
+                />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
                   <Music2 className="h-10 w-10 opacity-40" />

@@ -3,7 +3,7 @@ import YouTube, { type YouTubeEvent } from "react-youtube";
 import ChordText from "@/components/ChordText";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, ArrowDown, Pause, Music2, ChevronUp, ChevronDown } from "lucide-react";
+import { PlayCircle, ArrowDown, Pause, Music2, ChevronUp, ChevronDown, Repeat, Repeat1 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { transposeText, transposeChordPro, transposeKey } from "@/lib/transpose";

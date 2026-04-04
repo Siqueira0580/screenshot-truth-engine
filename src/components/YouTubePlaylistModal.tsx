@@ -161,13 +161,13 @@ export default function YouTubePlaylistModal({
           <DialogTitle className="flex items-center gap-2 text-base">
             <PlayCircle className="h-5 w-5 text-primary" />
             Playlist do Repertório
-            <span className="text-xs text-muted-foreground font-normal ml-auto mr-2">
+            <span className="text-xs text-muted-foreground font-normal ml-auto">
               {currentIndex + 1}/{youtubeIds.length}
             </span>
             <Button
               variant={showLyrics ? "default" : "outline"}
               size="icon"
-              className="h-7 w-7 shrink-0"
+              className="h-7 w-7 shrink-0 mr-6"
               onClick={() => setShowLyrics((v) => !v)}
               title={showLyrics ? "Ocultar cifra" : "Mostrar cifra"}
             >

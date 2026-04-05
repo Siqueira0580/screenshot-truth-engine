@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
-import { UserPlus, Trash2, Mail, LogOut, Link2, Loader2, MoreHorizontal, ShieldBan, ShieldCheck, Ban } from "lucide-react";
+import { UserPlus, Trash2, Mail, LogOut, Link2, Loader2, MoreHorizontal, ShieldBan, ShieldCheck, Ban, Crown, ShieldOff } from "lucide-react";
 
 interface Props {
   open: boolean;

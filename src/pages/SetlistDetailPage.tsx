@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Mic, MicOff, Link as LinkIcon, MessageCircle, Users, PlayCircle, Youtube, Loader2 } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Mic, MicOff, Link as LinkIcon, MessageCircle, Users, PlayCircle, Youtube, Loader2, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";

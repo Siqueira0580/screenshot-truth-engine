@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotifications, Notification } from "@/hooks/useNotifications";
-import { Bell, Check, Users, MessageSquare, Heart, MessageCircle, Share2 } from "lucide-react";
+import { Bell, Check, Users, MessageSquare, Heart, MessageCircle, Share2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +18,7 @@ const iconMap: Record<string, React.ElementType> = {
   setlist_comment: MessageCircle,
   setlist_like: Heart,
   group_share: Share2,
+  setlist_edit: Pencil,
 };
 
 function getNotificationRoute(n: Notification): string | null {
@@ -27,6 +28,7 @@ function getNotificationRoute(n: Notification): string | null {
       return meta?.sender_id ? `/chat/${meta.sender_id}` : null;
     case "setlist_comment":
     case "setlist_like":
+    case "setlist_edit":
       return meta?.setlist_id ? `/setlists/${meta.setlist_id}` : null;
     case "group_invite":
       return "/community";

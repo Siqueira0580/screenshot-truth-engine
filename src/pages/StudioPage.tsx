@@ -1,9 +1,11 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music2, Upload, Plus, Loader2 } from "lucide-react";
+import { Music2, Upload, Plus, Loader2, Music4 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchArtists, createSong, checkDuplicateSong } from "@/lib/supabase-queries";
 import { toast } from "sonner";
@@ -41,6 +43,7 @@ export default function StudioPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
+  const [showOnlyWithAudio, setShowOnlyWithAudio] = useState(false);
   const [uploadingNew, setUploadingNew] = useState(false);
   const newAudioRef = useRef<HTMLInputElement>(null);
   const { run: runTour, completeTour, replayTour } = useGuidedTour("studio_page");
@@ -66,10 +69,31 @@ export default function StudioPage() {
   });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
 
-  const filteredSongs = songs.filter(s =>
-    s.title.toLowerCase().includes(search.toLowerCase()) ||
-    (s.artist && s.artist.toLowerCase().includes(search.toLowerCase()))
-  );
+  // Fetch song IDs that have audio tracks
+  const { data: songIdsWithAudio = [] } = useQuery({
+    queryKey: ["studio-songs-with-audio", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("audio_tracks")
+        .select("song_id")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return [...new Set(data.map(t => t.song_id))];
+    },
+    enabled: !!user?.id,
+  });
+
+  const audioSet = new Set(songIdsWithAudio);
+
+  const filteredSongs = songs.filter(s => {
+    const matchesSearch =
+      s.title.toLowerCase().includes(search.toLowerCase()) ||
+      (s.artist && s.artist.toLowerCase().includes(search.toLowerCase()));
+    if (!matchesSearch) return false;
+    if (showOnlyWithAudio) return audioSet.has(s.id);
+    return true;
+  });
 
   const handleNewAudio = async (file: File) => {
     setUploadingNew(true);
@@ -157,20 +181,46 @@ export default function StudioPage() {
         </Button>
       </div>
 
+      {/* Audio filter */}
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="audio-filter"
+          checked={showOnlyWithAudio}
+          onCheckedChange={setShowOnlyWithAudio}
+        />
+        <Label htmlFor="audio-filter" className="text-sm cursor-pointer">
+          Apenas com áudio
+        </Label>
+      </div>
+
       {/* Song grid */}
       <div id="tour-studio-list">
       {filteredSongs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
-          <Upload className="h-12 w-12 mb-4 opacity-40" />
-          <p className="text-lg mb-2">Envie um áudio para começar</p>
-          <p className="text-sm text-muted-foreground/70 mb-4">
-            Clique em "Novo" para fazer upload de uma música
-          </p>
-          <Button className="gap-2" disabled={uploadingNew} onClick={() => newAudioRef.current?.click()}>
-            {uploadingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            Enviar Mix Completo
-          </Button>
-        </div>
+        showOnlyWithAudio ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
+            <Music4 className="h-12 w-12 mb-4 opacity-40" />
+            <p className="text-lg mb-2">Nenhuma música com áudio multitrack</p>
+            <p className="text-sm text-muted-foreground/70 mb-4 text-center px-4">
+              Envie stems ou um mix completo para que a música apareça aqui.
+            </p>
+            <Button className="gap-2" disabled={uploadingNew} onClick={() => newAudioRef.current?.click()}>
+              {uploadingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Enviar Áudio
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
+            <Upload className="h-12 w-12 mb-4 opacity-40" />
+            <p className="text-lg mb-2">Envie um áudio para começar</p>
+            <p className="text-sm text-muted-foreground/70 mb-4">
+              Clique em "Novo" para fazer upload de uma música
+            </p>
+            <Button className="gap-2" disabled={uploadingNew} onClick={() => newAudioRef.current?.click()}>
+              {uploadingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Enviar Mix Completo
+            </Button>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 landscape:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filteredSongs.map(song => {

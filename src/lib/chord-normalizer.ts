@@ -47,6 +47,27 @@ export function translateChordBR(chord: string): string {
   suffix = suffix.replace(/7M$/g, "maj7");
   suffix = suffix.replace(/7M(?=[(/])/g, "maj7");
 
+  // 4b. Brazilian "m7M" → "mMaj7" (Minor Major 7)
+  suffix = suffix.replace(/^m7M$/g, "mMaj7");
+  suffix = suffix.replace(/^m7M(?=[(/])/g, "mMaj7");
+
+  // 4c. Brazilian shorthand: "C4" → "Csus4", "C2" → "Csus2"
+  if (/^4$/.test(suffix)) suffix = "sus4";
+  if (/^2$/.test(suffix)) suffix = "sus2";
+  // "7(4)" → "7sus4"
+  suffix = suffix.replace(/^7\(4\)$/, "7sus4");
+
+  // 4d. "6(9)" → "69" (6/9 chord)
+  suffix = suffix.replace(/6\(9\)/, "69");
+
+  // 4e. Parenthetical tensions → flat notation: "7(9b)" → "7b9", "7(9#)" → "7#9"
+  suffix = suffix.replace(/\((\d+)([b#])\)/g, (_, deg, acc) => acc + deg);
+  // "7(b9)" style already handled by stripping in lookup chain
+
+  // 4f. "m7(5b)" → "m7b5" (half-diminished)
+  suffix = suffix.replace(/\(5b\)/, "b5");
+  suffix = suffix.replace(/\(b5\)/, "b5");
+
   // 5. "+" as augmented when it's a quality modifier
   //    C+ → Caug, C+7 → Caug (simplified)
   //    But NOT m7+ (which in BR means m(maj7) — edge case)

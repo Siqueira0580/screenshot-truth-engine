@@ -753,6 +753,7 @@ export default function SetlistDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
         setDirty(false);
         toast.success("Configurações salvas automaticamente");
+        notifyOwnerOfEdit("editou configurações das músicas");
       });
     }, 1500);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };

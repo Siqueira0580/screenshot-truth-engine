@@ -201,6 +201,36 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
     onError: () => toast.error("Erro ao desbloquear membro"),
   });
 
+  const promoteMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("community_group_members")
+        .update({ role: "admin" } as any)
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Membro promovido a Admin!");
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+    },
+    onError: () => toast.error("Erro ao promover membro"),
+  });
+
+  const demoteMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const { error } = await supabase
+        .from("community_group_members")
+        .update({ role: "member" } as any)
+        .eq("id", memberId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Permissão de Admin removida");
+      queryClient.invalidateQueries({ queryKey: ["group-members", groupId] });
+    },
+    onError: () => toast.error("Erro ao rebaixar membro"),
+  });
+
   const leaveMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase

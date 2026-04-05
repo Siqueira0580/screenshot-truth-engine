@@ -262,6 +262,55 @@ export default function SetlistDetailPage() {
   const isOwner = !!(user && setlist && (setlist as any).user_id === user.id);
   const isPublic = !!(setlist as any)?.is_public;
 
+  // Check if current user is a group admin for any group where this setlist was shared
+  const { data: isGroupAdminForSetlist } = useQuery({
+    queryKey: ["is-group-admin-for-setlist", id, user?.id],
+    enabled: !!user && !!id && !isOwner,
+    queryFn: async () => {
+      // Find groups where this setlist was posted
+      const { data: posts } = await supabase
+        .from("community_posts")
+        .select("group_id")
+        .eq("setlist_id", id!)
+        .not("group_id", "is", null);
+      const groupIds = [...new Set((posts || []).map((p: any) => p.group_id as string))];
+      if (groupIds.length === 0) return false;
+      // Check if user is admin in any of those groups
+      const { data: memberships } = await supabase
+        .from("community_group_members")
+        .select("id")
+        .eq("user_id", user!.id)
+        .eq("role", "admin")
+        .eq("status", "active")
+        .in("group_id", groupIds)
+        .limit(1);
+      return (memberships || []).length > 0;
+    },
+  });
+
+  const canEdit = isOwner || !!isGroupAdminForSetlist;
+
+  // Helper: notify setlist owner when a group admin edits their setlist
+  const notifyOwnerOfEdit = useCallback(async (action: string) => {
+    if (isOwner || !user || !setlist) return;
+    const ownerId = (setlist as any).user_id;
+    if (!ownerId) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", user.id)
+      .single();
+    const editorName = profile
+      ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Um admin"
+      : "Um admin";
+    await supabase.from("notifications").insert({
+      user_id: ownerId,
+      type: "setlist_edit",
+      title: `${editorName} ${action} no seu repertório "${(setlist as any).name}"`,
+      body: `Alteração feita por um administrador do grupo.`,
+    });
+  }, [isOwner, user, setlist]);
+
   // Fetch user's community groups for sharing
   const { data: myGroups = [] } = useQuery({
     queryKey: ["my-community-groups", user?.id],

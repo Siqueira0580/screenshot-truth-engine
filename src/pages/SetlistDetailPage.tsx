@@ -300,7 +300,7 @@ export default function SetlistDetailPage() {
         .select("title, created_at")
         .eq("user_id", user!.id)
         .eq("type", "setlist_edit")
-        .containedBy("metadata", { setlist_id: id })
+        .contains("metadata", { setlist_id: id })
         .order("created_at", { ascending: false })
         .limit(1);
       return data && data.length > 0 ? data[0] : null;

@@ -90,12 +90,24 @@ export default function EditSongPage() {
         return;
       }
 
-      // Log the edit in song_edits
+      // Build detailed edit summary
       if (user) {
+        const changes: string[] = [];
+        if (title !== (song?.title || "")) changes.push("título");
+        if (artist !== (song?.artist || "")) changes.push("artista");
+        if (musicalKey !== (song?.musical_key || "")) changes.push("tom");
+        if (style !== (song?.style || "")) changes.push("gênero");
+        if (bpm !== (song?.bpm?.toString() || "")) changes.push("BPM");
+        if (bodyText !== (song?.body_text || "")) changes.push("letra/cifra");
+
+        const summary = changes.length > 0
+          ? `Editou: ${changes.join(", ")}`
+          : "Editou a cifra";
+
         await supabase.from("song_edits").insert({
           song_id: id,
           user_id: user.id,
-          summary: "Editou a cifra",
+          summary,
         });
       }
 

@@ -843,6 +843,12 @@ export default function SetlistDetailPage() {
             Somente leitura
           </Badge>
         )}
+        {isOwner && adminEditInfo && (
+          <Badge variant="outline" className="text-xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+            <Pencil className="h-3 w-3" />
+            Editado por admin
+          </Badge>
+        )}
       </SetlistHeader>
 
 

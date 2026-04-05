@@ -216,21 +216,6 @@ function ChordCardItem({
   );
 }
 
-function toRoman(n: number): string {
-  const map: [number, string][] = [
-    [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"],
-  ];
-  let result = "";
-  let remaining = n;
-  for (const [value, numeral] of map) {
-    while (remaining >= value) {
-      result += numeral;
-      remaining -= value;
-    }
-  }
-  return result;
-}
-
 // ─── Main Page ────────────────────────────────────────
 const INSTRUMENTS: { value: Instrument; label: string }[] = [
   { value: "cavaquinho", label: "Cavaquinho" },
@@ -241,22 +226,16 @@ const INSTRUMENTS: { value: Instrument; label: string }[] = [
 export default function ChordLibraryPage() {
   const [instrument, setInstrument] = useState<Instrument>("cavaquinho");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedChord, setSelectedChord] = useState<string | null>(null);
 
-  // Build chord list per instrument (memoized)
-  const chordKeys = useMemo(
-    () => getChordKeysForInstrument(instrument),
-    [instrument]
-  );
-
+  const chordKeys = useMemo(() => getChordKeysForInstrument(instrument), [instrument]);
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
-  // Filter
   const filtered = useMemo(() => {
     if (!normalizedSearch) return chordKeys;
     return chordKeys.filter((k) => k.toLowerCase().includes(normalizedSearch));
   }, [chordKeys, normalizedSearch]);
 
-  // Group by root note
   const grouped = useMemo(() => {
     const map: Record<string, string[]> = {};
     for (const root of ROOT_ORDER) map[root] = [];
@@ -270,7 +249,6 @@ export default function ChordLibraryPage() {
 
   const isSearching = normalizedSearch.length > 0;
 
-  // When searching, auto-expand all non-empty groups
   const defaultOpen = useMemo(() => {
     if (!isSearching) return [] as string[];
     return ROOT_ORDER.filter((r) => grouped[r]?.length > 0);
@@ -278,7 +256,6 @@ export default function ChordLibraryPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 animate-fade-in pb-12">
-      {/* Header */}
       <div className="flex items-center gap-2">
         <BackButton />
         <div>
@@ -291,7 +268,6 @@ export default function ChordLibraryPage() {
         </div>
       </div>
 
-      {/* Instrument Tabs */}
       <Tabs
         value={instrument}
         onValueChange={(v) => {
@@ -307,7 +283,6 @@ export default function ChordLibraryPage() {
           ))}
         </TabsList>
 
-        {/* Search */}
         <div className="relative mt-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -318,25 +293,18 @@ export default function ChordLibraryPage() {
           />
         </div>
 
-        {/* Content for each tab (they share the same layout) */}
         {INSTRUMENTS.map((inst) => (
           <TabsContent key={inst.value} value={inst.value} className="mt-4">
             {filtered.length === 0 ? (
               <EmptyState searchTerm={searchTerm} />
             ) : isSearching ? (
-              /* Flat grid when searching */
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
                 {filtered.map((chord) => (
-                  <ChordCardItem key={chord} chordName={chord} instrument={instrument} />
+                  <ChordCardItem key={chord} chordName={chord} instrument={instrument} onClick={() => setSelectedChord(chord)} />
                 ))}
               </div>
             ) : (
-              /* Accordion grouped by root note */
-              <Accordion
-                type="multiple"
-                defaultValue={defaultOpen}
-                className="space-y-2"
-              >
+              <Accordion type="multiple" defaultValue={defaultOpen} className="space-y-2">
                 {ROOT_ORDER.map((root) => {
                   const chords = grouped[root];
                   if (!chords || chords.length === 0) return null;
@@ -345,19 +313,13 @@ export default function ChordLibraryPage() {
                       <AccordionTrigger className="hover:no-underline">
                         <span className="text-base font-semibold">
                           Acordes de {NOTE_NAMES[root] ?? root}{" "}
-                          <span className="text-muted-foreground font-normal text-sm">
-                            ({chords.length})
-                          </span>
+                          <span className="text-muted-foreground font-normal text-sm">({chords.length})</span>
                         </span>
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 pt-1 pb-2">
                           {chords.map((chord) => (
-                            <ChordCardItem
-                              key={chord}
-                              chordName={chord}
-                              instrument={instrument}
-                            />
+                            <ChordCardItem key={chord} chordName={chord} instrument={instrument} onClick={() => setSelectedChord(chord)} />
                           ))}
                         </div>
                       </AccordionContent>
@@ -369,6 +331,10 @@ export default function ChordLibraryPage() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {selectedChord && (
+        <VoicingModal chordName={selectedChord} instrument={instrument} onClose={() => setSelectedChord(null)} />
+      )}
     </div>
   );
 }

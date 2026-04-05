@@ -1222,6 +1222,7 @@ export default function SetlistDetailPage() {
             onSave={async (data) => {
               await updateSetlist(id!, data as any);
               queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+              notifyOwnerOfEdit("editou as configurações do repertório");
             }}
           />
 

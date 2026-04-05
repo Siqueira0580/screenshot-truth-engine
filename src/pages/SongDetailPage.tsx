@@ -224,6 +224,16 @@ export default function SongDetailPage() {
   const handleDeleteSong = async () => {
     if (!id) return;
     try {
+      // Log deletion before removing the song
+      if (user) {
+        const songTitle = song?.title || "Sem título";
+        const songArtist = song?.artist;
+        await supabase.from("song_edits").insert({
+          song_id: id,
+          user_id: user.id,
+          summary: `Excluiu a música "${songTitle}"${songArtist ? ` de ${songArtist}` : ""}`,
+        });
+      }
       const { error } = await supabase.from("songs").delete().eq("id", id);
       if (error) throw error;
       toast.success("Música excluída com sucesso!");

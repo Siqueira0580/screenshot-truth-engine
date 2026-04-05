@@ -290,6 +290,23 @@ export default function SetlistDetailPage() {
 
   const canEdit = isOwner || !!isGroupAdminForSetlist;
 
+  // Check if setlist was recently edited by a group admin (for owner indicator)
+  const { data: adminEditInfo } = useQuery({
+    queryKey: ["admin-edit-indicator", id],
+    enabled: !!id && isOwner,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("title, created_at")
+        .eq("user_id", user!.id)
+        .eq("type", "setlist_edit")
+        .containedBy("metadata", { setlist_id: id })
+        .order("created_at", { ascending: false })
+        .limit(1);
+      return data && data.length > 0 ? data[0] : null;
+    },
+  });
+
   // Helper: notify setlist owner when a group admin edits their setlist (debounced 30s)
   const notifyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingActionRef = useRef<string | null>(null);

@@ -817,7 +817,7 @@ export default function SetlistDetailPage() {
         musicians={(setlist as any)?.musicians}
         onSettingsClick={isOwner ? () => setSettingsOpen(true) : undefined}
       >
-        {!isOwner && (
+        {!canEdit && (
           <Badge variant="secondary" className="text-xs gap-1">
             <Eye className="h-3 w-3" />
             Somente leitura
@@ -827,7 +827,7 @@ export default function SetlistDetailPage() {
 
 
       {/* ── Owner Action Buttons ── */}
-      {isOwner && (
+      {canEdit && (
         <div className="flex items-center gap-2 flex-wrap">
           {dirty && (
             <Button onClick={() => {
@@ -988,7 +988,7 @@ export default function SetlistDetailPage() {
       )}
 
       {/* ── Read-only: teleprompter + clone for visitors ── */}
-      {!isOwner && items.length > 0 && (
+      {!canEdit && items.length > 0 && (
         <div className="flex items-center gap-2">
           <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
           {youtubeIds.length > 0 && (
@@ -1015,9 +1015,9 @@ export default function SetlistDetailPage() {
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
           <Music2 className="h-10 w-10 mb-3 opacity-40" />
           <p>Nenhuma música na setlist</p>
-          {isOwner && <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>}
+          {canEdit && <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>}
         </div>
-      ) : isOwner ? (
+      ) : canEdit ? (
         <>
           <SetlistToolbar
             sortBy={sortBy} onSortChange={setSortBy}
@@ -1075,7 +1075,7 @@ export default function SetlistDetailPage() {
         </div>
       )}
 
-      {isOwner && (
+      {canEdit && (
         <>
           <CreateFromSelectionBar
             count={selectedSongs.size}

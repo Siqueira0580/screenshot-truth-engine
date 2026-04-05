@@ -262,6 +262,55 @@ export default function SetlistDetailPage() {
   const isOwner = !!(user && setlist && (setlist as any).user_id === user.id);
   const isPublic = !!(setlist as any)?.is_public;
 
+  // Check if current user is a group admin for any group where this setlist was shared
+  const { data: isGroupAdminForSetlist } = useQuery({
+    queryKey: ["is-group-admin-for-setlist", id, user?.id],
+    enabled: !!user && !!id && !isOwner,
+    queryFn: async () => {
+      // Find groups where this setlist was posted
+      const { data: posts } = await supabase
+        .from("community_posts")
+        .select("group_id")
+        .eq("setlist_id", id!)
+        .not("group_id", "is", null);
+      const groupIds = [...new Set((posts || []).map((p: any) => p.group_id as string))];
+      if (groupIds.length === 0) return false;
+      // Check if user is admin in any of those groups
+      const { data: memberships } = await supabase
+        .from("community_group_members")
+        .select("id")
+        .eq("user_id", user!.id)
+        .eq("role", "admin")
+        .eq("status", "active")
+        .in("group_id", groupIds)
+        .limit(1);
+      return (memberships || []).length > 0;
+    },
+  });
+
+  const canEdit = isOwner || !!isGroupAdminForSetlist;
+
+  // Helper: notify setlist owner when a group admin edits their setlist
+  const notifyOwnerOfEdit = useCallback(async (action: string) => {
+    if (isOwner || !user || !setlist) return;
+    const ownerId = (setlist as any).user_id;
+    if (!ownerId) return;
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("first_name, last_name")
+      .eq("id", user.id)
+      .single();
+    const editorName = profile
+      ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Um admin"
+      : "Um admin";
+    await supabase.from("notifications").insert({
+      user_id: ownerId,
+      type: "setlist_edit",
+      title: `${editorName} ${action} no seu repertório "${(setlist as any).name}"`,
+      body: `Alteração feita por um administrador do grupo.`,
+    });
+  }, [isOwner, user, setlist]);
+
   // Fetch user's community groups for sharing
   const { data: myGroups = [] } = useQuery({
     queryKey: ["my-community-groups", user?.id],
@@ -656,6 +705,7 @@ export default function SetlistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
       toast.success("Música adicionada!");
+      notifyOwnerOfEdit("adicionou uma música");
     },
   });
 
@@ -664,6 +714,7 @@ export default function SetlistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
       toast.success("Música removida");
+      notifyOwnerOfEdit("removeu uma música");
     },
   });
 
@@ -702,6 +753,7 @@ export default function SetlistDetailPage() {
         queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
         setDirty(false);
         toast.success("Configurações salvas automaticamente");
+        notifyOwnerOfEdit("editou configurações das músicas");
       });
     }, 1500);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
@@ -768,7 +820,7 @@ export default function SetlistDetailPage() {
         musicians={(setlist as any)?.musicians}
         onSettingsClick={isOwner ? () => setSettingsOpen(true) : undefined}
       >
-        {!isOwner && (
+        {!canEdit && (
           <Badge variant="secondary" className="text-xs gap-1">
             <Eye className="h-3 w-3" />
             Somente leitura
@@ -778,7 +830,7 @@ export default function SetlistDetailPage() {
 
 
       {/* ── Owner Action Buttons ── */}
-      {isOwner && (
+      {canEdit && (
         <div className="flex items-center gap-2 flex-wrap">
           {dirty && (
             <Button onClick={() => {
@@ -939,7 +991,7 @@ export default function SetlistDetailPage() {
       )}
 
       {/* ── Read-only: teleprompter + clone for visitors ── */}
-      {!isOwner && items.length > 0 && (
+      {!canEdit && items.length > 0 && (
         <div className="flex items-center gap-2">
           <ShowButton onClick={() => setTeleprompterOpen(true)} compact />
           {youtubeIds.length > 0 && (
@@ -966,9 +1018,9 @@ export default function SetlistDetailPage() {
         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground border border-dashed border-border rounded-lg">
           <Music2 className="h-10 w-10 mb-3 opacity-40" />
           <p>Nenhuma música na setlist</p>
-          {isOwner && <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>}
+          {canEdit && <Button variant="outline" className="mt-4" onClick={() => setAddOpen(true)}>Adicionar música</Button>}
         </div>
-      ) : isOwner ? (
+      ) : canEdit ? (
         <>
           <SetlistToolbar
             sortBy={sortBy} onSortChange={setSortBy}
@@ -1026,7 +1078,7 @@ export default function SetlistDetailPage() {
         </div>
       )}
 
-      {isOwner && (
+      {canEdit && (
         <>
           <CreateFromSelectionBar
             count={selectedSongs.size}
@@ -1170,6 +1222,7 @@ export default function SetlistDetailPage() {
             onSave={async (data) => {
               await updateSetlist(id!, data as any);
               queryClient.invalidateQueries({ queryKey: ["setlist", id] });
+              notifyOwnerOfEdit("editou as configurações do repertório");
             }}
           />
 

@@ -69,10 +69,31 @@ export default function StudioPage() {
   });
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
 
-  const filteredSongs = songs.filter(s =>
-    s.title.toLowerCase().includes(search.toLowerCase()) ||
-    (s.artist && s.artist.toLowerCase().includes(search.toLowerCase()))
-  );
+  // Fetch song IDs that have audio tracks
+  const { data: songIdsWithAudio = [] } = useQuery({
+    queryKey: ["studio-songs-with-audio", user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from("audio_tracks")
+        .select("song_id")
+        .eq("user_id", user.id);
+      if (error) throw error;
+      return [...new Set(data.map(t => t.song_id))];
+    },
+    enabled: !!user?.id,
+  });
+
+  const audioSet = new Set(songIdsWithAudio);
+
+  const filteredSongs = songs.filter(s => {
+    const matchesSearch =
+      s.title.toLowerCase().includes(search.toLowerCase()) ||
+      (s.artist && s.artist.toLowerCase().includes(search.toLowerCase()));
+    if (!matchesSearch) return false;
+    if (showOnlyWithAudio) return audioSet.has(s.id);
+    return true;
+  });
 
   const handleNewAudio = async (file: File) => {
     setUploadingNew(true);

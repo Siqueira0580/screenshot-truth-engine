@@ -861,9 +861,12 @@ export default function SetlistDetailPage() {
           </Badge>
         )}
         {isOwner && adminEditInfo && (
-          <Badge variant="outline" className="text-xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+          <Badge variant="outline" className="text-xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10" title={adminEditInfo.title}>
             <Pencil className="h-3 w-3" />
-            Editado por admin
+            {(() => {
+              const name = adminEditInfo.title?.split(" ").slice(0, 2).join(" ") || "Admin";
+              return `Editado por ${name}`;
+            })()}
           </Badge>
         )}
       </SetlistHeader>

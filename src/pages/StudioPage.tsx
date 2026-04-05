@@ -181,20 +181,46 @@ export default function StudioPage() {
         </Button>
       </div>
 
+      {/* Audio filter */}
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="audio-filter"
+          checked={showOnlyWithAudio}
+          onCheckedChange={setShowOnlyWithAudio}
+        />
+        <Label htmlFor="audio-filter" className="text-sm cursor-pointer">
+          Apenas com áudio
+        </Label>
+      </div>
+
       {/* Song grid */}
       <div id="tour-studio-list">
       {filteredSongs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
-          <Upload className="h-12 w-12 mb-4 opacity-40" />
-          <p className="text-lg mb-2">Envie um áudio para começar</p>
-          <p className="text-sm text-muted-foreground/70 mb-4">
-            Clique em "Novo" para fazer upload de uma música
-          </p>
-          <Button className="gap-2" disabled={uploadingNew} onClick={() => newAudioRef.current?.click()}>
-            {uploadingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            Enviar Mix Completo
-          </Button>
-        </div>
+        showOnlyWithAudio ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
+            <Music4 className="h-12 w-12 mb-4 opacity-40" />
+            <p className="text-lg mb-2">Nenhuma música com áudio multitrack</p>
+            <p className="text-sm text-muted-foreground/70 mb-4 text-center px-4">
+              Envie stems ou um mix completo para que a música apareça aqui.
+            </p>
+            <Button className="gap-2" disabled={uploadingNew} onClick={() => newAudioRef.current?.click()}>
+              {uploadingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Enviar Áudio
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground rounded-lg border border-dashed border-border">
+            <Upload className="h-12 w-12 mb-4 opacity-40" />
+            <p className="text-lg mb-2">Envie um áudio para começar</p>
+            <p className="text-sm text-muted-foreground/70 mb-4">
+              Clique em "Novo" para fazer upload de uma música
+            </p>
+            <Button className="gap-2" disabled={uploadingNew} onClick={() => newAudioRef.current?.click()}>
+              {uploadingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              Enviar Mix Completo
+            </Button>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 landscape:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {filteredSongs.map(song => {

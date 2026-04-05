@@ -705,6 +705,7 @@ export default function SetlistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
       toast.success("Música adicionada!");
+      notifyOwnerOfEdit("adicionou uma música");
     },
   });
 
@@ -713,6 +714,7 @@ export default function SetlistDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });
       toast.success("Música removida");
+      notifyOwnerOfEdit("removeu uma música");
     },
   });
 

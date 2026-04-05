@@ -293,33 +293,40 @@ export default function SetlistDetailPage() {
   // Helper: notify setlist owner when a group admin edits their setlist (debounced 30s)
   const notifyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingActionRef = useRef<string | null>(null);
+  const notifyCtxRef = useRef({ isOwner, user, setlist, id });
+  notifyCtxRef.current = { isOwner, user, setlist, id };
+
+  const flushNotification = useCallback(async () => {
+    if (notifyDebounceRef.current) { clearTimeout(notifyDebounceRef.current); notifyDebounceRef.current = null; }
+    const action = pendingActionRef.current;
+    if (!action) return;
+    pendingActionRef.current = null;
+    const { isOwner: own, user: u, setlist: sl, id: sid } = notifyCtxRef.current;
+    if (own || !u || !sl) return;
+    const ownerId = (sl as any).user_id;
+    if (!ownerId) return;
+    const { data: profile } = await supabase.from("profiles").select("first_name, last_name").eq("id", u.id).single();
+    const editorName = profile ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Um admin" : "Um admin";
+    await supabase.from("notifications").insert({
+      user_id: ownerId,
+      type: "setlist_edit",
+      title: `${editorName} ${action} no seu repertório "${(sl as any).name}"`,
+      body: `Alteração feita por um administrador do grupo.`,
+      metadata: { setlist_id: sid },
+    });
+  }, []);
 
   const notifyOwnerOfEdit = useCallback((action: string) => {
-    if (isOwner || !user || !setlist) return;
+    if (notifyCtxRef.current.isOwner || !notifyCtxRef.current.user || !notifyCtxRef.current.setlist) return;
     pendingActionRef.current = action;
     if (notifyDebounceRef.current) clearTimeout(notifyDebounceRef.current);
-    notifyDebounceRef.current = setTimeout(async () => {
-      const finalAction = pendingActionRef.current || action;
-      pendingActionRef.current = null;
-      const ownerId = (setlist as any).user_id;
-      if (!ownerId) return;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("first_name, last_name")
-        .eq("id", user.id)
-        .single();
-      const editorName = profile
-        ? [profile.first_name, profile.last_name].filter(Boolean).join(" ") || "Um admin"
-        : "Um admin";
-      await supabase.from("notifications").insert({
-        user_id: ownerId,
-        type: "setlist_edit",
-        title: `${editorName} ${finalAction} no seu repertório "${(setlist as any).name}"`,
-        body: `Alteração feita por um administrador do grupo.`,
-        metadata: { setlist_id: id },
-      });
-    }, 30000);
-  }, [isOwner, user, setlist, id]);
+    notifyDebounceRef.current = setTimeout(() => flushNotification(), 30000);
+  }, [flushNotification]);
+
+  // Flush pending notification on unmount
+  useEffect(() => {
+    return () => { flushNotification(); };
+  }, [flushNotification]);
 
   // Fetch user's community groups for sharing
   const { data: myGroups = [] } = useQuery({

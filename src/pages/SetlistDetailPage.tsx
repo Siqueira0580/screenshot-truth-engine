@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Mic, MicOff, Link as LinkIcon, MessageCircle, Users, PlayCircle, Youtube, Loader2 } from "lucide-react";
+import { Plus, Trash2, GripVertical, Music2, Save, Eye, EyeOff, Share2, Minus, Copy, Globe, Mic, MicOff, Link as LinkIcon, MessageCircle, Users, PlayCircle, Youtube, Loader2, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
@@ -289,6 +289,23 @@ export default function SetlistDetailPage() {
   });
 
   const canEdit = isOwner || !!isGroupAdminForSetlist;
+
+  // Check if setlist was recently edited by a group admin (for owner indicator)
+  const { data: adminEditInfo } = useQuery({
+    queryKey: ["admin-edit-indicator", id],
+    enabled: !!id && isOwner,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("title, created_at")
+        .eq("user_id", user!.id)
+        .eq("type", "setlist_edit")
+        .contains("metadata", { setlist_id: id })
+        .order("created_at", { ascending: false })
+        .limit(1);
+      return data && data.length > 0 ? data[0] : null;
+    },
+  });
 
   // Helper: notify setlist owner when a group admin edits their setlist (debounced 30s)
   const notifyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -841,6 +858,12 @@ export default function SetlistDetailPage() {
           <Badge variant="secondary" className="text-xs gap-1">
             <Eye className="h-3 w-3" />
             Somente leitura
+          </Badge>
+        )}
+        {isOwner && adminEditInfo && (
+          <Badge variant="outline" className="text-xs gap-1 border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10">
+            <Pencil className="h-3 w-3" />
+            Editado por admin
           </Badge>
         )}
       </SetlistHeader>

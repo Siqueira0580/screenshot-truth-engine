@@ -308,6 +308,7 @@ export default function SetlistDetailPage() {
       type: "setlist_edit",
       title: `${editorName} ${action} no seu repertório "${(setlist as any).name}"`,
       body: `Alteração feita por um administrador do grupo.`,
+      metadata: { setlist_id: id },
     });
   }, [isOwner, user, setlist]);
 

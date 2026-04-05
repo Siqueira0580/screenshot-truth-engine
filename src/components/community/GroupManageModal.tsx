@@ -397,26 +397,43 @@ export default function GroupManageModal({ open, onOpenChange, groupId, groupNam
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{getName(m.profile)}</p>
                           <p className="text-[11px] text-muted-foreground truncate">
-                            {m.role === "admin" ? "Admin" : "Membro"} · {m.profile?.email}
+                            {m.role === "admin" ? (
+                              <span className="flex items-center gap-1 text-xs text-amber-600">
+                                <Crown className="h-3 w-3" /> Admin
+                              </span>
+                            ) : "Membro"} · {m.profile?.email}
                           </p>
                         </div>
-                        {m.role !== "admin" && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setConfirmKick(m.id)} className="gap-2">
-                                <Trash2 className="h-3.5 w-3.5" /> Remover
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                              <MoreHorizontal className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {m.role !== "admin" ? (
+                              <>
+                                <DropdownMenuItem onClick={() => promoteMutation.mutate(m.id)} className="gap-2">
+                                  <Crown className="h-3.5 w-3.5" /> Promover a Admin
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setConfirmKick(m.id)} className="gap-2">
+                                  <Trash2 className="h-3.5 w-3.5" /> Remover
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => banMutation.mutate(m.id)} className="gap-2 text-destructive focus:text-destructive">
+                                  <Ban className="h-3.5 w-3.5" /> Bloquear
+                                </DropdownMenuItem>
+                              </>
+                            ) : isCreator ? (
+                              <DropdownMenuItem onClick={() => demoteMutation.mutate(m.id)} className="gap-2">
+                                <ShieldOff className="h-3.5 w-3.5" /> Remover Admin
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => banMutation.mutate(m.id)} className="gap-2 text-destructive focus:text-destructive">
-                                <Ban className="h-3.5 w-3.5" /> Bloquear
+                            ) : (
+                              <DropdownMenuItem disabled className="gap-2 text-muted-foreground">
+                                <Crown className="h-3.5 w-3.5" /> Administrador
                               </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     ))}
                   </div>

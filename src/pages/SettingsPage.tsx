@@ -1,7 +1,7 @@
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Guitar, Piano, Mic, ShieldCheck, ChevronRight } from "lucide-react";
+import { Guitar, Piano, Mic, ShieldCheck, ChevronRight, BookOpen } from "lucide-react";
 import type { Instrument } from "@/lib/chord-diagrams";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -98,6 +98,26 @@ export default function SettingsPage() {
             <Mic className="h-4 w-4" />
             Afinador Digital
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Biblioteca de Acordes */}
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <CardTitle className="text-lg">Biblioteca de Acordes</CardTitle>
+          <CardDescription>Visualize todas as posições mapeadas no sistema</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            to="/settings/chords"
+            className="flex items-center justify-between gap-3 rounded-lg px-4 py-3 -mx-2 hover:bg-secondary/50 transition-colors group"
+          >
+            <div className="flex items-center gap-3">
+              <BookOpen className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <span className="text-sm font-medium text-foreground">Dicionário de Acordes</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </Link>
         </CardContent>
       </Card>
 

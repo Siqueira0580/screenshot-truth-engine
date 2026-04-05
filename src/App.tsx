@@ -20,6 +20,7 @@ import CompositionStudioPage from "@/pages/CompositionStudioPage";
 import CompositionsHomePage from "@/pages/CompositionsHomePage";
 import ProfilePage from "@/pages/ProfilePage";
 import SettingsPage from "@/pages/SettingsPage";
+import ChordLibraryPage from "@/pages/ChordLibraryPage";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import LoginPage from "@/pages/LoginPage";
@@ -109,6 +110,7 @@ const App = () => (
                   <Route path="/study/:songId" element={<StudyPage />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings/chords" element={<ChordLibraryPage />} />
                   <Route path="/tuner" element={<TunerPage />} />
                   <Route path="/artist/:artistName" element={<ArtistExplorePage />} />
                   <Route path="/planos" element={<PricingPage />} />

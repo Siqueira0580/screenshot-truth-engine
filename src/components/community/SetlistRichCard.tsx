@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ListMusic, ExternalLink, Music2, CalendarDays, Clock, Copy, User } from "lucide-react";
+import { ListMusic, ExternalLink, Music2, CalendarDays, Clock, Copy, User, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -18,9 +18,10 @@ interface Props {
   showTime?: string | null;
   ownerId?: string | null;
   ownerName?: string | null;
+  isGroupAdmin?: boolean;
 }
 
-export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime, ownerId, ownerName }: Props) {
+export default function SetlistRichCard({ setlistId, setlistName, songCount, showDate, showTime, ownerId, ownerName, isGroupAdmin }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -154,7 +155,22 @@ export default function SetlistRichCard({ setlistId, setlistName, songCount, sho
                 <ExternalLink className="h-3.5 w-3.5" />
                 Abrir
               </Button>
-              {user && !isOwner && (
+              {user && !isOwner && isGroupAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    navigate(`/setlists/${setlistId}`);
+                  }}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Editar
+                </Button>
+              )}
+              {user && !isOwner && !isGroupAdmin && (
                 <Button
                   variant="outline"
                   size="sm"

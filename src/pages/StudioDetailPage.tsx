@@ -238,6 +238,15 @@ export default function StudioDetailPage() {
       if (filesToRemove.length > 0) {
         await supabase.storage.from("audio-stems").remove(filesToRemove);
       }
+      // Log deletion before removing
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser && song) {
+        await supabase.from("song_edits").insert({
+          song_id: songId,
+          user_id: currentUser.id,
+          summary: `Excluiu a música "${song.title}"${song.artist ? ` de ${song.artist}` : ""}`,
+        });
+      }
       // Delete audio track record
       await supabase.from("audio_tracks").delete().eq("id", audioTrack.id);
       // Delete song record

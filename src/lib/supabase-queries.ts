@@ -213,6 +213,14 @@ export async function createSong(song: SongInsert) {
   };
   const { data, error } = await supabase.from("songs").insert(sanitized as any).select().single();
   if (error) throw error;
+
+  // Log creation in song_edits
+  await supabase.from("song_edits").insert({
+    song_id: (data as Song).id,
+    user_id: user.id,
+    summary: `Adicionou a música "${sanitized.title}"${sanitized.artist ? ` de ${sanitized.artist}` : ""}`,
+  });
+
   return data as Song;
 }
 

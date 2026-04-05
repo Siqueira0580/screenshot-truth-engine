@@ -36,7 +36,7 @@ function getChordKeysForInstrument(instrument: Instrument): string[] {
     }
   }
   // Deduplicate (enharmonics may resolve to the same voicing)
-  return [...new Set(keys)];
+  return Array.from(new Set(keys));
 }
 
 const NOTE_NAMES: Record<string, string> = {

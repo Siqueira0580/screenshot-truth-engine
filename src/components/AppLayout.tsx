@@ -104,7 +104,7 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="h-screen flex flex-col landscape:flex-row bg-background overflow-hidden pb-16 lg:pb-0 landscape:pb-0">
+    <div className="min-h-screen flex flex-col landscape:flex-row bg-background pb-16 lg:pb-0 landscape:pb-0">
       <GlobalBanner />
       {/* Landscape Side Rail (mobile only, hidden on lg+) */}
       <nav className="hidden landscape:flex landscape:lg:hidden flex-col items-center gap-1 py-2 px-1 w-14 shrink-0 border-r border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl z-50 overflow-y-auto">
@@ -144,7 +144,7 @@ export default function AppLayout() {
       </nav>
 
       {/* Desktop Header */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0">
       <header className="sticky top-0 z-50 border-b border-border/50 dark:border-border/30 bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 landscape:h-12 items-center gap-6">
           <button type="button" onClick={() => navigate("/songs")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -451,7 +451,7 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="container py-6 landscape:py-3 animate-fade-in flex-1 min-h-0 overflow-y-auto overflow-x-hidden max-w-full">
+      <main className="container py-6 landscape:py-3 animate-fade-in flex-1 overflow-x-hidden max-w-full">
         <Outlet />
       </main>
 

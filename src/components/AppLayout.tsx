@@ -451,7 +451,7 @@ export default function AppLayout() {
         </div>
       </header>
 
-      <main className="container py-6 landscape:py-3 animate-fade-in flex-1 min-h-0 overflow-y-auto overflow-x-hidden max-w-full">
+      <main className="container py-6 landscape:py-3 animate-fade-in flex-1 overflow-x-hidden max-w-full">
         <Outlet />
       </main>
 

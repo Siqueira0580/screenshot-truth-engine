@@ -109,7 +109,7 @@ export default function AutoCipherViewer({
           spellCheck={false}
         />
       ) : (
-        <div className="w-full max-w-full min-w-0 overflow-x-hidden whitespace-pre-wrap font-mono text-lg leading-relaxed">
+        <div className="w-full max-w-full min-w-0 overflow-x-hidden whitespace-pre-wrap font-mono leading-relaxed">
           {lines.map((line, lineIdx) => (
             <div key={lineIdx} className="flex max-w-full flex-wrap items-end mb-1">
               {line.tokens.map((token, tokenIdx) => (

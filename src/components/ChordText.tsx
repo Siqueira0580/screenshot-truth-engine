@@ -20,14 +20,14 @@ export default function ChordText({ text, className }: ChordTextProps) {
 
   if (isChordPro) {
     return (
-      <div className={className}>
-        <ChordProDisplay text={text} className="font-mono text-lg leading-relaxed" />
+      <div className={`${className ?? ""} w-full max-w-full min-w-0 overflow-x-hidden`}>
+        <ChordProDisplay text={text} className="w-full max-w-full min-w-0 font-mono text-lg leading-relaxed" />
       </div>
     );
   }
 
   return (
-    <pre className={`${className ?? ""} whitespace-pre-wrap font-mono`} style={{ tabSize: 8 }}>
+    <pre className={`${className ?? ""} w-full max-w-full min-w-0 overflow-x-hidden whitespace-pre-wrap break-words font-mono [overflow-wrap:anywhere]`} style={{ tabSize: 8 }}>
       {lines.map((line, lineIdx) => (
         <ChordLine key={lineIdx} line={line} isLast={lineIdx === lines.length - 1} />
       ))}
@@ -44,7 +44,7 @@ function ChordLine({ line, isLast }: { line: string; isLast: boolean }) {
         seg.type === "chord" ? (
           <ChordHighlight key={i} chord={seg.content} />
         ) : (
-          <span key={i} style={{ whiteSpace: "pre-wrap" }}>{seg.content}</span>
+          <span key={i} className="break-words [overflow-wrap:anywhere]" style={{ whiteSpace: "pre-wrap" }}>{seg.content}</span>
         )
       )}
       {!isLast && "\n"}

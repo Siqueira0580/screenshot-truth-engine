@@ -56,7 +56,7 @@ function ChordProRenderedText({
   const { lines } = useChordProParser(text);
 
   return (
-    <div className="font-mono leading-relaxed" style={{ fontSize: `${fontSize}px` }}>
+    <div className="w-full max-w-full min-w-0 overflow-x-hidden font-mono leading-relaxed" style={{ fontSize: `${fontSize}px` }}>
       {lines.map((line, lineIdx) => {
         const firstToken = line.tokens[0];
         if (firstToken && !firstToken.chord && /^\s*\{[^}]+\}\s*$/.test(firstToken.lyric)) {
@@ -64,9 +64,9 @@ function ChordProRenderedText({
         }
 
         return (
-          <div key={lineIdx} className="flex flex-wrap items-end mb-1">
+          <div key={lineIdx} className="flex max-w-full flex-wrap items-end mb-1">
             {line.tokens.map((token, tokenIdx) => (
-              <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
+              <span key={tokenIdx} className="inline-flex min-w-0 max-w-full flex-col mr-0.5">
                 <span className="font-bold text-[0.75em] h-[1.4em] leading-[1.4em] select-none text-primary">
                   {token.chord ? (
                     <span
@@ -79,7 +79,7 @@ function ChordProRenderedText({
                     "\u00A0"
                   )}
                 </span>
-                <span className="text-foreground whitespace-pre">
+                <span className="max-w-full break-words text-foreground whitespace-pre-wrap [overflow-wrap:anywhere]">
                   {token.lyric || "\u00A0"}
                 </span>
               </span>
@@ -98,7 +98,7 @@ function InlineChordText({
   const lines = text.split("\n");
 
   return (
-    <pre className="whitespace-pre-wrap font-mono leading-relaxed" style={{ fontSize: `${fontSize}px` }}>
+    <pre className="w-full max-w-full min-w-0 overflow-x-hidden whitespace-pre-wrap break-words font-mono leading-relaxed [overflow-wrap:anywhere]" style={{ fontSize: `${fontSize}px` }}>
       {lines.map((line, lineIdx) => {
         const segments = parseChordsInText(line);
         return (
@@ -113,7 +113,7 @@ function InlineChordText({
                   {seg.content}
                 </span>
               ) : (
-                <span key={segIdx}>{seg.content}</span>
+                <span key={segIdx} className="break-words [overflow-wrap:anywhere]">{seg.content}</span>
               )
             )}
             {lineIdx < lines.length - 1 && "\n"}

@@ -14,7 +14,7 @@ export default function ChordProDisplay({ text, className }: ChordProDisplayProp
   const { lines } = useChordProParser(text);
 
   return (
-    <div className={className}>
+    <div className={`${className ?? ""} w-full max-w-full min-w-0 overflow-x-hidden`}>
       {lines.map((line, lineIdx) => {
         // Filter out directive lines like {title:...}
         const firstToken = line.tokens[0];
@@ -23,9 +23,9 @@ export default function ChordProDisplay({ text, className }: ChordProDisplayProp
         }
 
         return (
-          <div key={lineIdx} className="flex flex-wrap items-end mb-1">
+          <div key={lineIdx} className="flex max-w-full flex-wrap items-end mb-1">
             {line.tokens.map((token, tokenIdx) => (
-              <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
+              <span key={tokenIdx} className="inline-flex min-w-0 max-w-full flex-col mr-0.5">
                 {/* Chord row */}
                 <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
                   {token.chord ? (
@@ -35,7 +35,7 @@ export default function ChordProDisplay({ text, className }: ChordProDisplayProp
                   )}
                 </span>
                 {/* Lyric row */}
-                <span className="text-foreground whitespace-pre">
+                <span className="max-w-full break-words text-foreground whitespace-pre-wrap [overflow-wrap:anywhere]">
                   {token.lyric || "\u00A0"}
                 </span>
               </span>

@@ -46,7 +46,7 @@ export default function AutoCipherViewer({
   if (!chordProText) return null;
 
   return (
-    <div className={className}>
+    <div className={`${className ?? ""} w-full max-w-full min-w-0 overflow-x-hidden`}>
       {/* Toolbar */}
       <div className="flex items-center gap-2 mb-3">
         {editMode ? (
@@ -109,11 +109,11 @@ export default function AutoCipherViewer({
           spellCheck={false}
         />
       ) : (
-        <div className="font-mono text-lg leading-relaxed whitespace-pre-wrap">
+        <div className="w-full max-w-full min-w-0 overflow-x-hidden whitespace-pre-wrap font-mono text-lg leading-relaxed">
           {lines.map((line, lineIdx) => (
-            <div key={lineIdx} className="flex flex-wrap items-end mb-1">
+            <div key={lineIdx} className="flex max-w-full flex-wrap items-end mb-1">
               {line.tokens.map((token, tokenIdx) => (
-                <span key={tokenIdx} className="inline-flex flex-col mr-0.5">
+                <span key={tokenIdx} className="inline-flex min-w-0 max-w-full flex-col mr-0.5">
                   {/* Chord row */}
                   <span className="text-primary font-bold text-sm h-5 leading-5 select-none">
                     {token.chord ? (
@@ -123,7 +123,7 @@ export default function AutoCipherViewer({
                     )}
                   </span>
                   {/* Lyric row */}
-                  <span className="text-foreground whitespace-pre">
+                  <span className="max-w-full break-words text-foreground whitespace-pre-wrap [overflow-wrap:anywhere]">
                     {token.lyric || "\u00A0"}
                   </span>
                 </span>

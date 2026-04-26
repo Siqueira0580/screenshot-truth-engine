@@ -93,13 +93,13 @@ export default function ArtistDetailPage() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="w-full min-w-0 space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-start gap-4">
+      <div className="flex min-w-0 items-start gap-3 sm:gap-4">
         <BackButton className="mt-1" />
         {/* Avatar with upload */}
-        <div className="relative group">
-          <Avatar className="h-20 w-20 text-2xl">
+        <div className="relative group shrink-0">
+          <Avatar className="h-16 w-16 text-xl sm:h-20 sm:w-20 sm:text-2xl">
             {artist.photo_url ? (
               <AvatarImage src={artist.photo_url} alt={artist.name} className="object-cover" />
             ) : null}
@@ -127,8 +127,8 @@ export default function ArtistDetailPage() {
           />
         </div>
 
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{artist.name}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="break-words text-2xl font-bold tracking-tight sm:text-3xl">{artist.name}</h1>
           {artist.about && (
             <p className="text-muted-foreground mt-1">{artist.about}</p>
           )}
@@ -139,10 +139,10 @@ export default function ArtistDetailPage() {
       </div>
 
       {/* Sort controls */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
         <span className="text-sm text-muted-foreground">Ordenar por:</span>
         <Select value={sort} onValueChange={(v) => setSort(v as SortOption)}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full sm:w-[200px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -171,20 +171,20 @@ export default function ArtistDetailPage() {
           <p className="text-lg">Nenhuma música deste artista</p>
         </div>
       ) : (
-        <div className="grid gap-2">
+        <div className="grid min-w-0 gap-2">
           {songs.map((song, i) => (
             <div
               key={song.id}
-              className="group flex items-center gap-4 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30 animate-fade-in"
+              className="group flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30 animate-fade-in sm:flex-row sm:items-center sm:gap-4 sm:p-4"
               style={{ animationDelay: `${i * 30}ms` }}
             >
-              <Link to={`/songs/${song.id}`} className="flex items-center gap-4 min-w-0 flex-1">
+              <Link to={`/songs/${song.id}`} className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-mono text-sm font-bold">
                   {i + 1}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold truncate">{song.title}</p>
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <p className="break-words font-semibold leading-snug sm:truncate">{song.title}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     {song.musical_key && (
                       <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">
                         {song.musical_key}
@@ -200,7 +200,7 @@ export default function ArtistDetailPage() {
                   </div>
                 </div>
               </Link>
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex shrink-0 items-center justify-end gap-1 border-t border-border/50 pt-2 sm:border-0 sm:pt-0">
                 <Button
                   variant="ghost"
                   size="icon"

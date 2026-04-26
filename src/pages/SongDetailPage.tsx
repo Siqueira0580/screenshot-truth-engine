@@ -431,7 +431,7 @@ export default function SongDetailPage() {
       {/* AI Cipher (priority) */}
       {aiChordPro && (
         <div
-          className={cn("rounded-lg border border-border bg-card p-3 sm:p-6 space-y-3", typographyClasses)}
+          className={cn("relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 overflow-x-hidden border-y border-border bg-card px-3 py-4 sm:static sm:left-auto sm:w-full sm:max-w-full sm:translate-x-0 sm:rounded-lg sm:border sm:p-6 space-y-3", typographyClasses)}
           style={{ fontFamily: currentFontFamily }}
         >
           <AutoCipherViewer

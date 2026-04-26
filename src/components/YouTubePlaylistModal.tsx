@@ -289,7 +289,7 @@ export default function YouTubePlaylistModal({
               {/* Lyrics body */}
               <div
                 ref={lyricsRef}
-                className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden p-4"
+                className="min-w-0 flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 sm:p-4"
               >
                 {transposedBody ? (
                   <ChordText

@@ -21,7 +21,7 @@ export default function ChordText({ text, className }: ChordTextProps) {
   if (isChordPro) {
     return (
       <div className={`${className ?? ""} w-full max-w-full min-w-0 overflow-x-hidden`}>
-        <ChordProDisplay text={text} className="w-full max-w-full min-w-0 font-mono text-lg leading-relaxed" />
+        <ChordProDisplay text={text} className="w-full max-w-full min-w-0 font-mono leading-relaxed" />
       </div>
     );
   }

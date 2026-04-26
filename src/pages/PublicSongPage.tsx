@@ -40,11 +40,11 @@ export default function PublicSongPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="mx-auto w-full max-w-2xl min-w-0 space-y-6 overflow-x-hidden">
       <BackButton />
 
       <div className="space-y-1">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{song.title}</h1>
+        <h1 className="break-words text-2xl font-bold tracking-tight sm:text-3xl">{song.title}</h1>
         {song.artist && (
           <p className="text-muted-foreground">{song.artist}</p>
         )}
@@ -68,7 +68,7 @@ export default function PublicSongPage() {
       </div>
 
       {song.body_text ? (
-        <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
+        <div className="w-full max-w-full min-w-0 overflow-x-hidden rounded-lg border border-border bg-card p-4 sm:p-6">
           <ChordText text={song.body_text} className="text-sm leading-relaxed" />
         </div>
       ) : (

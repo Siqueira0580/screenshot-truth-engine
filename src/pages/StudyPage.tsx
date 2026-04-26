@@ -98,7 +98,7 @@ function InlineChordText({
   const lines = text.split("\n");
 
   return (
-    <pre className="whitespace-pre-wrap font-mono leading-relaxed" style={{ fontSize: `${fontSize}px` }}>
+    <pre className="w-full max-w-full min-w-0 overflow-x-hidden whitespace-pre-wrap break-words font-mono leading-relaxed [overflow-wrap:anywhere]" style={{ fontSize: `${fontSize}px` }}>
       {lines.map((line, lineIdx) => {
         const segments = parseChordsInText(line);
         return (
@@ -113,7 +113,7 @@ function InlineChordText({
                   {seg.content}
                 </span>
               ) : (
-                <span key={segIdx}>{seg.content}</span>
+                <span key={segIdx} className="break-words [overflow-wrap:anywhere]">{seg.content}</span>
               )
             )}
             {lineIdx < lines.length - 1 && "\n"}

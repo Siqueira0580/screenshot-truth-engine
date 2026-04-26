@@ -265,7 +265,7 @@ export default function SongDetailPage() {
 
 
   return (
-    <div className="max-w-4xl space-y-4 sm:space-y-6 landscape:space-y-2 animate-fade-in overflow-x-hidden">
+    <div className="w-full max-w-4xl min-w-0 space-y-4 overflow-x-hidden sm:space-y-6 landscape:space-y-2 animate-fade-in">
       <div className="space-y-2 landscape:space-y-1">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 landscape:gap-1">
           <div className="flex items-center gap-2">
@@ -485,7 +485,7 @@ export default function SongDetailPage() {
       {/* Plain text fallback (only when no AI cipher) */}
       {!aiChordPro && displayBody && (
         <div
-          className={cn("rounded-lg border border-border bg-card p-3 sm:p-6", typographyClasses)}
+          className={cn("w-full max-w-full min-w-0 overflow-x-hidden rounded-lg border border-border bg-card p-3 sm:p-6", typographyClasses)}
           style={{ fontFamily: currentFontFamily }}
         >
           <ChordText

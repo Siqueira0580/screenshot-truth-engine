@@ -183,7 +183,9 @@ export default function ArtistDetailPage() {
                   {i + 1}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="break-words font-semibold leading-snug sm:truncate">{song.title}</p>
+                  <p className="line-clamp-2 break-words font-semibold leading-snug sm:line-clamp-none sm:truncate">
+                    {song.title}
+                  </p>
                   <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                     {song.musical_key && (
                       <span className="rounded bg-secondary px-1.5 py-0.5 text-xs font-mono font-medium text-secondary-foreground">

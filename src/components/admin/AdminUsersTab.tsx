@@ -14,9 +14,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { toast } from "@/components/ui/sonner";
-import { Users, Crown, Music, MoreVertical, Award, Ban, Search, X, UserX, ShieldCheck, ShieldOff } from "lucide-react";
+import { Users, Crown, Music, MoreVertical, Award, Ban, Search, X, UserX, ShieldCheck, ShieldOff, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import UserLoginHistorySheet from "@/components/admin/UserLoginHistorySheet";
 
 interface Profile {
   id: string;
@@ -34,6 +35,8 @@ export default function AdminUsersTab() {
   const { user: currentUser } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
+  const [lastLoginByUser, setLastLoginByUser] = useState<Record<string, string>>({});
+  const [historyTarget, setHistoryTarget] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [suspendTarget, setSuspendTarget] = useState<Profile | null>(null);
   const [search, setSearch] = useState("");
@@ -55,13 +58,18 @@ export default function AdminUsersTab() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [profilesRes, songsRes, rolesRes] = await Promise.all([
+    const [profilesRes, songsRes, rolesRes, loginsRes] = await Promise.all([
       supabase
         .from("profiles")
         .select("id, first_name, last_name, email, avatar_url, preferred_instrument, subscription_plan, pro_expires_at, created_at")
         .order("created_at", { ascending: false }),
       supabase.from("songs").select("id", { count: "exact", head: true }),
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
+      supabase
+        .from("user_login_logs")
+        .select("user_id, login_at")
+        .order("login_at", { ascending: false })
+        .limit(1000),
     ]);
 
     const data = profilesRes.data ?? [];
@@ -70,6 +78,14 @@ export default function AdminUsersTab() {
     setProUsers(data.filter((p) => p.subscription_plan === "pro").length);
     setTotalSongs(songsRes.count ?? 0);
     setAdminUserIds(new Set((rolesRes.data ?? []).map((r) => r.user_id)));
+
+    // Reduce login rows to latest login per user
+    const lastMap: Record<string, string> = {};
+    for (const row of (loginsRes.data ?? []) as Array<{ user_id: string; login_at: string }>) {
+      if (!lastMap[row.user_id]) lastMap[row.user_id] = row.login_at;
+    }
+    setLastLoginByUser(lastMap);
+
     setLoading(false);
   };
 
@@ -197,6 +213,7 @@ export default function AdminUsersTab() {
                       <TableHead>Cargo</TableHead>
                       <TableHead>Plano</TableHead>
                       <TableHead>Cadastro</TableHead>
+                      <TableHead>Último acesso</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -238,10 +255,34 @@ export default function AdminUsersTab() {
                             </Badge>
                           </TableCell>
                           <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell>
+                            {lastLoginByUser[p.id]
+                              ? (() => {
+                                  const d = new Date(lastLoginByUser[p.id]);
+                                  const date = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+                                  const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(d);
+                                  return `${date} às ${time}`;
+                                })()
+                              : <span className="text-muted-foreground">Nunca</span>}
+                          </TableCell>
                           <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                            <div className="inline-flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setHistoryTarget(p)}
+                                    aria-label="Ver histórico de acessos"
+                                  >
+                                    <History className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Histórico de acessos</TooltipContent>
+                              </Tooltip>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 {/* Role actions */}
@@ -305,6 +346,7 @@ export default function AdminUsersTab() {
                                 </Tooltip>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
@@ -319,6 +361,16 @@ export default function AdminUsersTab() {
               onConfirm={handleSuspend}
               title="Suspender conta"
               description={`Tem a certeza de que deseja suspender a conta de "${suspendTarget?.email ?? ""}"? Esta ação não pode ser desfeita.`}
+            />
+            <UserLoginHistorySheet
+              userId={historyTarget?.id ?? null}
+              userLabel={
+                historyTarget
+                  ? [historyTarget.first_name, historyTarget.last_name].filter(Boolean).join(" ") || historyTarget.email || ""
+                  : ""
+              }
+              open={!!historyTarget}
+              onOpenChange={(open) => !open && setHistoryTarget(null)}
             />
           </CardContent>
         </Card>

@@ -255,10 +255,34 @@ export default function AdminUsersTab() {
                             </Badge>
                           </TableCell>
                           <TableCell>{new Date(p.created_at).toLocaleDateString("pt-BR")}</TableCell>
+                          <TableCell>
+                            {lastLoginByUser[p.id]
+                              ? (() => {
+                                  const d = new Date(lastLoginByUser[p.id]);
+                                  const date = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(d);
+                                  const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(d);
+                                  return `${date} às ${time}`;
+                                })()
+                              : <span className="text-muted-foreground">Nunca</span>}
+                          </TableCell>
                           <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
+                            <div className="inline-flex items-center gap-1">
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setHistoryTarget(p)}
+                                    aria-label="Ver histórico de acessos"
+                                  >
+                                    <History className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Histórico de acessos</TooltipContent>
+                              </Tooltip>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 {/* Role actions */}

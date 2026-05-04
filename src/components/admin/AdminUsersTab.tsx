@@ -14,9 +14,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 import { toast } from "@/components/ui/sonner";
-import { Users, Crown, Music, MoreVertical, Award, Ban, Search, X, UserX, ShieldCheck, ShieldOff } from "lucide-react";
+import { Users, Crown, Music, MoreVertical, Award, Ban, Search, X, UserX, ShieldCheck, ShieldOff, History } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import UserLoginHistorySheet from "@/components/admin/UserLoginHistorySheet";
 
 interface Profile {
   id: string;

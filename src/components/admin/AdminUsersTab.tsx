@@ -35,6 +35,8 @@ export default function AdminUsersTab() {
   const { user: currentUser } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [adminUserIds, setAdminUserIds] = useState<Set<string>>(new Set());
+  const [lastLoginByUser, setLastLoginByUser] = useState<Record<string, string>>({});
+  const [historyTarget, setHistoryTarget] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [suspendTarget, setSuspendTarget] = useState<Profile | null>(null);
   const [search, setSearch] = useState("");

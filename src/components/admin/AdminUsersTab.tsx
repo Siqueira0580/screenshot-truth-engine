@@ -58,13 +58,18 @@ export default function AdminUsersTab() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [profilesRes, songsRes, rolesRes] = await Promise.all([
+    const [profilesRes, songsRes, rolesRes, loginsRes] = await Promise.all([
       supabase
         .from("profiles")
         .select("id, first_name, last_name, email, avatar_url, preferred_instrument, subscription_plan, pro_expires_at, created_at")
         .order("created_at", { ascending: false }),
       supabase.from("songs").select("id", { count: "exact", head: true }),
       supabase.from("user_roles").select("user_id, role").eq("role", "admin"),
+      supabase
+        .from("user_login_logs")
+        .select("user_id, login_at")
+        .order("login_at", { ascending: false })
+        .limit(1000),
     ]);
 
     const data = profilesRes.data ?? [];
@@ -73,6 +78,14 @@ export default function AdminUsersTab() {
     setProUsers(data.filter((p) => p.subscription_plan === "pro").length);
     setTotalSongs(songsRes.count ?? 0);
     setAdminUserIds(new Set((rolesRes.data ?? []).map((r) => r.user_id)));
+
+    // Reduce login rows to latest login per user
+    const lastMap: Record<string, string> = {};
+    for (const row of (loginsRes.data ?? []) as Array<{ user_id: string; login_at: string }>) {
+      if (!lastMap[row.user_id]) lastMap[row.user_id] = row.login_at;
+    }
+    setLastLoginByUser(lastMap);
+
     setLoading(false);
   };
 

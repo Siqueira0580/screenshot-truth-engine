@@ -346,6 +346,7 @@ export default function AdminUsersTab() {
                                 </Tooltip>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                            </div>
                           </TableCell>
                         </TableRow>
                       );

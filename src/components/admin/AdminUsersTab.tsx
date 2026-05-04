@@ -213,6 +213,7 @@ export default function AdminUsersTab() {
                       <TableHead>Cargo</TableHead>
                       <TableHead>Plano</TableHead>
                       <TableHead>Cadastro</TableHead>
+                      <TableHead>Último acesso</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>

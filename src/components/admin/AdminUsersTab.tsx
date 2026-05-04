@@ -362,6 +362,16 @@ export default function AdminUsersTab() {
               title="Suspender conta"
               description={`Tem a certeza de que deseja suspender a conta de "${suspendTarget?.email ?? ""}"? Esta ação não pode ser desfeita.`}
             />
+            <UserLoginHistorySheet
+              userId={historyTarget?.id ?? null}
+              userLabel={
+                historyTarget
+                  ? [historyTarget.first_name, historyTarget.last_name].filter(Boolean).join(" ") || historyTarget.email || ""
+                  : ""
+              }
+              open={!!historyTarget}
+              onOpenChange={(open) => !open && setHistoryTarget(null)}
+            />
           </CardContent>
         </Card>
       </div>

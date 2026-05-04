@@ -70,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           setTimeout(() => syncProfileFromOAuth(session.user), 0);
+          setTimeout(() => logUserLogin(session.user.id), 0);
         }
 
         if (event === "TOKEN_REFRESHED" && session?.user) {

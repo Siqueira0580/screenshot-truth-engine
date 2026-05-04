@@ -38,6 +38,21 @@ async function syncProfileFromOAuth(user: User) {
     }, { onConflict: "id", ignoreDuplicates: false });
 }
 
+/** Insert a login log row (once per session per browser tab). */
+async function logUserLogin(userId: string) {
+  try {
+    const key = `login_logged_${userId}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    await supabase.from("user_login_logs").insert({
+      user_id: userId,
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
+    });
+  } catch {
+    // best-effort: never block UI on audit logging
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);

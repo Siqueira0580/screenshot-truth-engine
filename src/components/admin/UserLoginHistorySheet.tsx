@@ -5,7 +5,11 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, History, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { Clock, History, Loader2, Search, X } from "lucide-react";
 
 interface LoginLog {
   id: string;
@@ -22,6 +26,7 @@ interface Props {
 }
 
 const PAGE_SIZE = 30;
+type PeriodFilter = "all" | "7" | "30" | "90";
 
 function formatDayHeader(d: Date): string {
   const today = new Date();
@@ -51,6 +56,16 @@ export default function UserLoginHistorySheet({ userId, userLabel, open, onOpenC
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
 
+  const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState<PeriodFilter>("all");
+
+  const sinceIso = useMemo(() => {
+    if (period === "all") return null;
+    const d = new Date();
+    d.setDate(d.getDate() - parseInt(period, 10));
+    return d.toISOString();
+  }, [period]);
+
   useEffect(() => {
     if (!open || !userId) return;
     setPage(0);
@@ -58,19 +73,25 @@ export default function UserLoginHistorySheet({ userId, userLabel, open, onOpenC
     setHasMore(false);
     setLoading(true);
     (async () => {
-      const { data, error } = await supabase
+      let q = supabase
         .from("user_login_logs")
         .select("id, login_at, ip_address, user_agent")
         .eq("user_id", userId)
         .order("login_at", { ascending: false })
         .range(0, PAGE_SIZE - 1);
+      if (sinceIso) q = q.gte("login_at", sinceIso);
+      if (search.trim()) {
+        const term = `%${search.trim()}%`;
+        q = q.or(`ip_address.ilike.${term},user_agent.ilike.${term}`);
+      }
+      const { data, error } = await q;
       if (!error && data) {
         setLogs(data as LoginLog[]);
         setHasMore(data.length === PAGE_SIZE);
       }
       setLoading(false);
     })();
-  }, [open, userId]);
+  }, [open, userId, sinceIso, search]);
 
   const loadMore = async () => {
     if (!userId || loadingMore) return;
@@ -78,12 +99,18 @@ export default function UserLoginHistorySheet({ userId, userLabel, open, onOpenC
     const next = page + 1;
     const from = next * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    const { data, error } = await supabase
+    let q = supabase
       .from("user_login_logs")
       .select("id, login_at, ip_address, user_agent")
       .eq("user_id", userId)
       .order("login_at", { ascending: false })
       .range(from, to);
+    if (sinceIso) q = q.gte("login_at", sinceIso);
+    if (search.trim()) {
+      const term = `%${search.trim()}%`;
+      q = q.or(`ip_address.ilike.${term},user_agent.ilike.${term}`);
+    }
+    const { data, error } = await q;
     if (!error && data) {
       setLogs((prev) => [...prev, ...(data as LoginLog[])]);
       setHasMore(data.length === PAGE_SIZE);
@@ -115,6 +142,39 @@ export default function UserLoginHistorySheet({ userId, userLabel, open, onOpenC
             {userLabel ? `Logins de ${userLabel}` : "Logins do utilizador"}
           </SheetDescription>
         </SheetHeader>
+
+        {/* Filtros */}
+        <div className="mt-4 space-y-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por IP ou navegador…"
+              className="pl-8 pr-8 h-9"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Limpar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todo o período</SelectItem>
+              <SelectItem value="7">Últimos 7 dias</SelectItem>
+              <SelectItem value="30">Últimos 30 dias</SelectItem>
+              <SelectItem value="90">Últimos 90 dias</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="mt-6 space-y-6">
           {loading ? (

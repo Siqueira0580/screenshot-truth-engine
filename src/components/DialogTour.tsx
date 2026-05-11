@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { setToursDisabled } from "@/hooks/useGuidedTour";
 
 export interface DialogTourStep {
   target: string; // CSS selector or "center" for centered overlay

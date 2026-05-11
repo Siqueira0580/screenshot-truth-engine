@@ -124,6 +124,15 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
           {/* Step counter */}
           <p className="text-xs text-muted-foreground">{step + 1} de {STEPS.length}</p>
 
+          {/* Don't show again */}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <Checkbox
+              checked={dontShowAgain}
+              onCheckedChange={(v) => setDontShowAgain(v === true)}
+            />
+            Não exibir mais este tour
+          </label>
+
           {/* Buttons */}
           <div className="flex w-full gap-3">
             {!isFirst && (

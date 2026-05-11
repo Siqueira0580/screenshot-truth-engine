@@ -137,7 +137,7 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
             <Checkbox
               checked={dontShowAgain}
-              onCheckedChange={(v) => setDontShowAgain(v === true)}
+              onCheckedChange={(v) => handleDontShowToggle(v === true)}
             />
             Não exibir mais este tour
           </label>

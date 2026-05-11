@@ -396,13 +396,13 @@ export default function VisualChordEditor({
         </div>
       )}
 
-      {/* FAB - Add Chord */}
+      {/* FAB - Add Chord (positioned above mobile bottom nav) */}
       <Button
-        size="icon"
-        className="fixed bottom-6 right-6 h-12 w-12 rounded-full shadow-lg z-50"
+        className="fixed bottom-24 right-4 lg:bottom-8 lg:right-8 h-14 px-5 rounded-full shadow-xl z-[110] gap-2 font-semibold"
         onClick={() => setLibraryOpen(true)}
       >
-        <Plus className="h-6 w-6" />
+        <Plus className="h-5 w-5" />
+        Adicionar acorde
       </Button>
 
       <ChordLibraryModal

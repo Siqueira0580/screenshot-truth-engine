@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Music, Mic2, Guitar, Radio, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { setToursDisabled } from "@/hooks/useGuidedTour";
 
 const STEPS = [
   {

@@ -124,6 +124,7 @@ export default function DialogTour({ steps, run, onFinish, scrollContainerSelect
       setCurrentStep((s) => s + 1);
     } else {
       cleanup();
+      if (dontShowAgain) setToursDisabled(true);
       onFinish();
     }
   };
@@ -136,6 +137,7 @@ export default function DialogTour({ steps, run, onFinish, scrollContainerSelect
 
   const handleSkip = () => {
     cleanup();
+    if (dontShowAgain) setToursDisabled(true);
     onFinish();
   };
 

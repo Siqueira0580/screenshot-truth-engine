@@ -207,6 +207,15 @@ export default function DialogTour({ steps, run, onFinish, scrollContainerSelect
           ))}
         </div>
 
+        {/* Don't show again */}
+        <label className="flex items-center justify-center gap-2 text-xs text-muted-foreground cursor-pointer select-none mb-3">
+          <Checkbox
+            checked={dontShowAgain}
+            onCheckedChange={(v) => setDontShowAgain(v === true)}
+          />
+          Não exibir mais este tour
+        </label>
+
         {/* Navigation */}
         <div className="flex items-center justify-between">
           <button

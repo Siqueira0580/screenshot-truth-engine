@@ -50,6 +50,7 @@ interface OnboardingTourProps {
 
 export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
   const [step, setStep] = useState(0);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const isLast = step === STEPS.length - 1;
   const isFirst = step === 0;
   const current = STEPS[step];
@@ -57,6 +58,7 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
   const finish = () => {
     localStorage.setItem(STORAGE_KEY, "true");
+    if (dontShowAgain) setToursDisabled(true);
     onComplete();
   };
 

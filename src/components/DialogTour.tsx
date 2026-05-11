@@ -20,6 +20,7 @@ interface DialogTourProps {
 
 export default function DialogTour({ steps, run, onFinish, scrollContainerSelector }: DialogTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [arrowSide, setArrowSide] = useState<"top" | "bottom">("top");
   const tooltipRef = useRef<HTMLDivElement>(null);

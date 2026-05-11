@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { setToursDisabled } from "@/hooks/useGuidedTour";
 
 export interface DialogTourStep {
   target: string; // CSS selector or "center" for centered overlay
@@ -18,6 +20,7 @@ interface DialogTourProps {
 
 export default function DialogTour({ steps, run, onFinish, scrollContainerSelector }: DialogTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const [arrowSide, setArrowSide] = useState<"top" | "bottom">("top");
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -121,6 +124,7 @@ export default function DialogTour({ steps, run, onFinish, scrollContainerSelect
       setCurrentStep((s) => s + 1);
     } else {
       cleanup();
+      if (dontShowAgain) setToursDisabled(true);
       onFinish();
     }
   };
@@ -133,6 +137,7 @@ export default function DialogTour({ steps, run, onFinish, scrollContainerSelect
 
   const handleSkip = () => {
     cleanup();
+    if (dontShowAgain) setToursDisabled(true);
     onFinish();
   };
 
@@ -201,6 +206,15 @@ export default function DialogTour({ steps, run, onFinish, scrollContainerSelect
             />
           ))}
         </div>
+
+        {/* Don't show again */}
+        <label className="flex items-center justify-center gap-2 text-xs text-muted-foreground cursor-pointer select-none mb-3">
+          <Checkbox
+            checked={dontShowAgain}
+            onCheckedChange={(v) => setDontShowAgain(v === true)}
+          />
+          Não exibir mais este tour
+        </label>
 
         {/* Navigation */}
         <div className="flex items-center justify-between">

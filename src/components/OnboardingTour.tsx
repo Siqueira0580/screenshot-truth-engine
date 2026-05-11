@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Music, Mic2, Guitar, Radio, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { setToursDisabled } from "@/hooks/useGuidedTour";
 
 const STEPS = [
   {
@@ -48,6 +50,7 @@ interface OnboardingTourProps {
 
 export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
   const [step, setStep] = useState(0);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const isLast = step === STEPS.length - 1;
   const isFirst = step === 0;
   const current = STEPS[step];
@@ -55,6 +58,7 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
   const finish = () => {
     localStorage.setItem(STORAGE_KEY, "true");
+    if (dontShowAgain) setToursDisabled(true);
     onComplete();
   };
 
@@ -119,6 +123,15 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
           {/* Step counter */}
           <p className="text-xs text-muted-foreground">{step + 1} de {STEPS.length}</p>
+
+          {/* Don't show again */}
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+            <Checkbox
+              checked={dontShowAgain}
+              onCheckedChange={(v) => setDontShowAgain(v === true)}
+            />
+            Não exibir mais este tour
+          </label>
 
           {/* Buttons */}
           <div className="flex w-full gap-3">

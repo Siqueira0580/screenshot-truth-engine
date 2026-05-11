@@ -57,7 +57,17 @@ function CustomTooltip({
       <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none mb-4">
         <Checkbox
           checked={dontShowAgain}
-          onCheckedChange={(v) => setDontShowAgain(v === true)}
+          onCheckedChange={(v) => {
+            const checked = v === true;
+            setDontShowAgain(checked);
+            if (checked) {
+              setToursDisabled(true);
+              const target = (skipProps as any).onClick;
+              if (typeof target === "function") {
+                target({ preventDefault() {}, stopPropagation() {} } as any);
+              }
+            }
+          }}
         />
         Não exibir mais este tour
       </label>

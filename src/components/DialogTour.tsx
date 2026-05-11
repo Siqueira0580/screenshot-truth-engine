@@ -211,7 +211,15 @@ export default function DialogTour({ steps, run, onFinish, scrollContainerSelect
         <label className="flex items-center justify-center gap-2 text-xs text-muted-foreground cursor-pointer select-none mb-3">
           <Checkbox
             checked={dontShowAgain}
-            onCheckedChange={(v) => setDontShowAgain(v === true)}
+            onCheckedChange={(v) => {
+              const checked = v === true;
+              setDontShowAgain(checked);
+              if (checked) {
+                setToursDisabled(true);
+                cleanup();
+                onFinish();
+              }
+            }}
           />
           Não exibir mais este tour
         </label>

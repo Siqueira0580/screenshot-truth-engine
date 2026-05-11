@@ -62,6 +62,15 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
     onComplete();
   };
 
+  const handleDontShowToggle = (checked: boolean) => {
+    setDontShowAgain(checked);
+    if (checked) {
+      setToursDisabled(true);
+      localStorage.setItem(STORAGE_KEY, "true");
+      onComplete();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <motion.div
@@ -128,7 +137,7 @@ export default function OnboardingTour({ onComplete }: OnboardingTourProps) {
           <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
             <Checkbox
               checked={dontShowAgain}
-              onCheckedChange={(v) => setDontShowAgain(v === true)}
+              onCheckedChange={(v) => handleDontShowToggle(v === true)}
             />
             Não exibir mais este tour
           </label>

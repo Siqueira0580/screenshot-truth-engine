@@ -85,24 +85,45 @@ serve(async (req) => {
       throw new Error("VITE_GEMINI_API_KEY is not configured");
     }
 
-    // Step A: Scrape the page
+    // Step A: Scrape the page (with Jina Reader fallback for sites that block data-center IPs)
     console.log("Fetching URL:", url);
-    const pageResp = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml",
-      },
-    });
+    let html = "";
+    let usedFallback = false;
 
-    if (!pageResp.ok) {
-      return new Response(
-        JSON.stringify({ error: `Não foi possível acessar a URL (status ${pageResp.status})` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    try {
+      const pageResp = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+        },
+      });
+
+      if (pageResp.ok) {
+        html = await pageResp.text();
+      } else {
+        console.warn(`Direct fetch failed (status ${pageResp.status}). Trying Jina Reader fallback...`);
+        usedFallback = true;
+      }
+    } catch (fetchErr) {
+      console.warn("Direct fetch threw, trying Jina Reader fallback:", fetchErr);
+      usedFallback = true;
     }
 
-    const html = await pageResp.text();
+    if (usedFallback || !html) {
+      const proxyUrl = `https://r.jina.ai/${url}`;
+      const proxyResp = await fetch(proxyUrl, {
+        headers: { "Accept": "text/plain", "X-Return-Format": "markdown" },
+      });
+      if (!proxyResp.ok) {
+        return new Response(
+          JSON.stringify({ error: `Não foi possível acessar a URL (status ${proxyResp.status}). O site pode estar bloqueando importações.` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      html = await proxyResp.text();
+    }
 
     // Step A.1: Pre-extract structured metadata from HTML
     let youtubeUrl: string | null = null;

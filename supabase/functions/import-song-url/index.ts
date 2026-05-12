@@ -194,17 +194,21 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-    const aiResp = await fetch(geminiUrl, {
+    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{
-          role: "user",
-          parts: [{ text: `Extraia a cifra e metadados deste texto de site:\n\n${truncated}` }],
-        }],
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Extraia a cifra e metadados deste texto de site:\n\n${truncated}` },
+        ],
         tools: [{
-          functionDeclarations: [{
+          type: "function",
+          function: {
             name: "extract_song",
             description: "Extract song data from scraped text into structured ChordPro format with full metadata",
             parameters: {
@@ -214,30 +218,30 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
                 artist: { type: "string", description: "Artist name" },
                 genre: { type: "string", description: "Musical genre (e.g. Rock, MPB, Sertanejo)" },
                 musical_key: { type: "string", description: "Musical key/tom da música original (e.g. G, Am, C#m). SEMPRE preencha, deduzindo se necessário." },
-                composer: { type: "string", description: "Composer(s) name(s)", nullable: true },
-                bpm: { type: "number", description: "BPM if found", nullable: true },
+                composer: { type: "string", description: "Composer(s) name(s)" },
+                bpm: { type: "number", description: "BPM if found" },
                 content: { type: "string", description: "Full song in ChordPro format. Preserve ALL whitespace between chords in intro/solo lines and ALL section markers (Intro:, [Refrão], Solo:, etc.)" },
               },
               required: ["title", "artist", "genre", "musical_key", "content"],
             },
-          }],
-        }],
-        toolConfig: {
-          functionCallingConfig: {
-            mode: "ANY",
-            allowedFunctionNames: ["extract_song"],
           },
-        },
-        generationConfig: { temperature: 0.0, topK: 1, topP: 0.1 },
+        }],
+        tool_choice: { type: "function", function: { name: "extract_song" } },
+        temperature: 0.0,
       }),
     });
 
     if (!aiResp.ok) {
       const errText = await aiResp.text();
-      console.error("Gemini error:", aiResp.status, errText);
+      console.error("AI Gateway error:", aiResp.status, errText);
       if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em instantes." }), {
+        return new Response(JSON.stringify({ error: "Limite de processamento de IA atingido. Aguarde alguns instantes e tente novamente." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiResp.status === 402) {
+        return new Response(JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos no workspace para continuar." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       throw new Error("Erro na IA ao processar a cifra");
@@ -247,11 +251,11 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
 
     let result: { title: string; artist: string; genre: string; content: string; musical_key?: string | null; composer?: string | null; bpm?: number | null };
 
-    const functionCall = aiData.candidates?.[0]?.content?.parts?.[0]?.functionCall;
-    if (functionCall?.args) {
-      result = functionCall.args;
+    const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall?.function?.arguments) {
+      result = JSON.parse(toolCall.function.arguments);
     } else {
-      const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const rawText = aiData.choices?.[0]?.message?.content || "";
       const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error("IA não retornou dados estruturados");

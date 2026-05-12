@@ -80,9 +80,9 @@ serve(async (req) => {
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("VITE_GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("VITE_GEMINI_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     // Step A: Scrape the page (with Jina Reader fallback for sites that block data-center IPs)

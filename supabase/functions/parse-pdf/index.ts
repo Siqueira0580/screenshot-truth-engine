@@ -71,9 +71,9 @@ Deno.serve(async (req) => {
     }
     const base64 = btoa(binary);
 
-    const GEMINI_API_KEY = Deno.env.get('VITE_GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('VITE_GEMINI_API_KEY not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     const systemPrompt = `Você é um extrator rigoroso de cifras musicais. Converta o conteúdo do PDF para o formato ChordPro estruturado.
@@ -90,7 +90,7 @@ REGRAS ABSOLUTAS (PENALIDADE SE DESCUMPRIDAS):
 
 5. FIDELIDADE EXTREMA: NÃO adicione, NÃO remova e NÃO altere nenhum acorde ou palavra da letra original. NÃO tente corrigir gramática ou harmonia.
 
-Retorne APENAS um JSON válido (sem markdown, sem code blocks) com esta estrutura:
+Retorne APENAS um JSON válido com esta estrutura:
 {
   "title": "título da música",
   "artist": "nome do artista/intérprete",
@@ -104,36 +104,41 @@ Retorne APENAS um JSON válido (sem markdown, sem code blocks) com esta estrutur
 }
 Se um campo não for encontrado, use null.`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
-    const aiResponse = await fetch(geminiUrl, {
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{
-          role: 'user',
-          parts: [
-            { inlineData: { mimeType: 'application/pdf', data: base64 } },
-            { text: 'Extract all song information from this PDF chord sheet. Return only the JSON object.' },
-          ],
-        }],
-        generationConfig: {
-          temperature: 0.0,
-          topK: 1,
-          topP: 0.1,
-          responseMimeType: 'application/json',
-        },
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: [
+              { type: 'text', text: 'Extract all song information from this PDF chord sheet. Return only the JSON object.' },
+              { type: 'image_url', image_url: { url: `data:application/pdf;base64,${base64}` } },
+            ],
+          },
+        ],
+        temperature: 0.0,
+        response_format: { type: 'json_object' },
       }),
     });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
-      console.error('Gemini error:', aiResponse.status, errText);
-      const status = aiResponse.status === 429 ? 429 : 500;
-      const message = aiResponse.status === 429
-        ? 'Limite de processamento de IA atingido. Aguarde alguns instantes e tente novamente.'
-        : 'Falha ao processar o PDF com a IA. Tente novamente.';
+      console.error('AI Gateway error:', aiResponse.status, errText);
+      let status = 500;
+      let message = 'Falha ao processar o PDF com a IA. Tente novamente.';
+      if (aiResponse.status === 429) {
+        status = 429;
+        message = 'Limite de processamento de IA atingido. Aguarde alguns instantes e tente novamente.';
+      } else if (aiResponse.status === 402) {
+        status = 402;
+        message = 'Créditos de IA esgotados. Adicione créditos no workspace para continuar.';
+      }
       return new Response(
         JSON.stringify({ error: message }),
         { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -141,7 +146,8 @@ Se um campo não for encontrado, use null.`;
     }
 
     const aiResult = await aiResponse.json();
-    const content = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const content = aiResult.choices?.[0]?.message?.content || '';
+
 
     // Robust JSON extraction: strip code fences, then slice from first { to last }
     let parsed;

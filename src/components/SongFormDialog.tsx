@@ -212,8 +212,12 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       formData.append("file", file);
       const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
       if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
 
-      if (data) {
+      if (data && (data.title || data.body_text || data.text)) {
         // The AI returns structured data with all fields
         setForm((prev) => ({
           ...prev,
@@ -230,9 +234,9 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       } else {
         toast.warning("Nenhum dado encontrado no PDF");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("PDF parse error:", err);
-      toast.error("Erro ao processar o PDF");
+      toast.error(err?.message || "Erro ao processar o PDF");
     } finally {
       setIsParsing(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

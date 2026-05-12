@@ -118,28 +118,49 @@ Se um campo não for encontrado, use null.`;
             { text: 'Extract all song information from this PDF chord sheet. Return only the JSON object.' },
           ],
         }],
-        generationConfig: { temperature: 0.0, topK: 1, topP: 0.1 },
+        generationConfig: {
+          temperature: 0.0,
+          topK: 1,
+          topP: 0.1,
+          responseMimeType: 'application/json',
+        },
       }),
     });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       console.error('Gemini error:', aiResponse.status, errText);
-      throw new Error('AI processing failed');
+      const status = aiResponse.status === 429 ? 429 : 500;
+      const message = aiResponse.status === 429
+        ? 'Limite de processamento de IA atingido. Aguarde alguns instantes e tente novamente.'
+        : 'Falha ao processar o PDF com a IA. Tente novamente.';
+      return new Response(
+        JSON.stringify({ error: message }),
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const aiResult = await aiResponse.json();
     const content = aiResult.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
+    // Robust JSON extraction: strip code fences, then slice from first { to last }
     let parsed;
     try {
-      const jsonStr = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      let jsonStr = content
+        .replace(/```json\s*/gi, '')
+        .replace(/```/g, '')
+        .trim();
+      const first = jsonStr.indexOf('{');
+      const last = jsonStr.lastIndexOf('}');
+      if (first !== -1 && last !== -1 && last > first) {
+        jsonStr = jsonStr.slice(first, last + 1);
+      }
       parsed = JSON.parse(jsonStr);
-    } catch {
+    } catch (e) {
       console.error('Failed to parse Gemini response:', content);
       return new Response(
-        JSON.stringify({ text: content }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Não foi possível interpretar a resposta da IA. Tente novamente.' }),
+        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

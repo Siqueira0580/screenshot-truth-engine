@@ -192,8 +192,6 @@ Extraia também: Título, Artista, Gênero Musical, Tom, Compositor(es), BPM (se
 Se um campo não for encontrado, retorne null.
 Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o JSON: {"error": "Nenhuma cifra encontrada neste link."}`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {

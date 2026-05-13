@@ -30,6 +30,7 @@ import { FileUp, Loader2, Settings2, Search, CheckCircle2, AlertCircle } from "l
 import { supabase } from "@/integrations/supabase/client";
 import DialogTour, { type DialogTourStep } from "@/components/DialogTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { validateChordPro } from "@/lib/chordpro-validator";
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:(?:www|m)\.)?(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:[&?].*)?$/;
 
@@ -218,6 +219,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       }
 
       if (data && (data.title || data.body_text || data.text)) {
+        const newBody = data.body_text || data.text || "";
         // The AI returns structured data with all fields
         setForm((prev) => ({
           ...prev,
@@ -228,9 +230,14 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
           style: data.style || prev.style,
           bpm: data.bpm?.toString() || prev.bpm,
           time_signature: data.time_signature || prev.time_signature,
-          body_text: data.body_text || data.text || prev.body_text,
+          body_text: newBody || prev.body_text,
         }));
-        toast.success("PDF processado! Campos preenchidos automaticamente.");
+        const check = validateChordPro(newBody);
+        if (!check.valid) {
+          toast.warning(`PDF processado, mas a cifra pode estar fora do padrão ChordPro. ${check.reason ?? ""} Revise o campo "Cifra" antes de salvar.`);
+        } else {
+          toast.success("PDF processado! Campos preenchidos automaticamente.");
+        }
       } else {
         toast.warning("Nenhum dado encontrado no PDF");
       }
@@ -271,7 +278,12 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
         body_text: data.body_text || prev.body_text,
       }));
       setSearchQuery("");
-      toast.success("Cifra encontrada! Campos preenchidos automaticamente.");
+      const check = validateChordPro(data.body_text);
+      if (!check.valid) {
+        toast.warning(`Cifra encontrada, mas pode estar fora do padrão ChordPro. ${check.reason ?? ""} Revise o campo "Cifra" antes de salvar.`);
+      } else {
+        toast.success("Cifra encontrada! Campos preenchidos automaticamente.");
+      }
     } catch (err) {
       console.error("Search cifra error:", err);
       toast.error("Erro ao buscar cifra");
@@ -292,6 +304,12 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
             if (!form.title.trim()) return toast.error("Título é obrigatório");
             if (form.youtube_url.trim() && !extractYouTubeId(form.youtube_url.trim())) {
               return toast.error("O link do YouTube é inválido. Corrija ou remova antes de salvar.");
+            }
+            if (form.body_text.trim()) {
+              const check = validateChordPro(form.body_text);
+              if (!check.valid) {
+                return toast.error(check.reason ?? "Cifra fora do padrão ChordPro. Adicione acordes entre colchetes (ex.: [C], [Am]) ou marcadores de seção (Intro:, [Refrão], Verso:).");
+              }
             }
             mutation.mutate();
           }}

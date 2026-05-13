@@ -15,6 +15,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist, checkDuplicateSong } from "@/lib/supabase-queries";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
+import { validateChordPro } from "@/lib/chordpro-validator";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -96,6 +97,11 @@ export default function ImportSongModal({
       if (data?.error) { toast.error(data.error); return; }
 
       setPreviewData(data);
+      const bodyForCheck = data?.content || data?.body_text || "";
+      const check = validateChordPro(bodyForCheck);
+      if (!check.valid) {
+        toast.warning(`Cifra importada, mas pode estar fora do padrão ChordPro. ${check.reason ?? ""}`);
+      }
       setStep("preview");
     } catch (err) {
       console.error("Import error:", err);
@@ -108,12 +114,18 @@ export default function ImportSongModal({
   const handleConfirmImport = async () => {
     if (!previewData) return;
 
+    const bodyText = previewData.content || previewData.body_text || null;
+    const check = validateChordPro(bodyText);
+    if (!check.valid) {
+      toast.error(check.reason ?? "Cifra fora do padrão ChordPro. Não é possível importar.");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const title = previewData.title || "Sem título";
       const artist = previewData.artist || null;
       const style = previewData.genre || previewData.style || null;
-      const bodyText = previewData.content || previewData.body_text || null;
 
       // Anti-duplicate check (user's own songs)
       const duplicateId = await checkDuplicateSong(title, artist);

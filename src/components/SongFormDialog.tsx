@@ -305,6 +305,12 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
             if (form.youtube_url.trim() && !extractYouTubeId(form.youtube_url.trim())) {
               return toast.error("O link do YouTube é inválido. Corrija ou remova antes de salvar.");
             }
+            if (form.body_text.trim()) {
+              const check = validateChordPro(form.body_text);
+              if (!check.valid) {
+                return toast.error(check.reason ?? "Cifra fora do padrão ChordPro. Adicione acordes entre colchetes (ex.: [C], [Am]) ou marcadores de seção (Intro:, [Refrão], Verso:).");
+              }
+            }
             mutation.mutate();
           }}
           className="space-y-4"

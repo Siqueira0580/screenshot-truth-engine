@@ -30,6 +30,7 @@ import { FileUp, Loader2, Settings2, Search, CheckCircle2, AlertCircle } from "l
 import { supabase } from "@/integrations/supabase/client";
 import DialogTour, { type DialogTourStep } from "@/components/DialogTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
+import { validateChordPro } from "@/lib/chordpro-validator";
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:(?:www|m)\.)?(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:[&?].*)?$/;
 

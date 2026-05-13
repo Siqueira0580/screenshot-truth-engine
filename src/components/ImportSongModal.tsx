@@ -114,12 +114,18 @@ export default function ImportSongModal({
   const handleConfirmImport = async () => {
     if (!previewData) return;
 
+    const bodyText = previewData.content || previewData.body_text || null;
+    const check = validateChordPro(bodyText);
+    if (!check.valid) {
+      toast.error(check.reason ?? "Cifra fora do padrão ChordPro. Não é possível importar.");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const title = previewData.title || "Sem título";
       const artist = previewData.artist || null;
       const style = previewData.genre || previewData.style || null;
-      const bodyText = previewData.content || previewData.body_text || null;
 
       // Anti-duplicate check (user's own songs)
       const duplicateId = await checkDuplicateSong(title, artist);

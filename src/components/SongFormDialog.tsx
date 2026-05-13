@@ -278,7 +278,12 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
         body_text: data.body_text || prev.body_text,
       }));
       setSearchQuery("");
-      toast.success("Cifra encontrada! Campos preenchidos automaticamente.");
+      const check = validateChordPro(data.body_text);
+      if (!check.valid) {
+        toast.warning(`Cifra encontrada, mas pode estar fora do padrão ChordPro. ${check.reason ?? ""} Revise o campo "Cifra" antes de salvar.`);
+      } else {
+        toast.success("Cifra encontrada! Campos preenchidos automaticamente.");
+      }
     } catch (err) {
       console.error("Search cifra error:", err);
       toast.error("Erro ao buscar cifra");

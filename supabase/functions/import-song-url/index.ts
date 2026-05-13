@@ -233,12 +233,12 @@ Se o texto bruto não contiver uma cifra musical válida, retorne ESTRITAMENTE o
       const errText = await aiResp.text();
       console.error("AI Gateway error:", aiResp.status, errText);
       if (aiResp.status === 429) {
-        return new Response(JSON.stringify({ error: "Limite de processamento de IA atingido. Aguarde alguns instantes e tente novamente." }), {
+        return new Response(JSON.stringify({ error: "Muitas requisições à IA em pouco tempo. Aguarde cerca de 1 minuto e tente importar novamente. Se o problema persistir, espere de 5 a 10 minutos antes de tentar de novo." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (aiResp.status === 402) {
-        return new Response(JSON.stringify({ error: "Créditos de IA esgotados. Adicione créditos no workspace para continuar." }), {
+        return new Response(JSON.stringify({ error: "Os créditos de IA do workspace acabaram. Para continuar, adicione saldo em Configurações → Plans & Credits (ou Workspace → Cloud & AI balance) na sua conta Lovable e tente novamente." }), {
           status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }

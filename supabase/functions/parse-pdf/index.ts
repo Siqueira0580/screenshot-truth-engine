@@ -134,10 +134,10 @@ Se um campo não for encontrado, use null.`;
       let message = 'Falha ao processar o PDF com a IA. Tente novamente.';
       if (aiResponse.status === 429) {
         status = 429;
-        message = 'Limite de processamento de IA atingido. Aguarde alguns instantes e tente novamente.';
+        message = 'Muitas requisições à IA em pouco tempo. Aguarde cerca de 1 minuto antes de tentar processar este PDF novamente. Se o erro persistir, espere de 5 a 10 minutos.';
       } else if (aiResponse.status === 402) {
         status = 402;
-        message = 'Créditos de IA esgotados. Adicione créditos no workspace para continuar.';
+        message = 'Os créditos de IA do workspace acabaram. Adicione saldo em Configurações → Plans & Credits (ou Workspace → Cloud & AI balance) na sua conta Lovable e tente novamente.';
       }
       return new Response(
         JSON.stringify({ error: message }),

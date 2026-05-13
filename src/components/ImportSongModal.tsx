@@ -97,6 +97,11 @@ export default function ImportSongModal({
       if (data?.error) { toast.error(data.error); return; }
 
       setPreviewData(data);
+      const bodyForCheck = data?.content || data?.body_text || "";
+      const check = validateChordPro(bodyForCheck);
+      if (!check.valid) {
+        toast.warning(`Cifra importada, mas pode estar fora do padrão ChordPro. ${check.reason ?? ""}`);
+      }
       setStep("preview");
     } catch (err) {
       console.error("Import error:", err);

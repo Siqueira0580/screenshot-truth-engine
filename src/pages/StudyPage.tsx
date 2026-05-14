@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { resolveAudioUrl } from "@/lib/audio-url";
 import { parseChordsInText } from "@/lib/chord-parser";
 import { isChordProFormat } from "@/lib/chordpro-parser";
+import { useSongTransposition } from "@/hooks/useSongTransposition";
 import { useChordProParser } from "@/hooks/useChordProParser";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";

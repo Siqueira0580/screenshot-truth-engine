@@ -107,7 +107,7 @@ export default function SongDetailPage() {
     enabled: !!id,
   });
 
-  const { data: artists = [] } = useQuery({
+  const { transpose, setTranspose } = useSongTransposition(id, song?.musical_key);
     queryKey: ["artists"],
     queryFn: fetchArtists,
   });

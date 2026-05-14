@@ -82,6 +82,8 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isParsing, setIsParsing] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const pdfCooldown = useAiCooldown("parse-pdf");
+  const searchCooldown = useAiCooldown("search-cifra");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Guided tour for the studio form

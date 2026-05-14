@@ -95,6 +95,10 @@ export default function ImportSongModal({
       const { data, error } = await supabase.functions.invoke("import-song-url", {
         body: { url: trimmed },
       });
+      if (handleInvokeResult(error, data)) {
+        toast.error(data?.error || "Limite de IA atingido. Aguarde para tentar novamente.");
+        return;
+      }
       if (error) throw error;
       if (data?.error) { toast.error(data.error); return; }
 

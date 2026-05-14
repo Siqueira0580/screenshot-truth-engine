@@ -286,14 +286,21 @@ export default function ImportSongModal({
               <Button variant="outline" onClick={handleClose} disabled={isSearching}>
                 Cancelar
               </Button>
-              <Button onClick={handleSearch} disabled={isSearching || !input.trim() || !isUrl(input.trim())} className="gap-2">
+              <Button onClick={handleSearch} disabled={isSearching || isCoolingDown || !input.trim() || !isUrl(input.trim())} className="gap-2">
                 {isSearching ? (
                   <><Loader2 className="h-4 w-4 animate-spin" />Importando...</>
+                ) : isCoolingDown ? (
+                  <>Aguarde {secondsLeft}s</>
                 ) : (
                   <><Sparkles className="h-4 w-4" />Importar Cifra</>
                 )}
               </Button>
             </div>
+            {isCoolingDown && (
+              <p className="text-xs text-center text-muted-foreground">
+                Limite de IA atingido. Você poderá tentar novamente em {secondsLeft}s.
+              </p>
+            )}
           </div>
         )}
 

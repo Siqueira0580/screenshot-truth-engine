@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSongTransposition } from "@/hooks/useSongTransposition";
 import { useUserRole } from "@/hooks/useUserRole";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 

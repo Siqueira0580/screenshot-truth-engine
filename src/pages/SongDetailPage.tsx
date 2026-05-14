@@ -108,6 +108,8 @@ export default function SongDetailPage() {
   });
 
   const { transpose, setTranspose } = useSongTransposition(id, song?.musical_key);
+
+  const { data: artists = [] } = useQuery({
     queryKey: ["artists"],
     queryFn: fetchArtists,
   });

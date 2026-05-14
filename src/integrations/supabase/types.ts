@@ -1034,6 +1034,41 @@ export type Database = {
         }
         Relationships: []
       }
+      user_song_transpositions: {
+        Row: {
+          id: string
+          semitones: number
+          song_id: string
+          transposed_key: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          semitones?: number
+          song_id: string
+          transposed_key?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          semitones?: number
+          song_id?: string
+          transposed_key?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_song_transpositions_song_id_fkey"
+            columns: ["song_id"]
+            isOneToOne: false
+            referencedRelation: "songs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { resolveAudioUrl } from "@/lib/audio-url";
 import { parseChordsInText } from "@/lib/chord-parser";
 import { isChordProFormat } from "@/lib/chordpro-parser";
+import { useSongTransposition } from "@/hooks/useSongTransposition";
 import { useChordProParser } from "@/hooks/useChordProParser";
 import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -153,7 +154,7 @@ export default function StudyPage() {
   const [stemVols, setStemVols] = useState<Record<StemType, number>>({ vocals: 100, backing_vocal: 100, percussion: 100, harmony: 100, guitar: 100 });
   const [mutedStems, setMutedStems] = useState<Record<StemType, boolean>>({ vocals: false, backing_vocal: false, percussion: false, harmony: false, guitar: false });
   const [soloStems, setSoloStems] = useState<Record<StemType, boolean>>({ vocals: false, backing_vocal: false, percussion: false, harmony: false, guitar: false });
-  const [transpose, setTranspose] = useState(0);
+  
   const [scrollSpeed, setScrollSpeed] = useState(2);
   const [isScrolling, setIsScrolling] = useState(false);
   const [fontSize, setFontSize] = useState(22);
@@ -163,6 +164,7 @@ export default function StudyPage() {
   const [editFormOpen, setEditFormOpen] = useState(false);
 
   const { data: song } = useQuery({ queryKey: ["song", songId], queryFn: () => fetchSong(songId!), enabled: !!songId });
+  const { transpose, setTranspose } = useSongTransposition(songId, song?.musical_key);
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
   const { data: audioTrack } = useQuery({
     queryKey: ["audio_track", songId],

@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { useTypographyPrefs } from "@/hooks/useTypographyPrefs";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSongTransposition } from "@/hooks/useSongTransposition";
 import { useUserRole } from "@/hooks/useUserRole";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
@@ -64,7 +65,7 @@ export default function SongDetailPage() {
     const saved = localStorage.getItem("@smartcifra:globalFont");
     return (saved && PRESENTATION_FONTS.some(f => f.id === saved) ? saved : "sans") as PresentationFontId;
   });
-  const [transpose, setTranspose] = useState(0);
+  
   const [songFontSize, setSongFontSize] = useState(() => {
     const saved = localStorage.getItem("@smartcifra:fontSize");
     return saved ? parseInt(saved, 10) : 16;
@@ -106,6 +107,8 @@ export default function SongDetailPage() {
     queryFn: () => fetchSong(id!),
     enabled: !!id,
   });
+
+  const { transpose, setTranspose } = useSongTransposition(id, song?.musical_key);
 
   const { data: artists = [] } = useQuery({
     queryKey: ["artists"],

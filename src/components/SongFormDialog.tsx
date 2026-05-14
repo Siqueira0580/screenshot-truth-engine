@@ -267,6 +267,10 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       const { data, error } = await supabase.functions.invoke("search-cifra", {
         body: { query: searchQuery.trim() },
       });
+      if (searchCooldown.handleInvokeResult(error, data)) {
+        toast.error(data?.error || "Limite de IA atingido. Aguarde para tentar novamente.");
+        return;
+      }
       if (error) throw error;
       if (data?.error) {
         toast.error(data.error);

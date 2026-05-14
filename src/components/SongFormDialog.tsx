@@ -215,6 +215,10 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
       const formData = new FormData();
       formData.append("file", file);
       const { data, error } = await supabase.functions.invoke("parse-pdf", { body: formData });
+      if (pdfCooldown.handleInvokeResult(error, data)) {
+        toast.error(data?.error || "Limite de IA atingido. Aguarde para tentar novamente.");
+        return;
+      }
       if (error) throw error;
       if (data?.error) {
         toast.error(data.error);

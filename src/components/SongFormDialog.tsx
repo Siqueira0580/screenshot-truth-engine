@@ -346,7 +346,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
               <Button
                 type="button"
                 variant="default"
-                disabled={isSearching || !searchQuery.trim()}
+                disabled={isSearching || searchCooldown.isCoolingDown || !searchQuery.trim()}
                 onClick={handleSearchCifra}
                 className="gap-2 shrink-0"
               >
@@ -355,6 +355,8 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Buscando...
                   </>
+                ) : searchCooldown.isCoolingDown ? (
+                  <>Aguarde {searchCooldown.secondsLeft}s</>
                 ) : (
                   <>
                     <Search className="h-4 w-4" />
@@ -363,6 +365,11 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
                 )}
               </Button>
             </div>
+            {searchCooldown.isCoolingDown && (
+              <p className="text-xs text-muted-foreground">
+                Limite de IA atingido. Tente buscar novamente em {searchCooldown.secondsLeft}s.
+              </p>
+            )}
             {/* PDF Import */}
             <div className="flex items-center gap-3">
               <input
@@ -379,7 +386,7 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
                 type="button"
                 variant="outline"
                 size="sm"
-                disabled={isParsing}
+                disabled={isParsing || pdfCooldown.isCoolingDown}
                 onClick={() => fileInputRef.current?.click()}
                 className="gap-2"
               >
@@ -388,6 +395,8 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Processando PDF...
                   </>
+                ) : pdfCooldown.isCoolingDown ? (
+                  <>Aguarde {pdfCooldown.secondsLeft}s</>
                 ) : (
                   <>
                     <FileUp className="h-4 w-4" />
@@ -396,7 +405,9 @@ export default function SongFormDialog({ open, onOpenChange, songId }: Props) {
                 )}
               </Button>
               <p className="text-xs text-muted-foreground">
-                Ou importe um PDF de cifra
+                {pdfCooldown.isCoolingDown
+                  ? `Limite de IA atingido. Tente novamente em ${pdfCooldown.secondsLeft}s.`
+                  : "Ou importe um PDF de cifra"}
               </p>
             </div>
           </div>

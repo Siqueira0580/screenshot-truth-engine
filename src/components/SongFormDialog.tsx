@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import DialogTour, { type DialogTourStep } from "@/components/DialogTour";
 import { useGuidedTour } from "@/hooks/useGuidedTour";
 import { validateChordPro } from "@/lib/chordpro-validator";
+import { useAiCooldown } from "@/hooks/useAiCooldown";
 
 const YOUTUBE_URL_REGEX = /^(?:https?:\/\/)?(?:(?:www|m)\.)?(?:youtube\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:[&?].*)?$/;
 

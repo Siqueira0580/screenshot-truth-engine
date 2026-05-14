@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { createSongAndAddToLibrary, addToUserLibrary, findOrCreateArtist, addSongToSetlist, checkDuplicateSong } from "@/lib/supabase-queries";
 import { calculateOptimalScrollSpeed } from "@/lib/scroll-math";
 import { validateChordPro } from "@/lib/chordpro-validator";
+import { useAiCooldown } from "@/hooks/useAiCooldown";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -57,6 +58,7 @@ export default function ImportSongModal({
   const [step, setStep] = useState<Step>("search");
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const queryClient = useQueryClient();
+  const { isCoolingDown, secondsLeft, handleInvokeResult } = useAiCooldown("import-song-url");
 
   const isUrl = (text: string) => /^https?:\/\//i.test(text.trim());
 
@@ -93,6 +95,10 @@ export default function ImportSongModal({
       const { data, error } = await supabase.functions.invoke("import-song-url", {
         body: { url: trimmed },
       });
+      if (handleInvokeResult(error, data)) {
+        toast.error(data?.error || "Limite de IA atingido. Aguarde para tentar novamente.");
+        return;
+      }
       if (error) throw error;
       if (data?.error) { toast.error(data.error); return; }
 
@@ -280,14 +286,21 @@ export default function ImportSongModal({
               <Button variant="outline" onClick={handleClose} disabled={isSearching}>
                 Cancelar
               </Button>
-              <Button onClick={handleSearch} disabled={isSearching || !input.trim() || !isUrl(input.trim())} className="gap-2">
+              <Button onClick={handleSearch} disabled={isSearching || isCoolingDown || !input.trim() || !isUrl(input.trim())} className="gap-2">
                 {isSearching ? (
                   <><Loader2 className="h-4 w-4 animate-spin" />Importando...</>
+                ) : isCoolingDown ? (
+                  <>Aguarde {secondsLeft}s</>
                 ) : (
                   <><Sparkles className="h-4 w-4" />Importar Cifra</>
                 )}
               </Button>
             </div>
+            {isCoolingDown && (
+              <p className="text-xs text-center text-muted-foreground">
+                Limite de IA atingido. Você poderá tentar novamente em {secondsLeft}s.
+              </p>
+            )}
           </div>
         )}
 

@@ -164,6 +164,7 @@ export default function StudyPage() {
   const [editFormOpen, setEditFormOpen] = useState(false);
 
   const { data: song } = useQuery({ queryKey: ["song", songId], queryFn: () => fetchSong(songId!), enabled: !!songId });
+  const { transpose, setTranspose } = useSongTransposition(songId, song?.musical_key);
   const { data: artists = [] } = useQuery({ queryKey: ["artists"], queryFn: fetchArtists });
   const { data: audioTrack } = useQuery({
     queryKey: ["audio_track", songId],

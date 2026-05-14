@@ -58,6 +58,7 @@ export default function ImportSongModal({
   const [step, setStep] = useState<Step>("search");
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const queryClient = useQueryClient();
+  const { isCoolingDown, secondsLeft, handleInvokeResult } = useAiCooldown("import-song-url");
 
   const isUrl = (text: string) => /^https?:\/\//i.test(text.trim());
 

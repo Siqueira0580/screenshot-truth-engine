@@ -854,6 +854,12 @@ export default function SetlistDetailPage() {
         musicians={(setlist as any)?.musicians}
         onSettingsClick={isOwner ? () => setSettingsOpen(true) : undefined}
       >
+        {!isOwner && isGroupAdminForSetlist && (
+          <Badge variant="secondary" className="text-xs gap-1">
+            <Users className="h-3 w-3" />
+            Compartilhado
+          </Badge>
+        )}
         {!canEdit && (
           <Badge variant="secondary" className="text-xs gap-1">
             <Eye className="h-3 w-3" />

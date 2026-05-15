@@ -31,8 +31,9 @@ interface TeleprompterSong {
   loop_count?: number | null;
   auto_next?: boolean | null;
   speed?: number | null; // percentage value e.g. 250 = 2.5x
-  setlist_item_id?: string | null; // for saving transposition
-  transposed_key?: string | null; // pre-saved transposition from setlist
+  setlist_item_id?: string | null; // for saving transposition (legacy)
+  song_id?: string | null; // for per-user transposition persistence
+  transposed_key?: string | null; // pre-saved transposition from setlist (fallback)
 }
 
 interface TeleprompterProps {

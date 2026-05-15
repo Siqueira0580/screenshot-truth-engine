@@ -213,7 +213,15 @@ export default function SetlistsPage() {
             >
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2">{sl.name}</h3>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <h3 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2">{sl.name}</h3>
+                    {sl._shared_from_group && (
+                      <Badge variant="secondary" className="text-[10px] gap-1 px-1.5 py-0.5 shrink-0">
+                        <Users className="h-3 w-3" />
+                        Compartilhado{sl._shared_group_name ? ` · ${sl._shared_group_name}` : ""}
+                      </Badge>
+                    )}
+                  </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1.5 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3 shrink-0" />
@@ -251,17 +259,19 @@ export default function SetlistsPage() {
                     </div>
                   )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 h-7 w-7"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setDeleteTarget(sl.id);
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                </Button>
+                {!sl._shared_from_group && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 h-7 w-7"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDeleteTarget(sl.id);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                )}
               </div>
             </Link>
           ))}

@@ -31,8 +31,9 @@ interface TeleprompterSong {
   loop_count?: number | null;
   auto_next?: boolean | null;
   speed?: number | null; // percentage value e.g. 250 = 2.5x
-  setlist_item_id?: string | null; // for saving transposition
-  transposed_key?: string | null; // pre-saved transposition from setlist
+  setlist_item_id?: string | null; // for saving transposition (legacy)
+  song_id?: string | null; // for per-user transposition persistence
+  transposed_key?: string | null; // pre-saved transposition from setlist (fallback)
 }
 
 interface TeleprompterProps {
@@ -112,20 +113,85 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   const displayKey = transposeKey(song?.musical_key, transpose);
   
 
-  // Save transposed key to setlist_items when transpose changes
+  // Load per-user saved transposition when current song changes
+  const loadedSongIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!song?.setlist_item_id || transpose === 0) return;
-    const newKey = transposeKey(song.musical_key, transpose);
-    if (!newKey) return;
+    if (!open) return;
+    const sid = song?.song_id;
+    if (!sid) return;
+    if (loadedSongIdRef.current === sid) return;
+    loadedSongIdRef.current = sid;
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
+      const { data } = await supabase
+        .from("user_song_transpositions")
+        .select("semitones")
+        .eq("user_id", auth.user.id)
+        .eq("song_id", sid)
+        .maybeSingle();
+      if (data && typeof data.semitones === "number") {
+        setTranspose(data.semitones);
+      } else if (song?.transposed_key && song?.musical_key) {
+        // Fallback to setlist's shared transposed_key
+        const origRoot = song.musical_key.match(/^([A-G][#b]?)/)?.[1];
+        const transRoot = song.transposed_key.match(/^([A-G][#b]?)/)?.[1];
+        if (origRoot && transRoot) {
+          const origIdx = ALL_KEYS.indexOf(origRoot);
+          const transIdx = ALL_KEYS.indexOf(transRoot);
+          if (origIdx >= 0 && transIdx >= 0) {
+            setTranspose(((transIdx - origIdx) % 12 + 12) % 12);
+            return;
+          }
+        }
+        setTranspose(0);
+      } else {
+        setTranspose(0);
+      }
+    })();
+  }, [open, song?.song_id]);
+
+  // Persist per-user transposition (debounced)
+  const lastSavedTransposeRef = useRef<{ songId: string | null; value: number }>({ songId: null, value: 0 });
+  useEffect(() => {
+    const sid = song?.song_id;
+    if (!sid || !open) return;
+    if (loadedSongIdRef.current !== sid) return; // wait until load finished
+    if (lastSavedTransposeRef.current.songId === sid && lastSavedTransposeRef.current.value === transpose) return;
+    const newKey = transposeKey(song?.musical_key, transpose);
     const timeout = setTimeout(async () => {
-      await supabase
-        .from("setlist_items")
-        .update({ transposed_key: newKey })
-        .eq("id", song.setlist_item_id!);
-      onTransposeChange?.(currentIndex, newKey, song.setlist_item_id!);
-    }, 500);
+      const { data: auth } = await supabase.auth.getUser();
+      if (!auth?.user) return;
+      try {
+        if (transpose === 0) {
+          await supabase
+            .from("user_song_transpositions")
+            .delete()
+            .eq("user_id", auth.user.id)
+            .eq("song_id", sid);
+        } else {
+          await supabase
+            .from("user_song_transpositions")
+            .upsert(
+              {
+                user_id: auth.user.id,
+                song_id: sid,
+                semitones: transpose,
+                transposed_key: newKey,
+              },
+              { onConflict: "user_id,song_id" },
+            );
+        }
+        lastSavedTransposeRef.current = { songId: sid, value: transpose };
+        if (song?.setlist_item_id && newKey) {
+          onTransposeChange?.(currentIndex, newKey, song.setlist_item_id);
+        }
+      } catch (err) {
+        console.error("Failed to save transposition", err);
+      }
+    }, 700);
     return () => clearTimeout(timeout);
-  }, [transpose, currentIndex, song?.setlist_item_id, song?.musical_key, onTransposeChange]);
+  }, [transpose, currentIndex, song?.song_id, song?.musical_key, song?.setlist_item_id, open, onTransposeChange]);
 
   // Build all songs' display bodies (use transposeChordPro for ChordPro-formatted text)
   const displayBodies = useMemo(() =>

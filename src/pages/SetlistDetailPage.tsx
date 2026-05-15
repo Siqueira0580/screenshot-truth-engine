@@ -1295,6 +1295,7 @@ export default function SetlistDetailPage() {
           auto_next: item.songs?.auto_next,
           speed: item.speed ?? item.songs?.default_speed ?? 250,
           setlist_item_id: item.id,
+          song_id: item.song_id,
           transposed_key: item.transposed_key,
         }))}
         open={teleprompterOpen}

@@ -251,13 +251,70 @@ export async function deleteSong(id: string) {
 export async function fetchSetlists() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
-  const { data, error } = await supabase
+
+  // Own setlists
+  const ownPromise = supabase
     .from("setlists")
     .select("*")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
+
+  // Setlists shared in groups where the user is an active admin
+  const sharedPromise = (async () => {
+    const { data: adminMemberships } = await supabase
+      .from("community_group_members")
+      .select("group_id")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .eq("status", "active");
+
+    const groupIds = (adminMemberships || []).map((m: any) => m.group_id);
+    if (groupIds.length === 0) return [] as any[];
+
+    const { data: posts } = await supabase
+      .from("community_posts")
+      .select("setlist_id, group_id, community_groups:group_id(name)")
+      .in("group_id", groupIds)
+      .not("setlist_id", "is", null);
+
+    const setlistIds = Array.from(new Set((posts || []).map((p: any) => p.setlist_id))).filter(Boolean);
+    if (setlistIds.length === 0) return [] as any[];
+
+    // Map setlist_id -> group name (first occurrence)
+    const groupBySetlist = new Map<string, string | null>();
+    (posts || []).forEach((p: any) => {
+      if (p.setlist_id && !groupBySetlist.has(p.setlist_id)) {
+        groupBySetlist.set(p.setlist_id, p.community_groups?.name ?? null);
+      }
+    });
+
+    const { data: sharedSetlists } = await supabase
+      .from("setlists")
+      .select("*")
+      .in("id", setlistIds);
+
+    return (sharedSetlists || [])
+      .filter((s: any) => s.user_id !== user.id)
+      .map((s: any) => ({
+        ...s,
+        _shared_from_group: true,
+        _shared_group_name: groupBySetlist.get(s.id) ?? null,
+      }));
+  })();
+
+  const [{ data: own, error }, shared] = await Promise.all([ownPromise, sharedPromise]);
   if (error) throw error;
-  return data as Setlist[];
+
+  const merged = [...(own || []), ...shared];
+  // De-dupe by id, prefer own copy
+  const seen = new Set<string>();
+  const result = merged.filter((s: any) => {
+    if (seen.has(s.id)) return false;
+    seen.add(s.id);
+    return true;
+  });
+  result.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  return result as Setlist[];
 }
 
 export async function fetchSetlist(id: string) {

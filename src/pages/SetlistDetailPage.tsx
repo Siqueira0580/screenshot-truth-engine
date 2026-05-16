@@ -1133,6 +1133,7 @@ export default function SetlistDetailPage() {
                     onDelete={(itemId: string) => setDeleteTarget(itemId)}
                     isMobile={isMobile}
                     isTablet={isTablet}
+                    userTransposition={userTranspMap.get(item.song_id)}
                   />
                 ))}
               </div>

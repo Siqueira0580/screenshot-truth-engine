@@ -113,7 +113,7 @@ function SortableSongItem({
               <Link to={`/songs/${item.song_id}`} className="font-medium hover:text-primary transition-colors text-sm sm:text-base">
                 {item.songs?.title}
               </Link>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
+              <div className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
                 <span className="truncate">{item.songs?.artist}</span>
                 {item.songs?.musical_key && (
                   userTransposition && userTransposition.semitones !== 0 && userTransposition.transposed_key ? (
@@ -127,7 +127,7 @@ function SortableSongItem({
                     <span>· {item.songs.musical_key}</span>
                   )
                 )}
-              </p>
+              </div>
             </div>
             <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => onDelete(item.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />

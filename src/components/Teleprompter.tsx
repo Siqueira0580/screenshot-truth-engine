@@ -572,8 +572,11 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 <div className="shrink-0 flex flex-col items-center ml-2">
                   <span className="text-3xl font-black text-primary font-mono leading-none">{displayKey}</span>
                   {originalKey && displayKey !== originalKey && (
-                    <span className="text-[10px] text-muted-foreground font-mono leading-tight mt-0.5">
-                      Orig: {originalKey}
+                    <span className="inline-flex items-center gap-1 mt-0.5">
+                      <span className="text-[10px] text-muted-foreground font-mono leading-tight line-through">
+                        {originalKey}
+                      </span>
+                      <span className="text-[8px] uppercase font-bold text-primary/80 bg-primary/10 px-1 py-px rounded">modificado</span>
                     </span>
                   )}
                 </div>

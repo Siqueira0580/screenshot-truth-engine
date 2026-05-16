@@ -1153,10 +1153,27 @@ export default function SetlistDetailPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm sm:text-base truncate">{item.songs?.title}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {item.songs?.artist}
-                  {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
-                </p>
+                {(() => {
+                  const ut = userTranspMap.get(item.song_id);
+                  const transposed = ut && ut.semitones !== 0 ? ut.transposed_key : null;
+                  return (
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
+                      <span className="truncate">{item.songs?.artist}</span>
+                      {item.songs?.musical_key && (
+                        transposed ? (
+                          <span className="inline-flex items-center gap-1">
+                            <span>·</span>
+                            <span className="line-through opacity-60">{item.songs.musical_key}</span>
+                            <span className="text-primary font-semibold">→ {transposed}</span>
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 leading-none">modificado</Badge>
+                          </span>
+                        ) : (
+                          <span>· {item.songs.musical_key}</span>
+                        )
+                      )}
+                    </p>
+                  );
+                })()}
               </div>
               <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
             </Link>

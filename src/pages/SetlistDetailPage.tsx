@@ -72,7 +72,7 @@ function prevSpeedCycle(current: number): number {
 // Sortable song item component
 function SortableSongItem({
   item, index, selectedSongs, toggleSelect, getVal, updateField,
-  onDelete, isMobile, isTablet,
+  onDelete, isMobile, isTablet, userTransposition,
 }: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id });
   const style = {
@@ -113,10 +113,21 @@ function SortableSongItem({
               <Link to={`/songs/${item.song_id}`} className="font-medium hover:text-primary transition-colors text-sm sm:text-base">
                 {item.songs?.title}
               </Link>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {item.songs?.artist}
-                {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
-              </p>
+              <div className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
+                <span className="truncate">{item.songs?.artist}</span>
+                {item.songs?.musical_key && (
+                  userTransposition && userTransposition.semitones !== 0 && userTransposition.transposed_key ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span>·</span>
+                      <span className="line-through opacity-60">{item.songs.musical_key}</span>
+                      <span className="text-primary font-semibold">→ {userTransposition.transposed_key}</span>
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 leading-none">modificado</Badge>
+                    </span>
+                  ) : (
+                    <span>· {item.songs.musical_key}</span>
+                  )
+                )}
+              </div>
             </div>
             <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => onDelete(item.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />
@@ -500,6 +511,31 @@ export default function SetlistDetailPage() {
     queryFn: () => fetchSetlistItems(id!),
     enabled: !!id,
   });
+
+  // Per-user transpositions for the songs in this setlist
+  const songIdsForTransp = useMemo(
+    () => Array.from(new Set((items as any[]).map((it) => it.song_id).filter(Boolean))),
+    [items],
+  );
+  const { data: userTranspositions = [] } = useQuery({
+    queryKey: ["user-transpositions", user?.id, songIdsForTransp],
+    queryFn: async () => {
+      if (!user || songIdsForTransp.length === 0) return [];
+      const { data } = await supabase
+        .from("user_song_transpositions")
+        .select("song_id, semitones, transposed_key")
+        .eq("user_id", user.id)
+        .in("song_id", songIdsForTransp);
+      return data || [];
+    },
+    enabled: !!user && songIdsForTransp.length > 0,
+    refetchOnWindowFocus: true,
+  });
+  const userTranspMap = useMemo(() => {
+    const m = new Map<string, { semitones: number; transposed_key: string | null }>();
+    (userTranspositions as any[]).forEach((t) => m.set(t.song_id, { semitones: t.semitones, transposed_key: t.transposed_key }));
+    return m;
+  }, [userTranspositions]);
 
   // Auto-fill missing YouTube links once when page loads with items
   const autoFillRanRef = useRef(false);
@@ -1097,6 +1133,7 @@ export default function SetlistDetailPage() {
                     onDelete={(itemId: string) => setDeleteTarget(itemId)}
                     isMobile={isMobile}
                     isTablet={isTablet}
+                    userTransposition={userTranspMap.get(item.song_id)}
                   />
                 ))}
               </div>
@@ -1116,10 +1153,27 @@ export default function SetlistDetailPage() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm sm:text-base truncate">{item.songs?.title}</p>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {item.songs?.artist}
-                  {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
-                </p>
+                {(() => {
+                  const ut = userTranspMap.get(item.song_id);
+                  const transposed = ut && ut.semitones !== 0 ? ut.transposed_key : null;
+                  return (
+                    <div className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
+                      <span className="truncate">{item.songs?.artist}</span>
+                      {item.songs?.musical_key && (
+                        transposed ? (
+                          <span className="inline-flex items-center gap-1">
+                            <span>·</span>
+                            <span className="line-through opacity-60">{item.songs.musical_key}</span>
+                            <span className="text-primary font-semibold">→ {transposed}</span>
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 leading-none">modificado</Badge>
+                          </span>
+                        ) : (
+                          <span>· {item.songs.musical_key}</span>
+                        )
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
               <Music2 className="h-4 w-4 text-muted-foreground shrink-0" />
             </Link>

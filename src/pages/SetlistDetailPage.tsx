@@ -512,6 +512,31 @@ export default function SetlistDetailPage() {
     enabled: !!id,
   });
 
+  // Per-user transpositions for the songs in this setlist
+  const songIdsForTransp = useMemo(
+    () => Array.from(new Set((items as any[]).map((it) => it.song_id).filter(Boolean))),
+    [items],
+  );
+  const { data: userTranspositions = [] } = useQuery({
+    queryKey: ["user-transpositions", user?.id, songIdsForTransp],
+    queryFn: async () => {
+      if (!user || songIdsForTransp.length === 0) return [];
+      const { data } = await supabase
+        .from("user_song_transpositions")
+        .select("song_id, semitones, transposed_key")
+        .eq("user_id", user.id)
+        .in("song_id", songIdsForTransp);
+      return data || [];
+    },
+    enabled: !!user && songIdsForTransp.length > 0,
+    refetchOnWindowFocus: true,
+  });
+  const userTranspMap = useMemo(() => {
+    const m = new Map<string, { semitones: number; transposed_key: string | null }>();
+    (userTranspositions as any[]).forEach((t) => m.set(t.song_id, { semitones: t.semitones, transposed_key: t.transposed_key }));
+    return m;
+  }, [userTranspositions]);
+
   // Auto-fill missing YouTube links once when page loads with items
   const autoFillRanRef = useRef(false);
   useEffect(() => {

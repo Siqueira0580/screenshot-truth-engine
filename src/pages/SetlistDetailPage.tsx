@@ -1157,7 +1157,7 @@ export default function SetlistDetailPage() {
                   const ut = userTranspMap.get(item.song_id);
                   const transposed = ut && ut.semitones !== 0 ? ut.transposed_key : null;
                   return (
-                    <p className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
+                    <div className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
                       <span className="truncate">{item.songs?.artist}</span>
                       {item.songs?.musical_key && (
                         transposed ? (
@@ -1171,7 +1171,7 @@ export default function SetlistDetailPage() {
                           <span>· {item.songs.musical_key}</span>
                         )
                       )}
-                    </p>
+                    </div>
                   );
                 })()}
               </div>

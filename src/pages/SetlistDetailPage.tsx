@@ -113,9 +113,20 @@ function SortableSongItem({
               <Link to={`/songs/${item.song_id}`} className="font-medium hover:text-primary transition-colors text-sm sm:text-base">
                 {item.songs?.title}
               </Link>
-              <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                {item.songs?.artist}
-                {item.songs?.musical_key && ` · ${item.songs.musical_key}`}
+              <p className="text-xs sm:text-sm text-muted-foreground truncate flex items-center gap-1.5 flex-wrap">
+                <span className="truncate">{item.songs?.artist}</span>
+                {item.songs?.musical_key && (
+                  userTransposition && userTransposition.semitones !== 0 && userTransposition.transposed_key ? (
+                    <span className="inline-flex items-center gap-1">
+                      <span>·</span>
+                      <span className="line-through opacity-60">{item.songs.musical_key}</span>
+                      <span className="text-primary font-semibold">→ {userTransposition.transposed_key}</span>
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 leading-none">modificado</Badge>
+                    </span>
+                  ) : (
+                    <span>· {item.songs.musical_key}</span>
+                  )
+                )}
               </p>
             </div>
             <Button variant="ghost" size="icon" className="shrink-0 h-8 w-8" onClick={() => onDelete(item.id)}>

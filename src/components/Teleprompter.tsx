@@ -978,9 +978,15 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         {/* Text tools popover */}
         <TextToolsPopover
           font={presentationFont}
-          onFontChange={setPresentationFont}
+          onFontChange={(f) => {
+            setPresentationFont(f);
+            localStorage.setItem("@smartcifra:globalFont", f);
+          }}
           fontSize={fontSize}
-          onFontSizeChange={setFontSize}
+          onFontSizeChange={(size) => {
+            setFontSize(size);
+            localStorage.setItem("@smartcifra:fontSize", String(size));
+          }}
           isBold={isBold}
           isItalic={isItalic}
           onToggleBold={toggleBold}

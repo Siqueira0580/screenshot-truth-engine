@@ -332,30 +332,14 @@ export default function StudyPage() {
                   {displayKey}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-2" align="end">
-                <div className="grid grid-cols-4 gap-1">
-                  {ALL_KEYS.map(k => {
-                    const original = song?.musical_key?.replace("m", "").replace("#", "#") || "";
-                    const originalIdx = ALL_KEYS.indexOf(original) !== -1 ? ALL_KEYS.indexOf(original) : 0;
-                    const targetIdx = ALL_KEYS.indexOf(k);
-                    const semitones = ((targetIdx - originalIdx) % 12 + 12) % 12;
-                    const isMinor = song?.musical_key?.endsWith("m");
-                    return (
-                      <button key={k} onClick={() => setTranspose(semitones === 0 ? 0 : semitones)}
-                        className={cn("px-2 py-1.5 text-xs font-mono font-bold rounded transition-colors",
-                          transpose !== 0 && displayKey?.replace("m", "") === k ? "bg-primary text-primary-foreground"
-                          : semitones === 0 ? "bg-accent text-accent-foreground" : "hover:bg-muted"
-                        )}>
-                        {k}{isMinor ? "m" : ""}
-                      </button>
-                    );
-                  })}
-                </div>
-                {transpose !== 0 && (
-                  <Button variant="ghost" size="sm" className="w-full mt-1 text-xs h-7" onClick={() => setTranspose(0)}>
-                    Voltar ao original ({song?.musical_key})
-                  </Button>
-                )}
+              <PopoverContent className="w-[300px] p-0 bg-transparent border-0 shadow-none" align="end">
+                <TranspositionControl
+                  originalKey={song?.musical_key}
+                  transpose={transpose}
+                  setTranspose={setTranspose}
+                  defaultOpen
+                  compact
+                />
               </PopoverContent>
             </Popover>
           )}

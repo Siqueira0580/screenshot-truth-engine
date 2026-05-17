@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { X, Play, Pause, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
 import { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
 import TextToolsPopover from "@/components/TextToolsPopover";
+import TranspositionControl from "@/components/TranspositionControl";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

@@ -386,24 +386,14 @@ export default function SongDetailPage() {
 
       {/* Transpose + Instrument controls */}
       {song.body_text && (
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-sm text-muted-foreground">Transpor:</span>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose((t) => t - 1)}>
-              <ChevronDown className="h-4 w-4" />
-            </Button>
-            <span className="font-mono text-sm font-semibold text-foreground w-12 text-center">
-              {transpose > 0 ? `+${transpose}` : transpose}
-            </span>
-            <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setTranspose((t) => t + 1)}>
-              <ChevronUp className="h-4 w-4" />
-            </Button>
-            {transpose !== 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setTranspose(0)} className="text-xs text-muted-foreground">
-                Original
-              </Button>
-            )}
-          </div>
+        <div className="flex flex-col gap-3 sm:gap-4">
+          <TranspositionControl
+            originalKey={song.musical_key}
+            transpose={transpose}
+            setTranspose={setTranspose}
+          />
+
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
 
           <div className="flex items-center gap-1.5">
             <Guitar className="h-4 w-4 text-muted-foreground shrink-0" />

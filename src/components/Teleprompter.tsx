@@ -87,7 +87,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   });
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
-  const [presentationFont, setPresentationFont] = useState<PresentationFontId>("mono");
+  const [presentationFont, setPresentationFont] = useState<PresentationFontId>(() => {
+    const saved = localStorage.getItem("@smartcifra:globalFont");
+    return (saved && PRESENTATION_FONTS.some(f => f.id === saved) ? saved : "mono") as PresentationFontId;
+  });
   const [nearEnd, setNearEnd] = useState(false);
   const [songProgress, setSongProgress] = useState(0);
   const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);

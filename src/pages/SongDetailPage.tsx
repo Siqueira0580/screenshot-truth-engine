@@ -28,6 +28,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import ConfirmDeleteModal from "@/components/ConfirmDeleteModal";
 
 import Teleprompter from "@/components/Teleprompter";
+import TranspositionControl from "@/components/TranspositionControl";
 import ChordText from "@/components/ChordText";
 import ShowButton from "@/components/ShowButton";
 import SongChordsFAB from "@/components/SongChordsFAB";

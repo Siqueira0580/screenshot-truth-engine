@@ -115,39 +115,49 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
 
   // Load per-user saved transposition when current song changes
   const loadedSongIdRef = useRef<string | null>(null);
+  const loadingSongIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (!open) return;
     const sid = song?.song_id;
     if (!sid) return;
     if (loadedSongIdRef.current === sid) return;
-    loadedSongIdRef.current = sid;
+    if (loadingSongIdRef.current === sid) return;
+    loadingSongIdRef.current = sid;
     (async () => {
       const { data: auth } = await supabase.auth.getUser();
-      if (!auth?.user) return;
+      if (!auth?.user) {
+        loadedSongIdRef.current = sid;
+        loadingSongIdRef.current = null;
+        return;
+      }
       const { data } = await supabase
         .from("user_song_transpositions")
         .select("semitones")
         .eq("user_id", auth.user.id)
         .eq("song_id", sid)
         .maybeSingle();
+
+      let nextTranspose = 0;
       if (data && typeof data.semitones === "number") {
-        setTranspose(data.semitones);
+        nextTranspose = data.semitones;
       } else if (song?.transposed_key && song?.musical_key) {
-        // Fallback to setlist's shared transposed_key
         const origRoot = song.musical_key.match(/^([A-G][#b]?)/)?.[1];
         const transRoot = song.transposed_key.match(/^([A-G][#b]?)/)?.[1];
         if (origRoot && transRoot) {
           const origIdx = ALL_KEYS.indexOf(origRoot);
           const transIdx = ALL_KEYS.indexOf(transRoot);
           if (origIdx >= 0 && transIdx >= 0) {
-            setTranspose(((transIdx - origIdx) % 12 + 12) % 12);
-            return;
+            nextTranspose = ((transIdx - origIdx) % 12 + 12) % 12;
           }
         }
-        setTranspose(0);
-      } else {
-        setTranspose(0);
       }
+
+      // Mark this song's saved value BEFORE updating state so the save effect
+      // doesn't overwrite/delete the freshly loaded value.
+      lastSavedTransposeRef.current = { songId: sid, value: nextTranspose };
+      loadedSongIdRef.current = sid;
+      loadingSongIdRef.current = null;
+      setTranspose(nextTranspose);
     })();
   }, [open, song?.song_id]);
 

@@ -409,6 +409,7 @@ export default function SongDetailPage() {
               </SelectContent>
             </Select>
           </div>
+          </div>
         </div>
       )}
 

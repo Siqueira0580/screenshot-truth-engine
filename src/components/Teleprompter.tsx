@@ -63,7 +63,11 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
     const initial = songs[initialIndex]?.speed;
     return initial ? initial / 100 : 2;
   });
-  const [fontSize, setFontSize] = useState(18);
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem("@smartcifra:fontSize");
+    const n = saved ? parseInt(saved, 10) : NaN;
+    return Number.isFinite(n) ? n : 18;
+  });
   const [showControls, setShowControls] = useState(true);
   const [transpose, setTranspose] = useState(() => {
     // If first song has a saved transposed_key, compute initial transpose
@@ -83,7 +87,10 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
   });
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [chordModalOpen, setChordModalOpen] = useState(false);
-  const [presentationFont, setPresentationFont] = useState<PresentationFontId>("mono");
+  const [presentationFont, setPresentationFont] = useState<PresentationFontId>(() => {
+    const saved = localStorage.getItem("@smartcifra:globalFont");
+    return (saved && PRESENTATION_FONTS.some(f => f.id === saved) ? saved : "mono") as PresentationFontId;
+  });
   const [nearEnd, setNearEnd] = useState(false);
   const [songProgress, setSongProgress] = useState(0);
   const [loopsRemaining, setLoopsRemaining] = useState<number[]>([]);
@@ -971,9 +978,15 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         {/* Text tools popover */}
         <TextToolsPopover
           font={presentationFont}
-          onFontChange={setPresentationFont}
+          onFontChange={(f) => {
+            setPresentationFont(f);
+            localStorage.setItem("@smartcifra:globalFont", f);
+          }}
           fontSize={fontSize}
-          onFontSizeChange={setFontSize}
+          onFontSizeChange={(size) => {
+            setFontSize(size);
+            localStorage.setItem("@smartcifra:fontSize", String(size));
+          }}
           isBold={isBold}
           isItalic={isItalic}
           onToggleBold={toggleBold}

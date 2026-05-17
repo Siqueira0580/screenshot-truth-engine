@@ -24,6 +24,7 @@ import ChordModal from "@/components/teleprompter/ChordModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SongChordsFAB from "@/components/SongChordsFAB";
 import QuickEditLyricsModal from "@/components/QuickEditLyricsModal";
+import TranspositionControl from "@/components/TranspositionControl";
 
 const ALL_KEYS = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"];
 

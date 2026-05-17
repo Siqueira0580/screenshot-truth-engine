@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { X, Play, Pause, SkipForward, SkipBack, Maximize, ChevronUp, ChevronDown, Repeat, Guitar } from "lucide-react";
 import { PRESENTATION_FONTS, type PresentationFontId } from "@/components/PresentationFontPicker";
 import TextToolsPopover from "@/components/TextToolsPopover";
+import TranspositionControl from "@/components/TranspositionControl";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -906,10 +907,7 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
         <MetronomePulse bpm={song.bpm ?? 0} isPlaying={isPlaying} />
 
         {/* Transpose */}
-        <div className="flex items-center gap-0.5 sm:gap-1">
-          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t - 1)} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
-            <ChevronDown className="h-3 w-3" />
-          </Button>
+        <div className="flex items-center">
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -924,55 +922,16 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                 {displayKey || "—"}
               </button>
             </PopoverTrigger>
-            <PopoverContent
-              className="w-auto p-2 z-[200]"
-              side="top"
-              align="center"
-            >
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-2 text-center">
-                Tonalidade
-              </p>
-              <div className="grid grid-cols-4 gap-1">
-                {ALL_KEYS.map((key) => {
-                  const originalKey = song?.musical_key;
-                  if (!originalKey) return null;
-                  const origMatch = originalKey.match(/^([A-G][#b]?)(.*)/);
-                  if (!origMatch) return null;
-                  const origRoot = origMatch[1];
-                  const suffix = origMatch[2];
-                  const origIdx = ALL_KEYS.indexOf(origRoot) !== -1
-                    ? ALL_KEYS.indexOf(origRoot)
-                    : ALL_KEYS.findIndex(k => k === origRoot || (origRoot === "Db" && k === "C#") || (origRoot === "D#" && k === "Eb") || (origRoot === "Gb" && k === "F#") || (origRoot === "G#" && k === "Ab") || (origRoot === "A#" && k === "Bb"));
-                  const targetIdx = ALL_KEYS.indexOf(key);
-                  const semitones = ((targetIdx - origIdx) % 12 + 12) % 12;
-                  const isActive = displayKey === `${key}${suffix}`;
-
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => setTranspose(semitones === 0 ? 0 : semitones)}
-                      className={cn(
-                        "px-2 py-1.5 rounded text-xs font-mono font-bold transition-colors",
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-muted text-foreground"
-                      )}
-                    >
-                      {key}{suffix}
-                    </button>
-                  );
-                })}
-              </div>
-              {!song?.musical_key && (
-                <p className="text-[10px] text-muted-foreground text-center mt-2">
-                  Sem tom definido
-                </p>
-              )}
+            <PopoverContent className="w-[300px] p-0 z-[200] bg-transparent border-0 shadow-none" side="top" align="center">
+              <TranspositionControl
+                originalKey={song?.musical_key}
+                transpose={transpose}
+                setTranspose={setTranspose}
+                defaultOpen
+                compact
+              />
             </PopoverContent>
           </Popover>
-          <Button variant="ghost" size="icon" onClick={() => setTranspose((t) => t + 1)} className="text-foreground h-7 w-7 sm:h-8 sm:w-8">
-            <ChevronUp className="h-3 w-3" />
-          </Button>
         </div>
 
         {/* Text tools popover */}

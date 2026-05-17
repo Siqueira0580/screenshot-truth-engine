@@ -63,7 +63,11 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
     const initial = songs[initialIndex]?.speed;
     return initial ? initial / 100 : 2;
   });
-  const [fontSize, setFontSize] = useState(18);
+  const [fontSize, setFontSize] = useState(() => {
+    const saved = localStorage.getItem("@smartcifra:fontSize");
+    const n = saved ? parseInt(saved, 10) : NaN;
+    return Number.isFinite(n) ? n : 18;
+  });
   const [showControls, setShowControls] = useState(true);
   const [transpose, setTranspose] = useState(() => {
     // If first song has a saved transposed_key, compute initial transpose

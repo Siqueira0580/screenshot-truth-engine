@@ -139,7 +139,7 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
       const sizeLabel = sizeMode === "quantity"
         ? `${selected.length} Músicas`
         : DURATION_OPTIONS.find((d) => d.value === duration)?.label ?? "";
-      const name = `Repertório ${occasion} - ${sizeLabel}`;
+      const name = `Repertório ${finalOccasion} - ${sizeLabel}`;
 
       // Create setlist
       const newSetlist = await createSetlist({ name });

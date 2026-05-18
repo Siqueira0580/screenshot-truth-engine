@@ -274,8 +274,12 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
                   type="number"
                   min={1}
                   max={200}
+                  placeholder="Ex: 20"
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setQuantity(v === "" ? "" : Math.max(1, parseInt(v) || 1));
+                  }}
                 />
               </div>
             ) : (

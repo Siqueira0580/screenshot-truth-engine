@@ -155,6 +155,7 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
         setlist_id: newSetlist.id,
         song_id: song.id,
         position: i + 1,
+        speed: 100, // Velocidade padrão 1.0x
       }));
       const { error: itemsError } = await supabase.from("setlist_items").insert(items);
       if (itemsError) throw itemsError;

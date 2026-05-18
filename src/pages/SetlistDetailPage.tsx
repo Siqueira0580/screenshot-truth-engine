@@ -768,9 +768,8 @@ export default function SetlistDetailPage() {
   // Mutations
   const addMutation = useMutation({
     mutationFn: (songId: string) => {
-      const song = allSongs.find((s) => s.id === songId);
-      const autoSpeed = calculateOptimalScrollSpeed(song?.body_text, song?.bpm);
-      return addSongToSetlist(id!, songId, items.length + 1, autoSpeed);
+      // Velocidade padrão 1.0x (100) ao adicionar ao repertório
+      return addSongToSetlist(id!, songId, items.length + 1, 100);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["setlist-items", id] });

@@ -43,7 +43,7 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
   const [customOccasion, setCustomOccasion] = useState("");
   const [sizeMode, setSizeMode] = useState<"duration" | "quantity">("quantity");
   const [duration, setDuration] = useState("7200");
-  const [quantity, setQuantity] = useState(20);
+  const [quantity, setQuantity] = useState<number | "">("");
   const [source, setSource] = useState<"all" | "setlists">("all");
   const [loading, setLoading] = useState(false);
 
@@ -115,7 +115,13 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
       let selected: typeof songs;
 
       if (sizeMode === "quantity") {
-        selected = shuffled.slice(0, Math.min(quantity, shuffled.length));
+        const qty = typeof quantity === "number" ? quantity : 0;
+        if (qty < 1) {
+          toast.error("Informe a quantidade de músicas");
+          setLoading(false);
+          return;
+        }
+        selected = shuffled.slice(0, Math.min(qty, shuffled.length));
       } else {
         const targetSeconds = parseInt(duration);
         const FALLBACK_DURATION = 210; // 3m30s
@@ -268,8 +274,12 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
                   type="number"
                   min={1}
                   max={200}
+                  placeholder="Ex: 20"
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setQuantity(v === "" ? "" : Math.max(1, parseInt(v) || 1));
+                  }}
                 />
               </div>
             ) : (

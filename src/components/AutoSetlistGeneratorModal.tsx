@@ -233,6 +233,14 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
                 ))}
               </SelectContent>
             </Select>
+            {occasion === "Outros" && (
+              <Input
+                placeholder="Digite a ocasião"
+                value={customOccasion}
+                onChange={(e) => setCustomOccasion(e.target.value)}
+                maxLength={50}
+              />
+            )}
           </div>
 
           {/* Size mode toggle */}

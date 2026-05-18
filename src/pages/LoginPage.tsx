@@ -54,7 +54,7 @@ export default function LoginPage() {
     try {
       localStorage.setItem('oauth_intent', 'login');
       const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/songs`,
       });
       if (error) {
         localStorage.removeItem('oauth_intent');

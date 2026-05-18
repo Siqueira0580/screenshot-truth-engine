@@ -115,7 +115,13 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
       let selected: typeof songs;
 
       if (sizeMode === "quantity") {
-        selected = shuffled.slice(0, Math.min(quantity, shuffled.length));
+        const qty = typeof quantity === "number" ? quantity : 0;
+        if (qty < 1) {
+          toast.error("Informe a quantidade de músicas");
+          setLoading(false);
+          return;
+        }
+        selected = shuffled.slice(0, Math.min(qty, shuffled.length));
       } else {
         const targetSeconds = parseInt(duration);
         const FALLBACK_DURATION = 210; // 3m30s

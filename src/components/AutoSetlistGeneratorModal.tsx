@@ -14,7 +14,7 @@ import { autoFillMissingYouTubeLinks } from "@/lib/youtube-autofill";
 import { toast } from "sonner";
 
 const STYLES = ["Samba", "Rock", "MPB", "Pop", "Gospel", "Sertanejo", "Forró", "Jazz", "Blues", "Reggae"];
-const OCCASIONS = ["Festa", "Churrasco", "Show", "Casamento", "Barzinho", "Aniversário", "Culto", "Evento Corporativo"];
+const OCCASIONS = ["Festa", "Churrasco", "Show", "Casamento", "Barzinho", "Aniversário", "Culto", "Evento Corporativo", "Outros"];
 const DURATION_OPTIONS = [
   { value: "3600", label: "1 hora" },
   { value: "5400", label: "1h30" },
@@ -40,6 +40,7 @@ interface Props {
 export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreated }: Props) {
   const [selectedStyles, setSelectedStyles] = useState<Set<string>>(new Set());
   const [occasion, setOccasion] = useState("");
+  const [customOccasion, setCustomOccasion] = useState("");
   const [sizeMode, setSizeMode] = useState<"duration" | "quantity">("quantity");
   const [duration, setDuration] = useState("7200");
   const [quantity, setQuantity] = useState(20);
@@ -55,8 +56,13 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
   };
 
   const handleGenerate = async () => {
+    const finalOccasion = occasion === "Outros" ? customOccasion.trim() : occasion;
     if (!occasion) {
       toast.error("Selecione uma ocasião");
+      return;
+    }
+    if (occasion === "Outros" && !finalOccasion) {
+      toast.error("Digite a ocasião");
       return;
     }
 
@@ -133,7 +139,7 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
       const sizeLabel = sizeMode === "quantity"
         ? `${selected.length} Músicas`
         : DURATION_OPTIONS.find((d) => d.value === duration)?.label ?? "";
-      const name = `Repertório ${occasion} - ${sizeLabel}`;
+      const name = `Repertório ${finalOccasion} - ${sizeLabel}`;
 
       // Create setlist
       const newSetlist = await createSetlist({ name });
@@ -227,6 +233,14 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
                 ))}
               </SelectContent>
             </Select>
+            {occasion === "Outros" && (
+              <Input
+                placeholder="Digite a ocasião"
+                value={customOccasion}
+                onChange={(e) => setCustomOccasion(e.target.value)}
+                maxLength={50}
+              />
+            )}
           </div>
 
           {/* Size mode toggle */}

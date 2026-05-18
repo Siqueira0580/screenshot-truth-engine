@@ -40,6 +40,7 @@ interface Props {
 export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreated }: Props) {
   const [selectedStyles, setSelectedStyles] = useState<Set<string>>(new Set());
   const [occasion, setOccasion] = useState("");
+  const [customOccasion, setCustomOccasion] = useState("");
   const [sizeMode, setSizeMode] = useState<"duration" | "quantity">("quantity");
   const [duration, setDuration] = useState("7200");
   const [quantity, setQuantity] = useState(20);

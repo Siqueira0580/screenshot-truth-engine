@@ -56,8 +56,13 @@ export default function AutoSetlistGeneratorModal({ open, onOpenChange, onCreate
   };
 
   const handleGenerate = async () => {
+    const finalOccasion = occasion === "Outros" ? customOccasion.trim() : occasion;
     if (!occasion) {
       toast.error("Selecione uma ocasião");
+      return;
+    }
+    if (occasion === "Outros" && !finalOccasion) {
+      toast.error("Digite a ocasião");
       return;
     }
 

@@ -14,7 +14,7 @@ import { autoFillMissingYouTubeLinks } from "@/lib/youtube-autofill";
 import { toast } from "sonner";
 
 const STYLES = ["Samba", "Rock", "MPB", "Pop", "Gospel", "Sertanejo", "Forró", "Jazz", "Blues", "Reggae"];
-const OCCASIONS = ["Festa", "Churrasco", "Show", "Casamento", "Barzinho", "Aniversário", "Culto", "Evento Corporativo"];
+const OCCASIONS = ["Festa", "Churrasco", "Show", "Casamento", "Barzinho", "Aniversário", "Culto", "Evento Corporativo", "Outros"];
 const DURATION_OPTIONS = [
   { value: "3600", label: "1 hora" },
   { value: "5400", label: "1h30" },

@@ -82,7 +82,7 @@ function SortableSongItem({
     opacity: isDragging ? 0.8 : 1,
   };
 
-  const currentSpeed = getVal(item, "speed") ?? item.songs?.default_speed ?? 250;
+  const currentSpeed = getVal(item, "speed") ?? 100;
 
   return (
     <div

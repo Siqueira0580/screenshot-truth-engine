@@ -185,7 +185,7 @@ function SortableSongItem({
                 type="number" min={0.5} max={5} step={0.1}
                 className="h-7 w-16 text-xs"
                 value={(currentSpeed / 100).toFixed(1)}
-                onChange={(e) => updateField(item.id, "speed", e.target.value ? Math.round(Number(e.target.value) * 100) : null, item)}
+                onChange={(e) => updateField(item.id, "speed", e.target.value ? Math.round(Number(e.target.value) * 100) : 100, item)}
               />
               <span className="text-xs text-muted-foreground">x</span>
             </>

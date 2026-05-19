@@ -818,6 +818,36 @@ export type Database = {
         }
         Relationships: []
       }
+      song_deletion_logs: {
+        Row: {
+          artist: string | null
+          deleted_at: string
+          deleted_by: string | null
+          deleted_by_email: string | null
+          id: string
+          song_id: string
+          title: string | null
+        }
+        Insert: {
+          artist?: string | null
+          deleted_at?: string
+          deleted_by?: string | null
+          deleted_by_email?: string | null
+          id?: string
+          song_id: string
+          title?: string | null
+        }
+        Update: {
+          artist?: string | null
+          deleted_at?: string
+          deleted_by?: string | null
+          deleted_by_email?: string | null
+          id?: string
+          song_id?: string
+          title?: string | null
+        }
+        Relationships: []
+      }
       song_edits: {
         Row: {
           created_at: string

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,12 +34,16 @@ interface SetlistCount {
   count: number;
 }
 
+const PAGE_SIZE = 50;
+
 export default function AdminSongsTab() {
   const [songs, setSongs] = useState<SongRow[]>([]);
   const [deletions, setDeletions] = useState<DeletionLog[]>([]);
   const [setlistCounts, setSetlistCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -122,6 +126,27 @@ export default function AdminSongsTab() {
       (d) => (d.title ?? "").toLowerCase().includes(q) || (d.artist ?? "").toLowerCase().includes(q)
     );
   }, [deletions, search]);
+
+  // Reset visible count when filter changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredSongs.length));
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [filteredSongs.length, visibleCount, loading]);
 
   if (loading) return <p className="text-muted-foreground text-sm">A carregar...</p>;
 
@@ -213,7 +238,7 @@ export default function AdminSongsTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSongs.slice(0, 200).map((s) => (
+              {filteredSongs.slice(0, visibleCount).map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.title}</TableCell>
                   <TableCell className="text-muted-foreground">{s.artist ?? "—"}</TableCell>
@@ -234,9 +259,14 @@ export default function AdminSongsTab() {
               )}
             </TableBody>
           </Table>
-          {filteredSongs.length > 200 && (
+          {visibleCount < filteredSongs.length && (
+            <div ref={loadMoreRef} className="py-4 text-center text-xs text-muted-foreground">
+              A carregar mais... ({visibleCount} de {filteredSongs.length})
+            </div>
+          )}
+          {visibleCount >= filteredSongs.length && filteredSongs.length > PAGE_SIZE && (
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              A mostrar 200 de {filteredSongs.length} resultados. Refine a pesquisa.
+              {filteredSongs.length} músicas carregadas.
             </p>
           )}
         </CardContent>

@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, Shield, Users, DollarSign, Settings } from "lucide-react";
+import { ArrowLeft, Shield, Users, DollarSign, Settings, Music } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AdminUsersTab from "@/components/admin/AdminUsersTab";
 import AdminFinancialTab from "@/components/admin/AdminFinancialTab";
 import AdminSystemTab from "@/components/admin/AdminSystemTab";
+import AdminSongsTab from "@/components/admin/AdminSongsTab";
 
 export default function AdminDashboardPage() {
   return (
@@ -20,11 +21,16 @@ export default function AdminDashboardPage() {
       {/* Body */}
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList className="w-full sm:w-auto">
+          <TabsList className="w-full sm:w-auto flex-wrap h-auto">
             <TabsTrigger value="users" className="gap-2">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Utilizadores</span>
               <span className="sm:hidden">👥</span>
+            </TabsTrigger>
+            <TabsTrigger value="songs" className="gap-2">
+              <Music className="h-4 w-4" />
+              <span className="hidden sm:inline">Músicas</span>
+              <span className="sm:hidden">🎵</span>
             </TabsTrigger>
             <TabsTrigger value="financial" className="gap-2">
               <DollarSign className="h-4 w-4" />
@@ -40,6 +46,9 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="users">
             <AdminUsersTab />
+          </TabsContent>
+          <TabsContent value="songs">
+            <AdminSongsTab />
           </TabsContent>
           <TabsContent value="financial">
             <AdminFinancialTab />

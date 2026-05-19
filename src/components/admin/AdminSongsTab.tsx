@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -213,7 +213,7 @@ export default function AdminSongsTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSongs.slice(0, 200).map((s) => (
+              {filteredSongs.slice(0, visibleCount).map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="font-medium">{s.title}</TableCell>
                   <TableCell className="text-muted-foreground">{s.artist ?? "—"}</TableCell>
@@ -234,9 +234,14 @@ export default function AdminSongsTab() {
               )}
             </TableBody>
           </Table>
-          {filteredSongs.length > 200 && (
+          {visibleCount < filteredSongs.length && (
+            <div ref={loadMoreRef} className="py-4 text-center text-xs text-muted-foreground">
+              A carregar mais... ({visibleCount} de {filteredSongs.length})
+            </div>
+          )}
+          {visibleCount >= filteredSongs.length && filteredSongs.length > PAGE_SIZE && (
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              A mostrar 200 de {filteredSongs.length} resultados. Refine a pesquisa.
+              {filteredSongs.length} músicas carregadas.
             </p>
           )}
         </CardContent>

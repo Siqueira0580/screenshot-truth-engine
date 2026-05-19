@@ -127,6 +127,27 @@ export default function AdminSongsTab() {
     );
   }, [deletions, search]);
 
+  // Reset visible count when filter changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search]);
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setVisibleCount((c) => Math.min(c + PAGE_SIZE, filteredSongs.length));
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [filteredSongs.length, visibleCount, loading]);
+
   if (loading) return <p className="text-muted-foreground text-sm">A carregar...</p>;
 
   return (

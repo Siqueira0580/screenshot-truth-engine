@@ -34,12 +34,16 @@ interface SetlistCount {
   count: number;
 }
 
+const PAGE_SIZE = 50;
+
 export default function AdminSongsTab() {
   const [songs, setSongs] = useState<SongRow[]>([]);
   const [deletions, setDeletions] = useState<DeletionLog[]>([]);
   const [setlistCounts, setSetlistCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     (async () => {

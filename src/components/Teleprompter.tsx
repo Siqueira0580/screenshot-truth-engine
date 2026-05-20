@@ -782,10 +782,42 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                     </span>
                   )}
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  {s.artist}
-                  {sKey && ` · Tom: ${sKey}`}
-                  {s.bpm && ` · ${s.bpm} BPM`}
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 flex flex-wrap items-center gap-x-1.5">
+                  {s.artist && <span>{s.artist}</span>}
+                  {sKey && (
+                    <>
+                      <span>·</span>
+                      {idx === currentIndex ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              className={cn(
+                                "px-1.5 py-0.5 rounded-md font-mono font-bold border transition-colors",
+                                transpose !== 0
+                                  ? "bg-primary/20 border-primary text-primary"
+                                  : "bg-muted/30 border-border text-foreground hover:bg-muted/60"
+                              )}
+                              title="Clique para escolher a tonalidade"
+                            >
+                              Tom: {sKey}
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[300px] p-0 z-[200] bg-transparent border-0 shadow-none" side="bottom" align="start">
+                            <TranspositionControl
+                              originalKey={s.musical_key}
+                              transpose={transpose}
+                              setTranspose={setTranspose}
+                              defaultOpen
+                              compact
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        <span>Tom: {sKey}</span>
+                      )}
+                    </>
+                  )}
+                  {s.bpm && <span>· {s.bpm} BPM</span>}
                 </p>
               </div>
 

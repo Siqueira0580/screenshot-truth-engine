@@ -803,20 +803,26 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                             </button>
                           </PopoverTrigger>
                           <PopoverContent
-                            className="w-[300px] p-2 z-[200] border border-primary/40 shadow-xl backdrop-blur-md"
-                            style={{ background: "hsl(210 90% 25% / 0.85)" }}
+                            className="w-[300px] p-3 z-[200] border-2 border-primary shadow-2xl rounded-xl"
+                            style={{
+                              background: "linear-gradient(135deg, hsl(210 90% 18% / 0.97), hsl(220 85% 12% / 0.97))",
+                              color: "hsl(0 0% 100%)",
+                            }}
                             side="bottom"
                             align="start"
                           >
-                            <TranspositionControl
-                              originalKey={s.musical_key}
-                              transpose={transpose}
-                              setTranspose={setTranspose}
-                              defaultOpen
-                              compact
-                              className="bg-transparent"
-                            />
+                            <div className="[&_button]:!text-white [&_.text-foreground]:!text-white [&_.text-muted-foreground]:!text-white/80">
+                              <TranspositionControl
+                                originalKey={s.musical_key}
+                                transpose={transpose}
+                                setTranspose={setTranspose}
+                                defaultOpen
+                                compact
+                                className="!bg-transparent !p-0"
+                              />
+                            </div>
                           </PopoverContent>
+
 
                         </Popover>
                       ) : (

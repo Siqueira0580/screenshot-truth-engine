@@ -803,11 +803,13 @@ export default function Teleprompter({ songs, initialIndex = 0, open, onClose, a
                             </button>
                           </PopoverTrigger>
                           <PopoverContent
-                            className="w-[300px] p-3 z-[200] border-2 border-primary shadow-2xl rounded-xl"
+                            className="w-[300px] p-3 z-[200] border-2 shadow-2xl rounded-xl"
                             style={{
-                              background: "linear-gradient(135deg, hsl(210 90% 18% / 0.97), hsl(220 85% 12% / 0.97))",
+                              background: "linear-gradient(135deg, hsl(260 55% 20% / 0.97), hsl(265 60% 13% / 0.97))",
+                              borderColor: "hsl(265 70% 55%)",
                               color: "hsl(0 0% 100%)",
                             }}
+
                             side="bottom"
                             align="start"
                           >

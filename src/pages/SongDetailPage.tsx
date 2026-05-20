@@ -371,11 +371,23 @@ export default function SongDetailPage() {
             </span>
           )}
           {displayKey && (
-            <span className="inline-flex flex-col items-start rounded bg-primary/10 px-2 py-0.5 font-mono">
+            <span
+              className={cn(
+                "inline-flex flex-col items-start rounded px-2 py-0.5 font-mono transition-all",
+                song.musical_key && displayKey !== song.musical_key
+                  ? "bg-primary/20 ring-2 ring-primary shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
+                  : "bg-primary/10"
+              )}
+              title={
+                song.musical_key && displayKey !== song.musical_key
+                  ? `Tom transposto (original: ${song.musical_key})`
+                  : undefined
+              }
+            >
               <span className="text-lg font-black text-primary leading-tight">{displayKey}</span>
               {song.musical_key && displayKey !== song.musical_key && (
-                <span className="text-[10px] text-muted-foreground leading-tight">
-                  Original: {song.musical_key}
+                <span className="text-[10px] font-bold text-primary leading-tight uppercase tracking-wide">
+                  ✦ Transposto · Original: {song.musical_key}
                 </span>
               )}
             </span>

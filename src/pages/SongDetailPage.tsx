@@ -494,10 +494,15 @@ export default function SongDetailPage() {
       <SongEditHistory songId={id!} />
 
       <Teleprompter
-        songs={[{ ...song, body_text: displayBody, musical_key: displayKey, artist_photo_url: artistPhoto, speed: song.default_speed ?? 250 }]}
+        songs={[{ ...song, song_id: song.id, body_text: song.body_text, musical_key: song.musical_key, artist_photo_url: artistPhoto, speed: song.default_speed ?? 250 }]}
         open={teleprompterOpen}
-        onClose={() => setTeleprompterOpen(false)}
+        onClose={() => {
+          setTeleprompterOpen(false);
+          // Re-sync transposition saved from the teleprompter so other pages reflect it.
+          reloadTransposition();
+        }}
       />
+
       <SongChordsFAB bodyText={displayBody} />
       <YouTubeSearchModal
         open={youtubeModalOpen}

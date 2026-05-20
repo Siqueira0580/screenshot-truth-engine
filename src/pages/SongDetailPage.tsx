@@ -109,7 +109,7 @@ export default function SongDetailPage() {
     enabled: !!id,
   });
 
-  const { transpose, setTranspose } = useSongTransposition(id, song?.musical_key);
+  const { transpose, setTranspose, reload: reloadTransposition } = useSongTransposition(id, song?.musical_key);
 
   const { data: artists = [] } = useQuery({
     queryKey: ["artists"],
@@ -371,11 +371,23 @@ export default function SongDetailPage() {
             </span>
           )}
           {displayKey && (
-            <span className="inline-flex flex-col items-start rounded bg-primary/10 px-2 py-0.5 font-mono">
+            <span
+              className={cn(
+                "inline-flex flex-col items-start rounded px-2 py-0.5 font-mono transition-all",
+                song.musical_key && displayKey !== song.musical_key
+                  ? "bg-primary/20 ring-2 ring-primary shadow-[0_0_12px_hsl(var(--primary)/0.4)]"
+                  : "bg-primary/10"
+              )}
+              title={
+                song.musical_key && displayKey !== song.musical_key
+                  ? `Tom transposto (original: ${song.musical_key})`
+                  : undefined
+              }
+            >
               <span className="text-lg font-black text-primary leading-tight">{displayKey}</span>
               {song.musical_key && displayKey !== song.musical_key && (
-                <span className="text-[10px] text-muted-foreground leading-tight">
-                  Original: {song.musical_key}
+                <span className="text-[10px] font-bold text-primary leading-tight uppercase tracking-wide">
+                  ✦ Transposto · Original: {song.musical_key}
                 </span>
               )}
             </span>
@@ -494,10 +506,15 @@ export default function SongDetailPage() {
       <SongEditHistory songId={id!} />
 
       <Teleprompter
-        songs={[{ ...song, body_text: displayBody, musical_key: displayKey, artist_photo_url: artistPhoto, speed: song.default_speed ?? 250 }]}
+        songs={[{ ...song, song_id: song.id, body_text: song.body_text, musical_key: song.musical_key, artist_photo_url: artistPhoto, speed: song.default_speed ?? 250 }]}
         open={teleprompterOpen}
-        onClose={() => setTeleprompterOpen(false)}
+        onClose={() => {
+          setTeleprompterOpen(false);
+          // Re-sync transposition saved from the teleprompter so other pages reflect it.
+          reloadTransposition();
+        }}
       />
+
       <SongChordsFAB bodyText={displayBody} />
       <YouTubeSearchModal
         open={youtubeModalOpen}

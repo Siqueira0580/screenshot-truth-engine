@@ -25,36 +25,33 @@ export function useSongTransposition(
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load saved value
-  useEffect(() => {
-    let cancelled = false;
+  const reload = useCallback(async () => {
     if (!enabled || !songId) {
       setLoaded(true);
       return;
     }
-    setLoaded(false);
-    (async () => {
-      const { data: auth } = await supabase.auth.getUser();
-      if (!auth?.user) {
-        if (!cancelled) setLoaded(true);
-        return;
-      }
-      const { data } = await supabase
-        .from("user_song_transpositions")
-        .select("semitones")
-        .eq("user_id", auth.user.id)
-        .eq("song_id", songId)
-        .maybeSingle();
-      if (cancelled) return;
-      const v = data?.semitones ?? 0;
-      lastSavedRef.current = v;
-      lastNotifiedRef.current = v;
-      setTransposeState(v);
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth?.user) {
       setLoaded(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [songId, enabled]);
+      return;
+    }
+    const { data } = await supabase
+      .from("user_song_transpositions")
+      .select("semitones")
+      .eq("user_id", auth.user.id)
+      .eq("song_id", songId)
+      .maybeSingle();
+    const v = data?.semitones ?? 0;
+    lastSavedRef.current = v;
+    lastNotifiedRef.current = v;
+    setTransposeState(v);
+    setLoaded(true);
+  }, [enabled, songId]);
+
+  useEffect(() => {
+    setLoaded(false);
+    reload();
+  }, [reload]);
 
   // Debounced save when transpose changes
   useEffect(() => {
@@ -116,5 +113,5 @@ export function useSongTransposition(
     setTransposeState((prev) => (typeof v === "function" ? (v as any)(prev) : v));
   }, []);
 
-  return { transpose, setTranspose, loaded };
+  return { transpose, setTranspose, loaded, reload };
 }

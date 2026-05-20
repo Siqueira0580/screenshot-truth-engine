@@ -113,5 +113,5 @@ export function useSongTransposition(
     setTransposeState((prev) => (typeof v === "function" ? (v as any)(prev) : v));
   }, []);
 
-  return { transpose, setTranspose, loaded };
+  return { transpose, setTranspose, loaded, reload };
 }

@@ -109,7 +109,7 @@ export default function AppLayout() {
       {/* Landscape Side Rail (mobile only, hidden on lg+) */}
       <nav className="hidden landscape:flex landscape:lg:hidden flex-col items-center gap-1 py-2 px-1 w-14 shrink-0 border-r border-border/50 dark:border-border/30 bg-card/95 backdrop-blur-xl z-50 overflow-y-auto">
         <button type="button" onClick={() => navigate("/songs")} className="mb-2">
-          <img src={smartCifraLogo} alt="Smart Cifra" className="h-8 w-8 rounded-md bg-white p-0.5 ring-1 ring-border" />
+          <img src={smartCifraLogo} alt="Smart Cifra" className="h-8 w-8 rounded-md bg-white dark:bg-transparent p-0.5 ring-1 ring-border dark:ring-0" />
         </button>
         {navItems.map((item) => {
           const isActive = location.pathname.startsWith(item.to);
@@ -148,7 +148,7 @@ export default function AppLayout() {
       <header className="sticky top-0 z-50 border-b border-border/50 dark:border-border/30 bg-card/80 backdrop-blur-xl">
         <div className="container flex h-16 landscape:h-12 items-center gap-6">
           <button type="button" onClick={() => navigate("/songs")} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <img src={smartCifraLogo} alt="Smart Cifra" className="h-12 w-12 rounded-lg bg-white p-1 ring-1 ring-border" />
+            <img src={smartCifraLogo} alt="Smart Cifra" className="h-12 w-12 rounded-lg bg-white dark:bg-transparent p-1 ring-1 ring-border dark:ring-0" />
             <span className="text-sm font-bold tracking-tight text-foreground hidden sm:inline">
               Smart Cifra
             </span>
@@ -332,7 +332,7 @@ export default function AppLayout() {
               <SheetContent side="right" className="w-72 p-0">
                 <SheetHeader className="p-4 pb-2 border-b border-border/50">
                   <SheetTitle className="flex items-center gap-2 text-base">
-                    <img src={smartCifraLogo} alt="Smart Cifra" className="h-8 w-8 rounded-md bg-white p-0.5 ring-1 ring-border" />
+                    <img src={smartCifraLogo} alt="Smart Cifra" className="h-8 w-8 rounded-md bg-white dark:bg-transparent p-0.5 ring-1 ring-border dark:ring-0" />
                     Smart Cifra
                   </SheetTitle>
                 </SheetHeader>

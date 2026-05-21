@@ -8,7 +8,12 @@ export default function MaintenancePage() {
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center px-6 text-center">
-      <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-xl mb-6 bg-white dark:bg-transparent p-1 ring-1 ring-border dark:ring-0" />
+      <div className="flex flex-col items-center mb-6">
+        <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-xl bg-white dark:bg-transparent p-1 ring-1 ring-border dark:ring-0" />
+        <span className="mt-2 text-base font-bold tracking-tight text-foreground">
+          Smart<span className="text-primary">Cifra</span>
+        </span>
+      </div>
       <div className="rounded-full bg-destructive/10 p-4 mb-6">
         <Wrench className="h-10 w-10 text-destructive" />
       </div>

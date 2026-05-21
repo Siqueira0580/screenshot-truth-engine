@@ -51,7 +51,12 @@ export default function TermsInterceptor({ children }: TermsInterceptorProps) {
     return (
       <div className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-2xl space-y-6 text-center">
-          <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-xl mx-auto bg-white dark:bg-transparent p-1 ring-1 ring-border dark:ring-0" />
+          <div className="flex flex-col items-center">
+            <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-xl bg-white dark:bg-transparent p-1 ring-1 ring-border dark:ring-0" />
+            <span className="mt-2 text-base font-bold tracking-tight text-foreground">
+              Smart<span className="text-primary">Cifra</span>
+            </span>
+          </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-center gap-2 text-primary">

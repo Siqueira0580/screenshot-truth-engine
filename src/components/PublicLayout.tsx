@@ -6,7 +6,7 @@ export default function PublicLayout() {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-50 border-b border-border/50 bg-card/80 backdrop-blur-xl">
         <div className="container flex h-14 items-center gap-3">
-          <img src={smartCifraLogo} alt="Smart Cifra" className="h-9 w-9 rounded-lg" />
+          <img src={smartCifraLogo} alt="Smart Cifra" className="h-9 w-9 rounded-lg bg-white p-0.5 ring-1 ring-border" />
           <span className="text-sm font-bold tracking-tight text-foreground">
             Smart Cifra
           </span>

@@ -55,7 +55,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-2">
-          <img src={smartCifraLogo} alt="Smart Cifra" className="h-9 w-9 rounded-lg" />
+          <img src={smartCifraLogo} alt="Smart Cifra" className="h-9 w-9 rounded-lg bg-white p-0.5 ring-1 ring-border" />
           <span className="font-display text-lg font-bold tracking-tight text-foreground">
             Smart<span className="text-primary">Cifra</span>
           </span>
@@ -81,7 +81,7 @@ export default function LandingPage() {
         >
           <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
           <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/30 bg-secondary/60 shadow-lg shadow-primary/10 backdrop-blur-sm">
-            <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-full" />
+            <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-full bg-white p-1 ring-1 ring-border" />
           </div>
           <motion.div
             animate={{ rotate: 360 }}

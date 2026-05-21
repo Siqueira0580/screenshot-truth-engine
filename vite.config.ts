@@ -28,8 +28,8 @@ export default defineConfig(({ mode }) => ({
         name: "Smart Cifra - Gestão de Repertório Musical",
         short_name: "Smart Cifra",
         description: "Gerencie suas músicas, setlists e repertório musical de forma profissional",
-        theme_color: "#1e40af",
-        background_color: "#0f172a",
+        theme_color: "#0a1f4d",
+        background_color: "#ffffff",
         display: "standalone",
         start_url: "/",
         icons: [

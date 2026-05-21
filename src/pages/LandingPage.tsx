@@ -79,9 +79,14 @@ export default function LandingPage() {
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           className="relative mb-8"
         >
-          <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl" />
-          <div className="relative flex h-24 w-24 items-center justify-center rounded-full border border-primary/30 bg-secondary/60 shadow-lg shadow-primary/10 backdrop-blur-sm">
-            <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-full bg-white dark:bg-transparent p-1 ring-1 ring-border dark:ring-0" />
+          <div className="absolute inset-x-0 top-0 h-24 rounded-full bg-primary/20 blur-2xl" />
+          <div className="relative flex flex-col items-center">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full border border-primary/30 bg-secondary/60 shadow-lg shadow-primary/10 backdrop-blur-sm">
+              <img src={smartCifraLogo} alt="Smart Cifra" className="h-16 w-16 rounded-full bg-white dark:bg-transparent p-1 ring-1 ring-border dark:ring-0" />
+            </div>
+            <span className="mt-3 text-lg font-bold tracking-tight text-foreground">
+              Smart<span className="text-primary">Cifra</span>
+            </span>
           </div>
           <motion.div
             animate={{ rotate: 360 }}
